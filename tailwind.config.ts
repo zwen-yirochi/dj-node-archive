@@ -57,9 +57,21 @@ const config: Config = {
                 md: 'calc(var(--radius) - 2px)',
                 sm: 'calc(var(--radius) - 4px)',
             },
+            transformStyle: {
+                '3d': 'preserve-3d',
+            },
+            backfaceVisibility: {
+                hidden: 'hidden',
+            },
+            textShadow: {
+                custom: '0px 0px 4px rgba(66, 52, 60, 0.6)',
+                sm: '0 1px 2px rgba(0, 0, 0, 0.5)',
+                md: '0 2px 4px rgba(0, 0, 0, 0.5)',
+                lg: '0 8px 16px rgba(0, 0, 0, 0.5)',
+            },
         },
     },
-    plugins: [require('tailwindcss-animate')],
+    plugins: [require('tailwindcss-animate'), require('tailwindcss-textshadow')],
 };
 
 export default config;
