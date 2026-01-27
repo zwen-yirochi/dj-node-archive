@@ -21,24 +21,23 @@ export default [
       '**/out/**',
       '**/build/**',
       '**/.turbo/**',
+      '**/dist/**',
     ],
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier'),
   {
-    files: ['**/*.ts', '**/*.tsx'],
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './tsconfig.json',
       },
     },
     plugins: {
       '@typescript-eslint': typescriptEslint,
     },
     rules: {
-      // 토스 스타일 규칙
       '@typescript-eslint/no-unused-vars': [
         'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
