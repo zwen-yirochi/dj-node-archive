@@ -51,15 +51,45 @@ const config: Config = {
                     '4': 'hsl(var(--chart-4))',
                     '5': 'hsl(var(--chart-5))',
                 },
+                text: {
+                    primary: 'rgb(66 52 60 / <alpha-value>)',
+                    secondary: '#666666',
+                    tertiary: '#999999',
+                    inverse: '#ffffff',
+                    muted: '#d1d5db',
+                },
+            },
+            fontFamily: {
+                stripe: ['var(--font-stripe)', 'sans-serif'],
+                nyangi: ['var(--font-nyangi)', 'sans-serif'],
+                bokeh: ['var(--font-bokeh)', 'sans-serif'],
+                sans: ['var(--font-geist-sans)', 'sans-serif'],
+                mono: ['var(--font-geist-mono)', 'monospace'],
             },
             borderRadius: {
                 lg: 'var(--radius)',
                 md: 'calc(var(--radius) - 2px)',
                 sm: 'calc(var(--radius) - 4px)',
             },
+            transformStyle: {
+                '3d': 'preserve-3d',
+            },
+            backfaceVisibility: {
+                hidden: 'hidden',
+            },
+            textShadow: {
+                xs: '0px 0px 2px color-mix(in srgb, currentColor 40%, transparent)',
+                sm: '0px 0px 3px color-mix(in srgb, currentColor 50%, transparent)',
+                def: '0px 0px 4px color-mix(in srgb, currentColor 60%, transparent)',
+                md: '0px 0px 5px color-mix(in srgb, currentColor 65%, transparent)',
+                lg: '0px 0px 6px color-mix(in srgb, currentColor 60%, transparent)',
+                xl: '0px 0px 8px color-mix(in srgb, currentColor 75%, transparent)',
+                '2xl': '0px 0px 12px color-mix(in srgb, currentColor 80%, transparent)',
+                '3xl': '0px 0px 16px color-mix(in srgb, currentColor 85%, transparent)',
+            },
         },
     },
-    plugins: [require('tailwindcss-animate')],
+    plugins: [require('tailwindcss-animate'), require('tailwindcss-textshadow')],
 };
 
 export default config;
