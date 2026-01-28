@@ -34,9 +34,9 @@ export default function GridView({ events, mixsets }: GridViewProps) {
             <div className="mx-auto max-w-7xl">
                 {/* 헤더 동일 */}
                 <div className="mb-8 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-500/20">
+                    <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-stone-500/20">
                         <svg
-                            className="h-5 w-5 text-pink-500"
+                            className="h-5 w-5 text-gray-500"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
