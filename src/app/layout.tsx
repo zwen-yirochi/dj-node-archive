@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 
 const geistSans = Geist({
@@ -10,6 +11,21 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
     variable: '--font-geist-mono',
     subsets: ['latin'],
+});
+
+const stripe = localFont({
+    src: './fonts/60sSTRIPE.ttf',
+    variable: '--font-stripe',
+});
+
+const bokeh = localFont({
+    src: './fonts/BOKEH.ttf',
+    variable: '--font-bokeh',
+});
+
+const nyangi = localFont({
+    src: './fonts/Nyangi-W-v1.0.woff2',
+    variable: '--font-nyangi',
 });
 
 export const metadata: Metadata = {
@@ -24,7 +40,9 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+            <body
+                className={`${geistSans.variable} ${geistMono.variable} ${stripe.variable} ${bokeh.variable} ${nyangi.variable} font-bokeh antialiased text-shadow-def`}
+            >
                 <div className="h-20">DNA</div>
                 {children}
             </body>
