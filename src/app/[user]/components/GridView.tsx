@@ -1,32 +1,14 @@
 // components/UnifiedGridView.tsx
+import { EventData, Mixset } from '@/app/types';
 import Masonry from 'react-masonry-css';
 import EventGridCard from './EventGridCard';
 
-interface Event {
-    id: string;
-    title: string;
-    date: string;
-    venue: string;
-    posterUrl: string;
-    description: string;
-    lineup: string[];
-}
-
-interface Mixset {
-    id: string;
-    title: string;
-    releaseDate: string;
-    genre: string;
-    coverUrl: string;
-    description: string;
-}
-
 interface GridViewProps {
-    events: Event[];
+    events: EventData[];
     mixsets: Mixset[];
 }
 
-type UnifiedItem = { type: 'event'; data: Event; date: string };
+type UnifiedItem = { type: 'event'; data: EventData; date: string };
 
 export default function GridView({ events, mixsets }: GridViewProps) {
     // 데이터 준비 (동일)
@@ -67,7 +49,7 @@ export default function GridView({ events, mixsets }: GridViewProps) {
                             />
                         </svg>
                     </div>
-                    <h2 className="text-3xl font-bold tracking-wider text-shadow-custom md:text-4xl">
+                    <h2 className="text-shadow-custom text-3xl font-bold tracking-wider md:text-4xl">
                         ALL CONTENT
                     </h2>
                     <span className="text-sm text-gray-500">({allItems.length})</span>

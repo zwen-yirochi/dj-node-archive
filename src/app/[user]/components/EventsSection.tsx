@@ -1,15 +1,6 @@
+import { EventData } from '@/app/types';
 import EventCard from './EventCard';
 import SectionHeader from './SectionHeader';
-
-interface EventData {
-    id: string;
-    title: string;
-    date: string;
-    venue: string;
-    posterUrl: string;
-    description: string;
-    lineup: string[];
-}
 
 interface EventsSectionProps {
     events: EventData[];

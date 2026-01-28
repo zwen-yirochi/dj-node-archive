@@ -1,14 +1,5 @@
+import { EventData } from '@/app/types';
 import Image from 'next/image';
-
-interface EventData {
-    id: string;
-    title: string;
-    date: string;
-    venue: string;
-    posterUrl: string;
-    description: string;
-    lineup: string[];
-}
 
 interface EventCardProps {
     event: EventData;

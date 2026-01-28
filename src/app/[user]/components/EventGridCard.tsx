@@ -1,20 +1,11 @@
 'use client';
 
+import { EventData } from '@/app/types';
 import Image from 'next/image';
 import { useState } from 'react';
 
-interface Event {
-    id: string;
-    title: string;
-    date: string;
-    venue: string;
-    posterUrl: string;
-    description: string;
-    lineup: string[];
-}
-
 interface EventGridCardProps {
-    event: Event;
+    event: EventData;
 }
 
 export default function EventGridCard({ event }: EventGridCardProps) {
