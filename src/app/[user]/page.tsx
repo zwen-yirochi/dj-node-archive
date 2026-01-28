@@ -18,16 +18,14 @@ export default function Page({ params }: PageProps) {
     const { user } = React.use(params);
 
     return (
-        <div className="min-h-screen bg-stone-200 text-[rgba(66,52,60)]">
+        <div className="text-primay min-h-screen bg-stone-200">
             <ProfileHeader {...userData} />
-
             {/* 뷰 모드 토글 */}
-            <div className="mt-12 px-6">
+            <div className="mt-6 px-4">
                 <div className="mx-auto mb-4 flex max-w-4xl justify-end">
                     <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
                 </div>
             </div>
-
             {viewMode === 'list' ? (
                 <>
                     <EventsSection events={events} />

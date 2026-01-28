@@ -1,4 +1,8 @@
+// components/EventCard.tsx
 import { EventData } from '@/app/types';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Calendar, MapPin, Users } from 'lucide-react';
 import Image from 'next/image';
 
 interface EventCardProps {
@@ -7,10 +11,10 @@ interface EventCardProps {
 
 export default function EventCard({ event }: EventCardProps) {
     return (
-        <article className="overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 backdrop-blur-sm transition-all hover:border-gray-700">
-            <div className="flex flex-col lg:flex-row">
-                {/* 포스터 */}
-                <div className="relative h-48 w-full flex-shrink-0 lg:h-auto lg:w-72">
+        <Card className="overflow-hidden border-gray-400 bg-stone-300/50 backdrop-blur-sm transition-all hover:border-gray-700">
+            <div className="flex flex-row">
+                {/* 포스터 이미지 */}
+                <div className="relative h-32 w-32 flex-shrink-0 sm:h-40 sm:w-40 md:h-48 md:w-48 lg:h-56 lg:w-56">
                     <Image
                         src={event.posterUrl}
                         alt={event.title}
@@ -20,95 +24,64 @@ export default function EventCard({ event }: EventCardProps) {
                     />
                 </div>
 
-                {/* 정보 */}
-                <div className="flex-1 p-6 md:p-8">
-                    {/* 날짜 & 장소 */}
-                    <div className="mb-4 flex flex-wrap items-center gap-3">
-                        <span className="flex items-center gap-2 text-sm text-pink-500">
-                            <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                            </svg>
-                            {new Date(event.date).toLocaleDateString('ko-KR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                            })}
-                        </span>
-                        <span className="flex items-center gap-2 text-sm text-gray-500">
-                            <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                />
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                            </svg>
-                            {event.venue}
-                        </span>
-                    </div>
-
+                {/* 정보 영역 - 더 넓어짐 */}
+                <CardContent className="flex flex-1 flex-col p-3 sm:p-4 md:p-6 lg:p-8">
                     {/* 제목 */}
-                    <h3 className="mb-4 text-3xl font-bold tracking-wide text-white transition-colors hover:text-pink-500 md:text-4xl">
+                    <h3 className="mb-2 text-base font-bold tracking-wide text-primary transition-colors sm:text-lg md:text-xl lg:text-2xl">
                         {event.title}
                     </h3>
 
-                    {/* 설명 */}
-                    <p className="mb-6 leading-relaxed text-gray-400">{event.description}</p>
+                    {/* 날짜 & 장소 뱃지 */}
+                    <div className="mb-2 flex flex-wrap gap-1.5 sm:gap-2 md:mb-3">
+                        <Badge
+                            variant="outline"
+                            className="border-gray-200/50 bg-stone-500/10 text-xs text-primary sm:text-xs"
+                        >
+                            <Calendar className="mr-1 h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                            <span className="hidden sm:inline">
+                                {new Date(event.date).toLocaleDateString('ko-KR', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                })}
+                            </span>
+                            <span className="sm:hidden">
+                                {new Date(event.date).toLocaleDateString('ko-KR', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                })}
+                            </span>
+                        </Badge>
+                        <Badge
+                            variant="outline"
+                            className="border-gray-200/50 bg-stone-500/10 text-xs text-primary sm:text-xs"
+                        >
+                            <MapPin className="mr-1 h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                            <span className="max-w-[100px] truncate sm:max-w-none">
+                                {event.venue}
+                            </span>
+                        </Badge>
+                    </div>
 
                     {/* 라인업 */}
-                    <div className="flex items-start gap-3">
-                        <svg
-                            className="mt-1 h-4 w-4 flex-shrink-0 text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                            />
-                        </svg>
-                        <div className="text-sm">
-                            <span className="mb-1 block text-gray-500">라인업</span>
-                            <div className="text-white">
+                    <div className="flex items-start gap-1.5 sm:gap-2 md:gap-3">
+                        <Users className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-gray-500 sm:h-4 sm:w-4" />
+                        <div className="flex-1 overflow-hidden">
+                            <div className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2">
                                 {event.lineup.map((artist, i) => (
-                                    <span key={i}>
-                                        <span className="cursor-pointer text-cyan-400 hover:text-cyan-300">
-                                            {artist}
-                                        </span>
-                                        {i < event.lineup.length - 1 && (
-                                            <span className="text-gray-500">, </span>
-                                        )}
-                                    </span>
+                                    <Badge
+                                        key={i}
+                                        variant="secondary"
+                                        className="cursor-pointer bg-stone-500/10 text-[10px] text-primary transition-colors hover:bg-stone-600/20 sm:text-xs md:text-sm"
+                                    >
+                                        {artist}
+                                    </Badge>
                                 ))}
                             </div>
                         </div>
                     </div>
-                </div>
+                </CardContent>
             </div>
-        </article>
+        </Card>
     );
 }
