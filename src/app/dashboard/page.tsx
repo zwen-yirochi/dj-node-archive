@@ -23,14 +23,16 @@ export default function EditorPage() {
     const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
     const { sensors, handleDragStart, handleDragEnd, activeComponent } = useDragAndDrop(
         components,
-        setComponents
+        setComponents,
+        pageId
     );
 
     const { addComponent, updateComponent, deleteComponent } = useComponentOperations(
         components,
         setComponents,
         selectedComponentId,
-        setSelectedComponentId
+        setSelectedComponentId,
+        pageId
     );
     const addMenu = useModal();
     const [showPreview, setShowPreview] = useState(true);
