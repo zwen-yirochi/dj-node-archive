@@ -29,6 +29,45 @@ export async function getUserProfile(username: string) {
     return data;
 }
 
+// 기존 함수들 아래에 추가
+
+// 에디터용: 사용자 페이지 전체 데이터 가져오기 (수정 가능한 형태)
+export async function getEditableUserPage(username: string) {
+    const { data, error } = await supabase
+        .from('users')
+        .select(
+            `
+      id,
+      username,
+      display_name,
+      avatar_url,
+      bio,
+      pages (
+        id,
+        slug,
+        template_type,
+        theme,
+        components (
+          id,
+          type,
+          position,
+          data,
+          created_at
+        )
+      )
+    `
+        )
+        .eq('username', username)
+        .single();
+
+    if (error) {
+        console.error('Error fetching editable page:', error);
+        return null;
+    }
+
+    return data;
+}
+
 // 컴포넌트를 타입별로 분리하는 헬퍼 함수
 export function separateComponentsByType(components: any[]) {
     const events = components

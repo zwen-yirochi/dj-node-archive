@@ -1,7 +1,7 @@
 'use client';
 
-import { events, mixsets, userData } from '@/mock/mockData';
-import React, { useState } from 'react';
+import { getUserProfile, separateComponentsByType } from '@/lib/supabase-queries';
+import React, { useEffect, useState } from 'react';
 import EventsSection from './components/EventsSection';
 import GridView from './components/GridView';
 import ProfileHeader from './components/ProfileHeader';
@@ -14,8 +14,57 @@ interface PageProps {
 export default function Page({ params }: PageProps) {
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
-    // params를 unwrap하기 위해 use hook 사용
+    const [loading, setLoading] = useState(true);
+    const [userData, setUserData] = useState<any>(null);
+    const [events, setEvents] = useState<any[]>([]);
+    const [mixsets, setMixsets] = useState<any[]>([]);
+
     const { user } = React.use(params);
+
+    useEffect(() => {
+        async function fetchData() {
+            setLoading(true);
+
+            const profile = await getUserProfile(user);
+
+            if (profile) {
+                setUserData({
+                    username: profile.username,
+                    displayName: profile.display_name,
+                    avatarUrl: profile.avatar_url,
+                    bio: profile.bio,
+                });
+
+                // 페이지가 있고 컴포넌트가 있으면 분리
+                if (profile.pages?.[0]?.components) {
+                    const { events: fetchedEvents, mixsets: fetchedMixsets } =
+                        separateComponentsByType(profile.pages[0].components);
+
+                    setEvents(fetchedEvents);
+                    setMixsets(fetchedMixsets);
+                }
+            }
+
+            setLoading(false);
+        }
+
+        fetchData();
+    }, [user]);
+    if (loading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-stone-200">
+                <p className="text-xl">로딩중...</p>
+            </div>
+        );
+    }
+
+    if (!userData) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-stone-200">
+                <p className="text-xl">사용자를 찾을 수 없습니다.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="text-primay min-h-screen bg-stone-200">
