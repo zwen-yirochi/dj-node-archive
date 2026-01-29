@@ -4,14 +4,14 @@ import { closestCenter, DndContext, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { Button } from '@/components/ui/button';
-import { ComponentData, EventComponent, LinkComponent, MixsetComponent, User } from '@/types';
+import { User } from '@/types';
 import { Calendar, Link, Music, Plus } from 'lucide-react';
 import ComponentEditor from './components/ComponentEditor';
 import ProfileEditor from './components/ProfileEditor';
 import SortableComponentCard from './components/SortableComponentCard';
+import { useComponentOperations } from './hooks/useComponentOperations';
 import { useDragAndDrop } from './hooks/useDragAndDrop';
 import { useEditorData } from './hooks/useEditorData';
 
@@ -21,13 +21,21 @@ const EDIT_USERNAME = 'dj-xxx';
 export default function EditorPage() {
     const { user, setUser, components, setComponents, pageId, loading } =
         useEditorData(EDIT_USERNAME);
+    const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
 
     const { sensors, handleDragStart, handleDragEnd, activeComponent } = useDragAndDrop(
         components,
         setComponents
     );
+
+    const { addComponent, updateComponent, deleteComponent } = useComponentOperations(
+        components,
+        setComponents,
+        selectedComponentId,
+        setSelectedComponentId
+    );
+
     // 초기 상태 비우기
-    const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [showPreview, setShowPreview] = useState(true);
     const [sidebarTab, setSidebarTab] = useState<'components' | 'style' | 'settings'>('components');
@@ -35,87 +43,6 @@ export default function EditorPage() {
     const [showAddMenu, setShowAddMenu] = useState(false);
 
     const selectedComponent = components.find((c) => c.id === selectedComponentId) || null;
-
-    const addComponent = useCallback((type: 'show' | 'mixset' | 'link') => {
-        const id = uuidv4();
-        let newComponent: ComponentData;
-
-        switch (type) {
-            case 'show':
-                newComponent = {
-                    id,
-                    type: 'show',
-                    title: '',
-                    date: new Date().toISOString().split('T')[0],
-                    venue: '',
-                    posterUrl: '',
-                    lineup: [],
-                    description: '',
-                    links: [],
-                } as EventComponent;
-                break;
-            case 'mixset':
-                newComponent = {
-                    id,
-                    type: 'mixset',
-                    title: '',
-                    coverUrl: '',
-                    audioUrl: '',
-                    soundcloudEmbedUrl: '',
-                    tracklist: [],
-                    description: '',
-                    releaseDate: new Date().toISOString().split('T')[0],
-                    genre: '',
-                } as MixsetComponent;
-                break;
-            case 'link':
-                newComponent = {
-                    id,
-                    type: 'link',
-                    title: '',
-                    url: '',
-                    icon: 'globe',
-                } as LinkComponent;
-                break;
-        }
-
-        setComponents((prev) => [...prev, newComponent]);
-        setSelectedComponentId(id);
-    }, []);
-
-    const updateComponent = useCallback((id: string, updates: Partial<ComponentData>) => {
-        setComponents((prev) =>
-            prev.map((c) => (c.id === id ? ({ ...c, ...updates } as ComponentData) : c))
-        );
-    }, []);
-
-    const deleteComponent = useCallback(
-        (id: string) => {
-            setComponents((prev) => prev.filter((c) => c.id !== id));
-            if (selectedComponentId === id) {
-                setSelectedComponentId(null);
-            }
-        },
-        [selectedComponentId]
-    );
-
-    const duplicateComponent = useCallback(
-        (id: string) => {
-            const component = components.find((c) => c.id === id);
-            if (component) {
-                const newId = uuidv4();
-                const newComponent = { ...component, id: newId };
-                const index = components.findIndex((c) => c.id === id);
-                setComponents((prev) => [
-                    ...prev.slice(0, index + 1),
-                    newComponent,
-                    ...prev.slice(index + 1),
-                ]);
-                setSelectedComponentId(newId);
-            }
-        },
-        [components]
-    );
 
     const updateUser = useCallback((updates: Partial<User>) => {
         setUser((prev) => (prev ? { ...prev, ...updates } : null));
@@ -193,7 +120,7 @@ export default function EditorPage() {
                                             isSelected={selectedComponentId === component.id}
                                             onSelect={() => setSelectedComponentId(component.id)}
                                             onDelete={() => deleteComponent(component.id)}
-                                            onDuplicate={() => duplicateComponent(component.id)}
+                                            onDuplicate={() => {}}
                                         />
                                     ))}
 
