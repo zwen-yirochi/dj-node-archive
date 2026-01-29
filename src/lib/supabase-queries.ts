@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { Component, EventData, MixsetData, LinkData, UserWithPages } from '@/types/database';
+import type { Component, EventData, LinkData, MixsetData, UserWithPages } from '@/types/database';
 
 // 사용자 프로필 + 페이지 정보 가져오기
 export async function getUserProfile(username: string): Promise<UserWithPages | null> {
@@ -93,7 +93,7 @@ export interface SeparatedComponents {
 // 컴포넌트를 타입별로 분리하는 헬퍼 함수
 export function separateComponentsByType(components: Component[]): SeparatedComponents {
     const events = components
-        .filter((c) => c.type === 'show')
+        .filter((c) => c.type === 'event')
         .sort((a, b) => a.position - b.position)
         .map((c) => ({
             id: c.id,
