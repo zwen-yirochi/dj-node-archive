@@ -3,10 +3,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
 import { useModal } from '@/hooks/useModal';
 import { User } from '@/types';
-import { Calendar, Link, Music } from 'lucide-react';
+import { AddComponentMenu } from './components/AddComponentMenu';
 import ComponentEditor from './components/ComponentEditor';
 import { ComponentList } from './components/ComponentList';
 import { Header } from './components/Header';
@@ -22,7 +21,6 @@ export default function EditorPage() {
     const { user, setUser, components, setComponents, pageId, loading } =
         useEditorData(EDIT_USERNAME);
     const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
-
     const { sensors, handleDragStart, handleDragEnd, activeComponent } = useDragAndDrop(
         components,
         setComponents
@@ -34,7 +32,6 @@ export default function EditorPage() {
         selectedComponentId,
         setSelectedComponentId
     );
-
     const addMenu = useModal();
     const [showPreview, setShowPreview] = useState(true);
 
@@ -85,51 +82,14 @@ export default function EditorPage() {
                         onDuplicateComponent={() => {}}
                         dragHandlers={{ onDragStart: handleDragStart, onDragEnd: handleDragEnd }}
                         sensors={sensors}
+                        activeComponent={activeComponent}
                     />
                 </main>
-
-                {addMenu.isOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
-                        <div
-                            className="w-96 rounded-xl bg-white p-6 shadow-xl"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <h3 className="mb-4 text-lg font-semibold">Add Component</h3>
-                            <div className="space-y-2">
-                                <Button
-                                    onClick={() => {
-                                        addComponent('show');
-                                    }}
-                                    variant="outline"
-                                    className="w-full justify-start"
-                                >
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    Show / Event
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        addComponent('mixset');
-                                    }}
-                                    variant="outline"
-                                    className="w-full justify-start"
-                                >
-                                    <Music className="mr-2 h-4 w-4" />
-                                    Mixset
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        addComponent('link');
-                                    }}
-                                    variant="outline"
-                                    className="w-full justify-start"
-                                >
-                                    <Link className="mr-2 h-4 w-4" />
-                                    Link
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <AddComponentMenu
+                    isOpen={addMenu.isOpen}
+                    onClose={addMenu.close}
+                    onAddComponent={addComponent}
+                />
 
                 {/* Preview Panel */}
                 <div className="border-2 border-red-500">
@@ -146,21 +106,19 @@ export default function EditorPage() {
                             </motion.aside>
                         )}
                     </AnimatePresence>
-
-                    {/* Component Editor Modal */}
-                    <AnimatePresence>
-                        {selectedComponent && (
-                            <ComponentEditor
-                                component={selectedComponent}
-                                onUpdate={(updates) =>
-                                    updateComponent(selectedComponentId!, updates)
-                                }
-                                onClose={() => setSelectedComponentId(null)}
-                                onDelete={() => deleteComponent(selectedComponentId!)}
-                            />
-                        )}
-                    </AnimatePresence>
                 </div>
+
+                {/* Component Editor Modal */}
+                <AnimatePresence>
+                    {selectedComponent && (
+                        <ComponentEditor
+                            component={selectedComponent}
+                            onUpdate={(updates) => updateComponent(selectedComponentId!, updates)}
+                            onClose={() => setSelectedComponentId(null)}
+                            onDelete={() => deleteComponent(selectedComponentId!)}
+                        />
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );
