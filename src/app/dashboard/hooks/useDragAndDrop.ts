@@ -41,7 +41,7 @@ export function useDragAndDrop(
         }
     };
 
-    const activeComponent = activeId ? components.find((c) => c.id === activeId) : null;
+    const activeComponent = activeId ? components.find((c) => c.id === activeId) : undefined;
 
     return { sensors, handleDragStart, handleDragEnd, activeId, activeComponent };
 }
