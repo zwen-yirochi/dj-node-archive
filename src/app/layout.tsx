@@ -44,7 +44,6 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} ${stripe.variable} ${bokeh.variable} ${nyangi.variable} font-bokeh antialiased text-shadow-def`}
             >
-                <div className="h-20">DNA</div>
                 {children}
             </body>
         </html>
