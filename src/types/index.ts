@@ -1,3 +1,6 @@
+// Re-export result types
+export * from './result';
+
 export interface User {
     id: string;
     username: string;

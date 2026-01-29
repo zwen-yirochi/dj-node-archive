@@ -1,5 +1,6 @@
 // app/api/editor/data/route.ts
 import { getEditorData } from '@/lib/services/user.service';
+import { isSuccess } from '@/types/result';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -16,11 +17,12 @@ export async function GET(request: Request) {
     //     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     // }
 
-    const data = await getEditorData(username);
+    const result = await getEditorData(username);
 
-    if (!data) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!isSuccess(result)) {
+        const status = result.error.code === 'NOT_FOUND' ? 404 : 500;
+        return NextResponse.json({ error: result.error.message }, { status });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(result.data);
 }

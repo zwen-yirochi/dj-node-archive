@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import localFont from 'next/font/local';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 
 const geistSans = Geist({
@@ -44,7 +46,8 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} ${stripe.variable} ${bokeh.variable} ${nyangi.variable} font-bokeh antialiased text-shadow-def`}
             >
-                {children}
+                <ErrorBoundary>{children}</ErrorBoundary>
+                <Toaster />
             </body>
         </html>
     );
