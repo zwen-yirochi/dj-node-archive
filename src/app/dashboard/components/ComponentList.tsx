@@ -1,22 +1,30 @@
 import { Button } from '@/components/ui/button';
-import { closestCenter, DndContext, DragOverlay } from '@dnd-kit/core';
+import { ComponentData } from '@/types';
+import {
+    closestCenter,
+    DndContext,
+    DragEndEvent,
+    DragOverlay,
+    DragStartEvent,
+} from '@dnd-kit/core';
+import type { SensorDescriptor, SensorOptions } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Plus } from 'lucide-react';
 import SortableComponentCard from './SortableComponentCard';
 
 interface ComponentListProps {
-    components: any[];
+    components: ComponentData[];
     selectedComponentId: string | null;
     onSelectComponent: (id: string) => void;
     onDeleteComponent: (id: string) => void;
     onDuplicateComponent: (id: string) => void;
     onShowAddMenu: () => void;
     dragHandlers: {
-        onDragStart: (event: any) => void;
-        onDragEnd: (event: any) => void;
+        onDragStart: (event: DragStartEvent) => void;
+        onDragEnd: (event: DragEndEvent) => void;
     };
-    sensors: any;
-    activeComponent?: any; // 드래그 중인 컴포넌트
+    sensors: SensorDescriptor<SensorOptions>[];
+    activeComponent?: ComponentData;
 }
 
 export function ComponentList({
