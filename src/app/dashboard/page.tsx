@@ -18,55 +18,31 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Button } from '@/components/ui/button';
-import { transformSupabaseToEditor } from '@/lib/editor-utils';
-import { getEditableUserPage } from '@/lib/supabase-queries';
 import { ComponentData, EventComponent, LinkComponent, MixsetComponent, User } from '@/types';
 import { Calendar, Link, Music, Plus } from 'lucide-react';
 import ComponentEditor from './components/ComponentEditor';
 import ProfileEditor from './components/ProfileEditor';
 import SortableComponentCard from './components/SortableComponentCard';
+import { useEditorData } from './hooks/useEditorData';
 
 // 임시: 편집할 사용자 (나중에 로그인으로 대체)
 const EDIT_USERNAME = 'dj-xxx';
 
 export default function EditorPage() {
-    // 초기 상태 비우기
-    const [user, setUser] = useState<User | null>(null);
-    const [components, setComponents] = useState<ComponentData[]>([]);
-    const [pageId, setPageId] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { user, setUser, components, setComponents, pageId, loading } =
+        useEditorData(EDIT_USERNAME);
 
+    // 초기 상태 비우기
     const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [showPreview, setShowPreview] = useState(true);
     const [sidebarTab, setSidebarTab] = useState<'components' | 'style' | 'settings'>('components');
     const [mobileView, setMobileView] = useState<'sidebar' | 'canvas' | 'preview'>('canvas');
     const [showAddMenu, setShowAddMenu] = useState(false);
-    // 데이터 불러오기
-    useEffect(() => {
-        async function loadData() {
-            setLoading(true);
-
-            const data = await getEditableUserPage(EDIT_USERNAME);
-
-            if (data) {
-                const transformed = transformSupabaseToEditor(data);
-                if (transformed) {
-                    setUser(transformed.user);
-                    setComponents(transformed.components);
-                    setPageId(transformed.pageId);
-                }
-            }
-
-            setLoading(false);
-        }
-
-        loadData();
-    }, []);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
