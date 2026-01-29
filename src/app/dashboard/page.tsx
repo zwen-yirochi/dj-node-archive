@@ -1,22 +1,7 @@
 'use client';
 
-import {
-    closestCenter,
-    DndContext,
-    DragEndEvent,
-    DragOverlay,
-    DragStartEvent,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-} from '@dnd-kit/core';
-import {
-    arrayMove,
-    SortableContext,
-    sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+import { closestCenter, DndContext, DragOverlay } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,6 +12,7 @@ import { Calendar, Link, Music, Plus } from 'lucide-react';
 import ComponentEditor from './components/ComponentEditor';
 import ProfileEditor from './components/ProfileEditor';
 import SortableComponentCard from './components/SortableComponentCard';
+import { useDragAndDrop } from './hooks/useDragAndDrop';
 import { useEditorData } from './hooks/useEditorData';
 
 // 임시: 편집할 사용자 (나중에 로그인으로 대체)
@@ -36,6 +22,10 @@ export default function EditorPage() {
     const { user, setUser, components, setComponents, pageId, loading } =
         useEditorData(EDIT_USERNAME);
 
+    const { sensors, handleDragStart, handleDragEnd, activeComponent } = useDragAndDrop(
+        components,
+        setComponents
+    );
     // 초기 상태 비우기
     const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -44,35 +34,7 @@ export default function EditorPage() {
     const [mobileView, setMobileView] = useState<'sidebar' | 'canvas' | 'preview'>('canvas');
     const [showAddMenu, setShowAddMenu] = useState(false);
 
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
-
     const selectedComponent = components.find((c) => c.id === selectedComponentId) || null;
-
-    const handleDragStart = (event: DragStartEvent) => {
-        setActiveId(event.active.id as string);
-    };
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        setActiveId(null);
-
-        if (over && active.id !== over.id) {
-            setComponents((items) => {
-                const oldIndex = items.findIndex((item) => item.id === active.id);
-                const newIndex = items.findIndex((item) => item.id === over.id);
-                return arrayMove(items, oldIndex, newIndex);
-            });
-        }
-    };
 
     const addComponent = useCallback((type: 'show' | 'mixset' | 'link') => {
         const id = uuidv4();
@@ -158,8 +120,6 @@ export default function EditorPage() {
     const updateUser = useCallback((updates: Partial<User>) => {
         setUser((prev) => (prev ? { ...prev, ...updates } : null));
     }, []);
-
-    const activeComponent = activeId ? components.find((c) => c.id === activeId) : null;
 
     // 로딩 중
     if (loading) {
