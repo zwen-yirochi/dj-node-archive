@@ -1,3 +1,4 @@
+// types/database.ts
 export interface User {
     id: string;
     username: string;
@@ -9,23 +10,16 @@ export interface User {
     updated_at: string;
 }
 
-export interface PageTheme {
-    accentColor: 'pink' | 'cyan' | 'purple';
-    backgroundStyle: 'gradient' | 'solid' | 'image';
-    backgroundImage?: string;
-}
-
 export interface Page {
     id: string;
     user_id: string;
     slug: string;
     template_type?: string;
-    theme?: PageTheme;
     created_at: string;
     updated_at: string;
 }
 
-export type ComponentType = 'show' | 'mixset' | 'link' | 'text' | 'image';
+export type ComponentType = 'event' | 'mixset' | 'link' | 'text' | 'image';
 
 export interface LinkData {
     title: string;
@@ -42,7 +36,6 @@ export interface ImageData {
     alt?: string;
 }
 
-// 컴포넌트 data 타입들
 export interface EventData {
     title: string;
     date: string;
@@ -72,11 +65,17 @@ export interface Component {
     updated_at: string;
 }
 
-// Supabase 쿼리 결과를 위한 확장 타입
+export interface PageWithComponents extends Page {
+    components: Component[];
+}
+
 export interface UserWithPages extends User {
     pages: PageWithComponents[];
 }
 
-export interface PageWithComponents extends Page {
-    components: Component[];
-}
+export type DBUser = User;
+export type DBPage = Page;
+export type DBComponent = Component;
+export type DBComponentType = ComponentType;
+export type DBPageWithComponents = PageWithComponents;
+export type DBUserWithPages = UserWithPages;
