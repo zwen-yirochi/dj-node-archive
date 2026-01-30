@@ -1,3 +1,4 @@
+'use client';
 // components/UnifiedGridView.tsx
 import { EventData, Mixset } from '@/app/types';
 import Masonry from 'react-masonry-css';
