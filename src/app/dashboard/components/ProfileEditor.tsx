@@ -1,21 +1,23 @@
+// app/dashboard/components/ProfileEditor.tsx
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { User } from '@/types';
+import { useEditorStore } from '@/stores/editorStore';
+import type { User } from '@/types';
 import { ChevronRight, Save, X } from 'lucide-react';
 import { useState } from 'react';
 
-interface ProfileEditorProps {
-    user: User;
-    onUpdate: (updates: Partial<User>) => void;
-}
+export default function ProfileEditor() {
+    const user = useEditorStore((state) => state.user);
+    const updateUser = useEditorStore((state) => state.updateUser);
 
-export default function ProfileEditor({ user, onUpdate }: ProfileEditorProps) {
     const [isEditing, setIsEditing] = useState(false);
-    const [tempUser, setTempUser] = useState(user);
+    const [tempUser, setTempUser] = useState<User | null>(user);
+
+    if (!user) return null;
 
     const getInitials = (name: string) => {
         return name
@@ -31,9 +33,31 @@ export default function ProfileEditor({ user, onUpdate }: ProfileEditorProps) {
         setIsEditing(true);
     };
 
-    const handleSave = () => {
-        onUpdate(tempUser);
+    const handleSave = async () => {
+        if (!tempUser) return;
+
+        // 낙관적 업데이트
+        updateUser(tempUser);
         setIsEditing(false);
+
+        // DB 저장
+        try {
+            const response = await fetch(`/api/users/${user.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tempUser),
+            });
+
+            if (!response.ok) {
+                // 실패 시 롤백
+                updateUser(user);
+                console.error('프로필 업데이트 실패');
+            }
+        } catch (error) {
+            // 실패 시 롤백
+            updateUser(user);
+            console.error('프로필 업데이트 오류:', error);
+        }
     };
 
     const handleCancel = () => {
@@ -97,8 +121,8 @@ export default function ProfileEditor({ user, onUpdate }: ProfileEditorProps) {
                 </div>
 
                 {/* 편집 폼 - 조건부 렌더링 */}
-                {isEditing && (
-                    <div className="border-t border-stone-200 p-8 pt-0 animate-in slide-in-from-top-2">
+                {isEditing && tempUser && (
+                    <div className="border-t border-stone-200 p-8 pt-6 animate-in slide-in-from-top-2">
                         <div className="space-y-6">
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-primary">
@@ -119,13 +143,28 @@ export default function ProfileEditor({ user, onUpdate }: ProfileEditorProps) {
                                     Bio
                                 </label>
                                 <Textarea
-                                    value={tempUser.bio}
+                                    value={tempUser.bio || ''}
                                     onChange={(e) =>
                                         setTempUser({ ...tempUser, bio: e.target.value })
                                     }
                                     rows={3}
                                     placeholder="Capturing envy-worthy moments"
                                     className="resize-none rounded-lg border-stone-300 bg-white focus-visible:ring-stone-900"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-primary">
+                                    Avatar URL
+                                </label>
+                                <Input
+                                    type="url"
+                                    value={tempUser.avatarUrl || ''}
+                                    onChange={(e) =>
+                                        setTempUser({ ...tempUser, avatarUrl: e.target.value })
+                                    }
+                                    placeholder="https://example.com/avatar.jpg"
+                                    className="h-11 rounded-lg border-stone-300 bg-white focus-visible:ring-stone-900"
                                 />
                             </div>
                         </div>
