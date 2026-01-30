@@ -1,3 +1,4 @@
+// hooks/useDragAndDrop.ts
 import { ComponentData } from '@/types';
 import {
     DragEndEvent,
@@ -12,10 +13,11 @@ import { useCallback, useRef, useState } from 'react';
 
 export function useDragAndDrop(
     components: ComponentData[],
-    setComponents: React.Dispatch<React.SetStateAction<ComponentData[]>>,
-    pageId: string | null
+    onComponentsChange: (components: ComponentData[]) => void,
+    pageId: string
 ) {
     const [activeId, setActiveId] = useState<string | null>(null);
+
     // 최신 components를 참조하기 위한 ref
     const componentsRef = useRef(components);
     componentsRef.current = components;
@@ -38,49 +40,49 @@ export function useDragAndDrop(
             const { active, over } = event;
             setActiveId(null);
 
-            if (over && active.id !== over.id) {
-                const currentComponents = componentsRef.current;
-                const oldIndex = currentComponents.findIndex((item) => item.id === active.id);
-                const newIndex = currentComponents.findIndex((item) => item.id === over.id);
+            if (!over || active.id === over.id) return;
 
-                if (oldIndex === -1 || newIndex === -1) return;
+            const currentComponents = componentsRef.current;
+            const oldIndex = currentComponents.findIndex((item) => item.id === active.id);
+            const newIndex = currentComponents.findIndex((item) => item.id === over.id);
 
-                const newComponents = arrayMove(currentComponents, oldIndex, newIndex);
+            if (oldIndex === -1 || newIndex === -1) return;
 
-                // 낙관적 업데이트
-                setComponents(newComponents);
+            const newComponents = arrayMove(currentComponents, oldIndex, newIndex);
 
-                // DB 저장
-                if (pageId) {
-                    try {
-                        const updates = newComponents.map((comp, index) => ({
-                            id: comp.id,
-                            position: index,
-                        }));
+            // 낙관적 업데이트
+            onComponentsChange(newComponents);
 
-                        const response = await fetch('/api/components/reorder', {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ updates }),
-                        });
+            // DB 저장
+            try {
+                const updates = newComponents.map((comp, index) => ({
+                    id: comp.id,
+                    position: index,
+                }));
 
-                        if (!response.ok) {
-                            // 실패 시 롤백
-                            setComponents(currentComponents);
-                            console.error('컴포넌트 순서 변경 실패');
-                        }
-                    } catch (error) {
-                        // 실패 시 롤백
-                        setComponents(currentComponents);
-                        console.error('컴포넌트 순서 변경 오류:', error);
-                    }
+                const response = await fetch('/api/components/reorder', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ updates }),
+                });
+
+                if (!response.ok) {
+                    // 실패 시 롤백
+                    onComponentsChange(currentComponents);
+                    console.error('컴포넌트 순서 변경 실패');
                 }
+            } catch (error) {
+                // 실패 시 롤백
+                onComponentsChange(currentComponents);
+                console.error('컴포넌트 순서 변경 오류:', error);
             }
         },
-        [pageId, setComponents]
+        [pageId, onComponentsChange]
     );
 
-    const activeComponent = activeId ? components.find((c) => c.id === activeId) : undefined;
+    const activeComponent = activeId
+        ? componentsRef.current.find((c) => c.id === activeId)
+        : undefined;
 
-    return { sensors, handleDragStart, handleDragEnd, activeId, activeComponent };
+    return { sensors, handleDragStart, handleDragEnd, activeComponent };
 }
