@@ -23,47 +23,17 @@ export default function Page({ params }: PageProps) {
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<AppError | null>(null);
-    const [userData, setUserData] = useState<User | null>(null);
-    const [events, setEvents] = useState<EventComponent[]>([]);
-    const [mixsets, setMixsets] = useState<MixsetComponent[]>([]);
 
-    const { user } = React.use(params);
-    const { showError } = useErrorToast();
+    const { user } = await params;
 
-    useEffect(() => {
-        async function fetchData() {
-            setLoading(true);
-            setError(null);
-
-            try {
-                const response = await fetch(`/api/user/${user}/page`);
-                const result: Result<PageData> = await response.json();
-
-                if (isSuccess(result)) {
-                    const { user: fetchedUser, events, mixsets } = result.data;
-                    setUserData(fetchedUser);
-                    setEvents(events);
-                    setMixsets(mixsets);
-                } else {
-                    setError(result.error);
-                    showError(result.error);
-                }
-            } catch {
-                const networkError: AppError = {
-                    code: 'NETWORK_ERROR',
-                    message: '데이터를 불러오는 중 오류가 발생했습니다.',
-                };
-                setError(networkError);
-                showError(networkError);
-            }
-
-            setLoading(false);
+    const result = await getComponentsByType(user);
+    if (!result.success) {
+        if (result.error.code === 'NOT_FOUND') {
+            NotFound();
         }
-
-        fetchData();
-    }, [user, showError]);
-
+        throw new Error(result.error.message);
+    }
+    const { events, mixsets } = result.data;
     if (loading) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-stone-200">
