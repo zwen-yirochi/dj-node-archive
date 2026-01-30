@@ -1,25 +1,24 @@
 'use client';
 
 import type { EventComponent, MixsetComponent, User } from '@/types/domain';
-import { useErrorToast } from '@/hooks/useErrorToast';
-import { isSuccess, type AppError, type Result } from '@/types/result';
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
+import EventsSection from './components/EventsSection';
+import GridView from './components/GridView';
+import ProfileHeader from './components/ProfileHeader';
+import ViewModeToggle from './components/ViewModeToggle';
+import NotFound from './not-found';
 
 interface PageData {
     user: User;
     events: EventComponent[];
     mixsets: MixsetComponent[];
 }
-import EventsSection from './components/EventsSection';
-import GridView from './components/GridView';
-import ProfileHeader from './components/ProfileHeader';
-import ViewModeToggle from './components/ViewModeToggle';
 
 interface PageProps {
     params: Promise<{ user: string }>;
 }
 
-export default function Page({ params }: PageProps) {
+export default async function Page({ params }: PageProps) {
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
     const [loading, setLoading] = useState(true);
