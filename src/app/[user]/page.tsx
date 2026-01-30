@@ -42,30 +42,6 @@ export default function Page({ params }: PageProps) {
         );
     }
 
-    if (error) {
-        return (
-            <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-stone-200">
-                <p className="text-xl text-red-600">
-                    {error.code === 'NOT_FOUND' ? '사용자를 찾을 수 없습니다.' : error.message}
-                </p>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="rounded-lg bg-stone-800 px-4 py-2 text-white hover:bg-stone-700"
-                >
-                    다시 시도
-                </button>
-            </div>
-        );
-    }
-
-    if (!userData) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-stone-200">
-                <p className="text-xl">사용자를 찾을 수 없습니다.</p>
-            </div>
-        );
-    }
-
     return (
         <div className="text-primay min-h-screen bg-stone-200">
             <ProfileHeader {...userData} />
