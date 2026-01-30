@@ -1,20 +1,21 @@
+// app/dashboard/components/AddComponentMenu.tsx
+'use client';
+
 import { Button } from '@/components/ui/button';
 import { Calendar, Link, Music } from 'lucide-react';
 
-export function AddComponentMenu({
-    isOpen,
-    onClose,
-    onAddComponent,
-}: {
+interface AddComponentMenuProps {
     isOpen: boolean;
     onClose: () => void;
     onAddComponent: (type: 'show' | 'mixset' | 'link') => void;
-}) {
+}
+
+export function AddComponentMenu({ isOpen, onClose, onAddComponent }: AddComponentMenuProps) {
     if (!isOpen) return null;
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/20"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
             onClick={onClose}
         >
             <div
@@ -26,7 +27,6 @@ export function AddComponentMenu({
                     <Button
                         onClick={() => {
                             onAddComponent('show');
-                            onClose();
                         }}
                         variant="outline"
                         className="w-full justify-start"

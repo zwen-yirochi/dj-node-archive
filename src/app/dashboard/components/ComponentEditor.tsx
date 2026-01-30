@@ -117,7 +117,7 @@ export default function ComponentEditor({
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="bg-surface relative max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10"
+                className="relative max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-gray-300"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
