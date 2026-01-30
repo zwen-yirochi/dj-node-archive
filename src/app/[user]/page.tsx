@@ -1,6 +1,5 @@
 import { getComponentsByType } from '@/lib/services/user.service';
 import type { EventComponent, MixsetComponent, User } from '@/types/domain';
-import { useState } from 'react';
 import EventsSection from './components/EventsSection';
 import GridView from './components/GridView';
 import ProfileHeader from './components/ProfileHeader';
@@ -15,13 +14,11 @@ interface PageData {
 
 interface PageProps {
     params: Promise<{ user: string }>;
+    searchParams: Promise<{ view?: 'list' | 'grid' }>;
 }
 
-export default async function Page({ params }: PageProps) {
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-
-    const [loading, setLoading] = useState(true);
-
+export default async function Page({ params, searchParams }: PageProps) {
+    const { view = 'list' } = await searchParams;
     const { user } = await params;
 
     const result = await getComponentsByType(user);
@@ -46,10 +43,10 @@ export default async function Page({ params }: PageProps) {
             {/* 뷰 모드 토글 */}
             <div className="mt-6 px-4">
                 <div className="mx-auto mb-4 flex max-w-4xl justify-end">
-                    <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+                    <ViewModeToggle viewMode={view} />
                 </div>
             </div>
-            {viewMode === 'list' ? (
+            {view === 'list' ? (
                 <>
                     <EventsSection events={events} />
                     {/* 믹스셋 섹션도 나중에 추가 */}
