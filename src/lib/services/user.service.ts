@@ -10,7 +10,7 @@ import type {
     Page,
     User,
 } from '@/types/domain';
-import { type Result, isSuccess, success, failure, createNotFoundError } from '@/types/result';
+import { type Result, createNotFoundError, failure, isSuccess, success } from '@/types/result';
 import { cache } from 'react';
 
 export interface EditorData {
@@ -24,6 +24,16 @@ export interface ComponentsByType {
     mixsets: MixsetComponent[];
     links: LinkComponent[];
 }
+
+export const getUser = cache(async (username: string): Promise<Result<User>> => {
+    const result = await findUserWithPages(username);
+
+    if (!result.success) {
+        return result;
+    }
+
+    return success(mapUserToDomain(result.data));
+});
 
 // React cache로 감싸서 요청당 한 번만 실행
 export const getUserPage = cache(async (username: string): Promise<Result<Page>> => {
