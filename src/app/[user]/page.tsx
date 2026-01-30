@@ -6,12 +6,6 @@ import ProfileHeader from './components/ProfileHeader';
 import ViewModeToggle from './components/ViewModeToggle';
 import NotFound from './not-found';
 
-interface PageData {
-    user: User;
-    events: EventComponent[];
-    mixsets: MixsetComponent[];
-}
-
 interface PageProps {
     params: Promise<{ user: string }>;
     searchParams: Promise<{ view?: 'list' | 'grid' }>;
@@ -29,13 +23,6 @@ export default async function Page({ params, searchParams }: PageProps) {
         throw new Error(result.error.message);
     }
     const { events, mixsets } = result.data;
-    if (loading) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-stone-200">
-                <p className="text-xl">로딩중...</p>
-            </div>
-        );
-    }
 
     return (
         <div className="text-primay min-h-screen bg-stone-200">
