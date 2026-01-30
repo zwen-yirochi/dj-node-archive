@@ -1,5 +1,4 @@
-'use client';
-
+import { getComponentsByType } from '@/lib/services/user.service';
 import type { EventComponent, MixsetComponent, User } from '@/types/domain';
 import { useState } from 'react';
 import EventsSection from './components/EventsSection';
