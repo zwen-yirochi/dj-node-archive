@@ -1,10 +1,9 @@
-import { getComponentsByType } from '@/lib/services/user.service';
-import type { EventComponent, MixsetComponent, User } from '@/types/domain';
+import { getComponentsByType, getUser } from '@/lib/services/user.service';
+import { notFound } from 'next/navigation';
 import EventsSection from './components/EventsSection';
 import GridView from './components/GridView';
 import ProfileHeader from './components/ProfileHeader';
 import ViewModeToggle from './components/ViewModeToggle';
-import NotFound from './not-found';
 
 interface PageProps {
     params: Promise<{ user: string }>;
@@ -15,14 +14,28 @@ export default async function Page({ params, searchParams }: PageProps) {
     const { view = 'list' } = await searchParams;
     const { user } = await params;
 
-    const result = await getComponentsByType(user);
-    if (!result.success) {
-        if (result.error.code === 'NOT_FOUND') {
-            NotFound();
+    const [userResult, componentsResult] = await Promise.all([
+        getUser(user),
+        getComponentsByType(user),
+    ]);
+
+    // 에러 체크
+    if (!userResult.success) {
+        if (userResult.error.code === 'NOT_FOUND') {
+            notFound();
         }
-        throw new Error(result.error.message);
+        throw new Error(userResult.error.message);
     }
-    const { events, mixsets } = result.data;
+
+    if (!componentsResult.success) {
+        if (componentsResult.error.code === 'NOT_FOUND') {
+            notFound();
+        }
+        throw new Error(componentsResult.error.message);
+    }
+
+    const userData = userResult.data;
+    const { events, mixsets } = componentsResult.data;
 
     return (
         <div className="text-primay min-h-screen bg-stone-200">
