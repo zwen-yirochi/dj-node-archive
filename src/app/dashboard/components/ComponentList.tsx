@@ -1,48 +1,55 @@
+// app/dashboard/components/ComponentList.tsx
+'use client';
+
 import { Button } from '@/components/ui/button';
-import { ComponentData } from '@/types';
-import {
-    closestCenter,
-    DndContext,
-    DragEndEvent,
-    DragOverlay,
-    DragStartEvent,
-} from '@dnd-kit/core';
-import type { SensorDescriptor, SensorOptions } from '@dnd-kit/core';
+import { useEditorStore } from '@/stores/editorStore';
+import { closestCenter, DndContext, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
+import { useState } from 'react';
+import { useComponentOperations } from '../hooks/useComponentOperations';
+import { useDragAndDrop } from '../hooks/useDragAndDrop';
+import { AddComponentMenu } from './AddComponentMenu';
+import ComponentEditor from './ComponentEditor';
 import SortableComponentCard from './SortableComponentCard';
 
-interface ComponentListProps {
-    components: ComponentData[];
-    selectedComponentId: string | null;
-    onSelectComponent: (id: string) => void;
-    onDeleteComponent: (id: string) => void;
-    onDuplicateComponent: (id: string) => void;
-    onShowAddMenu: () => void;
-    dragHandlers: {
-        onDragStart: (event: DragStartEvent) => void;
-        onDragEnd: (event: DragEndEvent) => void;
-    };
-    sensors: SensorDescriptor<SensorOptions>[];
-    activeComponent?: ComponentData;
-}
+export function ComponentList() {
+    const components = useEditorStore((state) => state.components);
+    const setComponents = useEditorStore((state) => state.setComponents);
+    const pageId = useEditorStore((state) => state.pageId);
 
-export function ComponentList({
-    components,
-    selectedComponentId,
-    onSelectComponent,
-    onDeleteComponent,
-    onDuplicateComponent,
-    onShowAddMenu,
-    dragHandlers,
-    sensors,
-    activeComponent,
-}: ComponentListProps) {
+    const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
+    const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+
+    const { sensors, handleDragStart, handleDragEnd, activeComponent } = useDragAndDrop(
+        components,
+        setComponents,
+        pageId!
+    );
+
+    const { addComponent, updateComponent, deleteComponent, duplicateComponent } =
+        useComponentOperations(
+            components,
+            setComponents,
+            selectedComponentId,
+            setSelectedComponentId,
+            pageId!
+        );
+
+    const selectedComponent = components.find((c) => c.id === selectedComponentId);
+
+    // ✓ AddComponentMenu에서 사용할 핸들러
+    const handleAddComponent = (type: 'show' | 'mixset' | 'link') => {
+        addComponent(type);
+        setIsAddMenuOpen(false);
+    };
+
     return (
         <section className="mb-12">
             <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-2xl font-semibold text-primary">Content</h2>
-                <Button onClick={onShowAddMenu} className="rounded-lg">
+                <Button onClick={() => setIsAddMenuOpen(true)} className="rounded-lg">
                     <Plus className="h-4 w-4" />
                     Add component
                 </Button>
@@ -51,8 +58,8 @@ export function ComponentList({
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
-                onDragStart={dragHandlers.onDragStart}
-                onDragEnd={dragHandlers.onDragEnd}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
             >
                 <SortableContext
                     items={components.map((c) => c.id)}
@@ -64,16 +71,20 @@ export function ComponentList({
                                 key={component.id}
                                 component={component}
                                 isSelected={selectedComponentId === component.id}
-                                onSelect={() => onSelectComponent(component.id)}
-                                onDelete={() => onDeleteComponent(component.id)}
-                                onDuplicate={() => onDuplicateComponent(component.id)}
+                                onSelect={() => setSelectedComponentId(component.id)}
+                                onDelete={() => deleteComponent(component.id)}
+                                onDuplicate={() => duplicateComponent(component.id)}
                             />
                         ))}
 
                         {components.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-16 text-center">
+                            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-stone-300 bg-stone-50 py-16 text-center">
                                 <p className="mb-4 text-stone-500">No content yet</p>
-                                <Button onClick={onShowAddMenu} variant="outline">
+                                <Button
+                                    onClick={() => setIsAddMenuOpen(true)}
+                                    variant="outline"
+                                    className="rounded-lg"
+                                >
                                     <Plus className="h-4 w-4" />
                                     Add your first component
                                 </Button>
@@ -89,12 +100,10 @@ export function ComponentList({
                                 className={`inline-flex items-center gap-2 rounded-md px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
                                     activeComponent.type === 'show'
                                         ? 'bg-[#ff2d92]/15 text-[#ff2d92]'
-                                        : ''
-                                } ${activeComponent.type === 'mixset' ? 'bg-[#00f0ff]/15 text-[#00f0ff]' : ''} ${
-                                    activeComponent.type === 'link'
-                                        ? 'bg-[#a855f7]/15 text-[#a855f7]'
-                                        : ''
-                                } `}
+                                        : activeComponent.type === 'mixset'
+                                          ? 'bg-[#00f0ff]/15 text-[#00f0ff]'
+                                          : 'bg-[#a855f7]/15 text-[#a855f7]'
+                                }`}
                             >
                                 {activeComponent.type}
                             </span>
@@ -105,6 +114,25 @@ export function ComponentList({
                     )}
                 </DragOverlay>
             </DndContext>
+
+            {/* Component Editor Modal */}
+            <AnimatePresence>
+                {selectedComponent && (
+                    <ComponentEditor
+                        component={selectedComponent}
+                        onUpdate={(updates) => updateComponent(selectedComponentId!, updates)}
+                        onClose={() => setSelectedComponentId(null)}
+                        onDelete={() => deleteComponent(selectedComponentId!)}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Add Component Menu */}
+            <AddComponentMenu
+                isOpen={isAddMenuOpen}
+                onClose={() => setIsAddMenuOpen(false)}
+                onAddComponent={handleAddComponent}
+            />
         </section>
     );
 }
