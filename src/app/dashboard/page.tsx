@@ -1,9 +1,8 @@
 // app/dashboard/page.tsx
-import { getEditorData } from '@/lib/services/user.service';
-import { notFound } from 'next/navigation';
+import { getUser } from '@/app/actions/auth';
+import { getEditorDataByUserId } from '@/lib/services/user.service';
+import { notFound, redirect } from 'next/navigation';
 import EditorClient from './EditorClient';
-
-const EDIT_USERNAME = 'dj-xxx';
 
 export const metadata = {
     title: 'Editor - Dashboard',
@@ -11,7 +10,13 @@ export const metadata = {
 };
 
 export default async function DashboardPage() {
-    const result = await getEditorData(EDIT_USERNAME);
+    const authUser = await getUser();
+
+    if (!authUser) {
+        redirect('/login');
+    }
+
+    const result = await getEditorDataByUserId(authUser.id);
 
     if (!result.success) {
         if (result.error.code === 'NOT_FOUND') {

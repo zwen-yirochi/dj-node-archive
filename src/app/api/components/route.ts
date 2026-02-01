@@ -1,5 +1,6 @@
 // app/api/components/route.ts
 import { createComponent, getMaxPosition } from '@/lib/db/queries/component.queries';
+import { createClient } from '@/lib/supabase/server';
 import { mapComponentToDatabase } from '@/lib/mappers/user.mapper';
 import { isSuccess } from '@/types/result';
 import { NextResponse } from 'next/server';
@@ -7,6 +8,16 @@ import type { ComponentData } from '@/types/domain';
 
 export async function POST(request: Request) {
     try {
+        // 인증 확인
+        const supabase = await createClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+        }
+
         const body = await request.json();
         const { pageId, component } = body as { pageId: string; component: ComponentData };
 

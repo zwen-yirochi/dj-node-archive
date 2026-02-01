@@ -1,23 +1,21 @@
 // app/api/editor/data/route.ts
-import { getEditorData } from '@/lib/services/user.service';
+import { getEditorDataByUserId } from '@/lib/services/user.service';
+import { createClient } from '@/lib/supabase/server';
 import { isSuccess } from '@/types/result';
 import { NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
-    const { searchParams } = new URL(request.url);
-    const username = searchParams.get('username');
+export async function GET() {
+    // 인증 확인
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!username) {
-        return NextResponse.json({ error: 'Username required' }, { status: 400 });
+    if (!user) {
+        return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
-    // TODO: 인증 체크 추가
-    // const session = await auth();
-    // if (session?.user?.username !== username) {
-    //     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
-
-    const result = await getEditorData(username);
+    const result = await getEditorDataByUserId(user.id);
 
     if (!isSuccess(result)) {
         const status = result.error.code === 'NOT_FOUND' ? 404 : 500;
