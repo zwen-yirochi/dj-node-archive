@@ -1,6 +1,6 @@
 // lib/db/queries/performer.queries.ts
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import type { DBEventPerformer, PerformanceType, DBArtistReference } from '@/types/database';
+import { createClient } from '@/lib/supabase/server';
+import type { DBArtistReference, DBEventPerformer, PerformanceType } from '@/types/database';
 
 export type AddPerformerInput = {
     event_id: string;
@@ -31,7 +31,7 @@ export type PerformersResult =
  * 이벤트에 퍼포머 추가
  */
 export async function addPerformerToEvent(input: AddPerformerInput): Promise<PerformerResult> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
 
     // user_id 또는 artist_ref_id 중 하나만 있어야 함
     if (!input.user_id && !input.artist_ref_id) {
@@ -63,7 +63,7 @@ export async function addPerformerToEvent(input: AddPerformerInput): Promise<Per
  * 이벤트의 퍼포머 목록 조회
  */
 export async function findPerformersByEventId(eventId: string): Promise<PerformersResult> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('event_performers')
@@ -90,7 +90,7 @@ export async function findPerformersByEventId(eventId: string): Promise<Performe
 export async function removePerformer(
     performerId: string
 ): Promise<{ success: true } | { success: false; error: string }> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
 
     const { error } = await supabase.from('event_performers').delete().eq('id', performerId);
 
@@ -107,7 +107,7 @@ export async function removePerformer(
 export async function findEventsByPerformerId(
     userId: string
 ): Promise<{ success: true; data: DBEventPerformer[] } | { success: false; error: string }> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('event_performers')
@@ -133,7 +133,7 @@ export async function updateEventPerformers(
         performance_type?: PerformanceType;
     }>
 ): Promise<PerformersResult> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
 
     // 기존 퍼포머 삭제
     const { error: deleteError } = await supabase

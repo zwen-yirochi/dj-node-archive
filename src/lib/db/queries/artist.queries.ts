@@ -1,5 +1,5 @@
 // lib/db/queries/artist.queries.ts
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import type { DBArtistReference } from '@/types/database';
 
 export type CreateArtistInput = {
@@ -20,7 +20,7 @@ export type ArtistsResult =
  * 아티스트 검색 (이름 기준)
  */
 export async function searchArtists(query: string, limit = 10): Promise<ArtistsResult> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('artist_references')
@@ -43,7 +43,7 @@ export async function createArtist(
     input: CreateArtistInput,
     createdBy: string
 ): Promise<ArtistResult> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('artist_references')
@@ -67,7 +67,7 @@ export async function createArtist(
  * 아티스트 ID로 조회
  */
 export async function findArtistById(id: string): Promise<ArtistResult> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('artist_references')
@@ -95,7 +95,7 @@ export async function searchPlatformUsers(
       }
     | { success: false; error: string }
 > {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('users')

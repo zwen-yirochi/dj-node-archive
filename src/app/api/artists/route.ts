@@ -1,10 +1,10 @@
 // app/api/artists/route.ts
 import { createArtist } from '@/lib/db/queries/artist.queries';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
     const {
         data: { user },
     } = await supabase.auth.getUser();
