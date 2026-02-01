@@ -27,9 +27,6 @@ export function useComponentOperations(
         links: event.data?.set_recording_url
             ? [{ title: '세트 녹음', url: event.data.set_recording_url }]
             : [],
-        // 원본 이벤트 ID 저장 (나중에 연동용)
-        eventId: event.id,
-        venueId: event.venue_ref_id,
     });
 
     // addComponent 수정 - 이벤트 데이터 지원
@@ -189,46 +186,5 @@ export function useComponentOperations(
         [pageId, selectedComponentId, onComponentsChange, setSelectedComponentId]
     );
 
-    const duplicateComponent = useCallback(
-        async (id: string) => {
-            const original = componentsRef.current.find((c) => c.id === id);
-            if (!original) return;
-
-            const duplicateId = uuidv4();
-            const duplicatedComponent = {
-                ...original,
-                id: duplicateId,
-                title: `${original.title} (복사본)`,
-            };
-
-            // 낙관적 업데이트
-            const updatedComponents = [...componentsRef.current, duplicatedComponent];
-            onComponentsChange(updatedComponents);
-            setSelectedComponentId(duplicateId);
-
-            // DB 저장
-            try {
-                const response = await fetch('/api/components', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pageId, component: duplicatedComponent }),
-                });
-
-                if (!response.ok) {
-                    // 실패 시 롤백
-                    onComponentsChange(componentsRef.current.filter((c) => c.id !== duplicateId));
-                    setSelectedComponentId(null);
-                    console.error('컴포넌트 복제 실패');
-                }
-            } catch (error) {
-                // 실패 시 롤백
-                onComponentsChange(componentsRef.current.filter((c) => c.id !== duplicateId));
-                setSelectedComponentId(null);
-                console.error('컴포넌트 복제 오류:', error);
-            }
-        },
-        [pageId, onComponentsChange, setSelectedComponentId]
-    );
-
-    return { addComponent, updateComponent, deleteComponent, duplicateComponent };
+    return { addComponent, updateComponent, deleteComponent };
 }

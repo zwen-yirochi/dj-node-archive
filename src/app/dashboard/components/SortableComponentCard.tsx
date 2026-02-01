@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/button';
 import { ComponentData, EventComponent, LinkComponent, MixsetComponent } from '@/types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Copy, GripVertical, Trash2 } from 'lucide-react';
+import { GripVertical, Trash2 } from 'lucide-react';
 
 interface SortableComponentCardProps {
     component: ComponentData;
     isSelected: boolean;
     onSelect: () => void;
     onDelete: () => void;
-    onDuplicate: () => void;
 }
 
 export default function SortableComponentCard({
@@ -19,7 +18,6 @@ export default function SortableComponentCard({
     isSelected,
     onSelect,
     onDelete,
-    onDuplicate,
 }: SortableComponentCardProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: component.id,
@@ -95,9 +93,6 @@ export default function SortableComponentCard({
 
                 {/* Actions */}
                 <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Button onClick={onDuplicate} variant="ghost" size="icon" className="h-8 w-8">
-                        <Copy className="h-4 w-4" />
-                    </Button>
                     <Button
                         onClick={onDelete}
                         variant="ghost"

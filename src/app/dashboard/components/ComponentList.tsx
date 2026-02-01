@@ -29,14 +29,13 @@ export function ComponentList() {
         pageId!
     );
 
-    const { addComponent, updateComponent, deleteComponent, duplicateComponent } =
-        useComponentOperations(
-            components,
-            setComponents,
-            selectedComponentId,
-            setSelectedComponentId,
-            pageId!
-        );
+    const { addComponent, updateComponent, deleteComponent } = useComponentOperations(
+        components,
+        setComponents,
+        selectedComponentId,
+        setSelectedComponentId,
+        pageId!
+    );
 
     const selectedComponent = components.find((c) => c.id === selectedComponentId);
 
@@ -74,7 +73,6 @@ export function ComponentList() {
                                 isSelected={selectedComponentId === component.id}
                                 onSelect={() => setSelectedComponentId(component.id)}
                                 onDelete={() => deleteComponent(component.id)}
-                                onDuplicate={() => duplicateComponent(component.id)}
                             />
                         ))}
 
