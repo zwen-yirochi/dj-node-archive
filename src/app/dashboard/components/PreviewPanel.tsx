@@ -52,9 +52,7 @@ export default function PreviewPanel() {
                     target="_blank"
                     className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                    <span className="max-w-[180px] truncate font-mono text-xs">
-                        /{user.username}
-                    </span>
+                    <span className="font-mono text-xs">{pageUrl}</span>
                     <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                 </Link>
                 <div className="h-4 w-px bg-border" />
