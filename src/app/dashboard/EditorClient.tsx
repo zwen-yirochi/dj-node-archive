@@ -31,22 +31,28 @@ export default function EditorClient({
     }, [initialUser, initialComponents, pageId, setUser, setComponents, setPageId]);
 
     return (
-        <div className="min-h-screen bg-stone-200 p-6 text-shadow-none">
+        <div className="h-screen overflow-hidden bg-stone-200 p-6">
             <div
-                className="editor-layout grid gap-6"
+                className="editor-layout grid h-full gap-6"
                 style={{
-                    gridTemplateColumns: '1fr 305px', // 273px (0.7x) + 패딩
-                    minHeight: 'calc(100vh - 3rem)',
+                    gridTemplateColumns: '1fr 305px',
                 }}
             >
-                {/* Main Content */}
-                <main className="overflow-y-auto rounded-lg bg-stone-100 p-8">
-                    <ProfileEditor />
-                    <ComponentList />
+                {/* Main Content - 전체 높이, 내부 스크롤 */}
+                <main className="flex h-full flex-col overflow-hidden rounded-lg bg-stone-100">
+                    {/* Profile - 고정 높이, 축소 UI */}
+                    <div className="shrink-0 border-b border-stone-200 px-6 py-4">
+                        <ProfileEditor compact />
+                    </div>
+
+                    {/* Content - 나머지 영역, 스크롤 */}
+                    <div className="flex-1 overflow-y-auto p-6">
+                        <ComponentList />
+                    </div>
                 </main>
 
                 {/* Preview Panel */}
-                <aside className="overflow-y-auto rounded-lg bg-stone-100">
+                <aside className="overflow-hidden rounded-lg bg-stone-100">
                     <PreviewPanel />
                 </aside>
             </div>

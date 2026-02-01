@@ -11,7 +11,11 @@ import type { User } from '@/types';
 import { Camera, ChevronRight, Loader2, Save, Trash2, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-export default function ProfileEditor() {
+interface ProfileEditorProps {
+    compact?: boolean;
+}
+
+export default function ProfileEditor({ compact = false }: ProfileEditorProps) {
     const user = useEditorStore((state) => state.user);
     const updateUser = useEditorStore((state) => state.updateUser);
 
@@ -150,6 +154,136 @@ export default function ProfileEditor() {
         }
     };
 
+    // 컴팩트 모드 (축소 UI)
+    if (compact) {
+        return (
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    {/* 아바타 - 편집 모드에서 클릭 가능 */}
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={handleAvatarClick}
+                            disabled={!isEditing || isUploading}
+                            className={`group relative ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}
+                        >
+                            <Avatar className="h-12 w-12 border border-stone-300">
+                                <AvatarImage
+                                    src={isEditing ? tempUser?.avatarUrl : user.avatarUrl}
+                                    alt={user.displayName}
+                                    className="object-cover"
+                                />
+                                <AvatarFallback className="bg-stone-200 text-sm font-semibold text-stone-600">
+                                    {getInitials(user.displayName)}
+                                </AvatarFallback>
+                            </Avatar>
+
+                            {/* 편집 모드 오버레이 */}
+                            {isEditing && (
+                                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                                    {isUploading ? (
+                                        <Loader2 className="h-4 w-4 animate-spin text-white" />
+                                    ) : (
+                                        <Camera className="h-4 w-4 text-white" />
+                                    )}
+                                </div>
+                            )}
+                        </button>
+
+                        {/* 삭제 버튼 */}
+                        {isEditing && tempUser?.avatarUrl && (
+                            <button
+                                type="button"
+                                onClick={handleDeleteAvatar}
+                                disabled={isUploading}
+                                className="absolute -bottom-0.5 -right-0.5 rounded-full bg-destructive p-1 text-destructive-foreground shadow-md transition-colors hover:bg-destructive/90"
+                            >
+                                <Trash2 className="h-2.5 w-2.5" />
+                            </button>
+                        )}
+
+                        {/* 숨겨진 파일 입력 */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
+                    </div>
+
+                    {/* 이름/바이오 또는 편집 폼 */}
+                    {!isEditing ? (
+                        <div>
+                            <h3 className="text-sm font-semibold text-stone-900">
+                                {user.displayName}
+                            </h3>
+                            <p className="line-clamp-1 text-xs text-stone-500">
+                                {user.bio || 'Capturing envy-worthy moments'}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="flex gap-2">
+                            <Input
+                                type="text"
+                                value={tempUser?.displayName || ''}
+                                onChange={(e) =>
+                                    setTempUser(
+                                        tempUser
+                                            ? { ...tempUser, displayName: e.target.value }
+                                            : null
+                                    )
+                                }
+                                placeholder="Display Name"
+                                className="h-8 w-32 text-sm"
+                            />
+                            <Input
+                                type="text"
+                                value={tempUser?.bio || ''}
+                                onChange={(e) =>
+                                    setTempUser(
+                                        tempUser ? { ...tempUser, bio: e.target.value } : null
+                                    )
+                                }
+                                placeholder="Bio"
+                                className="h-8 w-48 text-sm"
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* 버튼 */}
+                {!isEditing ? (
+                    <Button onClick={handleEdit} variant="ghost" size="sm" className="text-xs">
+                        Edit
+                        <ChevronRight className="h-3 w-3" />
+                    </Button>
+                ) : (
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={handleSave}
+                            disabled={isUploading}
+                            size="sm"
+                            className="h-7 text-xs"
+                        >
+                            <Save className="h-3 w-3" />
+                            Save
+                        </Button>
+                        <Button
+                            onClick={handleCancel}
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2"
+                        >
+                            <X className="h-3 w-3" />
+                        </Button>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // 기본 모드 (전체 UI)
     return (
         <section className="mb-12">
             <h2 className="m-2 text-2xl font-semibold text-primary">Profile</h2>
@@ -169,6 +303,7 @@ export default function ProfileEditor() {
                                     <AvatarImage
                                         src={isEditing ? tempUser?.avatarUrl : user.avatarUrl}
                                         alt={user.displayName}
+                                        className="object-cover"
                                     />
                                     <AvatarFallback className="bg-stone-200 text-2xl font-semibold text-stone-600">
                                         {getInitials(user.displayName)}
