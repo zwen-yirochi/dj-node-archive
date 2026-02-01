@@ -5,7 +5,7 @@ import {
     findPerformersByEventId,
     updateEventPerformers,
 } from '@/lib/db/queries/performer.queries';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import type { PerformanceType } from '@/types/database';
 
@@ -32,7 +32,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
  * 이벤트에 퍼포머 추가
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
     const {
         data: { user },
     } = await supabase.auth.getUser();
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  * 이벤트의 퍼포머 전체 교체
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createClient();
     const {
         data: { user },
     } = await supabase.auth.getUser();

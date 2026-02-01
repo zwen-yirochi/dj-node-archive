@@ -135,3 +135,38 @@ export async function findUserWithPagesById(userId: string): Promise<Result<DBUs
         );
     }
 }
+
+export async function updateUser(
+    userId: string,
+    updates: {
+        display_name?: string;
+        bio?: string;
+        avatar_url?: string;
+    }
+): Promise<Result<DBUser>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('users')
+            .update({
+                ...updates,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', userId)
+            .select()
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                return failure(createNotFoundError(`사용자를 찾을 수 없습니다.`, 'user'));
+            }
+            return failure(createDatabaseError(error.message, 'updateUser', error));
+        }
+
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError('사용자 업데이트 중 오류가 발생했습니다.', 'updateUser', err)
+        );
+    }
+}
