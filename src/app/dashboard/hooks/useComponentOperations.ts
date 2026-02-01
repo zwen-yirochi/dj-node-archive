@@ -1,5 +1,6 @@
 // app/dashboard/hooks/useComponentOperations.ts
 import { ComponentData, EventComponent, LinkComponent, MixsetComponent } from '@/types';
+import type { DBEventWithVenue } from '@/types/database';
 import { useCallback, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -13,25 +14,49 @@ export function useComponentOperations(
     const componentsRef = useRef(components);
     componentsRef.current = components;
 
-    // ✓ addComponent 추가
+    // 이벤트 데이터를 EventComponent 형식으로 변환
+    const eventToComponent = (event: DBEventWithVenue): EventComponent => ({
+        id: uuidv4(),
+        type: 'show',
+        title: event.title || '',
+        date: event.date,
+        venue: event.venue?.name || '',
+        posterUrl: event.data?.poster_url || '',
+        lineup: event.data?.lineup_text?.split('\n').filter(Boolean) || [],
+        description: event.data?.notes || '',
+        links: event.data?.set_recording_url
+            ? [{ title: '세트 녹음', url: event.data.set_recording_url }]
+            : [],
+        // 원본 이벤트 ID 저장 (나중에 연동용)
+        eventId: event.id,
+        venueId: event.venue_ref_id,
+    });
+
+    // addComponent 수정 - 이벤트 데이터 지원
     const addComponent = useCallback(
-        async (type: 'show' | 'mixset' | 'link') => {
+        async (type: 'show' | 'mixset' | 'link', eventData?: DBEventWithVenue) => {
             const id = uuidv4();
             let newComponent: ComponentData;
 
             switch (type) {
                 case 'show':
-                    newComponent = {
-                        id,
-                        type: 'show',
-                        title: '',
-                        date: new Date().toISOString().split('T')[0],
-                        venue: '',
-                        posterUrl: '',
-                        lineup: [],
-                        description: '',
-                        links: [],
-                    } as EventComponent;
+                    if (eventData) {
+                        // 기존 이벤트 데이터가 있으면 변환
+                        newComponent = { ...eventToComponent(eventData), id };
+                    } else {
+                        // 새 이벤트 생성 (빈 템플릿)
+                        newComponent = {
+                            id,
+                            type: 'show',
+                            title: '',
+                            date: new Date().toISOString().split('T')[0],
+                            venue: '',
+                            posterUrl: '',
+                            lineup: [],
+                            description: '',
+                            links: [],
+                        } as EventComponent;
+                    }
                     break;
                 case 'mixset':
                     newComponent = {
@@ -61,7 +86,11 @@ export function useComponentOperations(
             // 낙관적 업데이트
             const updatedComponents = [...componentsRef.current, newComponent];
             onComponentsChange(updatedComponents);
-            setSelectedComponentId(id); // ✓ 바로 선택하여 에디터 열기
+
+            // 이벤트 데이터가 있으면 에디터를 열지 않음 (이미 채워진 상태)
+            if (!eventData) {
+                setSelectedComponentId(id);
+            }
 
             // DB 저장
             try {

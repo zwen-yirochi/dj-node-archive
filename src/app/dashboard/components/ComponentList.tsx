@@ -3,6 +3,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useEditorStore } from '@/stores/editorStore';
+import type { DBEventWithVenue } from '@/types/database';
 import { closestCenter, DndContext, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { AnimatePresence } from 'framer-motion';
@@ -10,7 +11,7 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useComponentOperations } from '../hooks/useComponentOperations';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
-import { AddComponentMenu } from './AddComponentMenu';
+import { AddComponentModal } from './AddComponentModal';
 import ComponentEditor from './ComponentEditor';
 import SortableComponentCard from './SortableComponentCard';
 
@@ -39,9 +40,9 @@ export function ComponentList() {
 
     const selectedComponent = components.find((c) => c.id === selectedComponentId);
 
-    // ✓ AddComponentMenu에서 사용할 핸들러
-    const handleAddComponent = (type: 'show' | 'mixset' | 'link') => {
-        addComponent(type);
+    // ✓ AddComponentModal에서 사용할 핸들러
+    const handleAddComponent = (type: 'show' | 'mixset' | 'link', eventData?: DBEventWithVenue) => {
+        addComponent(type, eventData);
         setIsAddMenuOpen(false);
     };
 
@@ -127,10 +128,10 @@ export function ComponentList() {
                 )}
             </AnimatePresence>
 
-            {/* Add Component Menu */}
-            <AddComponentMenu
-                isOpen={isAddMenuOpen}
-                onClose={() => setIsAddMenuOpen(false)}
+            {/* Add Component Modal */}
+            <AddComponentModal
+                open={isAddMenuOpen}
+                onOpenChange={setIsAddMenuOpen}
                 onAddComponent={handleAddComponent}
             />
         </section>

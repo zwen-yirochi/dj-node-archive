@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { VenueSelector } from '@/components/venue/VenueSelector';
+import { ArtistTagger, TaggedArtist } from '@/components/artist/ArtistTagger';
 import type { DBVenueSearchResult, DBEventWithVenue } from '@/types/database';
 
 export interface EventFormData {
@@ -20,11 +21,13 @@ export interface EventFormData {
         set_recording_url?: string;
         lineup_text?: string;
     };
+    performers?: TaggedArtist[];
 }
 
 export interface EventFormProps {
     initialData?: Partial<EventFormData>;
     initialVenue?: DBVenueSearchResult | null;
+    initialPerformers?: TaggedArtist[];
     onSubmit: (data: EventFormData) => Promise<void>;
     onCancel?: () => void;
     submitLabel?: string;
@@ -34,6 +37,7 @@ export interface EventFormProps {
 export function EventForm({
     initialData,
     initialVenue,
+    initialPerformers,
     onSubmit,
     onCancel,
     submitLabel = '저장',
@@ -48,6 +52,7 @@ export function EventForm({
         initialData?.data?.set_recording_url || ''
     );
     const [lineupText, setLineupText] = useState(initialData?.data?.lineup_text || '');
+    const [performers, setPerformers] = useState<TaggedArtist[]>(initialPerformers || []);
     const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +81,7 @@ export function EventForm({
                     set_recording_url: setRecordingUrl.trim() || undefined,
                     lineup_text: lineupText.trim() || undefined,
                 },
+                performers,
             });
         } catch (err) {
             setError(err instanceof Error ? err.message : '저장에 실패했습니다.');
@@ -147,15 +153,28 @@ export function EventForm({
                 />
             </div>
 
-            {/* 라인업 (선택) */}
+            {/* 라인업 - 아티스트 태깅 */}
             <div className="space-y-2">
-                <Label htmlFor="lineup_text">라인업 (선택)</Label>
+                <Label>라인업 (선택)</Label>
+                <ArtistTagger
+                    value={performers}
+                    onChange={setPerformers}
+                    placeholder="아티스트 검색 또는 추가..."
+                />
+                <p className="text-xs text-muted-foreground">
+                    플랫폼 유저를 태그하거나 새 아티스트를 추가할 수 있습니다
+                </p>
+            </div>
+
+            {/* 추가 라인업 메모 (선택) */}
+            <div className="space-y-2">
+                <Label htmlFor="lineup_text">라인업 메모 (선택)</Label>
                 <Textarea
                     id="lineup_text"
                     value={lineupText}
                     onChange={(e) => setLineupText(e.target.value)}
-                    placeholder="아티스트 이름들 (줄바꿈으로 구분)"
-                    rows={3}
+                    placeholder="추가 라인업 정보나 메모"
+                    rows={2}
                 />
             </div>
 
