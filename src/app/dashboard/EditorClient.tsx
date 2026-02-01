@@ -5,7 +5,7 @@ import { useEditorStore } from '@/stores/editorStore';
 import type { ComponentData, User } from '@/types';
 import { useEffect } from 'react';
 import { ComponentList } from './components/ComponentList';
-import { Header } from './components/Header';
+import PreviewPanel from './components/PreviewPanel';
 import ProfileEditor from './components/ProfileEditor';
 
 interface EditorClientProps {
@@ -31,14 +31,12 @@ export default function EditorClient({
     }, [initialUser, initialComponents, pageId, setUser, setComponents, setPageId]);
 
     return (
-        <div className="min-h-screen bg-stone-200 p-8 text-shadow-none">
-            <Header />
-
+        <div className="min-h-screen bg-stone-200 p-6 text-shadow-none">
             <div
                 className="editor-layout grid gap-6"
                 style={{
-                    gridTemplateColumns: '1fr 380px',
-                    minHeight: 'calc(100vh - 4rem)',
+                    gridTemplateColumns: '1fr 305px', // 273px (0.7x) + 패딩
+                    minHeight: 'calc(100vh - 3rem)',
                 }}
             >
                 {/* Main Content */}
@@ -48,10 +46,8 @@ export default function EditorClient({
                 </main>
 
                 {/* Preview Panel */}
-                <aside className="overflow-y-auto rounded-lg border-2 border-dashed border-stone-400 bg-stone-50 p-8">
-                    <div className="flex h-full items-center justify-center">
-                        <p className="text-stone-500">Preview (Coming Soon)</p>
-                    </div>
+                <aside className="overflow-y-auto rounded-lg bg-stone-100">
+                    <PreviewPanel />
                 </aside>
             </div>
         </div>
