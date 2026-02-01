@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { Calendar, Link, Music, Plus, Download, ArrowLeft, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calendar, Link, Music, Search, Plus, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
     Dialog,
     DialogContent,
@@ -12,9 +13,9 @@ import {
 } from '@/components/ui/dialog';
 import { CreateEventModal } from '@/components/event/CreateEventModal';
 import type { DBEventWithVenue } from '@/types/database';
+import { cn } from '@/lib/utils';
 
 type ComponentType = 'event' | 'mixset' | 'link';
-type EventAddMode = 'select' | 'new' | 'import';
 
 interface AddComponentModalProps {
     open: boolean;
@@ -22,41 +23,86 @@ interface AddComponentModalProps {
     onAddComponent: (type: 'show' | 'mixset' | 'link', eventData?: DBEventWithVenue) => void;
 }
 
+const componentTypes = [
+    {
+        id: 'event' as ComponentType,
+        icon: Calendar,
+        label: '이벤트 / 공연',
+        description: '공연 기록을 추가합니다',
+        color: 'pink',
+    },
+    {
+        id: 'mixset' as ComponentType,
+        icon: Music,
+        label: '믹스셋',
+        description: 'DJ 믹스나 녹음을 추가합니다',
+        color: 'cyan',
+    },
+    {
+        id: 'link' as ComponentType,
+        icon: Link,
+        label: '링크',
+        description: 'SNS나 외부 링크를 추가합니다',
+        color: 'purple',
+    },
+];
+
 export function AddComponentModal({ open, onOpenChange, onAddComponent }: AddComponentModalProps) {
-    const [step, setStep] = useState<'type' | 'event-mode' | 'import-list'>('type');
+    const [selectedType, setSelectedType] = useState<ComponentType>('event');
+    const [searchQuery, setSearchQuery] = useState('');
     const [events, setEvents] = useState<DBEventWithVenue[]>([]);
+    const [filteredEvents, setFilteredEvents] = useState<DBEventWithVenue[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
 
-    const resetAndClose = () => {
-        setStep('type');
-        onOpenChange(false);
-    };
+    // 이벤트 타입 선택 시 이벤트 목록 로드
+    useEffect(() => {
+        if (open && selectedType === 'event') {
+            fetchEvents();
+        }
+    }, [open, selectedType]);
 
-    const handleSelectType = async (type: ComponentType) => {
-        if (type === 'event') {
-            setStep('event-mode');
+    // 검색 필터링
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setFilteredEvents(events);
         } else {
-            onAddComponent(type === 'mixset' ? 'mixset' : 'link');
-            resetAndClose();
+            const query = searchQuery.toLowerCase();
+            setFilteredEvents(
+                events.filter(
+                    (event) =>
+                        event.title?.toLowerCase().includes(query) ||
+                        event.venue?.name?.toLowerCase().includes(query) ||
+                        formatDate(event.date).includes(query)
+                )
+            );
+        }
+    }, [searchQuery, events]);
+
+    const fetchEvents = async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/events');
+            const json = await res.json();
+            setEvents(json.data || []);
+        } catch (err) {
+            console.error('Failed to fetch events:', err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const handleEventModeSelect = async (mode: EventAddMode) => {
-        if (mode === 'new') {
-            setIsCreateEventOpen(true);
-        } else if (mode === 'import') {
-            setIsLoading(true);
-            try {
-                const res = await fetch('/api/events');
-                const json = await res.json();
-                setEvents(json.data || []);
-                setStep('import-list');
-            } catch (err) {
-                console.error('Failed to fetch events:', err);
-            } finally {
-                setIsLoading(false);
-            }
+    const resetAndClose = () => {
+        setSelectedType('event');
+        setSearchQuery('');
+        onOpenChange(false);
+    };
+
+    const handleSelectType = (type: ComponentType) => {
+        setSelectedType(type);
+        if (type !== 'event') {
+            onAddComponent(type === 'mixset' ? 'mixset' : 'link');
+            resetAndClose();
         }
     };
 
@@ -71,155 +117,182 @@ export function AddComponentModal({ open, onOpenChange, onAddComponent }: AddCom
         resetAndClose();
     };
 
-    const goBack = () => {
-        if (step === 'import-list') {
-            setStep('event-mode');
-        } else if (step === 'event-mode') {
-            setStep('type');
-        }
+    const getColorClasses = (color: string, isSelected: boolean) => {
+        const colors: Record<string, { base: string; selected: string }> = {
+            pink: {
+                base: 'hover:bg-pink-500/10 hover:border-pink-500/30',
+                selected: 'bg-pink-500/15 border-pink-500/40 text-pink-500',
+            },
+            cyan: {
+                base: 'hover:bg-cyan-500/10 hover:border-cyan-500/30',
+                selected: 'bg-cyan-500/15 border-cyan-500/40 text-cyan-500',
+            },
+            purple: {
+                base: 'hover:bg-purple-500/10 hover:border-purple-500/30',
+                selected: 'bg-purple-500/15 border-purple-500/40 text-purple-500',
+            },
+        };
+        return isSelected ? colors[color].selected : colors[color].base;
     };
+
+    const showNoResults =
+        selectedType === 'event' && searchQuery.trim() && filteredEvents.length === 0;
 
     return (
         <>
             <Dialog open={open && !isCreateEventOpen} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-[425px]">
-                    {step === 'type' && (
-                        <>
-                            <DialogHeader>
-                                <DialogTitle>컴포넌트 추가</DialogTitle>
-                                <DialogDescription>
-                                    페이지에 추가할 컴포넌트 유형을 선택하세요
-                                </DialogDescription>
+                <DialogContent className="max-w-2xl p-0">
+                    <div className="flex min-h-[500px]">
+                        {/* 사이드바 - 컴포넌트 유형 선택 */}
+                        <div className="w-56 shrink-0 border-r bg-muted/30 p-4">
+                            <DialogHeader className="mb-4">
+                                <DialogTitle className="text-lg">컴포넌트 추가</DialogTitle>
                             </DialogHeader>
-                            <div className="mt-4 grid gap-3">
-                                <ComponentTypeButton
-                                    icon={Calendar}
-                                    label="이벤트 / 공연"
-                                    description="공연 기록을 추가합니다"
-                                    onClick={() => handleSelectType('event')}
-                                    color="pink"
-                                />
-                                <ComponentTypeButton
-                                    icon={Music}
-                                    label="믹스셋"
-                                    description="DJ 믹스나 녹음을 추가합니다"
-                                    onClick={() => handleSelectType('mixset')}
-                                    color="cyan"
-                                />
-                                <ComponentTypeButton
-                                    icon={Link}
-                                    label="링크"
-                                    description="SNS나 외부 링크를 추가합니다"
-                                    onClick={() => handleSelectType('link')}
-                                    color="purple"
-                                />
-                            </div>
-                        </>
-                    )}
 
-                    {step === 'event-mode' && (
-                        <>
-                            <DialogHeader>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        onClick={goBack}
-                                    >
-                                        <ArrowLeft className="h-4 w-4" />
-                                    </Button>
-                                    <div>
-                                        <DialogTitle>이벤트 추가</DialogTitle>
-                                        <DialogDescription>
-                                            이벤트를 어떻게 추가할까요?
-                                        </DialogDescription>
-                                    </div>
-                                </div>
-                            </DialogHeader>
-                            <div className="mt-4 grid gap-3">
-                                <ComponentTypeButton
-                                    icon={Plus}
-                                    label="새 이벤트 생성"
-                                    description="새로운 공연 정보를 입력합니다"
-                                    onClick={() => handleEventModeSelect('new')}
-                                    color="green"
-                                />
-                                <ComponentTypeButton
-                                    icon={Download}
-                                    label="기존 이벤트 가져오기"
-                                    description="이미 등록한 이벤트를 페이지에 추가합니다"
-                                    onClick={() => handleEventModeSelect('import')}
-                                    color="blue"
-                                    disabled={isLoading}
-                                />
-                            </div>
-                        </>
-                    )}
+                            <nav className="space-y-1">
+                                {componentTypes.map((type) => {
+                                    const Icon = type.icon;
+                                    const isSelected = selectedType === type.id;
 
-                    {step === 'import-list' && (
-                        <>
-                            <DialogHeader>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        onClick={goBack}
-                                    >
-                                        <ArrowLeft className="h-4 w-4" />
-                                    </Button>
-                                    <div>
-                                        <DialogTitle>이벤트 선택</DialogTitle>
-                                        <DialogDescription>
-                                            페이지에 추가할 이벤트를 선택하세요
-                                        </DialogDescription>
-                                    </div>
-                                </div>
-                            </DialogHeader>
-                            <div className="mt-4 max-h-[400px] overflow-y-auto">
-                                {isLoading ? (
-                                    <div className="flex items-center justify-center py-8">
-                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                                    </div>
-                                ) : events.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {events.map((event) => (
-                                            <button
-                                                key={event.id}
-                                                onClick={() => handleImportEvent(event)}
-                                                className="w-full rounded-lg border p-3 text-left transition-colors hover:bg-accent"
-                                            >
-                                                <div className="font-medium">
-                                                    {event.title || formatDate(event.date)}
-                                                </div>
-                                                <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                                                    <span>{event.venue?.name}</span>
-                                                    <span>·</span>
-                                                    <span>{formatDate(event.date)}</span>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="py-8 text-center text-muted-foreground">
-                                        <Calendar className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                                        <p>등록된 이벤트가 없습니다</p>
-                                        <Button
-                                            variant="link"
-                                            className="mt-2"
-                                            onClick={() => {
-                                                setStep('event-mode');
-                                                handleEventModeSelect('new');
-                                            }}
+                                    return (
+                                        <button
+                                            key={type.id}
+                                            onClick={() => handleSelectType(type.id)}
+                                            className={cn(
+                                                'flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors',
+                                                getColorClasses(type.color, isSelected)
+                                            )}
                                         >
-                                            새 이벤트 생성하기
-                                        </Button>
+                                            <Icon className="h-4 w-4" />
+                                            <span className="text-sm font-medium">
+                                                {type.label}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </nav>
+                        </div>
+
+                        {/* 메인 콘텐츠 */}
+                        <div className="flex flex-1 flex-col p-6">
+                            {selectedType === 'event' && (
+                                <>
+                                    <div className="mb-4">
+                                        <h3 className="text-lg font-semibold">이벤트 검색</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            기존 이벤트를 검색하거나 새로 생성하세요
+                                        </p>
                                     </div>
-                                )}
-                            </div>
-                        </>
-                    )}
+
+                                    {/* 검색바 */}
+                                    <div className="relative mb-4">
+                                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                        <Input
+                                            type="text"
+                                            placeholder="이벤트명, 장소로 검색..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="pl-9"
+                                        />
+                                    </div>
+
+                                    {/* 이벤트 목록 */}
+                                    <div className="flex-1 overflow-y-auto">
+                                        {isLoading ? (
+                                            <div className="flex items-center justify-center py-12">
+                                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                            </div>
+                                        ) : showNoResults ? (
+                                            <div className="py-12 text-center">
+                                                <Search className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+                                                <p className="text-muted-foreground">
+                                                    &quot;{searchQuery}&quot;에 대한 검색 결과가
+                                                    없습니다
+                                                </p>
+                                                <Button
+                                                    variant="link"
+                                                    className="mt-2"
+                                                    onClick={() => setIsCreateEventOpen(true)}
+                                                >
+                                                    <Plus className="mr-1 h-4 w-4" />새 이벤트
+                                                    생성하기
+                                                </Button>
+                                            </div>
+                                        ) : filteredEvents.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {filteredEvents.map((event) => (
+                                                    <button
+                                                        key={event.id}
+                                                        onClick={() => handleImportEvent(event)}
+                                                        className="w-full rounded-lg border p-3 text-left transition-colors hover:bg-accent"
+                                                    >
+                                                        <div className="font-medium">
+                                                            {event.title || formatDate(event.date)}
+                                                        </div>
+                                                        <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                                                            <span>{event.venue?.name}</span>
+                                                            <span>·</span>
+                                                            <span>{formatDate(event.date)}</span>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="py-12 text-center">
+                                                <Calendar className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+                                                <p className="text-muted-foreground">
+                                                    등록된 이벤트가 없습니다
+                                                </p>
+                                                <Button
+                                                    variant="link"
+                                                    className="mt-2"
+                                                    onClick={() => setIsCreateEventOpen(true)}
+                                                >
+                                                    <Plus className="mr-1 h-4 w-4" />첫 이벤트
+                                                    생성하기
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 하단 - 새 이벤트 생성 버튼 */}
+                                    {filteredEvents.length > 0 && (
+                                        <div className="mt-4 border-t pt-4">
+                                            <Button
+                                                variant="outline"
+                                                className="w-full"
+                                                onClick={() => setIsCreateEventOpen(true)}
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" />새 이벤트 생성
+                                            </Button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {selectedType === 'mixset' && (
+                                <div className="flex flex-1 items-center justify-center">
+                                    <div className="text-center">
+                                        <Music className="mx-auto mb-3 h-12 w-12 text-cyan-500/50" />
+                                        <p className="text-muted-foreground">
+                                            믹스셋 컴포넌트가 추가됩니다
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedType === 'link' && (
+                                <div className="flex flex-1 items-center justify-center">
+                                    <div className="text-center">
+                                        <Link className="mx-auto mb-3 h-12 w-12 text-purple-500/50" />
+                                        <p className="text-muted-foreground">
+                                            링크 컴포넌트가 추가됩니다
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 
@@ -229,48 +302,6 @@ export function AddComponentModal({ open, onOpenChange, onAddComponent }: AddCom
                 onCreated={handleEventCreated}
             />
         </>
-    );
-}
-
-function ComponentTypeButton({
-    icon: Icon,
-    label,
-    description,
-    onClick,
-    color,
-    disabled,
-}: {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    description: string;
-    onClick: () => void;
-    color: 'pink' | 'cyan' | 'purple' | 'green' | 'blue';
-    disabled?: boolean;
-}) {
-    const colorClasses = {
-        pink: 'bg-pink-500/10 text-pink-500 group-hover:bg-pink-500/20',
-        cyan: 'bg-cyan-500/10 text-cyan-500 group-hover:bg-cyan-500/20',
-        purple: 'bg-purple-500/10 text-purple-500 group-hover:bg-purple-500/20',
-        green: 'bg-green-500/10 text-green-500 group-hover:bg-green-500/20',
-        blue: 'bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20',
-    };
-
-    return (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            className="group flex w-full items-center gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-        >
-            <div
-                className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${colorClasses[color]}`}
-            >
-                <Icon className="h-5 w-5" />
-            </div>
-            <div>
-                <div className="font-medium">{label}</div>
-                <div className="text-sm text-muted-foreground">{description}</div>
-            </div>
-        </button>
     );
 }
 
