@@ -17,6 +17,9 @@ export interface EventComponent {
     lineup: string[];
     description: string;
     links?: { title: string; url: string }[];
+    // 원본 이벤트 연결 (이벤트 import 시)
+    eventId?: string;
+    venueId?: string;
 }
 
 export interface MixsetComponent {
