@@ -1,5 +1,6 @@
 // app/api/components/[id]/route.ts
 import { updateComponent, deleteComponent } from '@/lib/db/queries/component.queries';
+import { createClient } from '@/lib/supabase/server';
 import { mapComponentToDatabase } from '@/lib/mappers/user.mapper';
 import { isSuccess } from '@/types/result';
 import { NextResponse } from 'next/server';
@@ -11,6 +12,16 @@ interface RouteParams {
 
 export async function PATCH(request: Request, { params }: RouteParams) {
     try {
+        // 인증 확인
+        const supabase = await createClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+        }
+
         const { id } = await params;
         const body = await request.json();
         const { component } = body as { component: ComponentData };
@@ -39,8 +50,18 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
 }
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParams) {
     try {
+        // 인증 확인
+        const supabase = await createClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+        }
+
         const { id } = await params;
 
         const result = await deleteComponent(id);

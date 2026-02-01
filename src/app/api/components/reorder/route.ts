@@ -1,5 +1,6 @@
 // app/api/components/reorder/route.ts
 import { updateComponentPositions } from '@/lib/db/queries/component.queries';
+import { createClient } from '@/lib/supabase/server';
 import { isSuccess } from '@/types/result';
 import { NextResponse } from 'next/server';
 
@@ -10,6 +11,16 @@ interface ReorderItem {
 
 export async function PATCH(request: Request) {
     try {
+        // 인증 확인
+        const supabase = await createClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+        }
+
         const body = await request.json();
         const { updates } = body as { updates: ReorderItem[] };
 
