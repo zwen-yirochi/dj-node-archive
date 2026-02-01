@@ -1,10 +1,15 @@
 'use client';
 
-import { BarChart3, LayoutDashboard, Settings, User } from 'lucide-react';
+import { BarChart3, Compass, LayoutDashboard, LogOut, Settings, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { logout } from '@/app/actions/auth';
 
-export default function DashboardSidebar() {
+interface DashboardSidebarProps {
+    username: string | null;
+}
+
+export default function DashboardSidebar({ username }: DashboardSidebarProps) {
     const pathname = usePathname();
 
     const navItems = [
@@ -12,6 +17,11 @@ export default function DashboardSidebar() {
             href: '/dashboard',
             icon: LayoutDashboard,
             label: 'Dashboard',
+        },
+        {
+            href: '/dashboard/discovery',
+            icon: Compass,
+            label: 'Discovery',
         },
         {
             href: '/dashboard/analytics',
@@ -27,11 +37,17 @@ export default function DashboardSidebar() {
         },
     ];
 
+    const handleLogout = async () => {
+        await logout();
+    };
+
     return (
         <div className="flex h-full flex-col border-r-2 border-gray-500">
             {/* 로고 */}
             <div className="p-6">
-                <h1 className="font-display text-3xl tracking-wide text-primary">DNA</h1>
+                <Link href="/">
+                    <h1 className="font-display text-3xl tracking-wide text-primary">DNA</h1>
+                </Link>
             </div>
 
             {/* 네비게이션 */}
@@ -39,7 +55,10 @@ export default function DashboardSidebar() {
                 <ul className="space-y-1">
                     {navItems.map((item) => {
                         const Icon = item.icon;
-                        const isActive = pathname === item.href;
+                        const isActive =
+                            item.href === '/dashboard'
+                                ? pathname === '/dashboard'
+                                : pathname.startsWith(item.href);
 
                         return (
                             <li key={item.href}>
@@ -66,14 +85,23 @@ export default function DashboardSidebar() {
             </nav>
 
             {/* 하단 */}
-            <div className="space-y-2 border-t border-white/5 p-4">
-                <Link
-                    href="/dj-xxx"
-                    className="flex items-center gap-3 rounded-lg px-4 py-3 font-medium text-[#71717a] transition-all hover:bg-white/5 hover:text-[#fafaf9]"
+            <div className="space-y-1 border-t border-white/5 p-4">
+                {username && (
+                    <Link
+                        href={`/${username}`}
+                        className="flex items-center gap-3 rounded-lg px-4 py-3 font-medium text-[#71717a] transition-all hover:bg-white/5 hover:text-[#fafaf9]"
+                    >
+                        <User className="h-5 w-5" />
+                        <span>내 페이지 보기</span>
+                    </Link>
+                )}
+                <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium text-[#71717a] transition-all hover:bg-white/5 hover:text-red-400"
                 >
-                    <User className="h-5 w-5" />
-                    <span>내 페이지 보기</span>
-                </Link>
+                    <LogOut className="h-5 w-5" />
+                    <span>로그아웃</span>
+                </button>
             </div>
         </div>
     );
