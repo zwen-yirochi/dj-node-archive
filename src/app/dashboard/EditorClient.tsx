@@ -31,7 +31,7 @@ export default function EditorClient({
     }, [initialUser, initialComponents, pageId, setUser, setComponents, setPageId]);
 
     return (
-        <div className="h-screen overflow-hidden bg-stone-200 p-6">
+        <div className="h-screen overflow-hidden bg-surface p-6">
             <div
                 className="editor-layout grid h-full gap-6"
                 style={{
@@ -39,9 +39,9 @@ export default function EditorClient({
                 }}
             >
                 {/* Main Content - 전체 높이, 내부 스크롤 */}
-                <main className="flex h-full flex-col overflow-hidden rounded-lg bg-stone-100">
+                <main className="flex h-full flex-col overflow-hidden">
                     {/* Profile - 고정 높이, 축소 UI */}
-                    <div className="shrink-0 border-b border-stone-200 px-6 py-4">
+                    <div className="shrink-0 border-b border-border px-6 py-4">
                         <ProfileEditor compact />
                     </div>
 
@@ -52,7 +52,7 @@ export default function EditorClient({
                 </main>
 
                 {/* Preview Panel */}
-                <aside className="overflow-hidden rounded-lg bg-stone-100">
+                <aside className="flex flex-col overflow-hidden">
                     <PreviewPanel />
                 </aside>
             </div>

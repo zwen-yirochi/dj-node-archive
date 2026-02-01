@@ -41,6 +41,10 @@ const config: Config = {
                     DEFAULT: 'hsl(var(--destructive))',
                     foreground: 'hsl(var(--destructive-foreground))',
                 },
+                surface: {
+                    DEFAULT: 'hsl(var(--surface))',
+                    foreground: 'hsl(var(--surface-foreground))',
+                },
                 border: 'hsl(var(--border))',
                 input: 'hsl(var(--input))',
                 ring: 'hsl(var(--ring))',
