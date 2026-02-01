@@ -35,7 +35,7 @@ export default function EditorClient({
             <div
                 className="editor-layout grid h-full gap-6"
                 style={{
-                    gridTemplateColumns: '1fr 305px',
+                    gridTemplateColumns: '1fr 400px',
                 }}
             >
                 {/* Main Content - 전체 높이, 내부 스크롤 */}

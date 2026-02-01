@@ -45,7 +45,7 @@ export default function PreviewPanel() {
     const scaledHeight = deviceHeight * scale;
 
     return (
-        <div className="flex h-full flex-col items-center py-4">
+        <div className="mr-6 flex h-full flex-col items-center py-4">
             {/* 링크 + 복사 버튼 */}
             <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
                 <Link
@@ -110,9 +110,6 @@ export default function PreviewPanel() {
                             />
                         </div>
                     </div>
-
-                    {/* 하단 홈 인디케이터 */}
-                    <div className="absolute bottom-1.5 left-1/2 h-1 w-20 -translate-x-1/2 rounded-full bg-stone-700" />
                 </div>
             </div>
         </div>

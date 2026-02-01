@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { AddComponentModal } from './AddComponentModal';
+import ComponentDetail from './ComponentDetail';
 import ComponentEditor from './ComponentEditor';
 import SortableComponentCard from './SortableComponentCard';
 
@@ -22,6 +23,8 @@ export function ComponentList() {
     const pageId = useEditorStore((state) => state.pageId);
 
     const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+    // 상세정보 보기 중인 컴포넌트
+    const [viewingComponent, setViewingComponent] = useState<ComponentData | null>(null);
     // 편집 중인 컴포넌트 (기존 컴포넌트 또는 새 컴포넌트)
     const [editingComponent, setEditingComponent] = useState<ComponentData | null>(null);
     const [isNewComponent, setIsNewComponent] = useState(false);
@@ -103,10 +106,18 @@ export function ComponentList() {
         }
     };
 
-    // 기존 컴포넌트 선택 (편집)
+    // 기존 컴포넌트 선택 (상세 보기)
     const handleSelectComponent = (component: ComponentData) => {
-        setEditingComponent(component);
-        setIsNewComponent(false);
+        setViewingComponent(component);
+    };
+
+    // 상세 보기에서 편집으로 전환
+    const handleEditFromDetail = () => {
+        if (viewingComponent) {
+            setEditingComponent(viewingComponent);
+            setIsNewComponent(false);
+            setViewingComponent(null);
+        }
     };
 
     // 컴포넌트 저장 (새 컴포넌트)
@@ -180,6 +191,7 @@ export function ComponentList() {
 
         // 낙관적 업데이트
         setComponents(components.filter((c) => c.id !== id));
+        setViewingComponent(null);
         setEditingComponent(null);
 
         try {
@@ -233,7 +245,10 @@ export function ComponentList() {
                             <SortableComponentCard
                                 key={component.id}
                                 component={component}
-                                isSelected={editingComponent?.id === component.id}
+                                isSelected={
+                                    viewingComponent?.id === component.id ||
+                                    editingComponent?.id === component.id
+                                }
                                 onSelect={() => handleSelectComponent(component)}
                                 onDelete={() => handleDelete(component.id)}
                             />
@@ -276,6 +291,18 @@ export function ComponentList() {
                     )}
                 </DragOverlay>
             </DndContext>
+
+            {/* Component Detail Modal */}
+            <AnimatePresence>
+                {viewingComponent && (
+                    <ComponentDetail
+                        component={viewingComponent}
+                        onEdit={handleEditFromDetail}
+                        onDelete={() => handleDelete(viewingComponent.id)}
+                        onClose={() => setViewingComponent(null)}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Component Editor Modal */}
             <AnimatePresence>
