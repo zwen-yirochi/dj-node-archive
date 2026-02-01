@@ -1,7 +1,7 @@
 import { getUser } from '@/app/actions/auth';
 import { findUserWithPagesById } from '@/lib/db/queries/user.queries';
 import { redirect } from 'next/navigation';
-import DashboardSidebar from './components/Sidebar';
+import DashboardHeader from './components/DashboardHeader';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
     const authUser = await getUser();
@@ -10,16 +10,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
         redirect('/login');
     }
 
-    // Get user's username for the sidebar
+    // Get user's username for the header
     const userResult = await findUserWithPagesById(authUser.id);
     const username = userResult.success ? userResult.data.username : null;
 
     return (
-        <div className="grid h-screen grid-cols-[280px_1fr] overflow-hidden">
-            <aside className="overflow-y-auto border-r border-white/5 bg-stone-200">
-                <DashboardSidebar username={username} />
-            </aside>
-            <main className="overflow-y-auto">{children}</main>
+        <div className="flex min-h-screen flex-col">
+            <DashboardHeader username={username} />
+            <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
     );
 }
