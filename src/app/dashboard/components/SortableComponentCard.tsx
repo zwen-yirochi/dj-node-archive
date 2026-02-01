@@ -50,41 +50,45 @@ export default function SortableComponentCard({
         <div
             ref={setNodeRef}
             style={style}
-            className={`group relative rounded-xl border bg-white transition-all ${isSelected ? 'border-stone-900 ring-2 ring-stone-900/20' : 'border-stone-300'} ${isDragging ? 'opacity-50 shadow-2xl' : 'hover:border-stone-400'} `}
+            className={`group relative rounded-xl border backdrop-blur-sm transition-all ${
+                isSelected
+                    ? 'border-white/30 bg-black/60 ring-1 ring-white/20'
+                    : 'border-white/10 bg-black/40 hover:border-white/20 hover:bg-black/50'
+            } ${isDragging ? 'opacity-50 shadow-2xl' : ''}`}
         >
-            <div className="flex items-start gap-4 p-6">
+            <div className="flex items-start gap-3 p-4">
                 {/* Drag Handle */}
                 <button
                     {...attributes}
                     {...listeners}
-                    className="cursor-grab touch-none text-stone-400 transition-colors hover:text-stone-600 active:cursor-grabbing"
+                    className="cursor-grab touch-none text-white/40 transition-colors hover:text-white/70 active:cursor-grabbing"
                 >
-                    <GripVertical className="h-5 w-5" />
+                    <GripVertical className="h-4 w-4" />
                 </button>
 
                 {/* Content */}
-                <div className="min-w-0 flex-1" onClick={onSelect}>
-                    <div className="mb-2 flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1 cursor-pointer" onClick={onSelect}>
+                    <div className="mb-1.5 flex items-start justify-between gap-3">
                         <span
-                            className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${getTypeColor()} `}
+                            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${getTypeColor()}`}
                         >
                             {component.type}
                         </span>
                     </div>
 
-                    <h3 className="mb-1 truncate text-lg font-semibold text-stone-900">
+                    <h3 className="mb-0.5 truncate text-sm font-medium text-white/90">
                         {getTitle()}
                     </h3>
 
                     {/* 추가 정보 */}
                     {component.type === 'show' && (
-                        <p className="text-sm text-stone-500">
+                        <p className="text-xs text-white/50">
                             {(component as EventComponent).venue} •{' '}
                             {(component as EventComponent).date}
                         </p>
                     )}
                     {component.type === 'mixset' && (
-                        <p className="text-sm text-stone-500">
+                        <p className="text-xs text-white/50">
                             {(component as MixsetComponent).genre} •{' '}
                             {(component as MixsetComponent).releaseDate}
                         </p>
@@ -92,14 +96,14 @@ export default function SortableComponentCard({
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <Button
                         onClick={onDelete}
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                        className="h-7 w-7 text-white/50 hover:bg-red-500/20 hover:text-red-400"
                     >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                 </div>
             </div>

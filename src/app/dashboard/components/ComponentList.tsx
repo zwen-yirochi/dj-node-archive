@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { AddComponentModal } from './AddComponentModal';
+import ComponentDetail from './ComponentDetail';
 import ComponentEditor from './ComponentEditor';
 import SortableComponentCard from './SortableComponentCard';
 
@@ -22,6 +23,8 @@ export function ComponentList() {
     const pageId = useEditorStore((state) => state.pageId);
 
     const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+    // 상세정보 보기 중인 컴포넌트
+    const [viewingComponent, setViewingComponent] = useState<ComponentData | null>(null);
     // 편집 중인 컴포넌트 (기존 컴포넌트 또는 새 컴포넌트)
     const [editingComponent, setEditingComponent] = useState<ComponentData | null>(null);
     const [isNewComponent, setIsNewComponent] = useState(false);
@@ -103,10 +106,18 @@ export function ComponentList() {
         }
     };
 
-    // 기존 컴포넌트 선택 (편집)
+    // 기존 컴포넌트 선택 (상세 보기)
     const handleSelectComponent = (component: ComponentData) => {
-        setEditingComponent(component);
-        setIsNewComponent(false);
+        setViewingComponent(component);
+    };
+
+    // 상세 보기에서 편집으로 전환
+    const handleEditFromDetail = () => {
+        if (viewingComponent) {
+            setEditingComponent(viewingComponent);
+            setIsNewComponent(false);
+            setViewingComponent(null);
+        }
     };
 
     // 컴포넌트 저장 (새 컴포넌트)
@@ -180,6 +191,7 @@ export function ComponentList() {
 
         // 낙관적 업데이트
         setComponents(components.filter((c) => c.id !== id));
+        setViewingComponent(null);
         setEditingComponent(null);
 
         try {
@@ -205,12 +217,16 @@ export function ComponentList() {
     };
 
     return (
-        <section className="mb-12">
-            <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-2xl font-semibold text-primary">Content</h2>
-                <Button onClick={() => setIsAddMenuOpen(true)} className="rounded-lg">
-                    <Plus className="h-4 w-4" />
-                    Add component
+        <section className="mb-8">
+            <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white/90">Content</h2>
+                <Button
+                    onClick={() => setIsAddMenuOpen(true)}
+                    size="sm"
+                    className="h-8 rounded-lg bg-white/10 text-white/90 backdrop-blur-sm hover:bg-white/20"
+                >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add
                 </Button>
             </div>
 
@@ -224,26 +240,29 @@ export function ComponentList() {
                     items={components.map((c) => c.id)}
                     strategy={verticalListSortingStrategy}
                 >
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {components.map((component) => (
                             <SortableComponentCard
                                 key={component.id}
                                 component={component}
-                                isSelected={editingComponent?.id === component.id}
+                                isSelected={
+                                    viewingComponent?.id === component.id ||
+                                    editingComponent?.id === component.id
+                                }
                                 onSelect={() => handleSelectComponent(component)}
                                 onDelete={() => handleDelete(component.id)}
                             />
                         ))}
 
                         {components.length === 0 && (
-                            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-stone-300 bg-stone-50 py-16 text-center">
-                                <p className="mb-4 text-stone-500">No content yet</p>
+                            <div className="flex flex-col items-center justify-center rounded-xl border border-white/10 bg-black/40 py-12 text-center backdrop-blur-sm">
+                                <p className="mb-3 text-sm text-white/60">No content yet</p>
                                 <Button
                                     onClick={() => setIsAddMenuOpen(true)}
-                                    variant="outline"
-                                    className="rounded-lg"
+                                    size="sm"
+                                    className="h-8 rounded-lg bg-white/10 text-white/90 backdrop-blur-sm hover:bg-white/20"
                                 >
-                                    <Plus className="h-4 w-4" />
+                                    <Plus className="h-3.5 w-3.5" />
                                     Add your first component
                                 </Button>
                             </div>
@@ -253,9 +272,9 @@ export function ComponentList() {
 
                 <DragOverlay>
                     {activeComponent && (
-                        <div className="rounded-xl border-2 border-stone-900 bg-white p-4 opacity-90 shadow-2xl">
+                        <div className="rounded-xl border border-white/30 bg-black/70 p-3 shadow-2xl backdrop-blur-md">
                             <span
-                                className={`inline-flex items-center gap-2 rounded-md px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
+                                className={`inline-flex items-center gap-2 rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                                     activeComponent.type === 'show'
                                         ? 'bg-[#ff2d92]/15 text-[#ff2d92]'
                                         : activeComponent.type === 'mixset'
@@ -265,13 +284,25 @@ export function ComponentList() {
                             >
                                 {activeComponent.type}
                             </span>
-                            <p className="mt-2 truncate font-medium text-stone-900">
+                            <p className="mt-1.5 truncate text-sm font-medium text-white/90">
                                 {activeComponent.title || '제목 없음'}
                             </p>
                         </div>
                     )}
                 </DragOverlay>
             </DndContext>
+
+            {/* Component Detail Modal */}
+            <AnimatePresence>
+                {viewingComponent && (
+                    <ComponentDetail
+                        component={viewingComponent}
+                        onEdit={handleEditFromDetail}
+                        onDelete={() => handleDelete(viewingComponent.id)}
+                        onClose={() => setViewingComponent(null)}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Component Editor Modal */}
             <AnimatePresence>

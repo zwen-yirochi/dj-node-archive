@@ -31,11 +31,11 @@ export default function EditorClient({
     }, [initialUser, initialComponents, pageId, setUser, setComponents, setPageId]);
 
     return (
-        <div className="h-screen overflow-hidden bg-surface p-6">
+        <div className="h-screen overflow-hidden">
             <div
                 className="editor-layout grid h-full gap-6"
                 style={{
-                    gridTemplateColumns: '1fr 305px',
+                    gridTemplateColumns: '1fr 400px',
                 }}
             >
                 {/* Main Content - 전체 높이, 내부 스크롤 */}
@@ -52,7 +52,7 @@ export default function EditorClient({
                 </main>
 
                 {/* Preview Panel */}
-                <aside className="flex flex-col overflow-hidden">
+                <aside className="flex flex-col overflow-hidden pr-6 pt-6">
                     <PreviewPanel />
                 </aside>
             </div>
