@@ -1,6 +1,6 @@
 // lib/db/queries/component.queries.ts
 // 서버 전용 - 컴포넌트 DB 쿼리
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import type { DBComponent, DBComponentType, ComponentDataType } from '@/types/database';
 import {
     type Result,
@@ -27,6 +27,7 @@ export async function createComponent(
     input: CreateComponentInput
 ): Promise<Result<DBComponent>> {
     try {
+        const supabase = await createClient();
         const { data, error } = await supabase
             .from('components')
             .insert({
@@ -56,6 +57,7 @@ export async function updateComponent(
     input: UpdateComponentInput
 ): Promise<Result<DBComponent>> {
     try {
+        const supabase = await createClient();
         const { data, error } = await supabase
             .from('components')
             .update({
@@ -83,6 +85,7 @@ export async function updateComponent(
 
 export async function deleteComponent(id: string): Promise<Result<void>> {
     try {
+        const supabase = await createClient();
         const { error } = await supabase.from('components').delete().eq('id', id);
 
         if (error) {
@@ -101,6 +104,7 @@ export async function updateComponentPositions(
     updates: { id: string; position: number }[]
 ): Promise<Result<void>> {
     try {
+        const supabase = await createClient();
         // 트랜잭션으로 처리하기 위해 Promise.all 사용
         const results = await Promise.all(
             updates.map(({ id, position }) =>
@@ -136,6 +140,7 @@ export async function updateComponentPositions(
 
 export async function getMaxPosition(pageId: string): Promise<Result<number>> {
     try {
+        const supabase = await createClient();
         const { data, error } = await supabase
             .from('components')
             .select('position')

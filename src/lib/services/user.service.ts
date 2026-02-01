@@ -1,6 +1,6 @@
 // lib/services/user.service.ts
 // 서버 전용 - 'use server' 없어도 됨 (기본이 서버)
-import { findUserWithPages } from '@/lib/db/queries/user.queries';
+import { findUserWithPages, findUserWithPagesById } from '@/lib/db/queries/user.queries';
 import { mapComponentToDomain, mapUserToDomain } from '@/lib/mappers/user.mapper';
 import type {
     ComponentData,
@@ -106,3 +106,34 @@ export async function getComponentsByType(username: string): Promise<Result<Comp
         links: page.components.filter((c): c is LinkComponent => c.type === 'link'),
     });
 }
+
+// 인증된 사용자 ID로 에디터 데이터 조회
+export const getEditorDataByUserId = cache(async (userId: string): Promise<Result<EditorData>> => {
+    const result = await findUserWithPagesById(userId);
+
+    if (!isSuccess(result)) {
+        return result;
+    }
+
+    const dbData = result.data;
+    const user = mapUserToDomain(dbData);
+    const page = dbData.pages?.[0];
+
+    if (!page) {
+        return success({
+            user,
+            components: [],
+            pageId: null,
+        });
+    }
+
+    const components = (page.components || [])
+        .sort((a, b) => a.position - b.position)
+        .map(mapComponentToDomain);
+
+    return success({
+        user,
+        components,
+        pageId: page.id,
+    });
+});
