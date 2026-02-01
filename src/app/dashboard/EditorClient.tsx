@@ -31,7 +31,7 @@ export default function EditorClient({
     }, [initialUser, initialComponents, pageId, setUser, setComponents, setPageId]);
 
     return (
-        <div className="h-screen overflow-hidden bg-surface p-6">
+        <div className="h-screen overflow-hidden">
             <div
                 className="editor-layout grid h-full gap-6"
                 style={{
@@ -52,7 +52,7 @@ export default function EditorClient({
                 </main>
 
                 {/* Preview Panel */}
-                <aside className="flex flex-col overflow-hidden">
+                <aside className="flex flex-col overflow-hidden pr-6 pt-6">
                     <PreviewPanel />
                 </aside>
             </div>
