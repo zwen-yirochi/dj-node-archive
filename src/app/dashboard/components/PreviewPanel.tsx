@@ -25,10 +25,11 @@ export default function PreviewPanel() {
     }
 
     const pageUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${user.username}`;
+    const displayUrl = pageUrl.replace(/^https?:\/\//, '');
 
     const handleCopy = async () => {
         try {
-            await navigator.clipboard.writeText(pageUrl);
+            await navigator.clipboard.writeText(displayUrl);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (error) {
@@ -52,7 +53,7 @@ export default function PreviewPanel() {
                     target="_blank"
                     className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                    <span className="font-mono text-xs">{pageUrl}</span>
+                    <span className="font-mono text-xs">{displayUrl}</span>
                     <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                 </Link>
                 <div className="h-4 w-px bg-border" />
@@ -63,12 +64,10 @@ export default function PreviewPanel() {
                     {copied ? (
                         <>
                             <Check className="h-3.5 w-3.5 text-green-500" />
-                            <span className="text-green-500">복사됨</span>
                         </>
                     ) : (
                         <>
                             <Copy className="h-3.5 w-3.5" />
-                            <span>복사</span>
                         </>
                     )}
                 </button>
