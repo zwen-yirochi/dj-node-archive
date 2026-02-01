@@ -3,13 +3,14 @@
 
 import { Button } from '@/components/ui/button';
 import { useEditorStore } from '@/stores/editorStore';
+import type { ComponentData, EventComponent, LinkComponent, MixsetComponent } from '@/types';
 import type { DBEventWithVenue } from '@/types/database';
 import { closestCenter, DndContext, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { useComponentOperations } from '../hooks/useComponentOperations';
+import { v4 as uuidv4 } from 'uuid';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { AddComponentModal } from './AddComponentModal';
 import ComponentEditor from './ComponentEditor';
@@ -20,8 +21,10 @@ export function ComponentList() {
     const setComponents = useEditorStore((state) => state.setComponents);
     const pageId = useEditorStore((state) => state.pageId);
 
-    const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
     const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+    // 편집 중인 컴포넌트 (기존 컴포넌트 또는 새 컴포넌트)
+    const [editingComponent, setEditingComponent] = useState<ComponentData | null>(null);
+    const [isNewComponent, setIsNewComponent] = useState(false);
 
     const { sensors, handleDragStart, handleDragEnd, activeComponent } = useDragAndDrop(
         components,
@@ -29,20 +32,176 @@ export function ComponentList() {
         pageId!
     );
 
-    const { addComponent, updateComponent, deleteComponent } = useComponentOperations(
-        components,
-        setComponents,
-        selectedComponentId,
-        setSelectedComponentId,
-        pageId!
-    );
+    // 이벤트 데이터를 EventComponent로 변환
+    const eventToComponent = (event: DBEventWithVenue): EventComponent => ({
+        id: uuidv4(),
+        type: 'show',
+        title: event.title || '',
+        date: event.date,
+        venue: event.venue?.name || '',
+        posterUrl: event.data?.poster_url || '',
+        lineup: event.data?.lineup_text?.split('\n').filter(Boolean) || [],
+        description: event.data?.notes || '',
+        links: event.data?.set_recording_url
+            ? [{ title: '세트 녹음', url: event.data.set_recording_url }]
+            : [],
+    });
 
-    const selectedComponent = components.find((c) => c.id === selectedComponentId);
+    // 빈 컴포넌트 템플릿 생성
+    const createEmptyComponent = (type: 'show' | 'mixset' | 'link'): ComponentData => {
+        const id = uuidv4();
+        switch (type) {
+            case 'show':
+                return {
+                    id,
+                    type: 'show',
+                    title: '',
+                    date: new Date().toISOString().split('T')[0],
+                    venue: '',
+                    posterUrl: '',
+                    lineup: [],
+                    description: '',
+                    links: [],
+                } as EventComponent;
+            case 'mixset':
+                return {
+                    id,
+                    type: 'mixset',
+                    title: '',
+                    coverUrl: '',
+                    audioUrl: '',
+                    soundcloudEmbedUrl: '',
+                    tracklist: [],
+                    description: '',
+                    releaseDate: new Date().toISOString().split('T')[0],
+                    genre: '',
+                } as MixsetComponent;
+            case 'link':
+                return {
+                    id,
+                    type: 'link',
+                    title: '',
+                    url: '',
+                    icon: 'globe',
+                } as LinkComponent;
+        }
+    };
 
-    // ✓ AddComponentModal에서 사용할 핸들러
+    // AddComponentModal에서 호출
     const handleAddComponent = (type: 'show' | 'mixset' | 'link', eventData?: DBEventWithVenue) => {
-        addComponent(type, eventData);
         setIsAddMenuOpen(false);
+
+        if (eventData) {
+            // 이벤트 데이터가 있으면 변환하여 바로 저장
+            const newComponent = eventToComponent(eventData);
+            saveNewComponent(newComponent);
+        } else {
+            // 빈 컴포넌트로 에디터 열기
+            const newComponent = createEmptyComponent(type);
+            setEditingComponent(newComponent);
+            setIsNewComponent(true);
+        }
+    };
+
+    // 기존 컴포넌트 선택 (편집)
+    const handleSelectComponent = (component: ComponentData) => {
+        setEditingComponent(component);
+        setIsNewComponent(false);
+    };
+
+    // 컴포넌트 저장 (새 컴포넌트)
+    const saveNewComponent = async (component: ComponentData) => {
+        // 낙관적 업데이트
+        const updatedComponents = [...components, component];
+        setComponents(updatedComponents);
+
+        try {
+            const response = await fetch('/api/components', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pageId, component }),
+            });
+
+            if (!response.ok) {
+                // 실패 시 롤백
+                setComponents(components);
+                console.error('컴포넌트 추가 실패');
+            }
+        } catch (error) {
+            // 실패 시 롤백
+            setComponents(components);
+            console.error('컴포넌트 추가 오류:', error);
+        }
+    };
+
+    // 컴포넌트 저장 (기존 컴포넌트 수정)
+    const updateExistingComponent = async (component: ComponentData) => {
+        const previousComponent = components.find((c) => c.id === component.id);
+        if (!previousComponent) return;
+
+        // 낙관적 업데이트
+        const updatedComponents = components.map((c) => (c.id === component.id ? component : c));
+        setComponents(updatedComponents);
+
+        try {
+            const response = await fetch(`/api/components/${component.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ component }),
+            });
+
+            if (!response.ok) {
+                // 실패 시 롤백
+                setComponents(
+                    components.map((c) => (c.id === component.id ? previousComponent : c))
+                );
+                console.error('컴포넌트 수정 실패');
+            }
+        } catch (error) {
+            // 실패 시 롤백
+            setComponents(components.map((c) => (c.id === component.id ? previousComponent : c)));
+            console.error('컴포넌트 수정 오류:', error);
+        }
+    };
+
+    // 에디터에서 저장
+    const handleSave = async (component: ComponentData) => {
+        if (isNewComponent) {
+            await saveNewComponent(component);
+        } else {
+            await updateExistingComponent(component);
+        }
+    };
+
+    // 컴포넌트 삭제
+    const handleDelete = async (id: string) => {
+        const deletedComponent = components.find((c) => c.id === id);
+        if (!deletedComponent) return;
+
+        // 낙관적 업데이트
+        setComponents(components.filter((c) => c.id !== id));
+        setEditingComponent(null);
+
+        try {
+            const response = await fetch(`/api/components/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                // 실패 시 롤백
+                setComponents(components);
+                console.error('컴포넌트 삭제 실패');
+            }
+        } catch (error) {
+            // 실패 시 롤백
+            setComponents(components);
+            console.error('컴포넌트 삭제 오류:', error);
+        }
+    };
+
+    const handleCloseEditor = () => {
+        setEditingComponent(null);
+        setIsNewComponent(false);
     };
 
     return (
@@ -70,9 +229,9 @@ export function ComponentList() {
                             <SortableComponentCard
                                 key={component.id}
                                 component={component}
-                                isSelected={selectedComponentId === component.id}
-                                onSelect={() => setSelectedComponentId(component.id)}
-                                onDelete={() => deleteComponent(component.id)}
+                                isSelected={editingComponent?.id === component.id}
+                                onSelect={() => handleSelectComponent(component)}
+                                onDelete={() => handleDelete(component.id)}
                             />
                         ))}
 
@@ -116,12 +275,15 @@ export function ComponentList() {
 
             {/* Component Editor Modal */}
             <AnimatePresence>
-                {selectedComponent && (
+                {editingComponent && (
                     <ComponentEditor
-                        component={selectedComponent}
-                        onUpdate={(updates) => updateComponent(selectedComponentId!, updates)}
-                        onClose={() => setSelectedComponentId(null)}
-                        onDelete={() => deleteComponent(selectedComponentId!)}
+                        component={editingComponent}
+                        isNew={isNewComponent}
+                        onSave={handleSave}
+                        onClose={handleCloseEditor}
+                        onDelete={
+                            isNewComponent ? undefined : () => handleDelete(editingComponent.id)
+                        }
                     />
                 )}
             </AnimatePresence>
