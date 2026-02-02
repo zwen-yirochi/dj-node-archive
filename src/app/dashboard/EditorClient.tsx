@@ -210,7 +210,7 @@ export default function EditorClient({
     };
 
     return (
-        <div className="flex h-screen overflow-hidden bg-neutral-50">
+        <div className="flex h-screen overflow-hidden">
             {/* TreeSidebar - 왼쪽 */}
             <div className="p-3">
                 <TreeSidebar
@@ -221,9 +221,9 @@ export default function EditorClient({
             </div>
 
             {/* Main Content Area */}
-            <div className="flex flex-1 gap-6 overflow-hidden p-6 pl-0">
+            <div className="flex flex-1 gap-6 overflow-hidden p-3 pl-2">
                 {/* ContentPanel - 중앙 */}
-                <div className="flex flex-1 flex-col overflow-hidden">
+                <div className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-neutral-100/80 shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
                     <ContentPanel onSave={handleSaveComponent} onDelete={handleDeleteComponent} />
                 </div>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/stores/editorStore';
 import type { ComponentData } from '@/types';
 import {
@@ -19,7 +20,7 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Calendar, Headphones, Link as LinkIcon } from 'lucide-react';
+import { Calendar, FileText, Headphones, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import AccountSection from './AccountSection';
@@ -43,6 +44,8 @@ export default function TreeSidebar({
     const reorderView = useEditorStore((state) => state.reorderView);
     const reorderSectionItems = useEditorStore((state) => state.reorderSectionItems);
     const viewItems = useEditorStore((state) => state.viewItems);
+    const activePanel = useEditorStore((state) => state.activePanel);
+    const setActivePanel = useEditorStore((state) => state.setActivePanel);
 
     // useMemo로 필터링하여 무한 루프 방지
     const events = useMemo(() => components.filter((c) => c.type === 'show'), [components]);
@@ -142,6 +145,8 @@ export default function TreeSidebar({
         onDeleteComponent?.(componentId);
     };
 
+    const visibleCount = viewItems.filter((item) => item.isVisible).length;
+
     return (
         <DndContext
             sensors={sensors}
@@ -150,7 +155,7 @@ export default function TreeSidebar({
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <aside className="flex h-full w-64 flex-col rounded-2xl bg-neutral-100">
+            <aside className="flex h-full w-64 flex-col rounded-2xl bg-neutral-100/80 shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
                 {/* Header */}
                 <div className="px-4 py-4">
                     <Link href="/" className="font-display text-xl font-semibold text-neutral-900">
@@ -160,13 +165,42 @@ export default function TreeSidebar({
 
                 {/* Tree Content */}
                 <div className="flex-1 overflow-y-auto px-3 pb-3">
-                    {/* Page Section (formerly View) */}
-                    <div className="mb-2">
-                        <ViewSection
-                            isDraggingOver={isDraggingOverView}
-                            onDeleteComponent={handleDelete}
-                        />
-                    </div>
+                    {/* Top Level: Page */}
+                    <button
+                        onClick={() => setActivePanel('page')}
+                        className={cn(
+                            'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
+                            activePanel === 'page'
+                                ? 'bg-neutral-200 text-neutral-900'
+                                : 'text-neutral-700 hover:bg-neutral-200/50'
+                        )}
+                    >
+                        <FileText className="h-4 w-4 text-neutral-500" />
+                        <span className="flex-1 text-sm font-medium">Page</span>
+                        {visibleCount > 0 && (
+                            <span className="rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500">
+                                {visibleCount}
+                            </span>
+                        )}
+                    </button>
+
+                    {/* Page 섹션 (드롭존) - Page 선택 시에만 확장 */}
+                    {activePanel === 'page' && (
+                        <div className="mb-3 ml-2">
+                            <ViewSection
+                                isDraggingOver={isDraggingOverView}
+                                onDeleteComponent={handleDelete}
+                            />
+                        </div>
+                    )}
+
+                    {/* Divider */}
+                    <div className="my-3 border-t border-neutral-200" />
+
+                    {/* Sub Level: Components */}
+                    <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                        Components
+                    </p>
 
                     {/* Events Section */}
                     <SectionItem

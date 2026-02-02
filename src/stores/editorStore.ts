@@ -23,6 +23,7 @@ export type SidebarSections = {
 
 export type SectionKey = keyof SidebarSections;
 export type EditMode = 'view' | 'edit';
+export type ActivePanel = 'component' | 'page';
 
 interface EditorStore {
     // 기존 상태
@@ -33,6 +34,7 @@ interface EditorStore {
     // 신규 상태 - 선택 및 편집
     selectedComponentId: string | null;
     editMode: EditMode;
+    activePanel: ActivePanel;
 
     // 신규 상태 - 사이드바
     sidebarSections: SidebarSections;
@@ -49,6 +51,7 @@ interface EditorStore {
     // 신규 액션 - 선택 및 편집
     selectComponent: (id: string | null) => void;
     setEditMode: (mode: EditMode) => void;
+    setActivePanel: (panel: ActivePanel) => void;
 
     // 신규 액션 - 사이드바
     toggleSection: (section: SectionKey) => void;
@@ -90,6 +93,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     // 신규 상태 초기값
     selectedComponentId: null,
     editMode: 'view',
+    activePanel: 'component',
     sidebarSections: initialSidebarSections,
     viewItems: [],
 
@@ -110,9 +114,16 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         set({
             selectedComponentId: id,
             editMode: 'view', // 선택 시 항상 view 모드로 시작
+            activePanel: 'component', // 컴포넌트 선택 시 component 패널로 전환
         }),
 
     setEditMode: (mode) => set({ editMode: mode }),
+
+    setActivePanel: (panel) =>
+        set({
+            activePanel: panel,
+            selectedComponentId: panel === 'page' ? null : get().selectedComponentId,
+        }),
 
     // 신규 액션 - 사이드바
     toggleSection: (section) =>
