@@ -3,6 +3,7 @@
 import { useEditorStore } from '@/stores/editorStore';
 import type { ComponentData } from '@/types';
 import { useMemo } from 'react';
+import BioDesignPanel from './BioDesignPanel';
 import EditMode from './EditMode';
 import EmptyState from './EmptyState';
 import PageListView from './PageListView';
@@ -27,10 +28,19 @@ export default function ContentPanel({ onSave, onDelete }: ContentPanelProps) {
         return components.find((c) => c.id === selectedComponentId) ?? null;
     }, [selectedComponentId, components]);
 
+    // Bio design 패널 모드
+    if (activePanel === 'bio') {
+        return (
+            <div className="h-full overflow-hidden rounded-2xl">
+                <BioDesignPanel />
+            </div>
+        );
+    }
+
     // Page 패널 모드
     if (activePanel === 'page') {
         return (
-            <div className="h-full overflow-hidden rounded-2xl border border-dashboard-border bg-dashboard-bg-card">
+            <div className="h-full overflow-hidden rounded-2xl">
                 <PageListView />
             </div>
         );
@@ -39,7 +49,7 @@ export default function ContentPanel({ onSave, onDelete }: ContentPanelProps) {
     // 선택된 컴포넌트가 없으면 EmptyState
     if (!selectedComponent) {
         return (
-            <div className="flex h-full items-center justify-center rounded-2xl border border-white/10">
+            <div className="flex h-full items-center justify-center rounded-2xl">
                 <EmptyState />
             </div>
         );
