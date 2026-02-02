@@ -20,7 +20,7 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Calendar, FileText, Headphones, Link as LinkIcon } from 'lucide-react';
+import { Calendar, FileText, Headphones, Link as LinkIcon, Palette } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import AccountSection from './AccountSection';
@@ -168,7 +168,21 @@ export default function TreeSidebar({
 
                 {/* Tree Content */}
                 <div className="flex-1 overflow-y-auto px-3 pb-3">
-                    {/* Top Level: Page */}
+                    {/* Bio Design */}
+                    <button
+                        onClick={() => setActivePanel('bio')}
+                        className={cn(
+                            'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
+                            activePanel === 'bio'
+                                ? 'bg-dashboard-bg-active text-dashboard-text'
+                                : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
+                        )}
+                    >
+                        <Palette className="h-4 w-4 text-dashboard-text-muted" />
+                        <span className="flex-1 text-sm font-medium">Bio design</span>
+                    </button>
+
+                    {/* Page */}
                     <button
                         onClick={() => setActivePanel('page')}
                         className={cn(
@@ -187,9 +201,9 @@ export default function TreeSidebar({
                         )}
                     </button>
 
-                    {/* Page 섹션 (드롭존) - Page 선택 시에만 확장 */}
+                    {/* Page 드롭존 - Page 선택 시에만 확장 */}
                     {activePanel === 'page' && (
-                        <div className="mb-3 ml-2">
+                        <div className="mb-3 ml-3">
                             <ViewSection
                                 isDraggingOver={isDraggingOverView}
                                 onDeleteComponent={handleDelete}
