@@ -51,7 +51,8 @@ export default function ViewSection({ isDraggingOver = false }: ViewSectionProps
                 ref={setNodeRef}
                 className={cn(
                     'min-h-[32px] rounded-md transition-colors',
-                    showDropIndicator && 'ring-dashed bg-neutral-200 ring-1 ring-neutral-400'
+                    showDropIndicator &&
+                        'ring-dashed bg-dashboard-bg-active ring-1 ring-dashboard-border-hover'
                 )}
             >
                 <SortableContext
@@ -80,8 +81,8 @@ export default function ViewSection({ isDraggingOver = false }: ViewSectionProps
                         {sortedViewItems.length === 0 && (
                             <p
                                 className={cn(
-                                    'px-3 py-2 text-center text-xs text-neutral-400',
-                                    showDropIndicator && 'text-neutral-600'
+                                    'px-3 py-2 text-center text-xs text-dashboard-text-placeholder',
+                                    showDropIndicator && 'text-dashboard-text-secondary'
                                 )}
                             >
                                 {showDropIndicator ? '여기에 드롭하여 추가' : '드래그하여 추가'}

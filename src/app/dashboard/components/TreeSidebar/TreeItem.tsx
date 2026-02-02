@@ -38,18 +38,18 @@ interface TreeItemProps {
 const typeConfig = {
     show: {
         icon: Calendar,
-        color: 'text-neutral-500',
-        bgColor: 'bg-neutral-200',
+        color: 'text-dashboard-type-event',
+        bgColor: 'bg-blue-50',
     },
     mixset: {
         icon: Headphones,
-        color: 'text-neutral-500',
-        bgColor: 'bg-neutral-200',
+        color: 'text-dashboard-type-mixset',
+        bgColor: 'bg-purple-50',
     },
     link: {
         icon: LinkIcon,
-        color: 'text-neutral-500',
-        bgColor: 'bg-neutral-200',
+        color: 'text-dashboard-type-link',
+        bgColor: 'bg-green-50',
     },
 };
 
@@ -117,8 +117,8 @@ export default function TreeItem({
             className={cn(
                 'group relative flex cursor-pointer touch-none items-center rounded-md py-1.5 pr-2 transition-colors',
                 isSelected
-                    ? 'bg-neutral-200 text-neutral-900'
-                    : 'text-neutral-700 hover:bg-neutral-200/50 hover:text-neutral-900',
+                    ? 'bg-dashboard-bg-active text-dashboard-text'
+                    : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover hover:text-dashboard-text',
                 isDragging && 'opacity-50',
                 !isVisible && 'opacity-50'
             )}
@@ -128,11 +128,11 @@ export default function TreeItem({
             <div className="relative flex h-full w-7 shrink-0 items-center">
                 <div
                     className={cn(
-                        'absolute left-3 w-px bg-neutral-300',
+                        'absolute left-3 w-px bg-dashboard-border-hover',
                         isLast ? '-top-1 h-[calc(50%+4px)]' : '-top-1 h-[calc(100%+4px)]'
                     )}
                 />
-                <div className="absolute left-3 h-px w-2.5 bg-neutral-300" />
+                <div className="absolute left-3 h-px w-2.5 bg-dashboard-border-hover" />
             </div>
 
             {/* Type Icon - Page 섹션에서만 표시 */}
@@ -157,40 +157,40 @@ export default function TreeItem({
                 {isInViewSection ? (
                     <button
                         onClick={handleVisibilityClick}
-                        className="flex h-5 w-5 items-center justify-center rounded transition-colors hover:bg-neutral-300"
+                        className="flex h-5 w-5 items-center justify-center rounded transition-colors hover:bg-dashboard-bg-active"
                     >
                         {isVisible ? (
-                            <Eye className="h-3.5 w-3.5 text-neutral-500" />
+                            <Eye className="h-3.5 w-3.5 text-dashboard-text-muted" />
                         ) : (
-                            <EyeOff className="h-3.5 w-3.5 text-neutral-400" />
+                            <EyeOff className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
                         )}
                     </button>
                 ) : (
                     <>
                         {isInView && (
-                            <Check className="absolute h-3.5 w-3.5 text-green-600 transition-opacity group-hover:opacity-0" />
+                            <Check className="absolute h-3.5 w-3.5 text-dashboard-type-link transition-opacity group-hover:opacity-0" />
                         )}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
                                     onClick={(e) => e.stopPropagation()}
-                                    className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-all hover:bg-neutral-300 group-hover:opacity-100"
+                                    className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
                                 >
-                                    <MoreHorizontal className="h-3.5 w-3.5 text-neutral-500" />
+                                    <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
                                 </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                                 align="end"
-                                className="w-36 border-neutral-200 bg-white shadow-lg"
+                                className="w-36 border-dashboard-border bg-dashboard-bg-card shadow-lg"
                             >
                                 <DropdownMenuItem
                                     onClick={handleEdit}
-                                    className="cursor-pointer text-neutral-700 focus:bg-neutral-100 focus:text-neutral-900"
+                                    className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
                                 >
                                     <Pencil className="mr-2 h-3.5 w-3.5" />
                                     편집
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator className="bg-neutral-200" />
+                                <DropdownMenuSeparator className="bg-dashboard-border" />
                                 <DropdownMenuItem
                                     onClick={handleDelete}
                                     className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600"
@@ -210,23 +210,23 @@ export default function TreeItem({
                     <DropdownMenuTrigger asChild>
                         <button
                             onClick={(e) => e.stopPropagation()}
-                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded opacity-0 transition-all hover:bg-neutral-300 group-hover:opacity-100"
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
                         >
-                            <MoreHorizontal className="h-3.5 w-3.5 text-neutral-500" />
+                            <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                         align="end"
-                        className="w-36 border-neutral-200 bg-white shadow-lg"
+                        className="w-36 border-dashboard-border bg-dashboard-bg-card shadow-lg"
                     >
                         <DropdownMenuItem
                             onClick={handleEdit}
-                            className="cursor-pointer text-neutral-700 focus:bg-neutral-100 focus:text-neutral-900"
+                            className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
                         >
                             <Pencil className="mr-2 h-3.5 w-3.5" />
                             편집
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-neutral-200" />
+                        <DropdownMenuSeparator className="bg-dashboard-border" />
                         <DropdownMenuItem
                             onClick={handleDelete}
                             className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600"

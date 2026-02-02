@@ -40,11 +40,11 @@ export default function ViewMode({ component, onEdit, onDelete }: ViewModeProps)
     const getTypeColor = () => {
         switch (component.type) {
             case 'show':
-                return 'bg-[#ff2d92]/15 text-[#ff2d92] border-[#ff2d92]/30';
+                return 'bg-blue-50 text-dashboard-type-event border-blue-200';
             case 'mixset':
-                return 'bg-[#00f0ff]/15 text-[#00f0ff] border-[#00f0ff]/30';
+                return 'bg-purple-50 text-dashboard-type-mixset border-purple-200';
             case 'link':
-                return 'bg-[#a855f7]/15 text-[#a855f7] border-[#a855f7]/30';
+                return 'bg-green-50 text-dashboard-type-link border-green-200';
         }
     };
 
@@ -60,9 +60,9 @@ export default function ViewMode({ component, onEdit, onDelete }: ViewModeProps)
     };
 
     return (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col bg-dashboard-bg-card">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-dashboard-border px-6 py-4">
                 <span
                     className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${getTypeColor()}`}
                 >
@@ -74,14 +74,14 @@ export default function ViewMode({ component, onEdit, onDelete }: ViewModeProps)
                         onClick={onDelete}
                         variant="ghost"
                         size="sm"
-                        className="text-red-400 hover:bg-red-500/20 hover:text-red-300"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-600"
                     >
                         <Trash2 className="h-4 w-4" />
                     </Button>
                     <Button
                         onClick={onEdit}
                         size="sm"
-                        className="bg-white/10 text-white hover:bg-white/20"
+                        className="bg-dashboard-text text-white hover:bg-dashboard-text/90"
                     >
                         <Pencil className="mr-1.5 h-4 w-4" />
                         편집
@@ -119,28 +119,28 @@ function ShowDetail({ component }: { component: EventComponent }) {
             )}
 
             {/* Title */}
-            <h2 className="text-center text-xl font-bold text-white">
+            <h2 className="text-center text-xl font-bold text-dashboard-text">
                 {component.title || '제목 없음'}
             </h2>
 
             {/* Info Grid */}
-            <div className="space-y-3 rounded-xl bg-white/5 p-4">
+            <div className="space-y-3 rounded-xl bg-dashboard-bg-muted p-4">
                 <div className="flex items-center gap-3 text-sm">
-                    <Calendar className="h-4 w-4 text-white/40" />
-                    <span className="text-white/80">{component.date || '-'}</span>
+                    <Calendar className="h-4 w-4 text-dashboard-text-placeholder" />
+                    <span className="text-dashboard-text-secondary">{component.date || '-'}</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
-                    <MapPin className="h-4 w-4 text-white/40" />
-                    <span className="text-white/80">{component.venue || '-'}</span>
+                    <MapPin className="h-4 w-4 text-dashboard-text-placeholder" />
+                    <span className="text-dashboard-text-secondary">{component.venue || '-'}</span>
                 </div>
                 {component.lineup && component.lineup.length > 0 && (
                     <div className="flex items-start gap-3 text-sm">
-                        <Users className="mt-0.5 h-4 w-4 text-white/40" />
+                        <Users className="mt-0.5 h-4 w-4 text-dashboard-text-placeholder" />
                         <div className="flex flex-wrap gap-1.5">
                             {component.lineup.map((artist, i) => (
                                 <span
                                     key={i}
-                                    className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs text-white/70"
+                                    className="rounded-full bg-dashboard-bg-active px-2.5 py-0.5 text-xs text-dashboard-text-secondary"
                                 >
                                     {artist}
                                 </span>
@@ -152,7 +152,9 @@ function ShowDetail({ component }: { component: EventComponent }) {
 
             {/* Description */}
             {component.description && (
-                <p className="text-sm leading-relaxed text-white/60">{component.description}</p>
+                <p className="text-sm leading-relaxed text-dashboard-text-muted">
+                    {component.description}
+                </p>
             )}
 
             {/* Links */}
@@ -164,7 +166,7 @@ function ShowDetail({ component }: { component: EventComponent }) {
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                            className="flex items-center gap-2 rounded-lg bg-dashboard-bg-muted px-3 py-2 text-sm text-dashboard-text-secondary transition-colors hover:bg-dashboard-bg-active hover:text-dashboard-text"
                         >
                             <ExternalLink className="h-3.5 w-3.5" />
                             {link.title}
@@ -192,16 +194,16 @@ function MixsetDetail({ component }: { component: MixsetComponent }) {
             )}
 
             {/* Title */}
-            <h2 className="text-center text-xl font-bold text-white">
+            <h2 className="text-center text-xl font-bold text-dashboard-text">
                 {component.title || '제목 없음'}
             </h2>
 
             {/* Info */}
-            <div className="flex items-center justify-center gap-4 text-sm text-white/60">
+            <div className="flex items-center justify-center gap-4 text-sm text-dashboard-text-muted">
                 {component.genre && <span>{component.genre}</span>}
                 {component.releaseDate && (
                     <>
-                        <span className="h-1 w-1 rounded-full bg-white/30" />
+                        <span className="h-1 w-1 rounded-full bg-dashboard-border-hover" />
                         <span>{component.releaseDate}</span>
                     </>
                 )}
@@ -209,25 +211,32 @@ function MixsetDetail({ component }: { component: MixsetComponent }) {
 
             {/* Description */}
             {component.description && (
-                <p className="text-sm leading-relaxed text-white/60">{component.description}</p>
+                <p className="text-sm leading-relaxed text-dashboard-text-muted">
+                    {component.description}
+                </p>
             )}
 
             {/* Tracklist */}
             {component.tracklist && component.tracklist.length > 0 && (
-                <div className="rounded-xl bg-white/5 p-4">
-                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/40">
+                <div className="rounded-xl bg-dashboard-bg-muted p-4">
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
                         Tracklist
                     </h3>
                     <div className="space-y-2">
                         {component.tracklist.map((track, i) => (
                             <div key={i} className="flex items-baseline gap-3 text-sm">
-                                <span className="w-12 shrink-0 font-mono text-xs text-white/30">
+                                <span className="w-12 shrink-0 font-mono text-xs text-dashboard-text-placeholder">
                                     {track.time}
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                    <span className="text-white/80">{track.track}</span>
+                                    <span className="text-dashboard-text-secondary">
+                                        {track.track}
+                                    </span>
                                     {track.artist && (
-                                        <span className="text-white/40"> — {track.artist}</span>
+                                        <span className="text-dashboard-text-placeholder">
+                                            {' '}
+                                            — {track.artist}
+                                        </span>
                                     )}
                                 </div>
                             </div>
@@ -245,19 +254,21 @@ function LinkDetail({ component }: { component: LinkComponent }) {
     return (
         <div className="space-y-4 py-4 text-center">
             {/* Icon */}
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
-                <IconComponent className="h-8 w-8 text-white/70" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-dashboard-bg-muted">
+                <IconComponent className="h-8 w-8 text-dashboard-text-secondary" />
             </div>
 
             {/* Title */}
-            <h2 className="text-xl font-bold text-white">{component.title || '제목 없음'}</h2>
+            <h2 className="text-xl font-bold text-dashboard-text">
+                {component.title || '제목 없음'}
+            </h2>
 
             {/* URL */}
             <a
                 href={component.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-white/50 transition-colors hover:text-white/80"
+                className="inline-flex items-center gap-2 text-sm text-dashboard-text-muted transition-colors hover:text-dashboard-text-secondary"
             >
                 <ExternalLink className="h-3.5 w-3.5" />
                 {component.url}

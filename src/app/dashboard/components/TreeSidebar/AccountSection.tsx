@@ -168,42 +168,44 @@ export default function AccountSection({ username }: AccountSectionProps) {
 
     return (
         <>
-            <div className="mt-auto border-t border-neutral-200">
+            <div className="mt-auto border-t border-dashboard-border">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="flex w-full cursor-pointer items-center gap-3 p-3 transition-colors hover:bg-neutral-200/50">
+                        <button className="flex w-full cursor-pointer items-center gap-3 p-3 transition-colors hover:bg-dashboard-bg-hover">
                             {/* Avatar */}
-                            <Avatar className="h-8 w-8 border border-neutral-200">
+                            <Avatar className="h-8 w-8 border border-dashboard-border">
                                 <AvatarImage
                                     src={user.avatarUrl}
                                     alt={user.displayName}
                                     className="object-cover"
                                 />
-                                <AvatarFallback className="bg-neutral-200 text-xs font-medium text-neutral-600">
+                                <AvatarFallback className="bg-dashboard-bg-active text-xs font-medium text-dashboard-text-secondary">
                                     {getInitials(user.displayName || username)}
                                 </AvatarFallback>
                             </Avatar>
 
                             {/* User Info */}
                             <div className="min-w-0 flex-1 text-left">
-                                <p className="truncate text-sm font-medium text-neutral-900">
+                                <p className="truncate text-sm font-medium text-dashboard-text">
                                     {user.displayName || username}
                                 </p>
-                                <p className="truncate text-xs text-neutral-500">@{username}</p>
+                                <p className="truncate text-xs text-dashboard-text-muted">
+                                    @{username}
+                                </p>
                             </div>
 
-                            <ChevronUp className="h-4 w-4 shrink-0 text-neutral-400" />
+                            <ChevronUp className="h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
                         </button>
                     </DropdownMenuTrigger>
 
                     <DropdownMenuContent
                         align="start"
                         side="top"
-                        className="w-56 border-neutral-200 bg-white shadow-lg"
+                        className="w-56 border-dashboard-border bg-dashboard-bg-card shadow-lg"
                     >
                         <DropdownMenuItem
                             onClick={handleOpenEditDialog}
-                            className="cursor-pointer text-neutral-700 focus:bg-neutral-100 focus:text-neutral-900"
+                            className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
                         >
                             <Pencil className="mr-2 h-4 w-4" />
                             프로필 편집
@@ -213,13 +215,13 @@ export default function AccountSection({ username }: AccountSectionProps) {
                             <Link
                                 href={`/${username}`}
                                 target="_blank"
-                                className="cursor-pointer text-neutral-700 focus:bg-neutral-100 focus:text-neutral-900"
+                                className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
                             >
                                 <ExternalLink className="mr-2 h-4 w-4" />내 페이지 보기
                             </Link>
                         </DropdownMenuItem>
 
-                        <DropdownMenuSeparator className="bg-neutral-200" />
+                        <DropdownMenuSeparator className="bg-dashboard-border" />
 
                         <DropdownMenuItem
                             onClick={handleLogout}
@@ -234,9 +236,9 @@ export default function AccountSection({ username }: AccountSectionProps) {
 
             {/* Edit Profile Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="border-neutral-200 bg-white sm:max-w-md">
+                <DialogContent className="border-dashboard-border bg-dashboard-bg-card sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle className="text-neutral-900">프로필 편집</DialogTitle>
+                        <DialogTitle className="text-dashboard-text">프로필 편집</DialogTitle>
                     </DialogHeader>
 
                     <div className="space-y-4 py-4">
@@ -248,19 +250,19 @@ export default function AccountSection({ username }: AccountSectionProps) {
                                 disabled={isUploading}
                                 className="group relative"
                             >
-                                <Avatar className="h-16 w-16 border border-neutral-200">
+                                <Avatar className="h-16 w-16 border border-dashboard-border">
                                     <AvatarImage
                                         src={tempUser?.avatarUrl}
                                         alt={tempUser?.displayName}
                                         className="object-cover"
                                     />
-                                    <AvatarFallback className="bg-neutral-200 text-lg font-medium text-neutral-600">
+                                    <AvatarFallback className="bg-dashboard-bg-active text-lg font-medium text-dashboard-text-secondary">
                                         {getInitials(tempUser?.displayName || username)}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div
                                     className={cn(
-                                        'absolute inset-0 flex items-center justify-center rounded-full bg-neutral-900/50 transition-opacity',
+                                        'absolute inset-0 flex items-center justify-center rounded-full bg-dashboard-text/50 transition-opacity',
                                         isUploading
                                             ? 'opacity-100'
                                             : 'opacity-0 group-hover:opacity-100'
@@ -296,7 +298,9 @@ export default function AccountSection({ username }: AccountSectionProps) {
 
                         {/* Display Name */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-neutral-700">이름</label>
+                            <label className="text-sm font-medium text-dashboard-text-secondary">
+                                이름
+                            </label>
                             <Input
                                 type="text"
                                 value={tempUser?.displayName || ''}
@@ -308,13 +312,15 @@ export default function AccountSection({ username }: AccountSectionProps) {
                                     )
                                 }
                                 placeholder="Display Name"
-                                className="border-neutral-200 bg-white text-neutral-900 placeholder:text-neutral-400"
+                                className="border-dashboard-border bg-dashboard-bg-card text-dashboard-text placeholder:text-dashboard-text-placeholder"
                             />
                         </div>
 
                         {/* Bio */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-neutral-700">소개</label>
+                            <label className="text-sm font-medium text-dashboard-text-secondary">
+                                소개
+                            </label>
                             <Textarea
                                 value={tempUser?.bio || ''}
                                 onChange={(e) =>
@@ -324,7 +330,7 @@ export default function AccountSection({ username }: AccountSectionProps) {
                                 }
                                 placeholder="자기소개를 입력하세요"
                                 rows={3}
-                                className="resize-none border-neutral-200 bg-white text-neutral-900 placeholder:text-neutral-400"
+                                className="resize-none border-dashboard-border bg-dashboard-bg-card text-dashboard-text placeholder:text-dashboard-text-placeholder"
                             />
                         </div>
                     </div>
@@ -334,7 +340,7 @@ export default function AccountSection({ username }: AccountSectionProps) {
                         <Button
                             onClick={handleCancel}
                             variant="ghost"
-                            className="text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                            className="text-dashboard-text-secondary hover:bg-dashboard-bg-muted hover:text-dashboard-text"
                         >
                             <X className="mr-1 h-4 w-4" />
                             취소
@@ -342,7 +348,7 @@ export default function AccountSection({ username }: AccountSectionProps) {
                         <Button
                             onClick={handleSave}
                             disabled={isUploading}
-                            className="bg-neutral-900 text-white hover:bg-neutral-800"
+                            className="bg-dashboard-text text-white hover:bg-dashboard-text/90"
                         >
                             <Save className="mr-1 h-4 w-4" />
                             저장

@@ -30,7 +30,7 @@ export default function ContentPanel({ onSave, onDelete }: ContentPanelProps) {
     // Page 패널 모드
     if (activePanel === 'page') {
         return (
-            <div className="h-full overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+            <div className="h-full overflow-hidden rounded-2xl border border-dashboard-border bg-dashboard-bg-card">
                 <PageListView />
             </div>
         );

@@ -155,10 +155,13 @@ export default function TreeSidebar({
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <aside className="flex h-full w-64 flex-col rounded-2xl bg-neutral-100/80 shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
+            <aside className="flex h-full w-64 flex-col rounded-2xl bg-dashboard-bg-surface shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
                 {/* Header */}
                 <div className="px-4 py-4">
-                    <Link href="/" className="font-display text-xl font-semibold text-neutral-900">
+                    <Link
+                        href="/"
+                        className="font-display text-xl font-semibold text-dashboard-text"
+                    >
                         DNA
                     </Link>
                 </div>
@@ -171,14 +174,14 @@ export default function TreeSidebar({
                         className={cn(
                             'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
                             activePanel === 'page'
-                                ? 'bg-neutral-200 text-neutral-900'
-                                : 'text-neutral-700 hover:bg-neutral-200/50'
+                                ? 'bg-dashboard-bg-active text-dashboard-text'
+                                : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
                         )}
                     >
-                        <FileText className="h-4 w-4 text-neutral-500" />
+                        <FileText className="h-4 w-4 text-dashboard-text-muted" />
                         <span className="flex-1 text-sm font-medium">Page</span>
                         {visibleCount > 0 && (
-                            <span className="rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500">
+                            <span className="rounded bg-dashboard-bg-active px-1.5 py-0.5 text-[10px] font-medium text-dashboard-text-muted">
                                 {visibleCount}
                             </span>
                         )}
@@ -195,10 +198,10 @@ export default function TreeSidebar({
                     )}
 
                     {/* Divider */}
-                    <div className="my-3 border-t border-neutral-200" />
+                    <div className="my-3 border-t border-dashboard-border" />
 
                     {/* Sub Level: Components */}
-                    <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                    <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-dashboard-text-placeholder">
                         Components
                     </p>
 
@@ -285,8 +288,8 @@ export default function TreeSidebar({
             {/* Drag Overlay */}
             <DragOverlay>
                 {activeItem && (
-                    <div className="rounded-lg border border-neutral-200 bg-white px-3 py-2 shadow-lg">
-                        <span className="text-sm text-neutral-900">
+                    <div className="rounded-lg border border-dashboard-border bg-dashboard-bg-card px-3 py-2 shadow-lg">
+                        <span className="text-sm text-dashboard-text">
                             {activeItem.component.title || '제목 없음'}
                         </span>
                     </div>

@@ -31,11 +31,11 @@ export default function SectionItem({
         <div className="mb-1">
             {/* Section Header */}
             <div
-                className="group flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 transition-colors hover:bg-neutral-200/50"
+                className="group flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 transition-colors hover:bg-dashboard-bg-hover"
                 onClick={() => toggleSection(section)}
             >
                 {/* Collapse Arrow */}
-                <span className="flex h-4 w-4 items-center justify-center text-neutral-400">
+                <span className="flex h-4 w-4 items-center justify-center text-dashboard-text-placeholder">
                     {isCollapsed ? (
                         <ChevronRight className="h-3.5 w-3.5" />
                     ) : (
@@ -44,14 +44,16 @@ export default function SectionItem({
                 </span>
 
                 {/* Icon (optional) */}
-                {icon && <span className="text-neutral-500">{icon}</span>}
+                {icon && <span className="text-dashboard-text-muted">{icon}</span>}
 
                 {/* Title */}
-                <span className="flex-1 text-sm font-medium text-neutral-700">{title}</span>
+                <span className="flex-1 text-sm font-medium text-dashboard-text-secondary">
+                    {title}
+                </span>
 
                 {/* Count Badge */}
                 {count !== undefined && count > 0 && (
-                    <span className="rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500">
+                    <span className="rounded bg-dashboard-bg-active px-1.5 py-0.5 text-[10px] font-medium text-dashboard-text-muted">
                         {count}
                     </span>
                 )}
@@ -63,9 +65,9 @@ export default function SectionItem({
                             e.stopPropagation();
                             onAdd();
                         }}
-                        className="rounded p-1 opacity-0 transition-opacity hover:bg-neutral-300 group-hover:opacity-100"
+                        className="rounded p-1 opacity-0 transition-opacity hover:bg-dashboard-bg-active group-hover:opacity-100"
                     >
-                        <Plus className="h-3.5 w-3.5 text-neutral-600" />
+                        <Plus className="h-3.5 w-3.5 text-dashboard-text-secondary" />
                     </button>
                 )}
             </div>

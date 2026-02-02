@@ -36,19 +36,19 @@ const typeConfig = {
     show: {
         icon: Calendar,
         label: 'Event',
-        color: 'text-blue-600',
+        color: 'text-dashboard-type-event',
         bgColor: 'bg-blue-50',
     },
     mixset: {
         icon: Headphones,
         label: 'Mixset',
-        color: 'text-purple-600',
+        color: 'text-dashboard-type-mixset',
         bgColor: 'bg-purple-50',
     },
     link: {
         icon: LinkIcon,
         label: 'Link',
-        color: 'text-green-600',
+        color: 'text-dashboard-type-link',
         bgColor: 'bg-green-50',
     },
 };
@@ -87,10 +87,10 @@ function SortableItem({
             ref={setNodeRef}
             style={style}
             className={cn(
-                'group flex items-center gap-3 rounded-lg border bg-white p-3 transition-all',
+                'group flex items-center gap-3 rounded-lg border bg-dashboard-bg-card p-3 transition-all',
                 isDragging
-                    ? 'border-neutral-300 shadow-lg'
-                    : 'border-neutral-200 hover:border-neutral-300',
+                    ? 'border-dashboard-border-hover shadow-lg'
+                    : 'border-dashboard-border hover:border-dashboard-border-hover',
                 !isVisible && 'opacity-60'
             )}
         >
@@ -98,7 +98,7 @@ function SortableItem({
             <button
                 {...attributes}
                 {...listeners}
-                className="cursor-grab touch-none text-neutral-400 hover:text-neutral-600 active:cursor-grabbing"
+                className="cursor-grab touch-none text-dashboard-text-placeholder hover:text-dashboard-text-secondary active:cursor-grabbing"
             >
                 <GripVertical className="h-5 w-5" />
             </button>
@@ -115,10 +115,10 @@ function SortableItem({
 
             {/* Content */}
             <div className="min-w-0 flex-1 cursor-pointer" onClick={onSelect}>
-                <p className="truncate text-sm font-medium text-neutral-900">
+                <p className="truncate text-sm font-medium text-dashboard-text">
                     {component.title || '제목 없음'}
                 </p>
-                <p className="text-xs text-neutral-500">{config.label}</p>
+                <p className="text-xs text-dashboard-text-muted">{config.label}</p>
             </div>
 
             {/* Actions */}
@@ -128,8 +128,8 @@ function SortableItem({
                     className={cn(
                         'rounded-md p-2 transition-colors',
                         isVisible
-                            ? 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700'
-                            : 'text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600'
+                            ? 'text-dashboard-text-muted hover:bg-dashboard-bg-muted hover:text-dashboard-text-secondary'
+                            : 'text-dashboard-text-placeholder hover:bg-dashboard-bg-muted hover:text-dashboard-text-secondary'
                     )}
                     title={isVisible ? '숨기기' : '표시하기'}
                 >
@@ -137,7 +137,7 @@ function SortableItem({
                 </button>
                 <button
                     onClick={onRemove}
-                    className="rounded-md p-2 text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                    className="rounded-md p-2 text-dashboard-text-placeholder transition-colors hover:bg-red-50 hover:text-red-600"
                     title="Page에서 제거"
                 >
                     <Trash2 className="h-4 w-4" />
@@ -199,12 +199,12 @@ export default function PageListView() {
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="border-b border-neutral-200 bg-neutral-50 px-6 py-4">
-                <h2 className="text-lg font-semibold text-neutral-900">Page 구성</h2>
-                <p className="mt-1 text-sm text-neutral-500">
+            <div className="border-b border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
+                <h2 className="text-lg font-semibold text-dashboard-text">Page 구성</h2>
+                <p className="mt-1 text-sm text-dashboard-text-muted">
                     공개 페이지에 표시될 컴포넌트를 관리합니다. 드래그하여 순서를 변경하세요.
                 </p>
-                <div className="mt-2 flex items-center gap-4 text-xs text-neutral-500">
+                <div className="mt-2 flex items-center gap-4 text-xs text-dashboard-text-muted">
                     <span>전체 {viewItems.length}개</span>
                     <span>공개 {visibleCount}개</span>
                 </div>
@@ -215,13 +215,13 @@ export default function PageListView() {
                 {sortedViewItems.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                         <div className="text-center">
-                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100">
-                                <Calendar className="h-8 w-8 text-neutral-400" />
+                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-dashboard-bg-muted">
+                                <Calendar className="h-8 w-8 text-dashboard-text-placeholder" />
                             </div>
-                            <p className="text-sm font-medium text-neutral-600">
+                            <p className="text-sm font-medium text-dashboard-text-secondary">
                                 Page가 비어있습니다
                             </p>
-                            <p className="mt-1 text-xs text-neutral-400">
+                            <p className="mt-1 text-xs text-dashboard-text-placeholder">
                                 사이드바에서 컴포넌트를 드래그하여 추가하세요
                             </p>
                         </div>
@@ -263,8 +263,8 @@ export default function PageListView() {
 
                         <DragOverlay>
                             {activeComponent && (
-                                <div className="flex items-center gap-3 rounded-lg border border-neutral-300 bg-white p-3 shadow-xl">
-                                    <div className="text-neutral-400">
+                                <div className="flex items-center gap-3 rounded-lg border border-dashboard-border-hover bg-dashboard-bg-card p-3 shadow-xl">
+                                    <div className="text-dashboard-text-placeholder">
                                         <GripVertical className="h-5 w-5" />
                                     </div>
                                     <div
@@ -285,7 +285,7 @@ export default function PageListView() {
                                             );
                                         })()}
                                     </div>
-                                    <span className="text-sm font-medium text-neutral-900">
+                                    <span className="text-sm font-medium text-dashboard-text">
                                         {activeComponent.title || '제목 없음'}
                                     </span>
                                 </div>
