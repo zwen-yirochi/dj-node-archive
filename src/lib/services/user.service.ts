@@ -11,6 +11,7 @@ import type {
     Page,
     User,
 } from '@/types/domain';
+import type { Theme } from '@/types';
 import { type Result, createNotFoundError, failure, isSuccess, success } from '@/types/result';
 import { cache } from 'react';
 
@@ -27,6 +28,7 @@ export interface EditorData {
     components: ComponentData[];
     pageId: string | null;
     viewItems: ViewItem[];
+    theme: Theme | null;
 }
 
 // DB 타입을 도메인 타입으로 변환
@@ -98,6 +100,7 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
             components: [],
             pageId: null,
             viewItems: [],
+            theme: null,
         });
     }
 
@@ -111,11 +114,15 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
         ? viewItemsResult.data.map(mapViewItemToDomain)
         : [];
 
+    // Theme 매핑
+    const theme = (page.theme as unknown as Theme) ?? null;
+
     return success({
         user,
         components,
         pageId: page.id,
         viewItems,
+        theme,
     });
 });
 
@@ -153,6 +160,7 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
             components: [],
             pageId: null,
             viewItems: [],
+            theme: null,
         });
     }
 
@@ -166,11 +174,15 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
         ? viewItemsResult.data.map(mapViewItemToDomain)
         : [];
 
+    // Theme 매핑
+    const theme = (page.theme as unknown as Theme) ?? null;
+
     return success({
         user,
         components,
         pageId: page.id,
         viewItems,
+        theme,
     });
 });
 

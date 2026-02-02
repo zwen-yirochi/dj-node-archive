@@ -1,4 +1,4 @@
-import type { ComponentData, User } from '@/types';
+import type { ComponentData, Theme, User } from '@/types';
 import { create } from 'zustand';
 
 // View 항목 타입
@@ -23,13 +23,14 @@ export type SidebarSections = {
 
 export type SectionKey = keyof SidebarSections;
 export type EditMode = 'view' | 'edit';
-export type ActivePanel = 'component' | 'page';
+export type ActivePanel = 'component' | 'bio' | 'page';
 
 interface EditorStore {
     // 기존 상태
     user: User | null;
     components: ComponentData[];
     pageId: string | null;
+    theme: Theme | null;
 
     // 신규 상태 - 선택 및 편집
     selectedComponentId: string | null;
@@ -47,6 +48,7 @@ interface EditorStore {
     updateUser: (updates: Partial<User>) => void;
     setComponents: (components: ComponentData[]) => void;
     setPageId: (pageId: string) => void;
+    setTheme: (theme: Theme) => void;
 
     // 신규 액션 - 선택 및 편집
     selectComponent: (id: string | null) => void;
@@ -89,6 +91,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     user: null,
     components: [],
     pageId: null,
+    theme: null,
 
     // 신규 상태 초기값
     selectedComponentId: null,
@@ -108,6 +111,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     setComponents: (components) => set({ components }),
 
     setPageId: (pageId) => set({ pageId }),
+
+    setTheme: (theme) => set({ theme }),
 
     // 신규 액션 - 선택 및 편집
     selectComponent: (id) =>
