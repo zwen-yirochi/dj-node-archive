@@ -1,5 +1,13 @@
 'use client';
 
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/stores/editorStore';
 import type { ComponentData } from '@/types';
 import { useSortable } from '@dnd-kit/sortable';
@@ -9,35 +17,39 @@ import {
     Check,
     Eye,
     EyeOff,
-    GripVertical,
     Headphones,
     Link as LinkIcon,
+    MoreHorizontal,
+    Pencil,
+    Trash2,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface TreeItemProps {
     component: ComponentData;
     isInViewSection?: boolean;
     viewItemId?: string;
     isVisible?: boolean;
+    isLast?: boolean;
     onToggleVisibility?: () => void;
+    onEdit?: () => void;
+    onDelete?: () => void;
 }
 
 const typeConfig = {
     show: {
         icon: Calendar,
-        color: 'text-[#ff2d92]',
-        bgColor: 'bg-[#ff2d92]/10',
+        color: 'text-neutral-500',
+        bgColor: 'bg-neutral-200',
     },
     mixset: {
         icon: Headphones,
-        color: 'text-[#00f0ff]',
-        bgColor: 'bg-[#00f0ff]/10',
+        color: 'text-neutral-500',
+        bgColor: 'bg-neutral-200',
     },
     link: {
         icon: LinkIcon,
-        color: 'text-[#a855f7]',
-        bgColor: 'bg-[#a855f7]/10',
+        color: 'text-neutral-500',
+        bgColor: 'bg-neutral-200',
     },
 };
 
@@ -46,10 +58,14 @@ export default function TreeItem({
     isInViewSection = false,
     viewItemId,
     isVisible = true,
+    isLast = false,
     onToggleVisibility,
+    onEdit,
+    onDelete,
 }: TreeItemProps) {
     const selectedComponentId = useEditorStore((state) => state.selectedComponentId);
     const selectComponent = useEditorStore((state) => state.selectComponent);
+    const setEditMode = useEditorStore((state) => state.setEditMode);
     const viewItems = useEditorStore((state) => state.viewItems);
 
     // viewItems에서 현재 컴포넌트가 포함되어 있는지 확인
@@ -82,6 +98,16 @@ export default function TreeItem({
         onToggleVisibility?.();
     };
 
+    const handleEdit = () => {
+        selectComponent(component.id);
+        setEditMode('edit');
+        onEdit?.();
+    };
+
+    const handleDelete = () => {
+        onDelete?.();
+    };
+
     return (
         <div
             ref={setNodeRef}
@@ -89,44 +115,127 @@ export default function TreeItem({
             {...attributes}
             {...listeners}
             className={cn(
-                'group flex cursor-grab touch-none items-center gap-2 rounded-lg px-2 py-1.5 transition-colors active:cursor-grabbing',
+                'group relative flex cursor-pointer touch-none items-center rounded-md py-1.5 pr-2 transition-colors',
                 isSelected
-                    ? 'bg-white/15 text-white'
-                    : 'text-white/70 hover:bg-white/5 hover:text-white/90',
+                    ? 'bg-neutral-200 text-neutral-900'
+                    : 'text-neutral-700 hover:bg-neutral-200/50 hover:text-neutral-900',
                 isDragging && 'opacity-50',
                 !isVisible && 'opacity-50'
             )}
             onClick={handleClick}
         >
-            {/* Drag Indicator */}
-            <div className="opacity-0 transition-opacity group-hover:opacity-100">
-                <GripVertical className="h-3.5 w-3.5 text-white/40" />
+            {/* Tree Line */}
+            <div className="relative flex h-full w-7 shrink-0 items-center">
+                <div
+                    className={cn(
+                        'absolute left-3 w-px bg-neutral-300',
+                        isLast ? '-top-1 h-[calc(50%+4px)]' : '-top-1 h-[calc(100%+4px)]'
+                    )}
+                />
+                <div className="absolute left-3 h-px w-2.5 bg-neutral-300" />
             </div>
 
-            {/* Type Icon */}
-            <div className={cn('flex h-5 w-5 items-center justify-center rounded', config.bgColor)}>
-                <Icon className={cn('h-3 w-3', config.color)} />
-            </div>
+            {/* Type Icon - Page 섹션에서만 표시 */}
+            {isInViewSection && (
+                <div
+                    className={cn(
+                        'flex h-5 w-5 shrink-0 items-center justify-center rounded',
+                        config.bgColor
+                    )}
+                >
+                    <Icon className={cn('h-3 w-3', config.color)} />
+                </div>
+            )}
 
             {/* Title */}
-            <span className="flex-1 truncate text-sm">{component.title || '제목 없음'}</span>
+            <span className={cn('min-w-0 flex-1 truncate text-sm', isInViewSection && 'ml-2')}>
+                {component.title || '제목 없음'}
+            </span>
 
-            {/* Status Indicator */}
-            {isInViewSection ? (
-                // View 섹션: 공개/비공개 토글
-                <button
-                    onClick={handleVisibilityClick}
-                    className="rounded p-1 opacity-0 transition-opacity hover:bg-white/10 group-hover:opacity-100"
-                >
-                    {isVisible ? (
-                        <Eye className="h-3.5 w-3.5 text-white/60" />
-                    ) : (
-                        <EyeOff className="h-3.5 w-3.5 text-white/40" />
-                    )}
-                </button>
-            ) : (
-                // 원본 섹션: View에 포함됨 표시
-                isInView && <Check className="h-3.5 w-3.5 text-green-400/70" />
+            {/* Right Side Actions */}
+            <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
+                {isInViewSection ? (
+                    <button
+                        onClick={handleVisibilityClick}
+                        className="flex h-5 w-5 items-center justify-center rounded transition-colors hover:bg-neutral-300"
+                    >
+                        {isVisible ? (
+                            <Eye className="h-3.5 w-3.5 text-neutral-500" />
+                        ) : (
+                            <EyeOff className="h-3.5 w-3.5 text-neutral-400" />
+                        )}
+                    </button>
+                ) : (
+                    <>
+                        {isInView && (
+                            <Check className="absolute h-3.5 w-3.5 text-green-600 transition-opacity group-hover:opacity-0" />
+                        )}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-all hover:bg-neutral-300 group-hover:opacity-100"
+                                >
+                                    <MoreHorizontal className="h-3.5 w-3.5 text-neutral-500" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                align="end"
+                                className="w-36 border-neutral-200 bg-white shadow-lg"
+                            >
+                                <DropdownMenuItem
+                                    onClick={handleEdit}
+                                    className="cursor-pointer text-neutral-700 focus:bg-neutral-100 focus:text-neutral-900"
+                                >
+                                    <Pencil className="mr-2 h-3.5 w-3.5" />
+                                    편집
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="bg-neutral-200" />
+                                <DropdownMenuItem
+                                    onClick={handleDelete}
+                                    className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600"
+                                >
+                                    <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                    삭제
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </>
+                )}
+            </div>
+
+            {/* Page 섹션의 더보기 메뉴 */}
+            {isInViewSection && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded opacity-0 transition-all hover:bg-neutral-300 group-hover:opacity-100"
+                        >
+                            <MoreHorizontal className="h-3.5 w-3.5 text-neutral-500" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                        align="end"
+                        className="w-36 border-neutral-200 bg-white shadow-lg"
+                    >
+                        <DropdownMenuItem
+                            onClick={handleEdit}
+                            className="cursor-pointer text-neutral-700 focus:bg-neutral-100 focus:text-neutral-900"
+                        >
+                            <Pencil className="mr-2 h-3.5 w-3.5" />
+                            편집
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator className="bg-neutral-200" />
+                        <DropdownMenuItem
+                            onClick={handleDelete}
+                            className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600"
+                        >
+                            <Trash2 className="mr-2 h-3.5 w-3.5" />
+                            Page에서 제거
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             )}
         </div>
     );

@@ -9,7 +9,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { AddComponentModal } from './components/AddComponentModal';
 import ContentPanel from './components/ContentPanel';
 import PreviewPanel from './components/PreviewPanel';
-import ProfileEditor from './components/ProfileEditor';
 import TreeSidebar from './components/TreeSidebar';
 
 interface EditorClientProps {
@@ -36,7 +35,7 @@ export default function EditorClient({
     const setEditMode = useEditorStore((state) => state.setEditMode);
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [addingType, setAddingType] = useState<'show' | 'mixset' | 'link'>('show');
+    const [_addingType, setAddingType] = useState<'show' | 'mixset' | 'link'>('show');
 
     // Zustand 초기화
     useEffect(() => {
@@ -211,26 +210,21 @@ export default function EditorClient({
     };
 
     return (
-        <div className="flex h-screen overflow-hidden">
+        <div className="flex h-screen overflow-hidden bg-neutral-50">
             {/* TreeSidebar - 왼쪽 */}
-            <TreeSidebar onAddComponent={handleOpenAddModal} username={username} />
+            <div className="p-3">
+                <TreeSidebar
+                    onAddComponent={handleOpenAddModal}
+                    onDeleteComponent={handleDeleteComponent}
+                    username={username}
+                />
+            </div>
 
             {/* Main Content Area */}
-            <div className="flex flex-1 gap-6 overflow-hidden p-6">
+            <div className="flex flex-1 gap-6 overflow-hidden p-6 pl-0">
                 {/* ContentPanel - 중앙 */}
                 <div className="flex flex-1 flex-col overflow-hidden">
-                    {/* Profile - 상단 고정 */}
-                    <div className="mb-4 shrink-0 rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-md">
-                        <ProfileEditor compact />
-                    </div>
-
-                    {/* ContentPanel - 나머지 영역 */}
-                    <div className="flex-1 overflow-hidden">
-                        <ContentPanel
-                            onSave={handleSaveComponent}
-                            onDelete={handleDeleteComponent}
-                        />
-                    </div>
+                    <ContentPanel onSave={handleSaveComponent} onDelete={handleDeleteComponent} />
                 </div>
 
                 {/* PreviewPanel - 오른쪽 */}

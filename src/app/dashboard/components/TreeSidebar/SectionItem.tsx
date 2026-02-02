@@ -1,8 +1,8 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import { useEditorStore, type SectionKey } from '@/stores/editorStore';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
 
 interface SectionItemProps {
@@ -31,27 +31,27 @@ export default function SectionItem({
         <div className="mb-1">
             {/* Section Header */}
             <div
-                className="group flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/5"
+                className="group flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 transition-colors hover:bg-neutral-200/50"
                 onClick={() => toggleSection(section)}
             >
                 {/* Collapse Arrow */}
-                {isCollapsed ? (
-                    <ChevronRight className="h-4 w-4 text-white/40" />
-                ) : (
-                    <ChevronDown className="h-4 w-4 text-white/40" />
-                )}
+                <span className="flex h-4 w-4 items-center justify-center text-neutral-400">
+                    {isCollapsed ? (
+                        <ChevronRight className="h-3.5 w-3.5" />
+                    ) : (
+                        <ChevronDown className="h-3.5 w-3.5" />
+                    )}
+                </span>
 
                 {/* Icon (optional) */}
-                {icon && <span className="text-white/60">{icon}</span>}
+                {icon && <span className="text-neutral-500">{icon}</span>}
 
                 {/* Title */}
-                <span className="flex-1 text-xs font-semibold uppercase tracking-wide text-white/60">
-                    {title}
-                </span>
+                <span className="flex-1 text-sm font-medium text-neutral-700">{title}</span>
 
                 {/* Count Badge */}
                 {count !== undefined && count > 0 && (
-                    <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-white/50">
+                    <span className="rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500">
                         {count}
                     </span>
                 )}
@@ -63,9 +63,9 @@ export default function SectionItem({
                             e.stopPropagation();
                             onAdd();
                         }}
-                        className="rounded p-1 opacity-0 transition-opacity hover:bg-white/10 group-hover:opacity-100"
+                        className="rounded p-1 opacity-0 transition-opacity hover:bg-neutral-300 group-hover:opacity-100"
                     >
-                        <Plus className="h-3.5 w-3.5 text-white/60" />
+                        <Plus className="h-3.5 w-3.5 text-neutral-600" />
                     </button>
                 )}
             </div>

@@ -1,29 +1,29 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/stores/editorStore';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Eye } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { useMemo } from 'react';
 import SectionItem from './SectionItem';
 import TreeItem from './TreeItem';
-import { cn } from '@/lib/utils';
 
 interface ViewSectionProps {
     isDraggingOver?: boolean;
+    onDeleteComponent?: (id: string) => void;
 }
 
 export default function ViewSection({ isDraggingOver = false }: ViewSectionProps) {
     const viewItems = useEditorStore((state) => state.viewItems);
     const components = useEditorStore((state) => state.components);
     const toggleViewItemVisibility = useEditorStore((state) => state.toggleViewItemVisibility);
+    const removeFromView = useEditorStore((state) => state.removeFromView);
 
-    // Droppable zone for adding components to View
     const { setNodeRef, isOver } = useDroppable({
         id: 'view-drop-zone',
     });
 
-    // useMemo로 정렬 및 카운트 계산
     const sortedViewItems = useMemo(
         () => [...viewItems].sort((a, b) => a.order - b.order),
         [viewItems]
@@ -36,26 +36,30 @@ export default function ViewSection({ isDraggingOver = false }: ViewSectionProps
 
     const showDropIndicator = isDraggingOver || isOver;
 
+    const handleDeleteFromView = (viewItemId: string) => {
+        removeFromView(viewItemId);
+    };
+
     return (
         <SectionItem
             section="view"
-            title="View"
-            icon={<Eye className="h-3.5 w-3.5" />}
+            title="Page"
+            icon={<FileText className="h-4 w-4" />}
             count={visibleCount}
         >
             <div
                 ref={setNodeRef}
                 className={cn(
-                    'min-h-[60px] rounded-lg transition-colors',
-                    showDropIndicator && 'ring-dashed bg-white/5 ring-1 ring-white/20'
+                    'min-h-[32px] rounded-md transition-colors',
+                    showDropIndicator && 'ring-dashed bg-neutral-200 ring-1 ring-neutral-400'
                 )}
             >
                 <SortableContext
                     items={sortedViewItems.map((item) => item.id)}
                     strategy={verticalListSortingStrategy}
                 >
-                    <div className="space-y-0.5 py-1">
-                        {sortedViewItems.map((viewItem) => {
+                    <div className="py-0.5">
+                        {sortedViewItems.map((viewItem, index) => {
                             const component = components.find((c) => c.id === viewItem.componentId);
                             if (!component) return null;
 
@@ -66,7 +70,9 @@ export default function ViewSection({ isDraggingOver = false }: ViewSectionProps
                                     isInViewSection
                                     viewItemId={viewItem.id}
                                     isVisible={viewItem.isVisible}
+                                    isLast={index === sortedViewItems.length - 1}
                                     onToggleVisibility={() => toggleViewItemVisibility(viewItem.id)}
+                                    onDelete={() => handleDeleteFromView(viewItem.id)}
                                 />
                             );
                         })}
@@ -74,13 +80,11 @@ export default function ViewSection({ isDraggingOver = false }: ViewSectionProps
                         {sortedViewItems.length === 0 && (
                             <p
                                 className={cn(
-                                    'px-3 py-2 text-center text-xs text-white/40',
-                                    showDropIndicator && 'text-white/60'
+                                    'px-3 py-2 text-center text-xs text-neutral-400',
+                                    showDropIndicator && 'text-neutral-600'
                                 )}
                             >
-                                {showDropIndicator
-                                    ? '여기에 드롭하여 추가'
-                                    : '컴포넌트를 드래그하여 추가'}
+                                {showDropIndicator ? '여기에 드롭하여 추가' : '드래그하여 추가'}
                             </p>
                         )}
                     </div>

@@ -3,40 +3,45 @@
 import { useEditorStore } from '@/stores/editorStore';
 import type { ComponentData } from '@/types';
 import {
+    closestCenter,
     DndContext,
     DragOverlay,
-    closestCenter,
     KeyboardSensor,
     PointerSensor,
     useSensor,
     useSensors,
     type DragEndEvent,
-    type DragStartEvent,
     type DragOverEvent,
-    useDroppable,
+    type DragStartEvent,
 } from '@dnd-kit/core';
 import {
     SortableContext,
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Calendar, Compass, ExternalLink, Headphones, Link as LinkIcon } from 'lucide-react';
+import { Calendar, Headphones, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import AddButton from './AddButton';
+import AccountSection from './AccountSection';
 import SectionItem from './SectionItem';
 import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
 
 interface TreeSidebarProps {
     onAddComponent: (type: 'show' | 'mixset' | 'link') => void;
+    onDeleteComponent?: (id: string) => void;
     username: string;
 }
 
-export default function TreeSidebar({ onAddComponent, username }: TreeSidebarProps) {
+export default function TreeSidebar({
+    onAddComponent,
+    onDeleteComponent,
+    username,
+}: TreeSidebarProps) {
     const components = useEditorStore((state) => state.components);
     const addToView = useEditorStore((state) => state.addToView);
     const reorderView = useEditorStore((state) => state.reorderView);
+    const reorderSectionItems = useEditorStore((state) => state.reorderSectionItems);
     const viewItems = useEditorStore((state) => state.viewItems);
 
     // useMemo로 필터링하여 무한 루프 방지
@@ -78,7 +83,6 @@ export default function TreeSidebar({ onAddComponent, username }: TreeSidebarPro
 
     const handleDragOver = (event: DragOverEvent) => {
         const { over } = event;
-        // View 드롭존 위에 있는지 확인
         setIsDraggingOverView(over?.id === 'view-drop-zone');
     };
 
@@ -90,8 +94,9 @@ export default function TreeSidebar({ onAddComponent, username }: TreeSidebarPro
         if (!over) return;
 
         const activeData = active.data.current;
+        const overData = over.data.current;
 
-        // View 드롭존에 드롭한 경우 - 컴포넌트를 View에 추가
+        // View 드롭존에 드롭한 경우
         if (over.id === 'view-drop-zone' && activeData?.type === 'component') {
             addToView(activeData.component.id);
             return;
@@ -99,14 +104,42 @@ export default function TreeSidebar({ onAddComponent, username }: TreeSidebarPro
 
         // View 섹션 내에서 순서 변경
         if (activeData?.type === 'view-item') {
-            const overData = over.data.current;
             if (overData?.type === 'view-item') {
                 const overIndex = viewItems.findIndex((item) => item.id === over.id);
                 if (overIndex !== -1) {
                     reorderView(active.id as string, overIndex);
                 }
             }
+            return;
         }
+
+        // 섹션 내 컴포넌트 순서 변경
+        if (activeData?.type === 'component' && overData?.type === 'component') {
+            const activeComponent = activeData.component as ComponentData;
+            const overComponent = overData.component as ComponentData;
+
+            if (activeComponent.type === overComponent.type && active.id !== over.id) {
+                const sectionType = activeComponent.type as 'show' | 'mixset' | 'link';
+
+                let sectionComponents: ComponentData[];
+                if (sectionType === 'show') {
+                    sectionComponents = events;
+                } else if (sectionType === 'mixset') {
+                    sectionComponents = mixsets;
+                } else {
+                    sectionComponents = links;
+                }
+
+                const overIndex = sectionComponents.findIndex((c) => c.id === over.id);
+                if (overIndex !== -1) {
+                    reorderSectionItems(sectionType, activeComponent.id, overIndex);
+                }
+            }
+        }
+    };
+
+    const handleDelete = (componentId: string) => {
+        onDeleteComponent?.(componentId);
     };
 
     return (
@@ -117,26 +150,29 @@ export default function TreeSidebar({ onAddComponent, username }: TreeSidebarPro
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <aside className="flex h-full w-64 flex-col border-r border-white/10 bg-black/60 backdrop-blur-xl">
-                {/* Header - DNA 로고 */}
-                <div className="border-b border-white/10 px-5 py-4">
-                    <Link href="/" className="font-display text-2xl tracking-wide text-white">
+            <aside className="flex h-full w-64 flex-col rounded-2xl bg-neutral-100">
+                {/* Header */}
+                <div className="px-4 py-4">
+                    <Link href="/" className="font-display text-xl font-semibold text-neutral-900">
                         DNA
                     </Link>
                 </div>
 
                 {/* Tree Content */}
-                <div className="flex-1 overflow-y-auto px-2 py-3">
-                    {/* View Section - 공개 페이지 배치 (드롭존) */}
-                    <div className="mb-3 border-b border-white/10 pb-3">
-                        <ViewSection isDraggingOver={isDraggingOverView} />
+                <div className="flex-1 overflow-y-auto px-3 pb-3">
+                    {/* Page Section (formerly View) */}
+                    <div className="mb-2">
+                        <ViewSection
+                            isDraggingOver={isDraggingOverView}
+                            onDeleteComponent={handleDelete}
+                        />
                     </div>
 
                     {/* Events Section */}
                     <SectionItem
                         section="events"
                         title="Events"
-                        icon={<Calendar className="h-3.5 w-3.5" />}
+                        icon={<Calendar className="h-4 w-4" />}
                         count={events.length}
                         onAdd={() => onAddComponent('show')}
                     >
@@ -144,9 +180,14 @@ export default function TreeSidebar({ onAddComponent, username }: TreeSidebarPro
                             items={events.map((c) => c.id)}
                             strategy={verticalListSortingStrategy}
                         >
-                            <div className="space-y-0.5 py-1">
-                                {events.map((component) => (
-                                    <TreeItem key={component.id} component={component} />
+                            <div className="py-0.5">
+                                {events.map((component, index) => (
+                                    <TreeItem
+                                        key={component.id}
+                                        component={component}
+                                        isLast={index === events.length - 1}
+                                        onDelete={() => handleDelete(component.id)}
+                                    />
                                 ))}
                             </div>
                         </SortableContext>
@@ -156,7 +197,7 @@ export default function TreeSidebar({ onAddComponent, username }: TreeSidebarPro
                     <SectionItem
                         section="mixsets"
                         title="Mixsets"
-                        icon={<Headphones className="h-3.5 w-3.5" />}
+                        icon={<Headphones className="h-4 w-4" />}
                         count={mixsets.length}
                         onAdd={() => onAddComponent('mixset')}
                     >
@@ -164,9 +205,14 @@ export default function TreeSidebar({ onAddComponent, username }: TreeSidebarPro
                             items={mixsets.map((c) => c.id)}
                             strategy={verticalListSortingStrategy}
                         >
-                            <div className="space-y-0.5 py-1">
-                                {mixsets.map((component) => (
-                                    <TreeItem key={component.id} component={component} />
+                            <div className="py-0.5">
+                                {mixsets.map((component, index) => (
+                                    <TreeItem
+                                        key={component.id}
+                                        component={component}
+                                        isLast={index === mixsets.length - 1}
+                                        onDelete={() => handleDelete(component.id)}
+                                    />
                                 ))}
                             </div>
                         </SortableContext>
@@ -176,7 +222,7 @@ export default function TreeSidebar({ onAddComponent, username }: TreeSidebarPro
                     <SectionItem
                         section="links"
                         title="Links"
-                        icon={<LinkIcon className="h-3.5 w-3.5" />}
+                        icon={<LinkIcon className="h-4 w-4" />}
                         count={links.length}
                         onAdd={() => onAddComponent('link')}
                     >
@@ -184,52 +230,29 @@ export default function TreeSidebar({ onAddComponent, username }: TreeSidebarPro
                             items={links.map((c) => c.id)}
                             strategy={verticalListSortingStrategy}
                         >
-                            <div className="space-y-0.5 py-1">
-                                {links.map((component) => (
-                                    <TreeItem key={component.id} component={component} />
+                            <div className="py-0.5">
+                                {links.map((component, index) => (
+                                    <TreeItem
+                                        key={component.id}
+                                        component={component}
+                                        isLast={index === links.length - 1}
+                                        onDelete={() => handleDelete(component.id)}
+                                    />
                                 ))}
                             </div>
                         </SortableContext>
                     </SectionItem>
                 </div>
 
-                {/* Footer - Add Buttons */}
-                <div className="space-y-1 border-t border-white/10 p-2">
-                    <AddButton label="Add Event" onClick={() => onAddComponent('show')} />
-                    <AddButton label="Add Mixset" onClick={() => onAddComponent('mixset')} />
-                    <AddButton label="Add Link" onClick={() => onAddComponent('link')} />
-                </div>
-
-                {/* Bottom Navigation */}
-                <div className="space-y-1 border-t border-white/10 p-3">
-                    {/* Discovery */}
-                    <Link
-                        href="/discover"
-                        target="_blank"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white/90"
-                    >
-                        <Compass className="h-4 w-4" />
-                        <span>Discovery</span>
-                        <ExternalLink className="ml-auto h-3.5 w-3.5 text-white/40" />
-                    </Link>
-
-                    {/* 내 페이지 보기 */}
-                    <Link
-                        href={`/${username}`}
-                        target="_blank"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white/90"
-                    >
-                        <ExternalLink className="h-4 w-4" />
-                        <span>내 페이지 보기</span>
-                    </Link>
-                </div>
+                {/* Account Section - 하단 */}
+                <AccountSection username={username} />
             </aside>
 
             {/* Drag Overlay */}
             <DragOverlay>
                 {activeItem && (
-                    <div className="rounded-lg border border-white/20 bg-black/80 px-3 py-2 shadow-xl backdrop-blur-md">
-                        <span className="text-sm text-white/90">
+                    <div className="rounded-lg border border-neutral-200 bg-white px-3 py-2 shadow-lg">
+                        <span className="text-sm text-neutral-900">
                             {activeItem.component.title || '제목 없음'}
                         </span>
                     </div>
