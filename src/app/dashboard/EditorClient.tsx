@@ -2,7 +2,14 @@
 'use client';
 
 import { useEditorStore, type ViewItem } from '@/stores/editorStore';
-import type { ComponentData, EventComponent, LinkComponent, MixsetComponent, User } from '@/types';
+import type {
+    ComponentData,
+    EventComponent,
+    LinkComponent,
+    MixsetComponent,
+    Theme,
+    User,
+} from '@/types';
 import type { DBEventWithVenue } from '@/types/database';
 import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,6 +22,7 @@ interface EditorClientProps {
     initialUser: User;
     initialComponents: ComponentData[];
     initialViewItems?: ViewItem[];
+    initialTheme?: Theme | null;
     pageId: string;
     username: string;
 }
@@ -23,6 +31,7 @@ export default function EditorClient({
     initialUser,
     initialComponents,
     initialViewItems = [],
+    initialTheme = null,
     pageId,
     username,
 }: EditorClientProps) {
@@ -30,6 +39,7 @@ export default function EditorClient({
     const setComponents = useEditorStore((state) => state.setComponents);
     const setPageId = useEditorStore((state) => state.setPageId);
     const setViewItems = useEditorStore((state) => state.setViewItems);
+    const setTheme = useEditorStore((state) => state.setTheme);
     const components = useEditorStore((state) => state.components);
     const selectComponent = useEditorStore((state) => state.selectComponent);
     const setEditMode = useEditorStore((state) => state.setEditMode);
@@ -43,15 +53,20 @@ export default function EditorClient({
         setComponents(initialComponents);
         setViewItems(initialViewItems);
         setPageId(pageId);
+        if (initialTheme) {
+            setTheme(initialTheme);
+        }
     }, [
         initialUser,
         initialComponents,
         initialViewItems,
+        initialTheme,
         pageId,
         setUser,
         setComponents,
         setViewItems,
         setPageId,
+        setTheme,
     ]);
 
     // 이벤트 데이터를 EventComponent로 변환
@@ -223,7 +238,7 @@ export default function EditorClient({
             {/* Main Content Area */}
             <div className="flex flex-1 gap-6 overflow-hidden p-3 pl-2">
                 {/* ContentPanel - 중앙 */}
-                <div className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-neutral-100/80 shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
+                <div className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-dashboard-bg-card shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
                     <ContentPanel onSave={handleSaveComponent} onDelete={handleDeleteComponent} />
                 </div>
 
