@@ -28,6 +28,11 @@ export default async function DashboardPage() {
     const { user, components, pageId } = result.data;
 
     return (
-        <EditorClient initialUser={user} initialComponents={components} pageId={pageId as string} />
+        <EditorClient
+            initialUser={user}
+            initialComponents={components}
+            pageId={pageId as string}
+            username={user.username}
+        />
     );
 }
