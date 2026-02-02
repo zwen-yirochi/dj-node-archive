@@ -54,12 +54,19 @@ interface EditorStore {
     toggleSection: (section: SectionKey) => void;
     setSectionCollapsed: (section: SectionKey, collapsed: boolean) => void;
 
-    // 신규 액션 - View
+    // 신규 액션 - View (API 연동)
     setViewItems: (items: ViewItem[]) => void;
-    addToView: (componentId: string, position?: number) => void;
-    removeFromView: (viewItemId: string) => void;
-    reorderView: (viewItemId: string, newPosition: number) => void;
-    toggleViewItemVisibility: (viewItemId: string) => void;
+    addToView: (componentId: string, position?: number) => Promise<void>;
+    removeFromView: (viewItemId: string) => Promise<void>;
+    reorderView: (viewItemId: string, newPosition: number) => Promise<void>;
+    toggleViewItemVisibility: (viewItemId: string) => Promise<void>;
+
+    // 섹션 내 순서 변경
+    reorderSectionItems: (
+        type: 'show' | 'mixset' | 'link',
+        componentId: string,
+        newPosition: number
+    ) => Promise<void>;
 
     // 유틸리티
     getComponentById: (id: string) => ComponentData | undefined;
@@ -126,73 +133,262 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
             },
         })),
 
-    // 신규 액션 - View
+    // 신규 액션 - View (API 연동)
     setViewItems: (items) => set({ viewItems: items }),
 
-    addToView: (componentId, position) =>
-        set((state) => {
-            // 이미 View에 있으면 추가하지 않음
-            if (state.viewItems.some((item) => item.componentId === componentId)) {
-                return state;
+    addToView: async (componentId, position) => {
+        const state = get();
+        const { pageId, viewItems } = state;
+
+        // 이미 View에 있으면 추가하지 않음
+        if (viewItems.some((item) => item.componentId === componentId)) {
+            return;
+        }
+
+        if (!pageId) {
+            console.error('pageId가 없습니다.');
+            return;
+        }
+
+        const orderIndex = position ?? viewItems.length;
+
+        // 낙관적 업데이트를 위한 임시 ID
+        const tempId = crypto.randomUUID();
+        const newItem: ViewItem = {
+            id: tempId,
+            componentId,
+            order: orderIndex,
+            isVisible: true,
+        };
+
+        let newItems: ViewItem[];
+        if (position !== undefined) {
+            newItems = [...viewItems];
+            newItems.splice(position, 0, newItem);
+            newItems = newItems.map((item, index) => ({
+                ...item,
+                order: index,
+            }));
+        } else {
+            newItems = [...viewItems, newItem];
+        }
+
+        // 낙관적 업데이트
+        set({ viewItems: newItems });
+
+        try {
+            const response = await fetch('/api/view-items', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pageId, componentId, orderIndex }),
+            });
+
+            if (!response.ok) {
+                // 실패 시 롤백
+                set({ viewItems });
+                console.error('View item 추가 실패');
+                return;
             }
 
-            const newItem: ViewItem = {
-                id: crypto.randomUUID(),
-                componentId,
-                order: position ?? state.viewItems.length,
-                isVisible: true,
-            };
+            const result = await response.json();
 
-            let newItems: ViewItem[];
-            if (position !== undefined) {
-                // 특정 위치에 삽입
-                newItems = [...state.viewItems];
-                newItems.splice(position, 0, newItem);
-                // order 재정렬
-                newItems = newItems.map((item, index) => ({
-                    ...item,
-                    order: index,
+            // 서버에서 받은 실제 ID로 업데이트
+            set((s) => ({
+                viewItems: s.viewItems.map((item) =>
+                    item.id === tempId
+                        ? {
+                              ...item,
+                              id: result.data.id,
+                          }
+                        : item
+                ),
+            }));
+
+            // position이 있으면 순서 재정렬 API 호출
+            if (position !== undefined && newItems.length > 1) {
+                const updates = newItems.map((item, index) => ({
+                    id: item.id === tempId ? result.data.id : item.id,
+                    orderIndex: index,
                 }));
-            } else {
-                // 맨 뒤에 추가
-                newItems = [...state.viewItems, newItem];
+
+                await fetch('/api/view-items/reorder', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ updates }),
+                });
+            }
+        } catch (error) {
+            // 실패 시 롤백
+            set({ viewItems });
+            console.error('View item 추가 오류:', error);
+        }
+    },
+
+    removeFromView: async (viewItemId) => {
+        const { viewItems } = get();
+        const previousItems = viewItems;
+
+        // 낙관적 업데이트
+        const newItems = viewItems
+            .filter((item) => item.id !== viewItemId)
+            .map((item, index) => ({ ...item, order: index }));
+        set({ viewItems: newItems });
+
+        try {
+            const response = await fetch(`/api/view-items/${viewItemId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                // 실패 시 롤백
+                set({ viewItems: previousItems });
+                console.error('View item 삭제 실패');
+                return;
             }
 
-            return { viewItems: newItems };
-        }),
+            // 순서 재정렬 API 호출
+            if (newItems.length > 0) {
+                const updates = newItems.map((item, index) => ({
+                    id: item.id,
+                    orderIndex: index,
+                }));
 
-    removeFromView: (viewItemId) =>
-        set((state) => {
-            const newItems = state.viewItems
-                .filter((item) => item.id !== viewItemId)
-                .map((item, index) => ({ ...item, order: index }));
-            return { viewItems: newItems };
-        }),
+                await fetch('/api/view-items/reorder', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ updates }),
+                });
+            }
+        } catch (error) {
+            // 실패 시 롤백
+            set({ viewItems: previousItems });
+            console.error('View item 삭제 오류:', error);
+        }
+    },
 
-    reorderView: (viewItemId, newPosition) =>
-        set((state) => {
-            const currentIndex = state.viewItems.findIndex((item) => item.id === viewItemId);
-            if (currentIndex === -1) return state;
+    reorderView: async (viewItemId, newPosition) => {
+        const { viewItems } = get();
+        const previousItems = viewItems;
 
-            const newItems = [...state.viewItems];
-            const [movedItem] = newItems.splice(currentIndex, 1);
-            newItems.splice(newPosition, 0, movedItem);
+        const currentIndex = viewItems.findIndex((item) => item.id === viewItemId);
+        if (currentIndex === -1) return;
 
-            // order 재정렬
-            return {
-                viewItems: newItems.map((item, index) => ({
-                    ...item,
-                    order: index,
-                })),
-            };
-        }),
+        // 낙관적 업데이트
+        const newItems = [...viewItems];
+        const [movedItem] = newItems.splice(currentIndex, 1);
+        newItems.splice(newPosition, 0, movedItem);
 
-    toggleViewItemVisibility: (viewItemId) =>
-        set((state) => ({
-            viewItems: state.viewItems.map((item) =>
+        const reorderedItems = newItems.map((item, index) => ({
+            ...item,
+            order: index,
+        }));
+
+        set({ viewItems: reorderedItems });
+
+        try {
+            const updates = reorderedItems.map((item) => ({
+                id: item.id,
+                orderIndex: item.order,
+            }));
+
+            const response = await fetch('/api/view-items/reorder', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ updates }),
+            });
+
+            if (!response.ok) {
+                // 실패 시 롤백
+                set({ viewItems: previousItems });
+                console.error('View item 순서 변경 실패');
+            }
+        } catch (error) {
+            // 실패 시 롤백
+            set({ viewItems: previousItems });
+            console.error('View item 순서 변경 오류:', error);
+        }
+    },
+
+    toggleViewItemVisibility: async (viewItemId) => {
+        const { viewItems } = get();
+        const previousItems = viewItems;
+        const targetItem = viewItems.find((item) => item.id === viewItemId);
+
+        if (!targetItem) return;
+
+        // 낙관적 업데이트
+        set({
+            viewItems: viewItems.map((item) =>
                 item.id === viewItemId ? { ...item, isVisible: !item.isVisible } : item
             ),
-        })),
+        });
+
+        try {
+            const response = await fetch(`/api/view-items/${viewItemId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isVisible: !targetItem.isVisible }),
+            });
+
+            if (!response.ok) {
+                // 실패 시 롤백
+                set({ viewItems: previousItems });
+                console.error('View item 표시 여부 변경 실패');
+            }
+        } catch (error) {
+            // 실패 시 롤백
+            set({ viewItems: previousItems });
+            console.error('View item 표시 여부 변경 오류:', error);
+        }
+    },
+
+    // 섹션 내 컴포넌트 순서 변경
+    reorderSectionItems: async (type, componentId, newPosition) => {
+        const { components } = get();
+        const previousComponents = components;
+
+        // 해당 타입의 컴포넌트만 필터링
+        const sectionComponents = components.filter((c) => c.type === type);
+        const otherComponents = components.filter((c) => c.type !== type);
+
+        const currentIndex = sectionComponents.findIndex((c) => c.id === componentId);
+        if (currentIndex === -1) return;
+
+        // 순서 변경
+        const reorderedSection = [...sectionComponents];
+        const [movedComponent] = reorderedSection.splice(currentIndex, 1);
+        reorderedSection.splice(newPosition, 0, movedComponent);
+
+        // 전체 컴포넌트 목록 재구성 (position 재할당)
+        const allComponents = [...otherComponents, ...reorderedSection];
+
+        // 낙관적 업데이트
+        set({ components: allComponents });
+
+        try {
+            // position 업데이트 배열 생성
+            const updates = reorderedSection.map((comp, index) => ({
+                id: comp.id,
+                position: index,
+            }));
+
+            const response = await fetch('/api/components/reorder', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ updates }),
+            });
+
+            if (!response.ok) {
+                // 실패 시 롤백
+                set({ components: previousComponents });
+                console.error('컴포넌트 순서 변경 실패');
+            }
+        } catch (error) {
+            // 실패 시 롤백
+            set({ components: previousComponents });
+            console.error('컴포넌트 순서 변경 오류:', error);
+        }
+    },
 
     // 유틸리티
     getComponentById: (id) => {
