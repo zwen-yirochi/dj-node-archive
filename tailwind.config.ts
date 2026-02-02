@@ -67,8 +67,8 @@ const config: Config = {
                     // Backgrounds
                     bg: {
                         DEFAULT: 'rgb(250 250 250)', // neutral-50
-                        surface: 'rgb(245 245 245 / 0.8)', // neutral-100/80
-                        card: 'rgb(255 255 255)', // white
+                        surface: 'rgb(245 245 245 / 0.9)', // neutral-100/90
+                        card: 'rgb(245 245 245 / 0.9)', // neutral-100/90
                         hover: 'rgb(229 229 229 / 0.5)', // neutral-200/50
                         active: 'rgb(229 229 229)', // neutral-200
                         muted: 'rgb(245 245 245)', // neutral-100

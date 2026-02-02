@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/stores/editorStore';
+import type { ComponentData } from '@/types';
 import {
     closestCenter,
     DndContext,
@@ -30,7 +31,6 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import type { ComponentData } from '@/types';
 
 const typeConfig = {
     show: {
@@ -87,7 +87,7 @@ function SortableItem({
             ref={setNodeRef}
             style={style}
             className={cn(
-                'group flex items-center gap-3 rounded-lg border bg-dashboard-bg-card p-3 transition-all',
+                'group flex items-center gap-3 rounded-lg border p-3 transition-all',
                 isDragging
                     ? 'border-dashboard-border-hover shadow-lg'
                     : 'border-dashboard-border hover:border-dashboard-border-hover',
@@ -199,7 +199,7 @@ export default function PageListView() {
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="border-b border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
+            <div className="border-b bg-dashboard-bg-muted px-6 py-4">
                 <h2 className="text-lg font-semibold text-dashboard-text">Page 구성</h2>
                 <p className="mt-1 text-sm text-dashboard-text-muted">
                     공개 페이지에 표시될 컴포넌트를 관리합니다. 드래그하여 순서를 변경하세요.

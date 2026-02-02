@@ -60,7 +60,7 @@ export default function ViewMode({ component, onEdit, onDelete }: ViewModeProps)
     };
 
     return (
-        <div className="flex h-full flex-col bg-dashboard-bg-card">
+        <div className="flex h-full flex-col">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-dashboard-border px-6 py-4">
                 <span
