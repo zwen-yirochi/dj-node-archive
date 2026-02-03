@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { useEditorStore, type SectionKey } from '@/stores/editorStore';
+import { type SectionKey, useUIStore } from '@/stores/uiStore';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -22,8 +22,8 @@ export default function SectionItem({
     onAdd,
     children,
 }: SectionItemProps) {
-    const sidebarSections = useEditorStore((state) => state.sidebarSections);
-    const toggleSection = useEditorStore((state) => state.toggleSection);
+    const sidebarSections = useUIStore((state) => state.sidebarSections);
+    const toggleSection = useUIStore((state) => state.toggleSection);
 
     const isCollapsed = sidebarSections[section].collapsed;
 

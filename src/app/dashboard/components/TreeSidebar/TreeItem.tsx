@@ -8,7 +8,8 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { useEditorStore } from '@/stores/editorStore';
+import { useUIStore } from '@/stores/uiStore';
+import { useViewStore } from '@/stores/viewStore';
 import type { ComponentData } from '@/types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -63,10 +64,13 @@ export default function TreeItem({
     onEdit,
     onDelete,
 }: TreeItemProps) {
-    const selectedComponentId = useEditorStore((state) => state.selectedComponentId);
-    const selectComponent = useEditorStore((state) => state.selectComponent);
-    const setEditMode = useEditorStore((state) => state.setEditMode);
-    const viewItems = useEditorStore((state) => state.viewItems);
+    // UI Store
+    const selectedComponentId = useUIStore((state) => state.selectedComponentId);
+    const selectComponent = useUIStore((state) => state.selectComponent);
+    const setEditMode = useUIStore((state) => state.setEditMode);
+
+    // View Store
+    const viewItems = useViewStore((state) => state.viewItems);
 
     // viewItems에서 현재 컴포넌트가 포함되어 있는지 확인
     const isInView = viewItems.some((item) => item.componentId === component.id);

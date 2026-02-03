@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
-import { useEditorStore } from '@/stores/editorStore';
+import { useUserStore } from '@/stores/userStore';
 import type { User } from '@/types';
 import {
     Camera,
@@ -35,8 +35,8 @@ interface AccountSectionProps {
 }
 
 export default function AccountSection({ username }: AccountSectionProps) {
-    const user = useEditorStore((state) => state.user);
-    const updateUser = useEditorStore((state) => state.updateUser);
+    const user = useUserStore((state) => state.user);
+    const updateUser = useUserStore((state) => state.updateUser);
 
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [tempUser, setTempUser] = useState<User | null>(user);

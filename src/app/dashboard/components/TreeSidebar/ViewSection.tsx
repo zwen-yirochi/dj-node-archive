@@ -1,7 +1,8 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { useEditorStore } from '@/stores/editorStore';
+import { useComponentStore } from '@/stores/editorStore';
+import { useViewStore } from '@/stores/viewStore';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useMemo } from 'react';
@@ -13,10 +14,13 @@ interface ViewSectionProps {
 }
 
 export default function ViewSection({ isDraggingOver = false }: ViewSectionProps) {
-    const viewItems = useEditorStore((state) => state.viewItems);
-    const components = useEditorStore((state) => state.components);
-    const toggleViewItemVisibility = useEditorStore((state) => state.toggleViewItemVisibility);
-    const removeFromView = useEditorStore((state) => state.removeFromView);
+    // View Store
+    const viewItems = useViewStore((state) => state.viewItems);
+    const toggleViewItemVisibility = useViewStore((state) => state.toggleViewItemVisibility);
+    const removeFromView = useViewStore((state) => state.removeFromView);
+
+    // Component Store
+    const components = useComponentStore((state) => state.components);
 
     const { setNodeRef, isOver } = useDroppable({
         id: 'view-drop-zone',

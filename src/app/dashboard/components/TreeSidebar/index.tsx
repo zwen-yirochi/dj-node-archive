@@ -1,7 +1,9 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { useEditorStore } from '@/stores/editorStore';
+import { useComponentStore } from '@/stores/editorStore';
+import { useUIStore } from '@/stores/uiStore';
+import { useViewStore } from '@/stores/viewStore';
 import type { ComponentData } from '@/types';
 import {
     closestCenter,
@@ -39,13 +41,19 @@ export default function TreeSidebar({
     onDeleteComponent,
     username,
 }: TreeSidebarProps) {
-    const components = useEditorStore((state) => state.components);
-    const addToView = useEditorStore((state) => state.addToView);
-    const reorderView = useEditorStore((state) => state.reorderView);
-    const reorderSectionItems = useEditorStore((state) => state.reorderSectionItems);
-    const viewItems = useEditorStore((state) => state.viewItems);
-    const activePanel = useEditorStore((state) => state.activePanel);
-    const setActivePanel = useEditorStore((state) => state.setActivePanel);
+    // Component Store
+    const components = useComponentStore((state) => state.components);
+    const pageId = useComponentStore((state) => state.pageId);
+    const reorderSectionItems = useComponentStore((state) => state.reorderSectionItems);
+
+    // View Store
+    const viewItems = useViewStore((state) => state.viewItems);
+    const addToView = useViewStore((state) => state.addToView);
+    const reorderView = useViewStore((state) => state.reorderView);
+
+    // UI Store
+    const activePanel = useUIStore((state) => state.activePanel);
+    const setActivePanel = useUIStore((state) => state.setActivePanel);
 
     // useMemo로 필터링하여 무한 루프 방지
     const events = useMemo(() => components.filter((c) => c.type === 'show'), [components]);
@@ -100,8 +108,8 @@ export default function TreeSidebar({
         const overData = over.data.current;
 
         // View 드롭존에 드롭한 경우
-        if (over.id === 'view-drop-zone' && activeData?.type === 'component') {
-            addToView(activeData.component.id);
+        if (over.id === 'view-drop-zone' && activeData?.type === 'component' && pageId) {
+            addToView(pageId, activeData.component.id);
             return;
         }
 
