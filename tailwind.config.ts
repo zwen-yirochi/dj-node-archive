@@ -62,6 +62,37 @@ const config: Config = {
                     inverse: '#ffffff',
                     muted: '#d1d5db',
                 },
+                // Dashboard Design System - Light Theme
+                dashboard: {
+                    // Backgrounds
+                    bg: {
+                        DEFAULT: 'rgb(250 250 250)', // neutral-50
+                        surface: 'rgb(245 245 245 / 0.9)', // neutral-100/90
+                        card: 'rgb(245 245 245 / 0.9)', // neutral-100/90
+                        hover: 'rgb(229 229 229 / 0.5)', // neutral-200/50
+                        active: 'rgb(229 229 229)', // neutral-200
+                        muted: 'rgb(245 245 245)', // neutral-100
+                    },
+                    // Text colors
+                    text: {
+                        DEFAULT: 'rgb(23 23 23)', // neutral-900
+                        secondary: 'rgb(64 64 64)', // neutral-700
+                        muted: 'rgb(115 115 115)', // neutral-500
+                        placeholder: 'rgb(163 163 163)', // neutral-400
+                    },
+                    // Border colors
+                    border: {
+                        DEFAULT: 'rgb(229 229 229)', // neutral-200
+                        muted: 'rgb(245 245 245)', // neutral-100
+                        hover: 'rgb(212 212 212)', // neutral-300
+                    },
+                    // Component type colors
+                    type: {
+                        event: 'rgb(59 130 246)', // blue-500
+                        mixset: 'rgb(168 85 247)', // purple-500
+                        link: 'rgb(34 197 94)', // green-500
+                    },
+                },
             },
             fontFamily: {
                 stripe: ['var(--font-stripe)', 'sans-serif'],

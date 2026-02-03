@@ -1,4 +1,5 @@
-import { getComponentsByType, getUser } from '@/lib/services/user.service';
+import { getPublicPageData } from '@/lib/services/user.service';
+import type { EventComponent, MixsetComponent } from '@/types/domain';
 import { notFound } from 'next/navigation';
 import EventsSection from './components/EventsSection';
 import GridView from './components/GridView';
@@ -14,28 +15,20 @@ export default async function Page({ params, searchParams }: PageProps) {
     const { view = 'list' } = await searchParams;
     const { user } = await params;
 
-    const [userResult, componentsResult] = await Promise.all([
-        getUser(user),
-        getComponentsByType(user),
-    ]);
+    const result = await getPublicPageData(user);
 
-    // 에러 체크
-    if (!userResult.success) {
-        if (userResult.error.code === 'NOT_FOUND') {
+    if (!result.success) {
+        if (result.error.code === 'NOT_FOUND') {
             notFound();
         }
-        throw new Error(userResult.error.message);
+        throw new Error(result.error.message);
     }
 
-    if (!componentsResult.success) {
-        if (componentsResult.error.code === 'NOT_FOUND') {
-            notFound();
-        }
-        throw new Error(componentsResult.error.message);
-    }
+    const { user: userData, components } = result.data;
 
-    const userData = userResult.data;
-    const { events, mixsets } = componentsResult.data;
+    // 컴포넌트를 타입별로 분류
+    const events = components.filter((c): c is EventComponent => c.type === 'show');
+    const mixsets = components.filter((c): c is MixsetComponent => c.type === 'mixset');
 
     return (
         <div className="text-primay min-h-screen bg-stone-200">

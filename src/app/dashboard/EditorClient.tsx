@@ -1,61 +1,195 @@
 // app/dashboard/EditorClient.tsx
 'use client';
 
-import { useEditorStore } from '@/stores/editorStore';
-import type { ComponentData, User } from '@/types';
-import { useEffect } from 'react';
-import { ComponentList } from './components/ComponentList';
+import { useComponentStore, type ViewItem } from '@/stores/editorStore';
+import { useUIStore } from '@/stores/uiStore';
+import { useUserStore } from '@/stores/userStore';
+import { useViewStore } from '@/stores/viewStore';
+import type {
+    ComponentData,
+    EventComponent,
+    LinkComponent,
+    MixsetComponent,
+    Theme,
+    User,
+} from '@/types';
+import type { DBEventWithVenue } from '@/types/database';
+import { useEffect, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { AddComponentModal } from './components/AddComponentModal';
+import ContentPanel from './components/ContentPanel';
 import PreviewPanel from './components/PreviewPanel';
-import ProfileEditor from './components/ProfileEditor';
+import TreeSidebar from './components/TreeSidebar';
 
 interface EditorClientProps {
     initialUser: User;
     initialComponents: ComponentData[];
+    initialViewItems?: ViewItem[];
+    initialTheme?: Theme | null;
     pageId: string;
+    username: string;
 }
 
 export default function EditorClient({
     initialUser,
     initialComponents,
+    initialViewItems = [],
+    initialTheme = null,
     pageId,
+    username,
 }: EditorClientProps) {
-    const setUser = useEditorStore((state) => state.setUser);
-    const setComponents = useEditorStore((state) => state.setComponents);
-    const setPageId = useEditorStore((state) => state.setPageId);
+    // User Store
+    const setUser = useUserStore((state) => state.setUser);
+
+    // Component Store
+    const components = useComponentStore((state) => state.components);
+    const setComponents = useComponentStore((state) => state.setComponents);
+    const setPageId = useComponentStore((state) => state.setPageId);
+    const setTheme = useComponentStore((state) => state.setTheme);
+    const saveComponent = useComponentStore((state) => state.saveComponent);
+    const deleteComponent = useComponentStore((state) => state.deleteComponent);
+
+    // View Store
+    const setViewItems = useViewStore((state) => state.setViewItems);
+
+    // UI Store
+    const selectComponent = useUIStore((state) => state.selectComponent);
+    const setEditMode = useUIStore((state) => state.setEditMode);
+
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [_addingType, setAddingType] = useState<'show' | 'mixset' | 'link'>('show');
 
     // Zustand 초기화
     useEffect(() => {
         setUser(initialUser);
         setComponents(initialComponents);
+        setViewItems(initialViewItems);
         setPageId(pageId);
-    }, [initialUser, initialComponents, pageId, setUser, setComponents, setPageId]);
+        if (initialTheme) {
+            setTheme(initialTheme);
+        }
+    }, [
+        initialUser,
+        initialComponents,
+        initialViewItems,
+        initialTheme,
+        pageId,
+        setUser,
+        setComponents,
+        setViewItems,
+        setPageId,
+        setTheme,
+    ]);
+
+    // 이벤트 데이터를 EventComponent로 변환
+    const eventToComponent = (event: DBEventWithVenue): EventComponent => ({
+        id: uuidv4(),
+        type: 'show',
+        title: event.title || '',
+        date: event.date,
+        venue: event.venue?.name || '',
+        posterUrl: event.data?.poster_url || '',
+        lineup: event.data?.lineup_text?.split('\n').filter(Boolean) || [],
+        description: event.data?.notes || '',
+        links: event.data?.set_recording_url
+            ? [{ title: '세트 녹음', url: event.data.set_recording_url }]
+            : [],
+    });
+
+    // 빈 컴포넌트 템플릿 생성
+    const createEmptyComponent = (type: 'show' | 'mixset' | 'link'): ComponentData => {
+        const id = uuidv4();
+        switch (type) {
+            case 'show':
+                return {
+                    id,
+                    type: 'show',
+                    title: '',
+                    date: new Date().toISOString().split('T')[0],
+                    venue: '',
+                    posterUrl: '',
+                    lineup: [],
+                    description: '',
+                    links: [],
+                } as EventComponent;
+            case 'mixset':
+                return {
+                    id,
+                    type: 'mixset',
+                    title: '',
+                    coverUrl: '',
+                    audioUrl: '',
+                    soundcloudEmbedUrl: '',
+                    tracklist: [],
+                    description: '',
+                    releaseDate: new Date().toISOString().split('T')[0],
+                    genre: '',
+                } as MixsetComponent;
+            case 'link':
+                return {
+                    id,
+                    type: 'link',
+                    title: '',
+                    url: '',
+                    icon: 'globe',
+                } as LinkComponent;
+        }
+    };
+
+    // 컴포넌트 추가 핸들러
+    const handleAddComponent = (type: 'show' | 'mixset' | 'link', eventData?: DBEventWithVenue) => {
+        setIsAddModalOpen(false);
+
+        if (eventData) {
+            // 이벤트 데이터가 있으면 변환하여 바로 저장
+            const newComponent = eventToComponent(eventData);
+            saveComponent(newComponent);
+        } else {
+            // 빈 컴포넌트로 에디터 열기
+            const newComponent = createEmptyComponent(type);
+            // 임시로 컴포넌트 추가 후 선택하여 편집 모드로
+            setComponents([...components, newComponent]);
+            selectComponent(newComponent.id);
+            setEditMode('edit');
+        }
+    };
+
+    // Add 버튼 클릭 핸들러
+    const handleOpenAddModal = (type: 'show' | 'mixset' | 'link') => {
+        setAddingType(type);
+        setIsAddModalOpen(true);
+    };
 
     return (
-        <div className="h-screen overflow-hidden">
-            <div
-                className="editor-layout grid h-full gap-6"
-                style={{
-                    gridTemplateColumns: '1fr 400px',
-                }}
-            >
-                {/* Main Content - 전체 높이, 내부 스크롤 */}
-                <main className="flex h-full flex-col overflow-hidden">
-                    {/* Profile - 고정 높이, 축소 UI */}
-                    <div className="shrink-0 border-b border-border px-6 py-4">
-                        <ProfileEditor compact />
-                    </div>
+        <div className="flex h-screen overflow-hidden">
+            {/* TreeSidebar - 왼쪽 */}
+            <div className="p-3">
+                <TreeSidebar
+                    onAddComponent={handleOpenAddModal}
+                    onDeleteComponent={deleteComponent}
+                    username={username}
+                />
+            </div>
 
-                    {/* Content - 나머지 영역, 스크롤 */}
-                    <div className="flex-1 overflow-y-auto p-6">
-                        <ComponentList />
-                    </div>
-                </main>
+            {/* Main Content Area */}
+            <div className="flex flex-1 gap-6 overflow-hidden p-3 pl-2">
+                {/* ContentPanel - 중앙 */}
+                <div className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-dashboard-bg-card shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
+                    <ContentPanel />
+                </div>
 
-                {/* Preview Panel */}
-                <aside className="flex flex-col overflow-hidden pr-6 pt-6">
+                {/* PreviewPanel - 오른쪽 */}
+                <aside className="w-[400px] shrink-0 overflow-hidden">
                     <PreviewPanel />
                 </aside>
             </div>
+
+            {/* Add Component Modal */}
+            <AddComponentModal
+                open={isAddModalOpen}
+                onOpenChange={setIsAddModalOpen}
+                onAddComponent={handleAddComponent}
+            />
         </div>
     );
 }

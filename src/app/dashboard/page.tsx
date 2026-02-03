@@ -25,9 +25,16 @@ export default async function DashboardPage() {
         throw new Error(result.error.message);
     }
 
-    const { user, components, pageId } = result.data;
+    const { user, components, pageId, viewItems, theme } = result.data;
 
     return (
-        <EditorClient initialUser={user} initialComponents={components} pageId={pageId as string} />
+        <EditorClient
+            initialUser={user}
+            initialComponents={components}
+            initialViewItems={viewItems}
+            initialTheme={theme}
+            pageId={pageId as string}
+            username={user.username}
+        />
     );
 }

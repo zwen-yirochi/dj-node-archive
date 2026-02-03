@@ -1,11 +1,11 @@
 'use client';
 
-import { EventData } from '@/app/types';
+import type { EventComponent } from '@/types';
 import Image from 'next/image';
 import { useState } from 'react';
 
 interface EventGridCardProps {
-    event: EventData;
+    event: EventComponent;
 }
 
 export default function EventGridCard({ event }: EventGridCardProps) {
