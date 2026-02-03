@@ -88,10 +88,6 @@ export default function ContentPanel() {
                     component={selectedComponent}
                     onSave={saveComponent}
                     onCancel={() => setEditMode('view')}
-                    onDelete={async () => {
-                        await deleteComponent(selectedComponent.id);
-                        selectComponent(null);
-                    }}
                 />
             </div>
         );

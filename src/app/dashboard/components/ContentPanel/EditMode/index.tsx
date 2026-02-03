@@ -1,12 +1,20 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Tooltip } from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { canAddToView, canCreate, getMissingFieldLabels } from '@/lib/validators';
 import { useViewStore } from '@/stores/viewStore';
 import { type ComponentData, isEventComponent, isLinkComponent, isMixsetComponent } from '@/types';
-import { Calendar, Check, Headphones, Link as LinkIcon, Loader2, Trash2 } from 'lucide-react';
+import {
+    AlertCircle,
+    Calendar,
+    Check,
+    Headphones,
+    Link as LinkIcon,
+    Loader2,
+    X,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import LinkEditor from './LinkEditor';
 import MixsetEditor from './MixsetEditor';
@@ -16,7 +24,6 @@ interface EditModeProps {
     component: ComponentData;
     onSave: (component: ComponentData) => Promise<void>;
     onCancel: () => void;
-    onDelete?: () => void;
 }
 
 /** 자동 저장 딜레이 (ms) */
@@ -28,7 +35,7 @@ const AUTO_SAVE_DELAY = 800;
  * - 디바운스로 변경사항 자동 저장
  * - View 무결성 검사
  */
-export default function EditMode({ component, onSave, onCancel, onDelete }: EditModeProps) {
+export default function EditMode({ component, onSave, onCancel }: EditModeProps) {
     const [localComponent, setLocalComponent] = useState<ComponentData>(component);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     const isFirstRender = useRef(true);
@@ -125,6 +132,7 @@ export default function EditMode({ component, onSave, onCancel, onDelete }: Edit
     // View 상태
     const isViewReady = canAddToView(localComponent);
     const componentIsInView = isInView(localComponent.id);
+    const missingFields = !isViewReady ? getMissingFieldLabels(localComponent, 'view') : [];
 
     const typeStyles = {
         show: 'bg-blue-50 text-dashboard-type-event',
@@ -161,21 +169,29 @@ export default function EditMode({ component, onSave, onCancel, onDelete }: Edit
                             </>
                         )}
                     </div>
+
+                    {/* View 상태 경고 아이콘 */}
+                    {!isViewReady && (
+                        <Tooltip
+                            content={
+                                componentIsInView
+                                    ? `Page에서 제거 예정 - 필드를 채워주세요: ${missingFields.join(', ')}`
+                                    : `Page에 추가하려면: ${missingFields.join(', ')}`
+                            }
+                            delay={300}
+                        >
+                            <AlertCircle className="h-4 w-4 text-amber-500" />
+                        </Tooltip>
+                    )}
                 </div>
 
-                {/* View 상태 경고 */}
-                <div className="flex items-center gap-2">
-                    {componentIsInView && !isViewReady && (
-                        <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
-                            Page에서 제거 예정
-                        </span>
-                    )}
-                    {!componentIsInView && !isViewReady && (
-                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">
-                            Page 추가 불가
-                        </span>
-                    )}
-                </div>
+                {/* 닫기 버튼 (오른쪽 위) */}
+                <button
+                    onClick={onCancel}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-dashboard-text-muted transition-colors hover:bg-dashboard-bg-hover hover:text-dashboard-text"
+                >
+                    <X className="h-5 w-5" />
+                </button>
             </div>
 
             {/* Content */}
@@ -189,29 +205,6 @@ export default function EditMode({ component, onSave, onCancel, onDelete }: Edit
                 {isLinkComponent(localComponent) && (
                     <LinkEditor component={localComponent} onUpdate={updateLocal} />
                 )}
-            </div>
-
-            {/* Footer - 삭제 버튼과 닫기 버튼만 */}
-            <div className="flex items-center justify-between border-t border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
-                <div>
-                    {onDelete && (
-                        <Button
-                            onClick={onDelete}
-                            variant="ghost"
-                            className="text-red-600 hover:bg-red-50"
-                        >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            삭제
-                        </Button>
-                    )}
-                </div>
-                <Button
-                    onClick={onCancel}
-                    variant="ghost"
-                    className="text-dashboard-text-secondary hover:bg-dashboard-bg-muted hover:text-dashboard-text"
-                >
-                    닫기
-                </Button>
             </div>
         </div>
     );

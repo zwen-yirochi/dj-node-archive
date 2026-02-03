@@ -23,7 +23,15 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Calendar, FileText, Headphones, Link as LinkIcon, Palette } from 'lucide-react';
+import {
+    Calendar,
+    ChevronDown,
+    ChevronRight,
+    FileText,
+    Headphones,
+    Link as LinkIcon,
+    Palette,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import AccountSection from './AccountSection';
@@ -55,6 +63,11 @@ export default function TreeSidebar({
     // UI Store
     const activePanel = useUIStore((state) => state.activePanel);
     const setActivePanel = useUIStore((state) => state.setActivePanel);
+    const sidebarSections = useUIStore((state) => state.sidebarSections);
+    const toggleSection = useUIStore((state) => state.toggleSection);
+
+    // Page 섹션 접힘 상태
+    const isPageCollapsed = sidebarSections.view.collapsed;
 
     // useMemo로 필터링하여 무한 루프 방지
     const events = useMemo(() => components.filter((c) => c.type === 'show'), [components]);
@@ -161,6 +174,15 @@ export default function TreeSidebar({
         onDeleteComponent?.(componentId);
     };
 
+    const handlePageClick = () => {
+        setActivePanel('page');
+    };
+
+    const handlePageToggle = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        toggleSection('view');
+    };
+
     const visibleCount = viewItems.filter((item) => item.isVisible).length;
 
     return (
@@ -198,16 +220,27 @@ export default function TreeSidebar({
                         <span className="flex-1 text-sm font-medium">Bio design</span>
                     </button>
 
-                    {/* Page */}
-                    <button
-                        onClick={() => setActivePanel('page')}
+                    {/* Page - 클릭하면 패널 전환, 화살표 클릭하면 접기/펼치기 */}
+                    <div
+                        onClick={handlePageClick}
                         className={cn(
-                            'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
+                            'group mb-1 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
                             activePanel === 'page'
                                 ? 'bg-dashboard-bg-active text-dashboard-text'
                                 : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
                         )}
                     >
+                        {/* 접기/펼치기 화살표 */}
+                        <button
+                            onClick={handlePageToggle}
+                            className="flex h-4 w-4 items-center justify-center text-dashboard-text-placeholder hover:text-dashboard-text-muted"
+                        >
+                            {isPageCollapsed ? (
+                                <ChevronRight className="h-3.5 w-3.5" />
+                            ) : (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                            )}
+                        </button>
                         <FileText className="h-4 w-4 text-dashboard-text-muted" />
                         <span className="flex-1 text-sm font-medium">Page</span>
                         {visibleCount > 0 && (
@@ -215,17 +248,16 @@ export default function TreeSidebar({
                                 {visibleCount}
                             </span>
                         )}
-                    </button>
+                    </div>
 
-                    {/* Page 드롭존 - Page 선택 시에만 확장 */}
-                    {activePanel === 'page' && (
-                        <div className="mb-3 ml-3">
-                            <ViewSection
-                                isDraggingOver={isDraggingOverView}
-                                onDeleteComponent={handleDelete}
-                            />
-                        </div>
-                    )}
+                    {/* Page ViewSection - 항상 렌더링 (드롭 가능), 접힘 상태에 따라 표시 */}
+                    <div className="mb-3 ml-3">
+                        <ViewSection
+                            isDraggingOver={isDraggingOverView}
+                            isCollapsed={isPageCollapsed}
+                            onDeleteComponent={handleDelete}
+                        />
+                    </div>
 
                     {/* Divider */}
                     <div className="my-3 border-t border-dashboard-border" />
