@@ -1,6 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
+import { canAddToView, canCreate, getMissingFieldLabels } from '@/lib/validators';
+import { useViewStore } from '@/stores/viewStore';
 import { type ComponentData, isEventComponent, isLinkComponent, isMixsetComponent } from '@/types';
 import { Calendar, Headphones, Link as LinkIcon, Loader2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -26,16 +29,39 @@ export default function EditMode({
     const [localComponent, setLocalComponent] = useState<ComponentData>(component);
     const [isSaving, setIsSaving] = useState(false);
 
+    // View Store
+    const isInView = useViewStore((state) => state.isInView);
+    const removeFromViewByComponentId = useViewStore((state) => state.removeFromViewByComponentId);
+
     const updateLocal = (updates: Partial<ComponentData>) => {
         setLocalComponent((prev) => ({ ...prev, ...updates }) as ComponentData);
     };
 
     const handleSave = async () => {
+        // View에 있는 컴포넌트인 경우 View 검증
+        if (isInView(localComponent.id)) {
+            if (!canAddToView(localComponent)) {
+                const missingFields = getMissingFieldLabels(localComponent, 'view');
+                toast({
+                    variant: 'destructive',
+                    title: 'Page에서 제거됨',
+                    description: `필수 필드 누락: ${missingFields.join(', ')}`,
+                });
+                // View에서 제거
+                await removeFromViewByComponentId(localComponent.id);
+            }
+        }
+
         setIsSaving(true);
         try {
             await onSave(localComponent);
         } catch (error) {
             console.error('저장 실패:', error);
+            toast({
+                variant: 'destructive',
+                title: '저장 실패',
+                description: '컴포넌트를 저장하는 중 오류가 발생했습니다.',
+            });
         } finally {
             setIsSaving(false);
         }
@@ -63,22 +89,12 @@ export default function EditMode({
         }
     };
 
-    const isValid = () => {
-        if (isEventComponent(localComponent)) {
-            return (
-                localComponent.title.trim() !== '' &&
-                localComponent.date !== '' &&
-                localComponent.venue.trim() !== ''
-            );
-        }
-        if (isMixsetComponent(localComponent)) {
-            return localComponent.title.trim() !== '';
-        }
-        if (isLinkComponent(localComponent)) {
-            return localComponent.title.trim() !== '' && localComponent.url.trim() !== '';
-        }
-        return false;
-    };
+    // 저장 가능 여부: create tier 검증 (title만 필수)
+    const isSaveEnabled = canCreate(localComponent);
+
+    // View 추가 가능 여부 표시용
+    const isViewReady = canAddToView(localComponent);
+    const componentIsInView = isInView(localComponent.id);
 
     const typeStyles = {
         show: 'bg-blue-50 text-dashboard-type-event',
@@ -100,6 +116,22 @@ export default function EditMode({
                         {getComponentTitle()}
                     </h2>
                 </div>
+
+                {/* View 상태 표시 */}
+                {!isNew && (
+                    <div className="flex items-center gap-2">
+                        {componentIsInView && !isViewReady && (
+                            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+                                저장 시 Page에서 제거됨
+                            </span>
+                        )}
+                        {!componentIsInView && !isViewReady && (
+                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">
+                                Page 추가 불가
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Content */}
@@ -139,7 +171,7 @@ export default function EditMode({
                     </Button>
                     <Button
                         onClick={handleSave}
-                        disabled={!isValid() || isSaving}
+                        disabled={!isSaveEnabled || isSaving}
                         className="bg-dashboard-text text-white hover:bg-dashboard-text/90"
                     >
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

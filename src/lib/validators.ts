@@ -1,17 +1,10 @@
-import {
-    COMPONENT_FIELDS,
-    getRequiredFields,
-    type ComponentType,
-    type FieldConfig,
-} from '@/constants/componentFields';
+import { COMPONENT_FIELDS, type ComponentType } from '@/constants/componentFields';
 import type { ComponentData } from '@/types';
+import type { FieldConfig, TreeItemStatus, ValidationResult } from '@/types/componentFields';
 
-export interface ValidationResult {
-    isValid: boolean;
-    errors: string[];
-    /** 누락된 필드 키 목록 */
-    missingFields: string[];
-}
+// ============================================
+// 내부 헬퍼 함수
+// ============================================
 
 /**
  * URL 형식 검증
@@ -30,23 +23,69 @@ function isValidUrl(url: string): boolean {
  * 단일 필드 값 검증
  */
 function validateFieldValue(value: unknown, config: FieldConfig): boolean {
-    // 빈 값 체크
     if (value === undefined || value === null) return false;
 
     if (typeof value === 'string') {
         if (!value.trim()) return false;
-        // URL 검증
         if (config.isUrl && !isValidUrl(value)) return false;
         return true;
     }
 
     if (Array.isArray(value)) {
-        // 빈 배열 허용 여부
         return config.allowEmptyArray || value.length > 0;
     }
 
     return true;
 }
+
+// ============================================
+// 필드 설정 헬퍼 함수
+// ============================================
+
+/**
+ * 특정 검증 단계에서 필수인 필드 목록 반환
+ */
+export function getRequiredFields(type: ComponentType, tier: 'create' | 'view'): FieldConfig[] {
+    const fields = COMPONENT_FIELDS[type];
+
+    if (tier === 'create') {
+        return fields.filter((f) => f.required === 'create');
+    }
+
+    // view 단계: create + view 필드 모두 필수
+    return fields.filter((f) => f.required === 'create' || f.required === 'view');
+}
+
+/**
+ * 필드가 특정 단계에서 필수인지 확인
+ */
+export function isFieldRequired(
+    type: ComponentType,
+    fieldKey: string,
+    tier: 'create' | 'view'
+): boolean {
+    const fields = COMPONENT_FIELDS[type];
+    const field = fields.find((f) => f.key === fieldKey);
+
+    if (!field) return false;
+
+    if (tier === 'create') {
+        return field.required === 'create';
+    }
+
+    return field.required === 'create' || field.required === 'view';
+}
+
+/**
+ * 필드 설정 가져오기
+ */
+export function getFieldConfig(type: ComponentType, fieldKey: string): FieldConfig | undefined {
+    return COMPONENT_FIELDS[type].find((f) => f.key === fieldKey);
+}
+
+// ============================================
+// 검증 함수
+// ============================================
 
 /**
  * 컴포넌트 검증 (범용)
@@ -117,6 +156,10 @@ export function canAddToView(component: ComponentData): boolean {
     return validateComponent(component, 'view').isValid;
 }
 
+// ============================================
+// UI 헬퍼 함수
+// ============================================
+
 /**
  * 컴포넌트 완성도 계산 (0-100%)
  * Page 사용 가능 기준으로 계산
@@ -152,4 +195,15 @@ export function getMissingFieldLabels(
     return result.missingFields
         .map((key) => fields.find((f) => f.key === key)?.label)
         .filter((label): label is string => !!label);
+}
+
+/**
+ * TreeItem 상태 계산
+ * @param isInView - 컴포넌트가 현재 View에 있는지
+ * @param isValid - 컴포넌트가 view tier 검증을 통과하는지
+ */
+export function getTreeItemStatus(isInView: boolean, isValid: boolean): TreeItemStatus {
+    if (isInView) return 'inView';
+    if (!isValid) return 'warning';
+    return 'normal';
 }

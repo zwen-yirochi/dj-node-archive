@@ -13,10 +13,12 @@ interface ViewStore {
     // 동기 액션
     setViewItems: (items: ViewItem[]) => void;
     isInView: (componentId: string) => boolean;
+    getViewItemByComponentId: (componentId: string) => ViewItem | undefined;
 
     // 비동기 액션 (API 연동)
     addToView: (pageId: string, componentId: string, position?: number) => Promise<void>;
     removeFromView: (viewItemId: string) => Promise<void>;
+    removeFromViewByComponentId: (componentId: string) => Promise<void>;
     reorderView: (viewItemId: string, newPosition: number) => Promise<void>;
     toggleViewItemVisibility: (viewItemId: string) => Promise<void>;
 }
@@ -28,6 +30,10 @@ export const useViewStore = create<ViewStore>((set, get) => ({
 
     isInView: (componentId) => {
         return get().viewItems.some((item) => item.componentId === componentId);
+    },
+
+    getViewItemByComponentId: (componentId) => {
+        return get().viewItems.find((item) => item.componentId === componentId);
     },
 
     addToView: async (pageId, componentId, position) => {
@@ -147,6 +153,13 @@ export const useViewStore = create<ViewStore>((set, get) => ({
         } catch (error) {
             set({ viewItems: previousItems });
             console.error('View item 삭제 오류:', error);
+        }
+    },
+
+    removeFromViewByComponentId: async (componentId) => {
+        const viewItem = get().getViewItemByComponentId(componentId);
+        if (viewItem) {
+            await get().removeFromView(viewItem.id);
         }
     },
 
