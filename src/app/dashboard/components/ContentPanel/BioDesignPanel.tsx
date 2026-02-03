@@ -9,10 +9,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
 import { useUserStore } from '@/stores/userStore';
 import { ChevronDown, ChevronRight, ImagePlus, Loader2, Trash2 } from 'lucide-react';
-import { useCallback, useRef, useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { deleteAvatar, updateProfile, uploadAvatar } from '../../actions/user';
 
 // 헤더 스타일 타입
@@ -29,23 +30,6 @@ const HEADER_STYLES: HeaderStyleOption[] = [
     { id: 'portrait', label: 'Portrait' },
     { id: 'shapes', label: 'Shapes' },
 ];
-
-// Debounce hook
-function useDebounce<T extends (...args: Parameters<T>) => void>(callback: T, delay: number): T {
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    return useCallback(
-        ((...args: Parameters<T>) => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-            timeoutRef.current = setTimeout(() => {
-                callback(...args);
-            }, delay);
-        }) as T,
-        [callback, delay]
-    );
-}
 
 export default function BioDesignPanel() {
     const user = useUserStore((state) => state.user);

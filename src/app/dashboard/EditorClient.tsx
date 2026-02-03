@@ -47,7 +47,7 @@ export default function EditorClient({
 
     // UI Store
     const selectComponent = useUIStore((state) => state.selectComponent);
-    const setEditMode = useUIStore((state) => state.setEditMode);
+    const startCreating = useUIStore((state) => state.startCreating);
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [_addingType, setAddingType] = useState<'show' | 'mixset' | 'link'>('show');
@@ -82,16 +82,15 @@ export default function EditorClient({
         setIsAddModalOpen(false);
 
         if (eventData) {
-            // 이벤트 데이터가 있으면 변환하여 바로 저장
+            // 이벤트 데이터가 있으면 변환하여 바로 저장 (이미 데이터가 있으므로 view 모드)
             const newComponent = eventToComponent(eventData);
             await saveComponent(newComponent);
             selectComponent(newComponent.id);
         } else {
-            // 빈 컴포넌트 생성 후 즉시 DB에 저장
+            // 빈 컴포넌트 생성 후 즉시 DB에 저장 → 생성 모드 진입
             const newComponent = createEmptyComponent(type);
             await saveComponent(newComponent);
-            selectComponent(newComponent.id);
-            setEditMode('edit');
+            startCreating(newComponent.id);
         }
     };
 

@@ -4,6 +4,7 @@ import { useComponentStore } from '@/stores/editorStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useMemo } from 'react';
 import BioDesignPanel from './BioDesignPanel';
+import CreateMode from './EditMode/CreateMode';
 import EditMode from './EditMode';
 import EmptyState from './EmptyState';
 import PageListView from './PageListView';
@@ -14,8 +15,10 @@ export default function ContentPanel() {
     const selectedComponentId = useUIStore((state) => state.selectedComponentId);
     const editMode = useUIStore((state) => state.editMode);
     const activePanel = useUIStore((state) => state.activePanel);
+    const isCreating = useUIStore((state) => state.isCreating);
     const setEditMode = useUIStore((state) => state.setEditMode);
     const selectComponent = useUIStore((state) => state.selectComponent);
+    const finishCreating = useUIStore((state) => state.finishCreating);
 
     // Component Store
     const components = useComponentStore((state) => state.components);
@@ -55,16 +58,35 @@ export default function ContentPanel() {
         );
     }
 
-    // 편집 모드
+    // 생성 모드 (새 컴포넌트)
+    if (editMode === 'edit' && isCreating) {
+        return (
+            <div className="h-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
+                <CreateMode
+                    component={selectedComponent}
+                    onSave={async (component) => {
+                        await saveComponent(component);
+                        finishCreating();
+                        setEditMode('view');
+                    }}
+                    onCancel={() => {
+                        // 생성 취소 시 컴포넌트 삭제
+                        deleteComponent(selectedComponent.id);
+                        finishCreating();
+                        selectComponent(null);
+                    }}
+                />
+            </div>
+        );
+    }
+
+    // 편집 모드 (기존 컴포넌트)
     if (editMode === 'edit') {
         return (
             <div className="h-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
                 <EditMode
                     component={selectedComponent}
-                    onSave={async (component) => {
-                        await saveComponent(component);
-                        setEditMode('view');
-                    }}
+                    onSave={saveComponent}
                     onCancel={() => setEditMode('view')}
                     onDelete={async () => {
                         await deleteComponent(selectedComponent.id);
