@@ -1,4 +1,4 @@
-import type { ComponentData, EventComponent, LinkComponent, MixsetComponent } from './index';
+import type { ComponentData, EventComponent, LinkComponent, MixsetComponent } from './domain';
 
 /**
  * ComponentData 타입 가드 함수들

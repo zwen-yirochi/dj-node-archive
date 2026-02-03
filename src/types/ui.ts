@@ -1,6 +1,12 @@
-// types/ui.ts - UI 전용 (에디터 상태 등)
+// ==============================================
+// types/ui.ts - UI 전용 타입 (단일 소스)
+// ==============================================
+
 import type { ComponentData, User } from './domain';
 
+// ----------------------------------------------
+// Editor State
+// ----------------------------------------------
 export interface EditorState {
     user: User;
     components: ComponentData[];
@@ -8,12 +14,18 @@ export interface EditorState {
     isDirty: boolean;
 }
 
+// ----------------------------------------------
+// Artist Suggestion (자동완성)
+// ----------------------------------------------
 export interface ArtistSuggestion {
     username: string;
     displayName: string;
     avatarUrl: string;
 }
 
+// ----------------------------------------------
+// Font & Icon Options
+// ----------------------------------------------
 export type FontOption = 'bebas' | 'instrument' | 'jetbrains';
 
 export const ICON_OPTIONS = [
