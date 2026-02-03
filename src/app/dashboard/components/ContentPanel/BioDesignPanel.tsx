@@ -10,10 +10,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/client';
 import { useUserStore } from '@/stores/userStore';
 import { ChevronDown, ChevronRight, ImagePlus, Loader2, Trash2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState, useTransition } from 'react';
+import { deleteAvatar, updateProfile, uploadAvatar } from '../../actions/user';
 
 // 헤더 스타일 타입
 type HeaderStyle = 'minimal' | 'banner' | 'portrait' | 'shapes';
@@ -30,14 +30,42 @@ const HEADER_STYLES: HeaderStyleOption[] = [
     { id: 'shapes', label: 'Shapes' },
 ];
 
+// Debounce hook
+function useDebounce<T extends (...args: Parameters<T>) => void>(callback: T, delay: number): T {
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    return useCallback(
+        ((...args: Parameters<T>) => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            timeoutRef.current = setTimeout(() => {
+                callback(...args);
+            }, delay);
+        }) as T,
+        [callback, delay]
+    );
+}
+
 export default function BioDesignPanel() {
     const user = useUserStore((state) => state.user);
     const updateUser = useUserStore((state) => state.updateUser);
 
     const [isProfileOpen, setIsProfileOpen] = useState(true);
     const [selectedHeaderStyle, setSelectedHeaderStyle] = useState<HeaderStyle>('minimal');
-    const [isUploading, setIsUploading] = useState(false);
+    const [isPending, startTransition] = useTransition();
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Debounced save function
+    const debouncedSave = useDebounce(
+        async (userId: string, field: 'displayName' | 'bio', value: string) => {
+            const result = await updateProfile(userId, { [field]: value });
+            if (!result.success) {
+                console.error('프로필 저장 오류:', result.error);
+            }
+        },
+        500
+    );
 
     if (!user) return null;
 
@@ -54,94 +82,43 @@ export default function BioDesignPanel() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.size > 5 * 1024 * 1024) {
-            alert('파일 크기는 5MB 이하여야 합니다.');
-            return;
-        }
+        const formData = new FormData();
+        formData.append('file', file);
 
-        if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
-            alert('JPG, PNG, WebP, GIF 형식만 지원합니다.');
-            return;
-        }
+        startTransition(async () => {
+            const result = await uploadAvatar(user.id, formData);
 
-        setIsUploading(true);
-
-        try {
-            const supabase = createClient();
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-            if (user.avatarUrl?.includes('avatars')) {
-                const oldPath = user.avatarUrl.split('/avatars/')[1];
-                if (oldPath) {
-                    await supabase.storage.from('avatars').remove([oldPath]);
+            if (result.success) {
+                if (result.data) {
+                    updateUser({ avatarUrl: result.data.avatarUrl });
                 }
+            } else {
+                alert(result.error);
             }
 
-            const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(fileName, file, { upsert: true });
-
-            if (uploadError) throw uploadError;
-
-            const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
-            updateUser({ avatarUrl: urlData.publicUrl });
-
-            await fetch(`/api/users/${user.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ avatarUrl: urlData.publicUrl }),
-            });
-        } catch (error) {
-            console.error('아바타 업로드 오류:', error);
-            alert('이미지 업로드에 실패했습니다.');
-        } finally {
-            setIsUploading(false);
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
-        }
+        });
     };
 
     const handleDeleteAvatar = async () => {
-        setIsUploading(true);
+        startTransition(async () => {
+            const result = await deleteAvatar(user.id);
 
-        try {
-            if (user.avatarUrl?.includes('avatars')) {
-                const supabase = createClient();
-                const oldPath = user.avatarUrl.split('/avatars/')[1];
-                if (oldPath) {
-                    await supabase.storage.from('avatars').remove([oldPath]);
-                }
+            if (result.success) {
+                updateUser({ avatarUrl: '' });
+            } else {
+                console.error('아바타 삭제 오류:', result.error);
             }
-
-            updateUser({ avatarUrl: '' });
-
-            await fetch(`/api/users/${user.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ avatarUrl: '' }),
-            });
-        } catch (error) {
-            console.error('아바타 삭제 오류:', error);
-        } finally {
-            setIsUploading(false);
-        }
+        });
     };
 
-    const handleProfileChange = async (field: 'displayName' | 'bio', value: string) => {
+    const handleProfileChange = (field: 'displayName' | 'bio', value: string) => {
+        // Optimistic update
         updateUser({ [field]: value });
-
-        // Debounced save - 실제 구현시 debounce 추가 권장
-        try {
-            await fetch(`/api/users/${user.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ [field]: value }),
-            });
-        } catch (error) {
-            console.error('프로필 저장 오류:', error);
-        }
+        // Debounced save
+        debouncedSave(user.id, field, value);
     };
 
     return (
@@ -181,7 +158,7 @@ export default function BioDesignPanel() {
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <button
-                                                disabled={isUploading}
+                                                disabled={isPending}
                                                 className="group relative shrink-0"
                                             >
                                                 <Avatar className="h-16 w-16 border-2 border-dashboard-border">
@@ -196,7 +173,7 @@ export default function BioDesignPanel() {
                                                         )}
                                                     </AvatarFallback>
                                                 </Avatar>
-                                                {isUploading && (
+                                                {isPending && (
                                                     <div className="absolute inset-0 flex items-center justify-center rounded-full bg-dashboard-text/50">
                                                         <Loader2 className="h-5 w-5 animate-spin text-white" />
                                                     </div>
