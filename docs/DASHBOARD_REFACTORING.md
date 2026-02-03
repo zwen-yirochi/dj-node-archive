@@ -238,7 +238,11 @@ ContentPanel/
   - [x] `ShowDetail.tsx`
   - [x] `MixsetDetail.tsx`
   - [x] `LinkDetail.tsx`
-- [ ] BioDesignPanel 코드 분리 및 Server Action 전환
+- [x] BioDesignPanel 코드 분리 및 Server Action 전환
+  - [x] `actions/user.ts` - Server Actions 생성
+  - [x] fetch → Server Action 전환
+  - [x] Supabase Storage 직접 접근 → Server Action 전환
+  - [x] debounce 추가 (프로필 업데이트)
 - [ ] 상수/타입 중앙화
   - [ ] `src/constants/`
   - [ ] `src/types/`
