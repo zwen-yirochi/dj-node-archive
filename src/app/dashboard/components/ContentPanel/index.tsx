@@ -2,7 +2,6 @@
 
 import { useComponentStore } from '@/stores/editorStore';
 import { useUIStore } from '@/stores/uiStore';
-import type { ComponentData } from '@/types';
 import { useMemo } from 'react';
 import BioDesignPanel from './BioDesignPanel';
 import EditMode from './EditMode';
@@ -10,12 +9,7 @@ import EmptyState from './EmptyState';
 import PageListView from './PageListView';
 import ViewMode from './ViewMode';
 
-interface ContentPanelProps {
-    onSave: (component: ComponentData) => Promise<void>;
-    onDelete: (id: string) => Promise<void>;
-}
-
-export default function ContentPanel({ onSave, onDelete }: ContentPanelProps) {
+export default function ContentPanel() {
     // UI Store
     const selectedComponentId = useUIStore((state) => state.selectedComponentId);
     const editMode = useUIStore((state) => state.editMode);
@@ -25,6 +19,8 @@ export default function ContentPanel({ onSave, onDelete }: ContentPanelProps) {
 
     // Component Store
     const components = useComponentStore((state) => state.components);
+    const saveComponent = useComponentStore((state) => state.saveComponent);
+    const deleteComponent = useComponentStore((state) => state.deleteComponent);
 
     // useMemo로 선택된 컴포넌트 찾기
     const selectedComponent = useMemo(() => {
@@ -66,12 +62,12 @@ export default function ContentPanel({ onSave, onDelete }: ContentPanelProps) {
                 <EditMode
                     component={selectedComponent}
                     onSave={async (component) => {
-                        await onSave(component);
+                        await saveComponent(component);
                         setEditMode('view');
                     }}
                     onCancel={() => setEditMode('view')}
                     onDelete={async () => {
-                        await onDelete(selectedComponent.id);
+                        await deleteComponent(selectedComponent.id);
                         selectComponent(null);
                     }}
                 />
@@ -86,7 +82,7 @@ export default function ContentPanel({ onSave, onDelete }: ContentPanelProps) {
                 component={selectedComponent}
                 onEdit={() => setEditMode('edit')}
                 onDelete={async () => {
-                    await onDelete(selectedComponent.id);
+                    await deleteComponent(selectedComponent.id);
                     selectComponent(null);
                 }}
             />

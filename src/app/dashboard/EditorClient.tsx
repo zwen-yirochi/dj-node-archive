@@ -1,7 +1,10 @@
 // app/dashboard/EditorClient.tsx
 'use client';
 
-import { useEditorStore, type ViewItem } from '@/stores/editorStore';
+import { useComponentStore, type ViewItem } from '@/stores/editorStore';
+import { useUIStore } from '@/stores/uiStore';
+import { useUserStore } from '@/stores/userStore';
+import { useViewStore } from '@/stores/viewStore';
 import type {
     ComponentData,
     EventComponent,
@@ -35,14 +38,23 @@ export default function EditorClient({
     pageId,
     username,
 }: EditorClientProps) {
-    const setUser = useEditorStore((state) => state.setUser);
-    const setComponents = useEditorStore((state) => state.setComponents);
-    const setPageId = useEditorStore((state) => state.setPageId);
-    const setViewItems = useEditorStore((state) => state.setViewItems);
-    const setTheme = useEditorStore((state) => state.setTheme);
-    const components = useEditorStore((state) => state.components);
-    const selectComponent = useEditorStore((state) => state.selectComponent);
-    const setEditMode = useEditorStore((state) => state.setEditMode);
+    // User Store
+    const setUser = useUserStore((state) => state.setUser);
+
+    // Component Store
+    const components = useComponentStore((state) => state.components);
+    const setComponents = useComponentStore((state) => state.setComponents);
+    const setPageId = useComponentStore((state) => state.setPageId);
+    const setTheme = useComponentStore((state) => state.setTheme);
+    const saveComponent = useComponentStore((state) => state.saveComponent);
+    const deleteComponent = useComponentStore((state) => state.deleteComponent);
+
+    // View Store
+    const setViewItems = useViewStore((state) => state.setViewItems);
+
+    // UI Store
+    const selectComponent = useUIStore((state) => state.selectComponent);
+    const setEditMode = useUIStore((state) => state.setEditMode);
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [_addingType, setAddingType] = useState<'show' | 'mixset' | 'link'>('show');
@@ -131,7 +143,7 @@ export default function EditorClient({
         if (eventData) {
             // 이벤트 데이터가 있으면 변환하여 바로 저장
             const newComponent = eventToComponent(eventData);
-            handleSaveComponent(newComponent);
+            saveComponent(newComponent);
         } else {
             // 빈 컴포넌트로 에디터 열기
             const newComponent = createEmptyComponent(type);
@@ -139,82 +151,6 @@ export default function EditorClient({
             setComponents([...components, newComponent]);
             selectComponent(newComponent.id);
             setEditMode('edit');
-        }
-    };
-
-    // 컴포넌트 저장
-    const handleSaveComponent = async (component: ComponentData) => {
-        const existingIndex = components.findIndex((c) => c.id === component.id);
-
-        if (existingIndex === -1) {
-            // 새 컴포넌트
-            const updatedComponents = [...components, component];
-            setComponents(updatedComponents);
-
-            try {
-                const response = await fetch('/api/components', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pageId, component }),
-                });
-
-                if (!response.ok) {
-                    setComponents(components);
-                    console.error('컴포넌트 추가 실패');
-                }
-            } catch (error) {
-                setComponents(components);
-                console.error('컴포넌트 추가 오류:', error);
-            }
-        } else {
-            // 기존 컴포넌트 수정
-            const previousComponent = components[existingIndex];
-            const updatedComponents = components.map((c) =>
-                c.id === component.id ? component : c
-            );
-            setComponents(updatedComponents);
-
-            try {
-                const response = await fetch(`/api/components/${component.id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ component }),
-                });
-
-                if (!response.ok) {
-                    setComponents(
-                        components.map((c) => (c.id === component.id ? previousComponent : c))
-                    );
-                    console.error('컴포넌트 수정 실패');
-                }
-            } catch (error) {
-                setComponents(
-                    components.map((c) => (c.id === component.id ? previousComponent : c))
-                );
-                console.error('컴포넌트 수정 오류:', error);
-            }
-        }
-    };
-
-    // 컴포넌트 삭제
-    const handleDeleteComponent = async (id: string) => {
-        const deletedComponent = components.find((c) => c.id === id);
-        if (!deletedComponent) return;
-
-        setComponents(components.filter((c) => c.id !== id));
-
-        try {
-            const response = await fetch(`/api/components/${id}`, {
-                method: 'DELETE',
-            });
-
-            if (!response.ok) {
-                setComponents(components);
-                console.error('컴포넌트 삭제 실패');
-            }
-        } catch (error) {
-            setComponents(components);
-            console.error('컴포넌트 삭제 오류:', error);
         }
     };
 
@@ -230,7 +166,7 @@ export default function EditorClient({
             <div className="p-3">
                 <TreeSidebar
                     onAddComponent={handleOpenAddModal}
-                    onDeleteComponent={handleDeleteComponent}
+                    onDeleteComponent={deleteComponent}
                     username={username}
                 />
             </div>
@@ -239,7 +175,7 @@ export default function EditorClient({
             <div className="flex flex-1 gap-6 overflow-hidden p-3 pl-2">
                 {/* ContentPanel - 중앙 */}
                 <div className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-dashboard-bg-card shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
-                    <ContentPanel onSave={handleSaveComponent} onDelete={handleDeleteComponent} />
+                    <ContentPanel />
                 </div>
 
                 {/* PreviewPanel - 오른쪽 */}

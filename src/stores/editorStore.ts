@@ -38,6 +38,10 @@ interface ComponentStore {
     // 컴포넌트 관련 유틸리티
     getComponentById: (id: string) => ComponentData | undefined;
 
+    // 컴포넌트 CRUD 액션
+    saveComponent: (component: ComponentData) => Promise<void>;
+    deleteComponent: (id: string) => Promise<void>;
+
     // 섹션 내 순서 변경
     reorderSectionItems: (
         type: 'show' | 'mixset' | 'link',
@@ -57,6 +61,86 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
 
     getComponentById: (id) => {
         return get().components.find((c) => c.id === id);
+    },
+
+    saveComponent: async (component) => {
+        const { components, pageId } = get();
+        const existingIndex = components.findIndex((c) => c.id === component.id);
+
+        if (existingIndex === -1) {
+            // 새 컴포넌트 추가
+            const updatedComponents = [...components, component];
+            set({ components: updatedComponents });
+
+            try {
+                const response = await fetch('/api/components', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pageId, component }),
+                });
+
+                if (!response.ok) {
+                    set({ components });
+                    console.error('컴포넌트 추가 실패');
+                }
+            } catch (error) {
+                set({ components });
+                console.error('컴포넌트 추가 오류:', error);
+            }
+        } else {
+            // 기존 컴포넌트 수정
+            const previousComponent = components[existingIndex];
+            const updatedComponents = components.map((c) =>
+                c.id === component.id ? component : c
+            );
+            set({ components: updatedComponents });
+
+            try {
+                const response = await fetch(`/api/components/${component.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ component }),
+                });
+
+                if (!response.ok) {
+                    set({
+                        components: components.map((c) =>
+                            c.id === component.id ? previousComponent : c
+                        ),
+                    });
+                    console.error('컴포넌트 수정 실패');
+                }
+            } catch (error) {
+                set({
+                    components: components.map((c) =>
+                        c.id === component.id ? previousComponent : c
+                    ),
+                });
+                console.error('컴포넌트 수정 오류:', error);
+            }
+        }
+    },
+
+    deleteComponent: async (id) => {
+        const { components } = get();
+        const deletedComponent = components.find((c) => c.id === id);
+        if (!deletedComponent) return;
+
+        set({ components: components.filter((c) => c.id !== id) });
+
+        try {
+            const response = await fetch(`/api/components/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                set({ components });
+                console.error('컴포넌트 삭제 실패');
+            }
+        } catch (error) {
+            set({ components });
+            console.error('컴포넌트 삭제 오류:', error);
+        }
     },
 
     reorderSectionItems: async (type, componentId, newPosition) => {
@@ -158,6 +242,10 @@ interface EditorStore {
     getComponentById: (id: string) => ComponentData | undefined;
     getSelectedComponent: () => ComponentData | undefined;
     isInView: (componentId: string) => boolean;
+
+    // Component CRUD
+    saveComponent: (component: ComponentData) => Promise<void>;
+    deleteComponent: (id: string) => Promise<void>;
 }
 
 /**
@@ -220,6 +308,10 @@ export const useEditorStore = <T>(selector: (state: EditorStore) => T): T => {
             return componentState.components.find((c) => c.id === uiState.selectedComponentId);
         },
         isInView: viewState.isInView,
+
+        // Component CRUD
+        saveComponent: componentState.saveComponent,
+        deleteComponent: componentState.deleteComponent,
     };
 
     return selector(combinedState);
