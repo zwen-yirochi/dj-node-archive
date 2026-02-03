@@ -5,6 +5,9 @@ import {
     ComponentData,
     EventComponent,
     ICON_OPTIONS,
+    isEventComponent,
+    isLinkComponent,
+    isMixsetComponent,
     LinkComponent,
     MixsetComponent,
 } from '@/types';
@@ -93,22 +96,20 @@ export default function EditMode({
     };
 
     const isValid = () => {
-        switch (localComponent.type) {
-            case 'show': {
-                const show = localComponent as EventComponent;
-                return show.title.trim() !== '' && show.date !== '' && show.venue.trim() !== '';
-            }
-            case 'mixset': {
-                const mixset = localComponent as MixsetComponent;
-                return mixset.title.trim() !== '';
-            }
-            case 'link': {
-                const link = localComponent as LinkComponent;
-                return link.title.trim() !== '' && link.url.trim() !== '';
-            }
-            default:
-                return false;
+        if (isEventComponent(localComponent)) {
+            return (
+                localComponent.title.trim() !== '' &&
+                localComponent.date !== '' &&
+                localComponent.venue.trim() !== ''
+            );
         }
+        if (isMixsetComponent(localComponent)) {
+            return localComponent.title.trim() !== '';
+        }
+        if (isLinkComponent(localComponent)) {
+            return localComponent.title.trim() !== '' && localComponent.url.trim() !== '';
+        }
+        return false;
     };
 
     return (
@@ -135,23 +136,14 @@ export default function EditMode({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
-                {localComponent.type === 'show' && (
-                    <ShowEditor
-                        component={localComponent as EventComponent}
-                        onUpdate={updateLocal as (updates: Partial<EventComponent>) => void}
-                    />
+                {isEventComponent(localComponent) && (
+                    <ShowEditor component={localComponent} onUpdate={updateLocal} />
                 )}
-                {localComponent.type === 'mixset' && (
-                    <MixsetEditor
-                        component={localComponent as MixsetComponent}
-                        onUpdate={updateLocal as (updates: Partial<MixsetComponent>) => void}
-                    />
+                {isMixsetComponent(localComponent) && (
+                    <MixsetEditor component={localComponent} onUpdate={updateLocal} />
                 )}
-                {localComponent.type === 'link' && (
-                    <LinkEditor
-                        component={localComponent as LinkComponent}
-                        onUpdate={updateLocal as (updates: Partial<LinkComponent>) => void}
-                    />
+                {isLinkComponent(localComponent) && (
+                    <LinkEditor component={localComponent} onUpdate={updateLocal} />
                 )}
             </div>
 

@@ -1,7 +1,15 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import type { ComponentData, EventComponent, LinkComponent, MixsetComponent } from '@/types';
+import {
+    type ComponentData,
+    type EventComponent,
+    isEventComponent,
+    isLinkComponent,
+    isMixsetComponent,
+    type LinkComponent,
+    type MixsetComponent,
+} from '@/types';
 import {
     Calendar,
     ExternalLink,
@@ -91,13 +99,9 @@ export default function ViewMode({ component, onEdit, onDelete }: ViewModeProps)
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
-                {component.type === 'show' && (
-                    <ShowDetail component={component as EventComponent} />
-                )}
-                {component.type === 'mixset' && (
-                    <MixsetDetail component={component as MixsetComponent} />
-                )}
-                {component.type === 'link' && <LinkDetail component={component as LinkComponent} />}
+                {isEventComponent(component) && <ShowDetail component={component} />}
+                {isMixsetComponent(component) && <MixsetDetail component={component} />}
+                {isLinkComponent(component) && <LinkDetail component={component} />}
             </div>
         </div>
     );
