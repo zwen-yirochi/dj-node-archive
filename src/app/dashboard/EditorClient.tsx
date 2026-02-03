@@ -75,18 +75,21 @@ export default function EditorClient({
     ]);
 
     // 컴포넌트 추가 핸들러
-    const handleAddComponent = (type: 'show' | 'mixset' | 'link', eventData?: DBEventWithVenue) => {
+    const handleAddComponent = async (
+        type: 'show' | 'mixset' | 'link',
+        eventData?: DBEventWithVenue
+    ) => {
         setIsAddModalOpen(false);
 
         if (eventData) {
             // 이벤트 데이터가 있으면 변환하여 바로 저장
             const newComponent = eventToComponent(eventData);
-            saveComponent(newComponent);
+            await saveComponent(newComponent);
+            selectComponent(newComponent.id);
         } else {
-            // 빈 컴포넌트로 에디터 열기
+            // 빈 컴포넌트 생성 후 즉시 DB에 저장
             const newComponent = createEmptyComponent(type);
-            // 임시로 컴포넌트 추가 후 선택하여 편집 모드로
-            setComponents([...components, newComponent]);
+            await saveComponent(newComponent);
             selectComponent(newComponent.id);
             setEditMode('edit');
         }
