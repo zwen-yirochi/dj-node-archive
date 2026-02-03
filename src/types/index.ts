@@ -1,6 +1,9 @@
 // Re-export result types
 export * from './result';
 
+// Re-export type guards
+export * from './guards';
+
 export interface User {
     id: string;
     username: string;
