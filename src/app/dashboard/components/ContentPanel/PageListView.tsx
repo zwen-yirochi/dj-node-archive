@@ -1,7 +1,9 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { useEditorStore } from '@/stores/editorStore';
+import { useComponentStore } from '@/stores/editorStore';
+import { useUIStore } from '@/stores/uiStore';
+import { useViewStore } from '@/stores/viewStore';
 import type { ComponentData } from '@/types';
 import {
     closestCenter,
@@ -148,12 +150,17 @@ function SortableItem({
 }
 
 export default function PageListView() {
-    const viewItems = useEditorStore((state) => state.viewItems);
-    const components = useEditorStore((state) => state.components);
-    const reorderView = useEditorStore((state) => state.reorderView);
-    const toggleViewItemVisibility = useEditorStore((state) => state.toggleViewItemVisibility);
-    const removeFromView = useEditorStore((state) => state.removeFromView);
-    const selectComponent = useEditorStore((state) => state.selectComponent);
+    // View Store
+    const viewItems = useViewStore((state) => state.viewItems);
+    const reorderView = useViewStore((state) => state.reorderView);
+    const toggleViewItemVisibility = useViewStore((state) => state.toggleViewItemVisibility);
+    const removeFromView = useViewStore((state) => state.removeFromView);
+
+    // Component Store
+    const components = useComponentStore((state) => state.components);
+
+    // UI Store
+    const selectComponent = useUIStore((state) => state.selectComponent);
 
     const [activeId, setActiveId] = useState<string | null>(null);
 

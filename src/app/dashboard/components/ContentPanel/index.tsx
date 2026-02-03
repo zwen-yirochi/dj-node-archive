@@ -1,6 +1,7 @@
 'use client';
 
-import { useEditorStore } from '@/stores/editorStore';
+import { useComponentStore } from '@/stores/editorStore';
+import { useUIStore } from '@/stores/uiStore';
 import type { ComponentData } from '@/types';
 import { useMemo } from 'react';
 import BioDesignPanel from './BioDesignPanel';
@@ -15,12 +16,15 @@ interface ContentPanelProps {
 }
 
 export default function ContentPanel({ onSave, onDelete }: ContentPanelProps) {
-    const selectedComponentId = useEditorStore((state) => state.selectedComponentId);
-    const components = useEditorStore((state) => state.components);
-    const editMode = useEditorStore((state) => state.editMode);
-    const activePanel = useEditorStore((state) => state.activePanel);
-    const setEditMode = useEditorStore((state) => state.setEditMode);
-    const selectComponent = useEditorStore((state) => state.selectComponent);
+    // UI Store
+    const selectedComponentId = useUIStore((state) => state.selectedComponentId);
+    const editMode = useUIStore((state) => state.editMode);
+    const activePanel = useUIStore((state) => state.activePanel);
+    const setEditMode = useUIStore((state) => state.setEditMode);
+    const selectComponent = useUIStore((state) => state.selectComponent);
+
+    // Component Store
+    const components = useComponentStore((state) => state.components);
 
     // useMemo로 선택된 컴포넌트 찾기
     const selectedComponent = useMemo(() => {

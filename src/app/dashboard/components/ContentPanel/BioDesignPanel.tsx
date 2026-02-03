@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
-import { useEditorStore } from '@/stores/editorStore';
+import { useUserStore } from '@/stores/userStore';
 import { ChevronDown, ChevronRight, ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 
@@ -31,8 +31,8 @@ const HEADER_STYLES: HeaderStyleOption[] = [
 ];
 
 export default function BioDesignPanel() {
-    const user = useEditorStore((state) => state.user);
-    const updateUser = useEditorStore((state) => state.updateUser);
+    const user = useUserStore((state) => state.user);
+    const updateUser = useUserStore((state) => state.updateUser);
 
     const [isProfileOpen, setIsProfileOpen] = useState(true);
     const [selectedHeaderStyle, setSelectedHeaderStyle] = useState<HeaderStyle>('minimal');
