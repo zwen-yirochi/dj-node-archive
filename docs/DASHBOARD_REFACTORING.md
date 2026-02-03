@@ -234,10 +234,10 @@ ContentPanel/
   - [x] `PreviewPanel.tsx` → `useUserStore`, `useComponentStore` 사용
 
 ### 2단계: 구조 개선
-- [ ] ViewMode 내부 컴포넌트 분리
-  - [ ] `ShowDetail.tsx`
-  - [ ] `MixsetDetail.tsx`
-  - [ ] `LinkDetail.tsx`
+- [x] ViewMode 내부 컴포넌트 분리
+  - [x] `ShowDetail.tsx`
+  - [x] `MixsetDetail.tsx`
+  - [x] `LinkDetail.tsx`
 - [ ] BioDesignPanel 코드 분리 및 Server Action 전환
 - [ ] 상수/타입 중앙화
   - [ ] `src/constants/`
