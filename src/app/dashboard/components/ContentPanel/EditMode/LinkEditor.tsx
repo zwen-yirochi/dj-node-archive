@@ -1,23 +1,13 @@
 'use client';
 
+import { LINK_ICON_COMPONENTS } from '@/constants/componentConfig';
 import { ICON_OPTIONS, type LinkComponent } from '@/types';
-import { Globe, Instagram, Mail, Music, Youtube } from 'lucide-react';
+import { Globe } from 'lucide-react';
 
 interface LinkEditorProps {
     component: LinkComponent;
     onUpdate: (updates: Partial<LinkComponent>) => void;
 }
-
-const iconComponents: Record<string, React.ComponentType<{ className?: string }>> = {
-    soundcloud: Music,
-    spotify: Music,
-    bandcamp: Music,
-    instagram: Instagram,
-    youtube: Youtube,
-    twitter: Globe,
-    globe: Globe,
-    mail: Mail,
-};
 
 export default function LinkEditor({ component, onUpdate }: LinkEditorProps) {
     return (
@@ -29,7 +19,7 @@ export default function LinkEditor({ component, onUpdate }: LinkEditorProps) {
                 </label>
                 <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
                     {ICON_OPTIONS.map((icon) => {
-                        const IconComponent = iconComponents[icon] || Globe;
+                        const IconComponent = LINK_ICON_COMPONENTS[icon] || Globe;
                         return (
                             <button
                                 key={icon}

@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { COMPONENT_TYPE_CONFIG, LINK_ICON_COMPONENTS } from '@/constants/componentConfig';
 import {
     type ComponentData,
     type EventComponent,
@@ -10,21 +11,7 @@ import {
     type LinkComponent,
     type MixsetComponent,
 } from '@/types';
-import {
-    Calendar,
-    ExternalLink,
-    Globe,
-    Headphones,
-    Instagram,
-    Link as LinkIcon,
-    Mail,
-    MapPin,
-    Music,
-    Pencil,
-    Trash2,
-    Users,
-    Youtube,
-} from 'lucide-react';
+import { Calendar, ExternalLink, Globe, MapPin, Pencil, Trash2, Users } from 'lucide-react';
 import Image from 'next/image';
 
 interface ViewModeProps {
@@ -33,38 +20,12 @@ interface ViewModeProps {
     onDelete: () => void;
 }
 
-const iconComponents: Record<string, React.ComponentType<{ className?: string }>> = {
-    soundcloud: Music,
-    spotify: Music,
-    bandcamp: Music,
-    instagram: Instagram,
-    youtube: Youtube,
-    twitter: Globe,
-    globe: Globe,
-    mail: Mail,
-};
-
 export default function ViewMode({ component, onEdit, onDelete }: ViewModeProps) {
-    const getTypeColor = () => {
-        switch (component.type) {
-            case 'show':
-                return 'bg-blue-50 text-dashboard-type-event border-blue-200';
-            case 'mixset':
-                return 'bg-purple-50 text-dashboard-type-mixset border-purple-200';
-            case 'link':
-                return 'bg-green-50 text-dashboard-type-link border-green-200';
-        }
-    };
+    const config = COMPONENT_TYPE_CONFIG[component.type];
+    const TypeIcon = config.icon;
 
-    const getTypeIcon = () => {
-        switch (component.type) {
-            case 'show':
-                return <Calendar className="h-4 w-4" />;
-            case 'mixset':
-                return <Headphones className="h-4 w-4" />;
-            case 'link':
-                return <LinkIcon className="h-4 w-4" />;
-        }
+    const getTypeColor = () => {
+        return `${config.bgColor} ${config.color} ${config.borderColor}`;
     };
 
     return (
@@ -74,7 +35,7 @@ export default function ViewMode({ component, onEdit, onDelete }: ViewModeProps)
                 <span
                     className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${getTypeColor()}`}
                 >
-                    {getTypeIcon()}
+                    <TypeIcon className="h-4 w-4" />
                     {component.type}
                 </span>
                 <div className="flex items-center gap-2">
@@ -253,7 +214,7 @@ function MixsetDetail({ component }: { component: MixsetComponent }) {
 }
 
 function LinkDetail({ component }: { component: LinkComponent }) {
-    const IconComponent = iconComponents[component.icon] || Globe;
+    const IconComponent = LINK_ICON_COMPONENTS[component.icon] || Globe;
 
     return (
         <div className="space-y-4 py-4 text-center">

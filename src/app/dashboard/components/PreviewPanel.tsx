@@ -1,13 +1,14 @@
 'use client';
 
-import { useEditorStore } from '@/stores/editorStore';
+import { useComponentStore } from '@/stores/editorStore';
+import { useUserStore } from '@/stores/userStore';
 import { Check, Copy, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export default function PreviewPanel() {
-    const user = useEditorStore((state) => state.user);
-    const components = useEditorStore((state) => state.components);
+    const user = useUserStore((state) => state.user);
+    const components = useComponentStore((state) => state.components);
     const [refreshKey, setRefreshKey] = useState(0);
     const [copied, setCopied] = useState(false);
 

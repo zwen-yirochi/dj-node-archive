@@ -7,23 +7,14 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores/uiStore';
 import { useViewStore } from '@/stores/viewStore';
 import type { ComponentData } from '@/types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import {
-    Calendar,
-    Check,
-    Eye,
-    EyeOff,
-    Headphones,
-    Link as LinkIcon,
-    MoreHorizontal,
-    Pencil,
-    Trash2,
-} from 'lucide-react';
+import { Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 
 interface TreeItemProps {
     component: ComponentData;
@@ -35,24 +26,6 @@ interface TreeItemProps {
     onEdit?: () => void;
     onDelete?: () => void;
 }
-
-const typeConfig = {
-    show: {
-        icon: Calendar,
-        color: 'text-dashboard-type-event',
-        bgColor: 'bg-blue-50',
-    },
-    mixset: {
-        icon: Headphones,
-        color: 'text-dashboard-type-mixset',
-        bgColor: 'bg-purple-50',
-    },
-    link: {
-        icon: LinkIcon,
-        color: 'text-dashboard-type-link',
-        bgColor: 'bg-green-50',
-    },
-};
 
 export default function TreeItem({
     component,
@@ -76,7 +49,7 @@ export default function TreeItem({
     const isInView = viewItems.some((item) => item.componentId === component.id);
 
     const isSelected = selectedComponentId === component.id;
-    const config = typeConfig[component.type];
+    const config = COMPONENT_TYPE_CONFIG[component.type];
     const Icon = config.icon;
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
