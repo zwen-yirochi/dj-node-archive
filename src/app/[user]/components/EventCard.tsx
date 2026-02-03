@@ -1,12 +1,12 @@
 // components/EventCard.tsx
-import { EventData } from '@/app/types';
+import type { EventComponent } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, Users } from 'lucide-react';
 import Image from 'next/image';
 
 interface EventCardProps {
-    event: EventData;
+    event: EventComponent;
 }
 
 export default function EventCard({ event }: EventCardProps) {
