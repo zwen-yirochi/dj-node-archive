@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { canAddToView } from '@/lib/validators';
 import { useComponentStore } from '@/stores/editorStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useViewStore } from '@/stores/viewStore';
@@ -109,7 +110,14 @@ export default function TreeSidebar({
 
         // View 드롭존에 드롭한 경우
         if (over.id === 'view-drop-zone' && activeData?.type === 'component' && pageId) {
-            addToView(pageId, activeData.component.id);
+            const component = activeData.component as ComponentData;
+            // 유효성 검사: 필수 필드가 채워진 컴포넌트만 View에 추가 가능
+            if (!canAddToView(component)) {
+                // TODO: Toast로 사용자에게 알림
+                console.warn('컴포넌트를 완성해야 Page에 추가할 수 있습니다.');
+                return;
+            }
+            addToView(pageId, component.id);
             return;
         }
 

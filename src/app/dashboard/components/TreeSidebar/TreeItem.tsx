@@ -9,12 +9,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
 import { cn } from '@/lib/utils';
+import { canAddToView } from '@/lib/validators';
 import { useUIStore } from '@/stores/uiStore';
 import { useViewStore } from '@/stores/viewStore';
 import type { ComponentData } from '@/types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 
 interface TreeItemProps {
     component: ComponentData;
@@ -47,6 +48,9 @@ export default function TreeItem({
 
     // viewItems에서 현재 컴포넌트가 포함되어 있는지 확인
     const isInView = viewItems.some((item) => item.componentId === component.id);
+
+    // 컴포넌트 유효성 검사
+    const isValid = canAddToView(component);
 
     const isSelected = selectedComponentId === component.id;
     const config = COMPONENT_TYPE_CONFIG[component.type];
@@ -128,6 +132,13 @@ export default function TreeItem({
             <span className={cn('min-w-0 flex-1 truncate text-sm', isInViewSection && 'ml-2')}>
                 {component.title || '제목 없음'}
             </span>
+
+            {/* 유효하지 않은 컴포넌트 표시 (View 섹션이 아닐 때만) */}
+            {!isInViewSection && !isValid && (
+                <span title="필수 필드를 채워야 Page에 추가할 수 있습니다">
+                    <AlertCircle className="mr-1 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                </span>
+            )}
 
             {/* Right Side Actions */}
             <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
