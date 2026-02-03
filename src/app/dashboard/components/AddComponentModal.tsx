@@ -1,19 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Calendar, Link, Music, Search, Plus, ArrowLeft, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { CreateEventModal } from '@/components/event/CreateEventModal';
-import type { DBEventWithVenue } from '@/types/database';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import type { DBEventWithVenue } from '@/types/database';
+import { Calendar, Link, Loader2, Music, Plus, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 type ComponentType = 'event' | 'mixset' | 'link';
 
