@@ -1,8 +1,22 @@
-# 컴포넌트 필드 비교: DB vs 타입 vs Form vs Validator
+# 컴포넌트 필드 검증 시스템
 
 ## 개요
 
-컴포넌트 생성/수정 시 불일치로 인한 에러 분석을 위한 문서입니다.
+컴포넌트 필드 검증을 위한 2단계(Tier) 시스템 문서입니다.
+
+### 검증 단계
+
+| Tier | 목적 | 필수 필드 | 사용처 |
+|------|------|-----------|--------|
+| **create** | 컴포넌트 생성 | `title`만 | 생성 시 검증 |
+| **view** | Page에 추가 | `title` + 추가 필드 | 드래그&드롭 시 검증 |
+
+### 코드 구조
+
+```
+src/constants/componentFields.ts  ← Single Source of Truth
+src/lib/validators.ts             ← 검증 함수들
+```
 
 ---
 
@@ -27,63 +41,48 @@ components (
 
 ## 1. Event (Show) 컴포넌트
 
-### 비교표
+### 필드별 검증
 
-| 필드 | TypeScript 타입 | Form 필수 | Validator 필수 | 비고 |
-|------|----------------|-----------|----------------|------|
-| `id` | `string` (required) | - | - | uuid, 자동 생성 |
-| `type` | `'show'` (literal) | - | - | 고정값 |
-| `title` | `string` (required) | ✅ `*` 표시 | ✅ | |
-| `date` | `string` (required) | ✅ `*` 표시 | ✅ | |
-| `venue` | `string` (required) | ✅ `*` 표시 | ❌ | ⚠️ **불일치** |
-| `posterUrl` | `string` (required) | ❌ | ❌ | 타입은 required지만 빈 문자열 허용 |
-| `lineup` | `string[]` (required) | ❌ | ❌ | 빈 배열 허용 |
-| `description` | `string` (required) | ❌ | ❌ | 빈 문자열 허용 |
-| `links` | `array` (optional) | ❌ | ❌ | |
-| `eventId` | `string` (optional) | ❌ | ❌ | 이벤트 import 시 |
-| `venueId` | `string` (optional) | ❌ | ❌ | 이벤트 import 시 |
-
-### 문제점
-- **venue**: Form에서 필수(`*`)로 표시되지만, Validator에서는 검증하지 않음
+| 필드 | Tier | 설명 |
+|------|------|------|
+| `title` | **create** | 생성 시 필수 |
+| `date` | **create** | 생성 시 필수 (기본값: 오늘) |
+| `posterUrl` | **view** | Page 추가 시 필수 |
+| `venue` | - | 선택 |
+| `lineup` | - | 선택 (빈 배열 허용) |
+| `description` | - | 선택 |
+| `links` | - | 선택 (빈 배열 허용) |
 
 ---
 
 ## 2. Mixset 컴포넌트
 
-### 비교표
+### 필드별 검증
 
-| 필드 | TypeScript 타입 | Form 필수 | Validator 필수 | 비고 |
-|------|----------------|-----------|----------------|------|
-| `id` | `string` (required) | - | - | uuid, 자동 생성 |
-| `type` | `'mixset'` (literal) | - | - | 고정값 |
-| `title` | `string` (required) | ✅ `*` 표시 | ✅ | |
-| `coverUrl` | `string` (required) | ❌ | ❌ | 빈 문자열 허용 |
-| `audioUrl` | `string` (required) | ❌ | ❌ | 빈 문자열 허용 |
-| `soundcloudEmbedUrl` | `string` (optional) | ❌ | ❌ | |
-| `tracklist` | `array` (required) | ❌ | ❌ | 빈 배열 허용 |
-| `description` | `string` (required) | ❌ | ❌ | 빈 문자열 허용 |
-| `releaseDate` | `string` (required) | ❌ | ❌ | ⚠️ 타입은 required |
-| `genre` | `string` (required) | ❌ | ❌ | 빈 문자열 허용 |
+| 필드 | Tier | 설명 |
+|------|------|------|
+| `title` | **create** | 생성 시 필수 |
+| `coverUrl` | **view** | Page 추가 시 필수 |
+| `audioUrl` | **view** | Page 추가 시 필수 (soundcloudEmbedUrl과 OR) |
+| `soundcloudEmbedUrl` | **view** | Page 추가 시 필수 (audioUrl과 OR) |
+| `tracklist` | - | 선택 (빈 배열 허용) |
+| `description` | - | 선택 |
+| `releaseDate` | - | 선택 |
+| `genre` | - | 선택 |
 
-### 문제점
-- 없음 (title만 필수로 일관됨)
+**특수 조건**: `audioUrl` 또는 `soundcloudEmbedUrl` 중 하나는 반드시 있어야 Page에 추가 가능
 
 ---
 
 ## 3. Link 컴포넌트
 
-### 비교표
+### 필드별 검증
 
-| 필드 | TypeScript 타입 | Form 필수 | Validator 필수 | 비고 |
-|------|----------------|-----------|----------------|------|
-| `id` | `string` (required) | - | - | uuid, 자동 생성 |
-| `type` | `'link'` (literal) | - | - | 고정값 |
-| `title` | `string` (required) | ✅ `*` 표시 | ✅ | |
-| `url` | `string` (required) | ✅ `*` 표시 | ✅ + URL 형식 검증 | |
-| `icon` | `string` (required) | ❌ | ❌ | 기본값 'globe' |
-
-### 문제점
-- 없음 (title, url 필수로 일관됨)
+| 필드 | Tier | 설명 |
+|------|------|------|
+| `title` | **create** | 생성 시 필수 |
+| `url` | **view** | Page 추가 시 필수 (URL 형식 검증) |
+| `icon` | - | 선택 (기본값: 'globe') |
 
 ---
 
@@ -131,81 +130,74 @@ components (
 
 ---
 
-## 에러 발생 시나리오
+## 검증 함수 사용법
 
-### 1. 컴포넌트 수정 실패
-```
-saveComponent → PATCH /api/components/[id] → 실패
-```
+### 기본 사용
 
-**가능한 원인:**
-- 컴포넌트가 아직 DB에 저장되지 않은 상태에서 수정 시도
-- 빈 컴포넌트 생성 후 바로 저장 시 data 필드 검증 실패
+```typescript
+import { canCreate, canAddToView, validateComponent } from '@/lib/validators';
 
-### 2. View item 추가 실패
-```
-addToView → POST /api/view-items → 실패
-```
+// Tier 1: 생성 가능 여부 (title만 확인)
+if (canCreate(component)) {
+    await saveComponent(component);
+}
 
-**가능한 원인:**
-- 컴포넌트가 DB에 없는 상태에서 View에 추가 시도
-- component_id FK 제약 조건 위반
+// Tier 2: Page 추가 가능 여부 (전체 필수 필드 확인)
+if (canAddToView(component)) {
+    addToView(pageId, component.id);
+}
 
----
-
-## 현재 Flow 분석
-
-### 빈 컴포넌트 생성 Flow
-
-```
-1. handleAddComponent('mixset')
-2. createEmptyComponent('mixset')  → 빈 Mixset 객체 생성
-3. setComponents([...components, newComponent])  → 로컬 상태에만 추가
-4. selectComponent(newComponent.id)  → 선택
-5. setEditMode('edit')  → 편집 모드 진입
-
-⚠️ 이 시점에서 DB에는 저장되지 않음!
+// 상세 검증 결과
+const result = validateComponent(component, 'view');
+console.log(result.errors);        // ["커버 이미지이(가) 필요합니다"]
+console.log(result.missingFields); // ["coverUrl"]
 ```
 
-### 편집 후 저장 Flow
+### 헬퍼 함수
 
-```
-1. handleSave() in EditMode/index.tsx
-2. onSave(component) in ContentPanel/index.tsx
-3. saveComponent(component) in editorStore.ts
-4. 기존 컴포넌트인지 확인 (existingIndex)
-5. PATCH /api/components/[id]  ← 실패! (DB에 없는 ID)
+```typescript
+import { getMissingFieldLabels, getCompletionPercentage } from '@/lib/validators';
+
+// 누락된 필드 라벨 가져오기
+const missing = getMissingFieldLabels(component, 'view');
+// ["커버 이미지", "오디오 URL"]
+
+// 완성도 계산 (0-100%)
+const percent = getCompletionPercentage(component);
+// 66
 ```
 
 ---
 
-## 핵심 문제
+## 필드 설정 확장하기
 
-### ❌ 현재 문제점
+`src/constants/componentFields.ts`에서 필드 설정을 수정합니다.
 
-1. **빈 컴포넌트가 DB에 저장되지 않은 채 로컬 상태에만 존재**
-2. **편집 후 저장 시 PATCH 요청 → 존재하지 않는 ID로 요청**
-3. **View 추가 시 FK 제약 위반**
+```typescript
+export const EVENT_FIELDS: FieldConfig[] = [
+    { key: 'title', label: '제목', required: 'create' },
+    { key: 'posterUrl', label: '포스터', required: 'view', isUrl: true },
+    // 새 필드 추가
+    { key: 'newField', label: '새 필드', required: 'view' },
+];
+```
 
-### ✅ 해결 방안
-
-**Option A: 생성 시 즉시 DB 저장**
-- 빈 컴포넌트를 생성하면서 바로 DB에 저장
-- 이후 수정은 정상적인 PATCH
-
-**Option B: 새 컴포넌트 감지 후 POST 호출**
-- saveComponent에서 DB에 없는 컴포넌트인 경우 POST 호출
-- 현재 코드는 로컬 배열 인덱스로만 판단 (문제)
-
-**권장: Option B 수정**
-- `existingIndex` 체크를 더 정교하게 (예: 서버에서 확인하거나, 플래그 추가)
+**FieldConfig 옵션:**
+- `required: 'create'` - 생성 시 필수
+- `required: 'view'` - Page 추가 시 필수
+- `required: false` - 선택 사항
+- `isUrl: true` - URL 형식 검증
+- `allowEmptyArray: true` - 빈 배열 허용
 
 ---
 
-## 요약
+## 구현 현황
 
-| 문제 | 원인 | 해결 |
+| 항목 | 상태 | 파일 |
 |------|------|------|
-| 컴포넌트 수정 실패 | 새 컴포넌트를 PATCH로 요청 | POST/PATCH 분기 로직 수정 |
-| View 추가 실패 | DB에 없는 컴포넌트 참조 | 컴포넌트 저장 후 View 추가 |
+| 필드 설정 정의 | ✅ | `src/constants/componentFields.ts` |
+| 검증 함수 | ✅ | `src/lib/validators.ts` |
+| TreeItem 경고 표시 | ✅ | `TreeSidebar/TreeItem.tsx` |
+| 드래그 시 검증 | ✅ | `TreeSidebar/index.tsx` |
+| 생성 시 즉시 DB 저장 | ✅ | `EditorClient.tsx` |
 | Form 필수 필드 불일치 | Event venue 표시 오류 | Form 또는 Validator 통일 |

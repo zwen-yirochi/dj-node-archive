@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
 import { cn } from '@/lib/utils';
-import { canAddToView } from '@/lib/validators';
+import { canAddToView, getMissingFieldLabels } from '@/lib/validators';
 import { useUIStore } from '@/stores/uiStore';
 import { useViewStore } from '@/stores/viewStore';
 import type { ComponentData } from '@/types';
@@ -51,6 +51,7 @@ export default function TreeItem({
 
     // 컴포넌트 유효성 검사
     const isValid = canAddToView(component);
+    const missingFields = !isValid ? getMissingFieldLabels(component, 'view') : [];
 
     const isSelected = selectedComponentId === component.id;
     const config = COMPONENT_TYPE_CONFIG[component.type];
@@ -135,7 +136,7 @@ export default function TreeItem({
 
             {/* 유효하지 않은 컴포넌트 표시 (View 섹션이 아닐 때만) */}
             {!isInViewSection && !isValid && (
-                <span title="필수 필드를 채워야 Page에 추가할 수 있습니다">
+                <span title={`Page에 추가하려면 필요: ${missingFields.join(', ')}`}>
                     <AlertCircle className="mr-1 h-3.5 w-3.5 shrink-0 text-amber-500" />
                 </span>
             )}
