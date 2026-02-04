@@ -1,21 +1,14 @@
 // app/dashboard/EditorClient.tsx
 'use client';
 
+import { createEmptyComponent, eventToComponent } from '@/lib/transformers';
 import { useComponentStore, type ViewItem } from '@/stores/editorStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useUserStore } from '@/stores/userStore';
 import { useViewStore } from '@/stores/viewStore';
-import type {
-    ComponentData,
-    EventComponent,
-    LinkComponent,
-    MixsetComponent,
-    Theme,
-    User,
-} from '@/types';
+import type { ComponentData, Theme, User } from '@/types';
 import type { DBEventWithVenue } from '@/types/database';
 import { useEffect, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { AddComponentModal } from './components/AddComponentModal';
 import ContentPanel from './components/ContentPanel';
 import PreviewPanel from './components/PreviewPanel';
@@ -54,7 +47,7 @@ export default function EditorClient({
 
     // UI Store
     const selectComponent = useUIStore((state) => state.selectComponent);
-    const setEditMode = useUIStore((state) => state.setEditMode);
+    const startCreating = useUIStore((state) => state.startCreating);
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [_addingType, setAddingType] = useState<'show' | 'mixset' | 'link'>('show');
@@ -81,76 +74,23 @@ export default function EditorClient({
         setTheme,
     ]);
 
-    // 이벤트 데이터를 EventComponent로 변환
-    const eventToComponent = (event: DBEventWithVenue): EventComponent => ({
-        id: uuidv4(),
-        type: 'show',
-        title: event.title || '',
-        date: event.date,
-        venue: event.venue?.name || '',
-        posterUrl: event.data?.poster_url || '',
-        lineup: event.data?.lineup_text?.split('\n').filter(Boolean) || [],
-        description: event.data?.notes || '',
-        links: event.data?.set_recording_url
-            ? [{ title: '세트 녹음', url: event.data.set_recording_url }]
-            : [],
-    });
-
-    // 빈 컴포넌트 템플릿 생성
-    const createEmptyComponent = (type: 'show' | 'mixset' | 'link'): ComponentData => {
-        const id = uuidv4();
-        switch (type) {
-            case 'show':
-                return {
-                    id,
-                    type: 'show',
-                    title: '',
-                    date: new Date().toISOString().split('T')[0],
-                    venue: '',
-                    posterUrl: '',
-                    lineup: [],
-                    description: '',
-                    links: [],
-                } as EventComponent;
-            case 'mixset':
-                return {
-                    id,
-                    type: 'mixset',
-                    title: '',
-                    coverUrl: '',
-                    audioUrl: '',
-                    soundcloudEmbedUrl: '',
-                    tracklist: [],
-                    description: '',
-                    releaseDate: new Date().toISOString().split('T')[0],
-                    genre: '',
-                } as MixsetComponent;
-            case 'link':
-                return {
-                    id,
-                    type: 'link',
-                    title: '',
-                    url: '',
-                    icon: 'globe',
-                } as LinkComponent;
-        }
-    };
-
     // 컴포넌트 추가 핸들러
-    const handleAddComponent = (type: 'show' | 'mixset' | 'link', eventData?: DBEventWithVenue) => {
+    const handleAddComponent = async (
+        type: 'show' | 'mixset' | 'link',
+        eventData?: DBEventWithVenue
+    ) => {
         setIsAddModalOpen(false);
 
         if (eventData) {
-            // 이벤트 데이터가 있으면 변환하여 바로 저장
+            // 이벤트 데이터가 있으면 변환하여 바로 저장 (이미 데이터가 있으므로 view 모드)
             const newComponent = eventToComponent(eventData);
-            saveComponent(newComponent);
-        } else {
-            // 빈 컴포넌트로 에디터 열기
-            const newComponent = createEmptyComponent(type);
-            // 임시로 컴포넌트 추가 후 선택하여 편집 모드로
-            setComponents([...components, newComponent]);
+            await saveComponent(newComponent);
             selectComponent(newComponent.id);
-            setEditMode('edit');
+        } else {
+            // 빈 컴포넌트 생성 후 즉시 DB에 저장 → 생성 모드 진입
+            const newComponent = createEmptyComponent(type);
+            await saveComponent(newComponent);
+            startCreating(newComponent.id);
         }
     };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { canAddToView } from '@/lib/validators';
 import { useComponentStore } from '@/stores/editorStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useViewStore } from '@/stores/viewStore';
@@ -22,7 +23,15 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Calendar, FileText, Headphones, Link as LinkIcon, Palette } from 'lucide-react';
+import {
+    Calendar,
+    ChevronDown,
+    ChevronRight,
+    FileText,
+    Headphones,
+    Link as LinkIcon,
+    Palette,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import AccountSection from './AccountSection';
@@ -54,6 +63,11 @@ export default function TreeSidebar({
     // UI Store
     const activePanel = useUIStore((state) => state.activePanel);
     const setActivePanel = useUIStore((state) => state.setActivePanel);
+    const sidebarSections = useUIStore((state) => state.sidebarSections);
+    const toggleSection = useUIStore((state) => state.toggleSection);
+
+    // Page 섹션 접힘 상태
+    const isPageCollapsed = sidebarSections.view.collapsed;
 
     // useMemo로 필터링하여 무한 루프 방지
     const events = useMemo(() => components.filter((c) => c.type === 'show'), [components]);
@@ -109,7 +123,14 @@ export default function TreeSidebar({
 
         // View 드롭존에 드롭한 경우
         if (over.id === 'view-drop-zone' && activeData?.type === 'component' && pageId) {
-            addToView(pageId, activeData.component.id);
+            const component = activeData.component as ComponentData;
+            // 유효성 검사: 필수 필드가 채워진 컴포넌트만 View에 추가 가능
+            if (!canAddToView(component)) {
+                // TODO: Toast로 사용자에게 알림
+                console.warn('컴포넌트를 완성해야 Page에 추가할 수 있습니다.');
+                return;
+            }
+            addToView(pageId, component.id);
             return;
         }
 
@@ -153,7 +174,14 @@ export default function TreeSidebar({
         onDeleteComponent?.(componentId);
     };
 
-    const visibleCount = viewItems.filter((item) => item.isVisible).length;
+    const handlePageClick = () => {
+        setActivePanel('page');
+    };
+
+    const handlePageToggle = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        toggleSection('view');
+    };
 
     return (
         <DndContext
@@ -190,11 +218,11 @@ export default function TreeSidebar({
                         <span className="flex-1 text-sm font-medium">Bio design</span>
                     </button>
 
-                    {/* Page */}
-                    <button
-                        onClick={() => setActivePanel('page')}
+                    {/* Page - 클릭하면 패널 전환, 화살표 클릭하면 접기/펼치기 */}
+                    <div
+                        onClick={handlePageClick}
                         className={cn(
-                            'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
+                            'group mb-1 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
                             activePanel === 'page'
                                 ? 'bg-dashboard-bg-active text-dashboard-text'
                                 : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
@@ -202,22 +230,32 @@ export default function TreeSidebar({
                     >
                         <FileText className="h-4 w-4 text-dashboard-text-muted" />
                         <span className="flex-1 text-sm font-medium">Page</span>
-                        {visibleCount > 0 && (
+                        {/* {visibleCount > 0 && (
                             <span className="rounded bg-dashboard-bg-active px-1.5 py-0.5 text-[10px] font-medium text-dashboard-text-muted">
                                 {visibleCount}
                             </span>
-                        )}
-                    </button>
+                        )} */}
+                        {/* 접기/펼치기 화살표 */}
+                        <button
+                            onClick={handlePageToggle}
+                            className="flex h-4 w-4 items-center justify-center text-dashboard-text-placeholder hover:text-dashboard-text-muted"
+                        >
+                            {isPageCollapsed ? (
+                                <ChevronRight className="h-3.5 w-3.5" />
+                            ) : (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                            )}
+                        </button>
+                    </div>
 
-                    {/* Page 드롭존 - Page 선택 시에만 확장 */}
-                    {activePanel === 'page' && (
-                        <div className="mb-3 ml-3">
-                            <ViewSection
-                                isDraggingOver={isDraggingOverView}
-                                onDeleteComponent={handleDelete}
-                            />
-                        </div>
-                    )}
+                    {/* Page ViewSection - 항상 렌더링 (드롭 가능), 접힘 상태에 따라 표시 */}
+                    <div className="mb-3 ml-3">
+                        <ViewSection
+                            isDraggingOver={isDraggingOverView}
+                            isCollapsed={isPageCollapsed}
+                            onDeleteComponent={handleDelete}
+                        />
+                    </div>
 
                     {/* Divider */}
                     <div className="my-3 border-t border-dashboard-border" />
@@ -240,11 +278,10 @@ export default function TreeSidebar({
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {events.map((component, index) => (
+                                {events.map((component) => (
                                     <TreeItem
                                         key={component.id}
                                         component={component}
-                                        isLast={index === events.length - 1}
                                         onDelete={() => handleDelete(component.id)}
                                     />
                                 ))}
@@ -265,11 +302,10 @@ export default function TreeSidebar({
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {mixsets.map((component, index) => (
+                                {mixsets.map((component) => (
                                     <TreeItem
                                         key={component.id}
                                         component={component}
-                                        isLast={index === mixsets.length - 1}
                                         onDelete={() => handleDelete(component.id)}
                                     />
                                 ))}
@@ -290,11 +326,10 @@ export default function TreeSidebar({
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {links.map((component, index) => (
+                                {links.map((component) => (
                                     <TreeItem
                                         key={component.id}
                                         component={component}
-                                        isLast={index === links.length - 1}
                                         onDelete={() => handleDelete(component.id)}
                                     />
                                 ))}

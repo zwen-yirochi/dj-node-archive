@@ -75,10 +75,12 @@ export default function SectionItem({
             {/* Section Content */}
             <div
                 className={cn(
-                    'ml-2 overflow-hidden transition-all duration-200',
+                    'relative ml-2 overflow-hidden transition-all duration-200',
                     isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'
                 )}
             >
+                {/* Tree Line - 세로선 */}
+                <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
                 {children}
             </div>
         </div>

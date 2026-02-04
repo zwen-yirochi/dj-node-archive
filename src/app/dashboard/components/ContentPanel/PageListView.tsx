@@ -1,5 +1,6 @@
 'use client';
 
+import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
 import { cn } from '@/lib/utils';
 import { useComponentStore } from '@/stores/editorStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -23,37 +24,8 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import {
-    Calendar,
-    Eye,
-    EyeOff,
-    GripVertical,
-    Headphones,
-    Link as LinkIcon,
-    Trash2,
-} from 'lucide-react';
+import { Calendar, Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-
-const typeConfig = {
-    show: {
-        icon: Calendar,
-        label: 'Event',
-        color: 'text-dashboard-type-event',
-        bgColor: 'bg-blue-50',
-    },
-    mixset: {
-        icon: Headphones,
-        label: 'Mixset',
-        color: 'text-dashboard-type-mixset',
-        bgColor: 'bg-purple-50',
-    },
-    link: {
-        icon: LinkIcon,
-        label: 'Link',
-        color: 'text-dashboard-type-link',
-        bgColor: 'bg-green-50',
-    },
-};
 
 interface SortableItemProps {
     id: string;
@@ -81,7 +53,7 @@ function SortableItem({
         transition,
     };
 
-    const config = typeConfig[component.type];
+    const config = COMPONENT_TYPE_CONFIG[component.type];
     const Icon = config.icon;
 
     return (
@@ -277,16 +249,18 @@ export default function PageListView() {
                                     <div
                                         className={cn(
                                             'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                                            typeConfig[activeComponent.type].bgColor
+                                            COMPONENT_TYPE_CONFIG[activeComponent.type].bgColor
                                         )}
                                     >
                                         {(() => {
-                                            const Icon = typeConfig[activeComponent.type].icon;
+                                            const Icon =
+                                                COMPONENT_TYPE_CONFIG[activeComponent.type].icon;
                                             return (
                                                 <Icon
                                                     className={cn(
                                                         'h-4 w-4',
-                                                        typeConfig[activeComponent.type].color
+                                                        COMPONENT_TYPE_CONFIG[activeComponent.type]
+                                                            .color
                                                     )}
                                                 />
                                             );
