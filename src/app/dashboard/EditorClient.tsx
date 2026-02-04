@@ -35,7 +35,6 @@ export default function EditorClient({
     const setUser = useUserStore((state) => state.setUser);
 
     // Component Store
-    const components = useComponentStore((state) => state.components);
     const setComponents = useComponentStore((state) => state.setComponents);
     const setPageId = useComponentStore((state) => state.setPageId);
     const setTheme = useComponentStore((state) => state.setTheme);

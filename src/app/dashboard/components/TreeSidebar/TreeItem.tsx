@@ -1,12 +1,6 @@
 'use client';
 
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
 import { cn } from '@/lib/utils';
 import { canAddToView, getMissingFieldLabels, getTreeItemStatus } from '@/lib/validators';
@@ -62,7 +56,6 @@ export default function TreeItem({
     // UI Store
     const selectedComponentId = useUIStore((state) => state.selectedComponentId);
     const selectComponent = useUIStore((state) => state.selectComponent);
-    const setEditMode = useUIStore((state) => state.setEditMode);
 
     // View Store
     const viewItems = useViewStore((state) => state.viewItems);
@@ -95,20 +88,38 @@ export default function TreeItem({
         selectComponent(component.id);
     };
 
-    const handleVisibilityClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
+    const handleVisibilityClick = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
         onToggleVisibility?.();
     };
 
     const handleEdit = () => {
         selectComponent(component.id);
-        setEditMode('edit');
         onEdit?.();
     };
 
     const handleDelete = () => {
         onDelete?.();
     };
+
+    // 컴포넌트 섹션용 메뉴 아이템
+    const componentMenuItems: DropdownMenuItemConfig[] = [
+        { label: '편집', onClick: handleEdit, icon: Pencil },
+        { type: 'separator' },
+        { label: '삭제', onClick: handleDelete, icon: Trash2, variant: 'danger' },
+    ];
+
+    // Page 섹션용 메뉴 아이템
+    const viewMenuItems: DropdownMenuItemConfig[] = [
+        { label: '편집', onClick: handleEdit, icon: Pencil },
+        {
+            label: isVisible ? '숨김' : '표시',
+            onClick: () => handleVisibilityClick(),
+            icon: isVisible ? Eye : EyeOff,
+        },
+        { type: 'separator' },
+        { label: 'Page에서 제거', onClick: handleDelete, icon: Trash2, variant: 'danger' },
+    ];
 
     return (
         <div
@@ -143,57 +154,20 @@ export default function TreeItem({
                 {component.title || '제목 없음'}
             </span>
 
-            {/* Right Side - View Section: Visibility + Menu */}
+            {/* Right Side - View Section: Menu */}
             {isInViewSection ? (
-                <>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button
-                                onClick={(e) => e.stopPropagation()}
-                                className="flex h-5 w-5 shrink-0 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
-                            >
-                                <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            align="end"
-                            className="w-36 border-dashboard-border bg-dashboard-bg-card shadow-lg"
+                <SimpleDropdown
+                    trigger={
+                        <button
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
                         >
-                            <DropdownMenuItem
-                                onClick={handleEdit}
-                                className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
-                            >
-                                <Pencil className="mr-2 h-3.5 w-3.5" />
-                                편집
-                            </DropdownMenuItem>
-
-                            <DropdownMenuItem
-                                onClick={handleVisibilityClick}
-                                className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
-                            >
-                                {isVisible ? (
-                                    <>
-                                        <Eye className="h-3.5 w-3.5 text-dashboard-text-muted" />
-                                        숨김
-                                    </>
-                                ) : (
-                                    <>
-                                        <EyeOff className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
-                                        표시
-                                    </>
-                                )}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-dashboard-border" />
-                            <DropdownMenuItem
-                                onClick={handleDelete}
-                                className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600"
-                            >
-                                <Trash2 className="mr-2 h-3.5 w-3.5" />
-                                Page에서 제거
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </>
+                            <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
+                        </button>
+                    }
+                    items={viewMenuItems}
+                    contentClassName="w-36"
+                />
             ) : (
                 /* Right Side - Component Section: Status Icon + Menu (같은 위치) */
                 <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
@@ -202,36 +176,18 @@ export default function TreeItem({
                         <StatusIcon status={status} missingFields={missingFields} />
                     </div>
                     {/* 더보기 메뉴 - hover 시 표시 */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                    <SimpleDropdown
+                        trigger={
                             <button
                                 onClick={(e) => e.stopPropagation()}
                                 className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
                             >
                                 <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
                             </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            align="end"
-                            className="w-36 border-dashboard-border bg-dashboard-bg-card shadow-lg"
-                        >
-                            <DropdownMenuItem
-                                onClick={handleEdit}
-                                className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
-                            >
-                                <Pencil className="mr-2 h-3.5 w-3.5" />
-                                편집
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-dashboard-border" />
-                            <DropdownMenuItem
-                                onClick={handleDelete}
-                                className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600"
-                            >
-                                <Trash2 className="mr-2 h-3.5 w-3.5" />
-                                삭제
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        }
+                        items={componentMenuItems}
+                        contentClassName="w-36"
+                    />
                 </div>
             )}
         </div>

@@ -5,18 +5,15 @@ import { useUIStore } from '@/stores/uiStore';
 import { useMemo } from 'react';
 import BioDesignPanel from './BioDesignPanel';
 import CreateMode from './EditMode/CreateMode';
-import EditMode from './EditMode';
 import EmptyState from './EmptyState';
+import InlineEditMode from './InlineEditMode';
 import PageListView from './PageListView';
-import ViewMode from './ViewMode';
 
 export default function ContentPanel() {
     // UI Store
     const selectedComponentId = useUIStore((state) => state.selectedComponentId);
-    const editMode = useUIStore((state) => state.editMode);
     const activePanel = useUIStore((state) => state.activePanel);
     const isCreating = useUIStore((state) => state.isCreating);
-    const setEditMode = useUIStore((state) => state.setEditMode);
     const selectComponent = useUIStore((state) => state.selectComponent);
     const finishCreating = useUIStore((state) => state.finishCreating);
 
@@ -58,8 +55,8 @@ export default function ContentPanel() {
         );
     }
 
-    // 생성 모드 (새 컴포넌트)
-    if (editMode === 'edit' && isCreating) {
+    // 생성 모드 (새 컴포넌트) - 별도 유지
+    if (isCreating) {
         return (
             <div className="h-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
                 <CreateMode
@@ -67,7 +64,6 @@ export default function ContentPanel() {
                     onSave={async (component) => {
                         await saveComponent(component);
                         finishCreating();
-                        setEditMode('view');
                     }}
                     onCancel={() => {
                         // 생성 취소 시 컴포넌트 삭제
@@ -80,25 +76,14 @@ export default function ContentPanel() {
         );
     }
 
-    // 편집 모드 (기존 컴포넌트)
-    if (editMode === 'edit') {
-        return (
-            <div className="h-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
-                <EditMode
-                    component={selectedComponent}
-                    onSave={saveComponent}
-                    onCancel={() => setEditMode('view')}
-                />
-            </div>
-        );
-    }
-
-    // 뷰 모드
+    // 인라인 편집 모드 (View + Edit 통합)
     return (
         <div className="h-full overflow-hidden rounded-2xl border border-white/10">
-            <ViewMode
+            <InlineEditMode
                 component={selectedComponent}
-                onEdit={() => setEditMode('edit')}
+                onSave={async (component) => {
+                    await saveComponent(component);
+                }}
                 onDelete={async () => {
                     await deleteComponent(selectedComponent.id);
                     selectComponent(null);
