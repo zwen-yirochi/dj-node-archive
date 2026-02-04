@@ -1,10 +1,10 @@
 // app/api/components/[id]/route.ts
 import { updateComponent, deleteComponent } from '@/lib/db/queries/component.queries';
 import { createClient } from '@/lib/supabase/server';
-import { mapComponentToDatabase } from '@/lib/mappers/user.mapper';
+import { mapEntryToDatabase } from '@/lib/mappers/user.mapper';
 import { isSuccess } from '@/types/result';
 import { NextResponse } from 'next/server';
-import type { ComponentData } from '@/types/domain';
+import type { ContentEntry } from '@/types/domain';
 
 interface RouteParams {
     params: Promise<{ id: string }>;
@@ -24,18 +24,18 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
         const { id } = await params;
         const body = await request.json();
-        const { component } = body as { component: ComponentData };
+        const { component } = body as { component: ContentEntry };
 
         if (!component) {
             return NextResponse.json({ error: 'component가 필요합니다.' }, { status: 400 });
         }
 
         // position은 유지하면서 type과 data만 업데이트
-        const dbComponent = mapComponentToDatabase(component, 0);
+        const dbEntry = mapEntryToDatabase(component, 0);
 
         const result = await updateComponent(id, {
-            type: dbComponent.type,
-            data: dbComponent.data,
+            type: dbEntry.type,
+            data: dbEntry.data,
         });
 
         if (!isSuccess(result)) {

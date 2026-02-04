@@ -1,10 +1,10 @@
 // app/api/components/route.ts
 import { createComponent, getMaxPosition } from '@/lib/db/queries/component.queries';
 import { createClient } from '@/lib/supabase/server';
-import { mapComponentToDatabase } from '@/lib/mappers/user.mapper';
+import { mapEntryToDatabase } from '@/lib/mappers/user.mapper';
 import { isSuccess } from '@/types/result';
 import { NextResponse } from 'next/server';
-import type { ComponentData } from '@/types/domain';
+import type { ContentEntry } from '@/types/domain';
 
 export async function POST(request: Request) {
     try {
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { pageId, component } = body as { pageId: string; component: ComponentData };
+        const { pageId, component } = body as { pageId: string; component: ContentEntry };
 
         if (!pageId || !component) {
             return NextResponse.json(
@@ -35,13 +35,13 @@ export async function POST(request: Request) {
         }
 
         const newPosition = maxPositionResult.data + 1;
-        const dbComponent = mapComponentToDatabase(component, newPosition);
+        const dbEntry = mapEntryToDatabase(component, newPosition);
 
         const result = await createComponent(component.id, {
             page_id: pageId,
-            type: dbComponent.type,
-            position: dbComponent.position,
-            data: dbComponent.data,
+            type: dbEntry.type,
+            position: dbEntry.position,
+            data: dbEntry.data,
         });
 
         if (!isSuccess(result)) {
