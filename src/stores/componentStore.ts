@@ -90,7 +90,7 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
         });
 
         try {
-            const response = await fetch('/api/components', {
+            const response = await fetch('/api/entries', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pageId, component }),
@@ -137,7 +137,7 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
         set({ components: updatedComponents });
 
         try {
-            const response = await fetch(`/api/components/${component.id}`, {
+            const response = await fetch(`/api/entries/${component.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ component }),
@@ -192,7 +192,7 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
         });
 
         try {
-            const response = await fetch(`/api/components/${id}`, {
+            const response = await fetch(`/api/entries/${id}`, {
                 method: 'DELETE',
             });
 
@@ -247,7 +247,7 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
                 position: index,
             }));
 
-            const response = await fetch('/api/components/reorder', {
+            const response = await fetch('/api/entries/reorder', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ updates }),

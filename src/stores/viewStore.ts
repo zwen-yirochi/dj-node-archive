@@ -101,7 +101,7 @@ export const useViewStore = create<ViewStore>((set, get) => ({
         }));
 
         try {
-            const response = await fetch('/api/view-items', {
+            const response = await fetch('/api/display-entries', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pageId, componentId, orderIndex }),
@@ -129,7 +129,7 @@ export const useViewStore = create<ViewStore>((set, get) => ({
                     orderIndex: index,
                 }));
 
-                await fetch('/api/view-items/reorder', {
+                await fetch('/api/display-entries/reorder', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ updates }),
@@ -157,7 +157,7 @@ export const useViewStore = create<ViewStore>((set, get) => ({
         }));
 
         try {
-            const response = await fetch(`/api/view-items/${viewItemId}`, {
+            const response = await fetch(`/api/display-entries/${viewItemId}`, {
                 method: 'DELETE',
             });
 
@@ -174,7 +174,7 @@ export const useViewStore = create<ViewStore>((set, get) => ({
                     orderIndex: index,
                 }));
 
-                await fetch('/api/view-items/reorder', {
+                await fetch('/api/display-entries/reorder', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ updates }),
@@ -218,7 +218,7 @@ export const useViewStore = create<ViewStore>((set, get) => ({
                 orderIndex: item.order,
             }));
 
-            const response = await fetch('/api/view-items/reorder', {
+            const response = await fetch('/api/display-entries/reorder', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ updates }),
@@ -250,7 +250,7 @@ export const useViewStore = create<ViewStore>((set, get) => ({
         }));
 
         try {
-            const response = await fetch(`/api/view-items/${viewItemId}`, {
+            const response = await fetch(`/api/display-entries/${viewItemId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ isVisible: !targetItem.isVisible }),

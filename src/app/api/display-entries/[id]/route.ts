@@ -1,6 +1,5 @@
-// app/api/view-items/[id]/route.ts
-// @deprecated 이 경로는 /api/display-entries/[id]로 마이그레이션됩니다.
-// 새 코드에서는 /api/display-entries/[id]를 사용해주세요.
+// app/api/display-entries/[id]/route.ts
+// DisplayEntry API - 새 경로 (기존: /api/view-items/[id])
 import { withAuth } from '@/lib/api';
 import { handleUpdateDisplayEntry, handleDeleteDisplayEntry } from '@/lib/api/handlers';
 
