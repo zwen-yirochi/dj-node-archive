@@ -102,8 +102,13 @@ export interface LinkComponent {
     icon: string;
 }
 
-export type ComponentData = EventComponent | MixsetComponent | LinkComponent;
-export type ComponentType = ComponentData['type'];
+export type ContentEntry = EventComponent | MixsetComponent | LinkComponent;
+export type ContentEntryType = ContentEntry['type'];
+
+/** @deprecated Use ContentEntry instead */
+export type ComponentData = ContentEntry;
+/** @deprecated Use ContentEntryType instead */
+export type ComponentType = ContentEntryType;
 
 // ----------------------------------------------
 // Page
@@ -112,7 +117,7 @@ export interface Page {
     id: string;
     userId: string;
     slug: string;
-    components: ComponentData[];
+    components: ContentEntry[];
 }
 
 // ----------------------------------------------
