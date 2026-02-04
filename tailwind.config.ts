@@ -95,9 +95,13 @@ const config: Config = {
                 },
             },
             fontFamily: {
+                // Dashboard UI용 (가독성, 다양한 웨이트)
+                inter: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+                // 아트워크/공개 페이지용
                 stripe: ['var(--font-stripe)', 'sans-serif'],
                 nyangi: ['var(--font-nyangi)', 'sans-serif'],
                 bokeh: ['var(--font-bokeh)', 'sans-serif'],
+                // 기본 시스템
                 sans: ['var(--font-geist-sans)', 'sans-serif'],
                 mono: ['var(--font-geist-mono)', 'monospace'],
             },
