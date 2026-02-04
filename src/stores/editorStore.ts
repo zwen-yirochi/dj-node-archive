@@ -10,6 +10,7 @@
  * - useUIStore: UI 상태 (선택, 편집 모드, 사이드바 등)
  */
 
+import { canAddToView } from '@/lib/validators';
 import type { ComponentData, Theme, User } from '@/types';
 import { create } from 'zustand';
 
@@ -31,6 +32,10 @@ interface ComponentStore {
     pageId: string | null;
     theme: Theme | null;
 
+    // 미리보기 업데이트 트리거 (조건부 새로고침용)
+    // 완성된 컴포넌트 변경, 삭제, visibility 변경 시에만 증가
+    previewVersion: number;
+
     setComponents: (components: ComponentData[]) => void;
     setPageId: (pageId: string) => void;
     setTheme: (theme: Theme) => void;
@@ -42,35 +47,48 @@ interface ComponentStore {
     saveComponent: (component: ComponentData) => Promise<void>;
     deleteComponent: (id: string) => Promise<void>;
 
-    // 섹션 내 순서 변경
+    // 섹션 내 순서 변경 (미리보기 트리거 안함)
     reorderSectionItems: (
         type: 'show' | 'mixset' | 'link',
         componentId: string,
         newPosition: number
     ) => Promise<void>;
+
+    // 수동 미리보기 새로고침 트리거
+    triggerPreviewRefresh: () => void;
 }
 
 export const useComponentStore = create<ComponentStore>((set, get) => ({
     components: [],
     pageId: null,
     theme: null,
+    previewVersion: 0,
 
     setComponents: (components) => set({ components }),
     setPageId: (pageId) => set({ pageId }),
     setTheme: (theme) => set({ theme }),
+
+    triggerPreviewRefresh: () => set((state) => ({ previewVersion: state.previewVersion + 1 })),
 
     getComponentById: (id) => {
         return get().components.find((c) => c.id === id);
     },
 
     saveComponent: async (component) => {
-        const { components, pageId } = get();
+        const { components, pageId, previewVersion } = get();
         const existingIndex = components.findIndex((c) => c.id === component.id);
+
+        // 컴포넌트가 공개 가능한 상태인지 확인
+        const isComplete = canAddToView(component);
 
         if (existingIndex === -1) {
             // 새 컴포넌트 추가
             const updatedComponents = [...components, component];
-            set({ components: updatedComponents });
+            // 완성된 컴포넌트만 미리보기 새로고침
+            set({
+                components: updatedComponents,
+                ...(isComplete && { previewVersion: previewVersion + 1 }),
+            });
 
             try {
                 const response = await fetch('/api/components', {
@@ -90,10 +108,18 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
         } else {
             // 기존 컴포넌트 수정
             const previousComponent = components[existingIndex];
+            const wasComplete = canAddToView(previousComponent);
             const updatedComponents = components.map((c) =>
                 c.id === component.id ? component : c
             );
-            set({ components: updatedComponents });
+
+            // 완성된 상태에서 변경되었거나, 완성 상태로 전환된 경우에만 미리보기 새로고침
+            const shouldRefreshPreview = isComplete || wasComplete;
+
+            set({
+                components: updatedComponents,
+                ...(shouldRefreshPreview && { previewVersion: previewVersion + 1 }),
+            });
 
             try {
                 const response = await fetch(`/api/components/${component.id}`, {
@@ -122,11 +148,17 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
     },
 
     deleteComponent: async (id) => {
-        const { components } = get();
+        const { components, previewVersion } = get();
         const deletedComponent = components.find((c) => c.id === id);
         if (!deletedComponent) return;
 
-        set({ components: components.filter((c) => c.id !== id) });
+        // 삭제된 컴포넌트가 완성된 상태였다면 미리보기 새로고침
+        const wasComplete = canAddToView(deletedComponent);
+
+        set({
+            components: components.filter((c) => c.id !== id),
+            ...(wasComplete && { previewVersion: previewVersion + 1 }),
+        });
 
         try {
             const response = await fetch(`/api/components/${id}`, {

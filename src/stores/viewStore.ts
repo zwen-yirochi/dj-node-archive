@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useComponentStore } from './editorStore';
 
 export interface ViewItem {
     id: string;
@@ -75,6 +76,9 @@ export const useViewStore = create<ViewStore>((set, get) => ({
         // 낙관적 업데이트
         set({ viewItems: newItems });
 
+        // 미리보기 새로고침 트리거 (View에 추가는 공개 페이지에 영향)
+        useComponentStore.getState().triggerPreviewRefresh();
+
         try {
             const response = await fetch('/api/view-items', {
                 method: 'POST',
@@ -125,6 +129,9 @@ export const useViewStore = create<ViewStore>((set, get) => ({
             .filter((item) => item.id !== viewItemId)
             .map((item, index) => ({ ...item, order: index }));
         set({ viewItems: newItems });
+
+        // 미리보기 새로고침 트리거 (View에서 제거는 공개 페이지에 영향)
+        useComponentStore.getState().triggerPreviewRefresh();
 
         try {
             const response = await fetch(`/api/view-items/${viewItemId}`, {
@@ -217,6 +224,9 @@ export const useViewStore = create<ViewStore>((set, get) => ({
                 item.id === viewItemId ? { ...item, isVisible: !item.isVisible } : item
             ),
         });
+
+        // 미리보기 새로고침 트리거 (visibility 변경은 공개 페이지에 영향)
+        useComponentStore.getState().triggerPreviewRefresh();
 
         try {
             const response = await fetch(`/api/view-items/${viewItemId}`, {
