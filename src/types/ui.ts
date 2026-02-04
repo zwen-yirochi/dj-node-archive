@@ -2,14 +2,14 @@
 // types/ui.ts - UI 전용 타입 (단일 소스)
 // ==============================================
 
-import type { ComponentData, User } from './domain';
+import type { ContentEntry, User } from './domain';
 
 // ----------------------------------------------
 // Editor State
 // ----------------------------------------------
 export interface EditorState {
     user: User;
-    components: ComponentData[];
+    components: ContentEntry[];
     selectedComponentId: string | null;
     isDirty: boolean;
 }

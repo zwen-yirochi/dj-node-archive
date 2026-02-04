@@ -79,7 +79,7 @@ export const LINK_FIELDS: FieldConfig[] = [
 // 타입별 필드 설정 맵
 // ============================================
 export const COMPONENT_FIELDS = {
-    show: EVENT_FIELDS,
+    event: EVENT_FIELDS,
     mixset: MIXSET_FIELDS,
     link: LINK_FIELDS,
 } as const;

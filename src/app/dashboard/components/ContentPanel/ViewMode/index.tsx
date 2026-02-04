@@ -2,14 +2,14 @@
 
 import { Button } from '@/components/ui/button';
 import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
-import { type ComponentData, isEventComponent, isLinkComponent, isMixsetComponent } from '@/types';
+import { type ContentEntry, isEventComponent, isLinkComponent, isMixsetComponent } from '@/types';
 import { Pencil, Trash2 } from 'lucide-react';
 import LinkDetail from './LinkDetail';
 import MixsetDetail from './MixsetDetail';
 import ShowDetail from './ShowDetail';
 
 interface ViewModeProps {
-    component: ComponentData;
+    component: ContentEntry;
     onEdit: () => void;
     onDelete: () => void;
 }

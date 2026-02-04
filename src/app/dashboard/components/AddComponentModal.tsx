@@ -14,7 +14,7 @@ type ComponentType = 'event' | 'mixset' | 'link';
 interface AddComponentModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onAddComponent: (type: 'show' | 'mixset' | 'link', eventData?: DBEventWithVenue) => void;
+    onAddComponent: (type: 'event' | 'mixset' | 'link', eventData?: DBEventWithVenue) => void;
 }
 
 const componentTypes = [
@@ -102,12 +102,12 @@ export function AddComponentModal({ open, onOpenChange, onAddComponent }: AddCom
 
     const handleEventCreated = (event: DBEventWithVenue) => {
         setIsCreateEventOpen(false);
-        onAddComponent('show', event);
+        onAddComponent('event', event);
         resetAndClose();
     };
 
     const handleImportEvent = (event: DBEventWithVenue) => {
-        onAddComponent('show', event);
+        onAddComponent('event', event);
         resetAndClose();
     };
 

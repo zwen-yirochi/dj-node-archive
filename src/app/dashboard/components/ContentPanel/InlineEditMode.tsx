@@ -9,7 +9,7 @@ import {
 import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 import { cn } from '@/lib/utils';
 import {
-    type ComponentData,
+    type ContentEntry,
     type EventComponent,
     isEventComponent,
     isLinkComponent,
@@ -39,8 +39,8 @@ import Image from 'next/image';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface InlineEditModeProps {
-    component: ComponentData;
-    onSave: (component: ComponentData) => Promise<void>;
+    component: ContentEntry;
+    onSave: (component: ContentEntry) => Promise<void>;
     onDelete: () => void;
 }
 
@@ -56,16 +56,13 @@ const iconComponents: Record<string, React.ComponentType<{ className?: string }>
 };
 
 // 디바운스된 저장을 위한 훅
-function useDebouncedSave(
-    onSave: (component: ComponentData) => Promise<void>,
-    delay: number = 800
-) {
+function useDebouncedSave(onSave: (entry: ContentEntry) => Promise<void>, delay: number = 800) {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
     const debouncedSave = useCallback(
-        (component: ComponentData) => {
+        (entry: ContentEntry) => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
             }
@@ -73,7 +70,7 @@ function useDebouncedSave(
             timeoutRef.current = setTimeout(async () => {
                 setIsSaving(true);
                 try {
-                    await onSave(component);
+                    await onSave(entry);
                     setLastSaved(new Date());
                 } catch (error) {
                     console.error('저장 실패:', error);
@@ -97,23 +94,23 @@ function useDebouncedSave(
 }
 
 export default function InlineEditMode({ component, onSave, onDelete }: InlineEditModeProps) {
-    const [localComponent, setLocalComponent] = useState<ComponentData>(component);
+    const [localEntry, setLocalEntry] = useState<ContentEntry>(component);
     const { debouncedSave, isSaving, lastSaved } = useDebouncedSave(onSave);
 
-    // 외부 컴포넌트가 변경되면 로컬 상태 업데이트
+    // 외부 엔트리가 변경되면 로컬 상태 업데이트
     useEffect(() => {
-        setLocalComponent(component);
+        setLocalEntry(component);
     }, [component]);
 
-    const updateField = <K extends keyof ComponentData>(key: K, value: ComponentData[K]) => {
-        const updated = { ...localComponent, [key]: value } as ComponentData;
-        setLocalComponent(updated);
+    const updateField = <K extends keyof ContentEntry>(key: K, value: ContentEntry[K]) => {
+        const updated = { ...localEntry, [key]: value } as ContentEntry;
+        setLocalEntry(updated);
         debouncedSave(updated);
     };
 
     const getTypeColor = () => {
-        switch (localComponent.type) {
-            case 'show':
+        switch (localEntry.type) {
+            case 'event':
                 return 'bg-blue-50 text-dashboard-type-event border-blue-200';
             case 'mixset':
                 return 'bg-purple-50 text-dashboard-type-mixset border-purple-200';
@@ -123,8 +120,8 @@ export default function InlineEditMode({ component, onSave, onDelete }: InlineEd
     };
 
     const getTypeIcon = () => {
-        switch (localComponent.type) {
-            case 'show':
+        switch (localEntry.type) {
+            case 'event':
                 return <Calendar className="h-4 w-4" />;
             case 'mixset':
                 return <Headphones className="h-4 w-4" />;
@@ -159,7 +156,7 @@ export default function InlineEditMode({ component, onSave, onDelete }: InlineEd
                         className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${getTypeColor()}`}
                     >
                         {getTypeIcon()}
-                        {localComponent.type}
+                        {localEntry.type}
                     </span>
                     {saveStatus && (
                         <span className="text-xs text-dashboard-text-muted">{saveStatus}</span>
@@ -180,32 +177,32 @@ export default function InlineEditMode({ component, onSave, onDelete }: InlineEd
                 <p className="mb-4 text-xs text-dashboard-text-placeholder">
                     더블클릭하여 편집 · Enter로 저장 · Escape로 취소
                 </p>
-                {isEventComponent(localComponent) && (
+                {isEventComponent(localEntry) && (
                     <ShowInlineEdit
-                        component={localComponent}
+                        component={localEntry}
                         onUpdate={(updates) => {
-                            const updated = { ...localComponent, ...updates } as EventComponent;
-                            setLocalComponent(updated);
+                            const updated = { ...localEntry, ...updates } as EventComponent;
+                            setLocalEntry(updated);
                             debouncedSave(updated);
                         }}
                     />
                 )}
-                {isMixsetComponent(localComponent) && (
+                {isMixsetComponent(localEntry) && (
                     <MixsetInlineEdit
-                        component={localComponent}
+                        component={localEntry}
                         onUpdate={(updates) => {
-                            const updated = { ...localComponent, ...updates } as MixsetComponent;
-                            setLocalComponent(updated);
+                            const updated = { ...localEntry, ...updates } as MixsetComponent;
+                            setLocalEntry(updated);
                             debouncedSave(updated);
                         }}
                     />
                 )}
-                {isLinkComponent(localComponent) && (
+                {isLinkComponent(localEntry) && (
                     <LinkInlineEdit
-                        component={localComponent}
+                        component={localEntry}
                         onUpdate={(updates) => {
-                            const updated = { ...localComponent, ...updates } as LinkComponent;
-                            setLocalComponent(updated);
+                            const updated = { ...localEntry, ...updates } as LinkComponent;
+                            setLocalEntry(updated);
                             debouncedSave(updated);
                         }}
                     />

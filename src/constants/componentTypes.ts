@@ -18,7 +18,7 @@ export interface ComponentTypeConfig {
 }
 
 export const COMPONENT_TYPE_CONFIG: Record<ComponentType, ComponentTypeConfig> = {
-    show: {
+    event: {
         label: 'Event',
         icon: Calendar,
         color: 'text-dashboard-type-event',

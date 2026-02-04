@@ -1,20 +1,36 @@
-import { create } from 'zustand';
-import { useComponentStore } from './componentStore';
+/**
+ * viewStore.ts - View 상태 관리
+ *
+ * 공개 페이지에 표시되는 DisplayEntry와 미리보기 트리거를 관리합니다.
+ * previewVersion이 ComponentStore에서 이동됨.
+ */
 
-export interface ViewItem {
+import { create } from 'zustand';
+
+export interface DisplayEntry {
     id: string;
     componentId: string;
     order: number;
     isVisible: boolean;
 }
 
+/** @deprecated Use DisplayEntry instead */
+export type ViewItem = DisplayEntry;
+
 interface ViewStore {
-    viewItems: ViewItem[];
+    viewItems: DisplayEntry[];
+
+    // 미리보기 업데이트 트리거 (ComponentStore에서 이동)
+    // View 변경, 컴포넌트 변경 시 증가
+    previewVersion: number;
 
     // 동기 액션
-    setViewItems: (items: ViewItem[]) => void;
+    setViewItems: (items: DisplayEntry[]) => void;
     isInView: (componentId: string) => boolean;
-    getViewItemByComponentId: (componentId: string) => ViewItem | undefined;
+    getViewItemByComponentId: (componentId: string) => DisplayEntry | undefined;
+
+    // 미리보기 트리거
+    triggerPreviewRefresh: () => void;
 
     // 비동기 액션 (API 연동)
     addToView: (pageId: string, componentId: string, position?: number) => Promise<void>;
@@ -26,6 +42,7 @@ interface ViewStore {
 
 export const useViewStore = create<ViewStore>((set, get) => ({
     viewItems: [],
+    previewVersion: 0,
 
     setViewItems: (items) => set({ viewItems: items }),
 
@@ -35,6 +52,10 @@ export const useViewStore = create<ViewStore>((set, get) => ({
 
     getViewItemByComponentId: (componentId) => {
         return get().viewItems.find((item) => item.componentId === componentId);
+    },
+
+    triggerPreviewRefresh: () => {
+        set((state) => ({ previewVersion: state.previewVersion + 1 }));
     },
 
     addToView: async (pageId, componentId, position) => {
@@ -54,14 +75,14 @@ export const useViewStore = create<ViewStore>((set, get) => ({
 
         // 낙관적 업데이트를 위한 임시 ID
         const tempId = crypto.randomUUID();
-        const newItem: ViewItem = {
+        const newItem: DisplayEntry = {
             id: tempId,
             componentId,
             order: orderIndex,
             isVisible: true,
         };
 
-        let newItems: ViewItem[];
+        let newItems: DisplayEntry[];
         if (position !== undefined) {
             newItems = [...viewItems];
             newItems.splice(position, 0, newItem);
@@ -73,11 +94,11 @@ export const useViewStore = create<ViewStore>((set, get) => ({
             newItems = [...viewItems, newItem];
         }
 
-        // 낙관적 업데이트
-        set({ viewItems: newItems });
-
-        // 미리보기 새로고침 트리거 (View에 추가는 공개 페이지에 영향)
-        useComponentStore.getState().triggerPreviewRefresh();
+        // 낙관적 업데이트 + 미리보기 트리거
+        set((state) => ({
+            viewItems: newItems,
+            previewVersion: state.previewVersion + 1,
+        }));
 
         try {
             const response = await fetch('/api/view-items', {
@@ -128,10 +149,12 @@ export const useViewStore = create<ViewStore>((set, get) => ({
         const newItems = viewItems
             .filter((item) => item.id !== viewItemId)
             .map((item, index) => ({ ...item, order: index }));
-        set({ viewItems: newItems });
 
-        // 미리보기 새로고침 트리거 (View에서 제거는 공개 페이지에 영향)
-        useComponentStore.getState().triggerPreviewRefresh();
+        // 낙관적 업데이트 + 미리보기 트리거
+        set((state) => ({
+            viewItems: newItems,
+            previewVersion: state.previewVersion + 1,
+        }));
 
         try {
             const response = await fetch(`/api/view-items/${viewItemId}`, {
@@ -218,15 +241,13 @@ export const useViewStore = create<ViewStore>((set, get) => ({
 
         if (!targetItem) return;
 
-        // 낙관적 업데이트
-        set({
+        // 낙관적 업데이트 + 미리보기 트리거
+        set((state) => ({
             viewItems: viewItems.map((item) =>
                 item.id === viewItemId ? { ...item, isVisible: !item.isVisible } : item
             ),
-        });
-
-        // 미리보기 새로고침 트리거 (visibility 변경은 공개 페이지에 영향)
-        useComponentStore.getState().triggerPreviewRefresh();
+            previewVersion: state.previewVersion + 1,
+        }));
 
         try {
             const response = await fetch(`/api/view-items/${viewItemId}`, {

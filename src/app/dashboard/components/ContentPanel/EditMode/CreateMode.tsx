@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { canCreate } from '@/lib/validators';
-import { type ComponentData, isEventComponent, isLinkComponent, isMixsetComponent } from '@/types';
+import { type ContentEntry, isEventComponent, isLinkComponent, isMixsetComponent } from '@/types';
 import { Calendar, Headphones, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import LinkEditor from './LinkEditor';
@@ -11,8 +11,8 @@ import MixsetEditor from './MixsetEditor';
 import ShowEditor from './ShowEditor';
 
 interface CreateModeProps {
-    component: ComponentData;
-    onSave: (component: ComponentData) => Promise<void>;
+    component: ContentEntry;
+    onSave: (component: ContentEntry) => Promise<void>;
     onCancel: () => void;
 }
 
@@ -22,17 +22,17 @@ interface CreateModeProps {
  * - title만 필수 (canCreate 검증)
  */
 export default function CreateMode({ component, onSave, onCancel }: CreateModeProps) {
-    const [localComponent, setLocalComponent] = useState<ComponentData>(component);
+    const [localEntry, setLocalEntry] = useState<ContentEntry>(component);
     const [isSaving, setIsSaving] = useState(false);
 
-    const updateLocal = (updates: Partial<ComponentData>) => {
-        setLocalComponent((prev) => ({ ...prev, ...updates }) as ComponentData);
+    const updateLocal = (updates: Partial<ContentEntry>) => {
+        setLocalEntry((prev) => ({ ...prev, ...updates }) as ContentEntry);
     };
 
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await onSave(localComponent);
+            await onSave(localEntry);
         } catch (error) {
             console.error('생성 실패:', error);
             toast({
@@ -45,9 +45,9 @@ export default function CreateMode({ component, onSave, onCancel }: CreateModePr
         }
     };
 
-    const getComponentIcon = () => {
-        switch (localComponent.type) {
-            case 'show':
+    const getEntryIcon = () => {
+        switch (localEntry.type) {
+            case 'event':
                 return <Calendar className="h-5 w-5" />;
             case 'mixset':
                 return <Headphones className="h-5 w-5" />;
@@ -56,9 +56,9 @@ export default function CreateMode({ component, onSave, onCancel }: CreateModePr
         }
     };
 
-    const getComponentTitle = () => {
-        switch (localComponent.type) {
-            case 'show':
+    const getEntryTitle = () => {
+        switch (localEntry.type) {
+            case 'event':
                 return '새 공연 추가';
             case 'mixset':
                 return '새 믹스셋 추가';
@@ -67,10 +67,10 @@ export default function CreateMode({ component, onSave, onCancel }: CreateModePr
         }
     };
 
-    const isSaveEnabled = canCreate(localComponent);
+    const isSaveEnabled = canCreate(localEntry);
 
     const typeStyles = {
-        show: 'bg-blue-50 text-dashboard-type-event',
+        event: 'bg-blue-50 text-dashboard-type-event',
         mixset: 'bg-purple-50 text-dashboard-type-mixset',
         link: 'bg-green-50 text-dashboard-type-link',
     };
@@ -81,26 +81,24 @@ export default function CreateMode({ component, onSave, onCancel }: CreateModePr
             <div className="flex items-center justify-between border-b border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
                 <div className="flex items-center gap-3">
                     <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${typeStyles[localComponent.type]}`}
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${typeStyles[localEntry.type]}`}
                     >
-                        {getComponentIcon()}
+                        {getEntryIcon()}
                     </div>
-                    <h2 className="text-xl font-semibold text-dashboard-text">
-                        {getComponentTitle()}
-                    </h2>
+                    <h2 className="text-xl font-semibold text-dashboard-text">{getEntryTitle()}</h2>
                 </div>
             </div>
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
-                {isEventComponent(localComponent) && (
-                    <ShowEditor component={localComponent} onUpdate={updateLocal} />
+                {isEventComponent(localEntry) && (
+                    <ShowEditor component={localEntry} onUpdate={updateLocal} />
                 )}
-                {isMixsetComponent(localComponent) && (
-                    <MixsetEditor component={localComponent} onUpdate={updateLocal} />
+                {isMixsetComponent(localEntry) && (
+                    <MixsetEditor component={localEntry} onUpdate={updateLocal} />
                 )}
-                {isLinkComponent(localComponent) && (
-                    <LinkEditor component={localComponent} onUpdate={updateLocal} />
+                {isLinkComponent(localEntry) && (
+                    <LinkEditor component={localEntry} onUpdate={updateLocal} />
                 )}
             </div>
 

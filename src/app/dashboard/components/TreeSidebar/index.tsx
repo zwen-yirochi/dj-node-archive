@@ -5,7 +5,7 @@ import { canAddToView } from '@/lib/validators';
 import { useComponentStore } from '@/stores/componentStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useViewStore } from '@/stores/viewStore';
-import type { ComponentData } from '@/types';
+import type { ContentEntry } from '@/types';
 import {
     closestCenter,
     DndContext,
@@ -40,7 +40,7 @@ import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
 
 interface TreeSidebarProps {
-    onAddComponent: (type: 'show' | 'mixset' | 'link') => void;
+    onAddComponent: (type: 'event' | 'mixset' | 'link') => void;
     onDeleteComponent?: (id: string) => void;
     username: string;
 }
@@ -70,12 +70,12 @@ export default function TreeSidebar({
     const isPageCollapsed = sidebarSections.view.collapsed;
 
     // useMemo로 필터링하여 무한 루프 방지
-    const events = useMemo(() => components.filter((c) => c.type === 'show'), [components]);
+    const events = useMemo(() => components.filter((c) => c.type === 'event'), [components]);
     const mixsets = useMemo(() => components.filter((c) => c.type === 'mixset'), [components]);
     const links = useMemo(() => components.filter((c) => c.type === 'link'), [components]);
 
     const [activeItem, setActiveItem] = useState<{
-        component: ComponentData;
+        component: ContentEntry;
         isViewItem: boolean;
         viewItemId?: string;
     } | null>(null);
@@ -123,7 +123,7 @@ export default function TreeSidebar({
 
         // View 드롭존에 드롭한 경우
         if (over.id === 'view-drop-zone' && activeData?.type === 'component' && pageId) {
-            const component = activeData.component as ComponentData;
+            const component = activeData.component as ContentEntry;
             // 유효성 검사: 필수 필드가 채워진 컴포넌트만 View에 추가 가능
             if (!canAddToView(component)) {
                 // TODO: Toast로 사용자에게 알림
@@ -145,26 +145,26 @@ export default function TreeSidebar({
             return;
         }
 
-        // 섹션 내 컴포넌트 순서 변경
+        // 섹션 내 엔트리 순서 변경
         if (activeData?.type === 'component' && overData?.type === 'component') {
-            const activeComponent = activeData.component as ComponentData;
-            const overComponent = overData.component as ComponentData;
+            const activeEntry = activeData.component as ContentEntry;
+            const overEntry = overData.component as ContentEntry;
 
-            if (activeComponent.type === overComponent.type && active.id !== over.id) {
-                const sectionType = activeComponent.type as 'show' | 'mixset' | 'link';
+            if (activeEntry.type === overEntry.type && active.id !== over.id) {
+                const sectionType = activeEntry.type as 'event' | 'mixset' | 'link';
 
-                let sectionComponents: ComponentData[];
-                if (sectionType === 'show') {
-                    sectionComponents = events;
+                let sectionEntries: ContentEntry[];
+                if (sectionType === 'event') {
+                    sectionEntries = events;
                 } else if (sectionType === 'mixset') {
-                    sectionComponents = mixsets;
+                    sectionEntries = mixsets;
                 } else {
-                    sectionComponents = links;
+                    sectionEntries = links;
                 }
 
-                const overIndex = sectionComponents.findIndex((c) => c.id === over.id);
+                const overIndex = sectionEntries.findIndex((c) => c.id === over.id);
                 if (overIndex !== -1) {
-                    reorderSectionItems(sectionType, activeComponent.id, overIndex);
+                    reorderSectionItems(sectionType, activeEntry.id, overIndex);
                 }
             }
         }
@@ -271,7 +271,7 @@ export default function TreeSidebar({
                         title="Events"
                         icon={<Calendar className="h-4 w-4" />}
                         count={events.length}
-                        onAdd={() => onAddComponent('show')}
+                        onAdd={() => onAddComponent('event')}
                     >
                         <SortableContext
                             items={events.map((c) => c.id)}

@@ -27,7 +27,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     const { user: userData, components } = result.data;
 
     // 컴포넌트를 타입별로 분류
-    const events = components.filter((c): c is EventComponent => c.type === 'show');
+    const events = components.filter((c): c is EventComponent => c.type === 'event');
     const mixsets = components.filter((c): c is MixsetComponent => c.type === 'mixset');
 
     return (

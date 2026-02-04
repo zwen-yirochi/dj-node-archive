@@ -16,23 +16,26 @@ import { type Result, createNotFoundError, failure, isSuccess, success } from '@
 import { cache } from 'react';
 
 // View Item 도메인 타입
-export interface ViewItem {
+export interface DisplayEntry {
     id: string;
     componentId: string;
     order: number;
     isVisible: boolean;
 }
 
+/** @deprecated Use DisplayEntry instead */
+export type ViewItem = DisplayEntry;
+
 export interface EditorData {
     user: User;
     components: ComponentData[];
     pageId: string | null;
-    viewItems: ViewItem[];
+    viewItems: DisplayEntry[];
     theme: Theme | null;
 }
 
 // DB 타입을 도메인 타입으로 변환
-function mapViewItemToDomain(dbItem: DBPageViewItem): ViewItem {
+function mapViewItemToDomain(dbItem: DBPageViewItem): DisplayEntry {
     return {
         id: dbItem.id,
         componentId: dbItem.component_id,
@@ -136,7 +139,7 @@ export async function getComponentsByType(username: string): Promise<Result<Comp
 
     const page = result.data;
     return success({
-        events: page.components.filter((c): c is EventComponent => c.type === 'show'),
+        events: page.components.filter((c): c is EventComponent => c.type === 'event'),
         mixsets: page.components.filter((c): c is MixsetComponent => c.type === 'mixset'),
         links: page.components.filter((c): c is LinkComponent => c.type === 'link'),
     });

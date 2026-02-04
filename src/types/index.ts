@@ -12,6 +12,9 @@ export type {
     EventComponent,
     MixsetComponent,
     LinkComponent,
+    ContentEntry,
+    ContentEntryType,
+    // Deprecated aliases (for backward compatibility)
     ComponentData,
     ComponentType,
     Page,

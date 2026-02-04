@@ -1,5 +1,5 @@
 import { COMPONENT_FIELDS, type ComponentType } from '@/constants/componentFields';
-import type { ComponentData } from '@/types';
+import type { ContentEntry } from '@/types';
 import type { FieldConfig, TreeItemStatus, ValidationResult } from '@/types/componentFields';
 
 // ============================================
@@ -88,23 +88,23 @@ export function getFieldConfig(type: ComponentType, fieldKey: string): FieldConf
 // ============================================
 
 /**
- * 컴포넌트 검증 (범용)
+ * 엔트리 검증 (범용)
  *
- * @param component - 검증할 컴포넌트
+ * @param entry - 검증할 엔트리
  * @param tier - 검증 단계 ('create' | 'view')
  */
-export function validateComponent(
-    component: ComponentData,
+export function validateEntry(
+    entry: ContentEntry,
     tier: 'create' | 'view' = 'view'
 ): ValidationResult {
-    const type = component.type as ComponentType;
+    const type = entry.type as ComponentType;
     const requiredFields = getRequiredFields(type, tier);
 
     const errors: string[] = [];
     const missingFields: string[] = [];
 
     for (const field of requiredFields) {
-        const value = (component as unknown as Record<string, unknown>)[field.key];
+        const value = (entry as unknown as Record<string, unknown>)[field.key];
         const isValid = validateFieldValue(value, field);
 
         if (!isValid) {
@@ -119,7 +119,7 @@ export function validateComponent(
 
     // Mixset 특수 케이스: audioUrl 또는 soundcloudEmbedUrl 중 하나 필요
     if (type === 'mixset' && tier === 'view') {
-        const mixset = component as unknown as Record<string, unknown>;
+        const mixset = entry as unknown as Record<string, unknown>;
         const hasAudio =
             mixset.audioUrl && typeof mixset.audioUrl === 'string' && mixset.audioUrl.trim();
         const hasSoundcloud =
@@ -140,20 +140,23 @@ export function validateComponent(
     };
 }
 
+/** @deprecated Use validateEntry instead */
+export const validateComponent = validateEntry;
+
 /**
- * 컴포넌트 생성 가능 여부 확인 (Tier 1)
+ * 엔트리 생성 가능 여부 확인 (Tier 1)
  * - title만 필수
  */
-export function canCreate(component: ComponentData): boolean {
-    return validateComponent(component, 'create').isValid;
+export function canCreate(entry: ContentEntry): boolean {
+    return validateEntry(entry, 'create').isValid;
 }
 
 /**
- * 컴포넌트가 Page에 추가 가능한지 확인 (Tier 2)
+ * 엔트리가 Page에 추가 가능한지 확인 (Tier 2)
  * - title + 추가 필수 필드 (coverUrl, url 등)
  */
-export function canAddToView(component: ComponentData): boolean {
-    return validateComponent(component, 'view').isValid;
+export function canAddToView(entry: ContentEntry): boolean {
+    return validateEntry(entry, 'view').isValid;
 }
 
 // ============================================
@@ -161,18 +164,18 @@ export function canAddToView(component: ComponentData): boolean {
 // ============================================
 
 /**
- * 컴포넌트 완성도 계산 (0-100%)
+ * 엔트리 완성도 계산 (0-100%)
  * Page 사용 가능 기준으로 계산
  */
-export function getCompletionPercentage(component: ComponentData): number {
-    const type = component.type as ComponentType;
+export function getCompletionPercentage(entry: ContentEntry): number {
+    const type = entry.type as ComponentType;
     const requiredFields = getRequiredFields(type, 'view');
 
     if (requiredFields.length === 0) return 100;
 
     let filledCount = 0;
     for (const field of requiredFields) {
-        const value = (component as unknown as Record<string, unknown>)[field.key];
+        const value = (entry as unknown as Record<string, unknown>)[field.key];
         if (validateFieldValue(value, field)) {
             filledCount++;
         }
@@ -185,12 +188,12 @@ export function getCompletionPercentage(component: ComponentData): number {
  * 누락된 필드 목록과 라벨 반환
  */
 export function getMissingFieldLabels(
-    component: ComponentData,
+    entry: ContentEntry,
     tier: 'create' | 'view' = 'view'
 ): string[] {
-    const type = component.type as ComponentType;
+    const type = entry.type as ComponentType;
     const fields = COMPONENT_FIELDS[type];
-    const result = validateComponent(component, tier);
+    const result = validateEntry(entry, tier);
 
     return result.missingFields
         .map((key) => fields.find((f) => f.key === key)?.label)

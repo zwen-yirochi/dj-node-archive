@@ -21,7 +21,7 @@ import type { EventComponent, MixsetComponent, LinkComponent } from './domain';
 export function dbEventToComponent(dbEvent: DBEvent, venueName: string = ''): EventComponent {
     return {
         id: dbEvent.id,
-        type: 'show',
+        type: 'event',
         title: dbEvent.title ?? '',
         date: dbEvent.date,
         venue: venueName,

@@ -6,7 +6,7 @@
  */
 
 import { COMPONENT_FIELDS, type ComponentType } from '@/constants/componentFields';
-import type { ComponentData } from '@/types';
+import type { ContentEntry } from '@/types';
 
 /**
  * 두 값이 같은지 깊은 비교
@@ -36,15 +36,15 @@ function isEqual(a: unknown, b: unknown): boolean {
 /**
  * 변경된 필드 중 미리보기 트리거가 필요한 필드가 있는지 확인
  *
- * @param previousComponent - 변경 전 컴포넌트
- * @param updatedComponent - 변경 후 컴포넌트
+ * @param previousEntry - 변경 전 엔트리
+ * @param updatedEntry - 변경 후 엔트리
  * @returns 미리보기 새로고침이 필요하면 true
  */
 export function shouldTriggerPreview(
-    previousComponent: ComponentData,
-    updatedComponent: ComponentData
+    previousEntry: ContentEntry,
+    updatedEntry: ContentEntry
 ): boolean {
-    const type = updatedComponent.type as ComponentType;
+    const type = updatedEntry.type as ComponentType;
     const fields = COMPONENT_FIELDS[type];
 
     if (!fields) return false;
@@ -53,8 +53,8 @@ export function shouldTriggerPreview(
         // triggersPreview가 false인 필드는 건너뜀
         if (!field.triggersPreview) continue;
 
-        const prevValue = (previousComponent as unknown as Record<string, unknown>)[field.key];
-        const newValue = (updatedComponent as unknown as Record<string, unknown>)[field.key];
+        const prevValue = (previousEntry as unknown as Record<string, unknown>)[field.key];
+        const newValue = (updatedEntry as unknown as Record<string, unknown>)[field.key];
 
         // 값이 다르면 트리거 필요
         if (!isEqual(prevValue, newValue)) {

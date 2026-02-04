@@ -9,7 +9,7 @@
  */
 
 export { useUserStore } from './userStore';
-export { useViewStore, type ViewItem } from './viewStore';
+export { useViewStore, type DisplayEntry, type ViewItem } from './viewStore';
 export {
     useUIStore,
     type ActivePanel,
@@ -18,4 +18,11 @@ export {
     type SidebarSections,
     type SidebarSectionState,
 } from './uiStore';
-export { useComponentStore, getComponentsByType, getSelectedComponent } from './componentStore';
+export {
+    useComponentStore,
+    getEntriesByType,
+    getSelectedEntry,
+    // Deprecated aliases
+    getComponentsByType,
+    getSelectedComponent,
+} from './componentStore';

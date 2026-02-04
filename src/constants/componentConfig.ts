@@ -29,7 +29,7 @@ export const LINK_ICON_COMPONENTS: Record<string, React.ComponentType<{ classNam
  * TreeItem, PageListView, ViewMode에서 사용
  */
 export const COMPONENT_TYPE_CONFIG = {
-    show: {
+    event: {
         icon: Calendar,
         label: 'Event',
         color: 'text-dashboard-type-event',

@@ -1,13 +1,13 @@
 // app/dashboard/EditorClient.tsx
 'use client';
 
-import { createEmptyComponent, eventToComponent } from '@/lib/transformers';
+import { createEmptyEntry, eventToEntry } from '@/lib/transformers';
 import { useComponentStore } from '@/stores/componentStore';
-import type { ViewItem } from '@/stores/viewStore';
+import type { DisplayEntry } from '@/stores/viewStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useUserStore } from '@/stores/userStore';
 import { useViewStore } from '@/stores/viewStore';
-import type { ComponentData, Theme, User } from '@/types';
+import type { ContentEntry, Theme, User } from '@/types';
 import type { DBEventWithVenue } from '@/types/database';
 import { useEffect, useState } from 'react';
 import { AddComponentModal } from './components/AddComponentModal';
@@ -17,8 +17,8 @@ import TreeSidebar from './components/TreeSidebar';
 
 interface EditorClientProps {
     initialUser: User;
-    initialComponents: ComponentData[];
-    initialViewItems?: ViewItem[];
+    initialComponents: ContentEntry[];
+    initialViewItems?: DisplayEntry[];
     initialTheme?: Theme | null;
     pageId: string;
     username: string;
@@ -39,18 +39,20 @@ export default function EditorClient({
     const setComponents = useComponentStore((state) => state.setComponents);
     const setPageId = useComponentStore((state) => state.setPageId);
     const setTheme = useComponentStore((state) => state.setTheme);
-    const saveComponent = useComponentStore((state) => state.saveComponent);
-    const deleteComponent = useComponentStore((state) => state.deleteComponent);
+    const createComponent = useComponentStore((state) => state.createComponent);
+    const finishCreating = useComponentStore((state) => state.finishCreating);
+    const deleteComponentFromStore = useComponentStore((state) => state.deleteComponent);
 
     // View Store
     const setViewItems = useViewStore((state) => state.setViewItems);
+    const triggerPreviewRefresh = useViewStore((state) => state.triggerPreviewRefresh);
 
     // UI Store
     const selectComponent = useUIStore((state) => state.selectComponent);
     const startCreating = useUIStore((state) => state.startCreating);
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [_addingType, setAddingType] = useState<'show' | 'mixset' | 'link'>('show');
+    const [_addingType, setAddingType] = useState<'event' | 'mixset' | 'link'>('event');
 
     // Zustand 초기화
     useEffect(() => {
@@ -76,26 +78,36 @@ export default function EditorClient({
 
     // 컴포넌트 추가 핸들러
     const handleAddComponent = async (
-        type: 'show' | 'mixset' | 'link',
+        type: 'event' | 'mixset' | 'link',
         eventData?: DBEventWithVenue
     ) => {
         setIsAddModalOpen(false);
 
         if (eventData) {
-            // 이벤트 데이터가 있으면 변환하여 바로 저장 (이미 데이터가 있으므로 view 모드)
-            const newComponent = eventToComponent(eventData);
-            await saveComponent(newComponent);
-            selectComponent(newComponent.id);
+            // 이벤트 데이터가 있으면 변환하여 바로 저장 (이미 완성된 데이터)
+            const newEntry = eventToEntry(eventData);
+            await createComponent(newEntry);
+            // 완성된 데이터이므로 바로 생성 완료 처리 + 미리보기 트리거
+            finishCreating(newEntry.id);
+            triggerPreviewRefresh();
+            selectComponent(newEntry.id);
         } else {
-            // 빈 컴포넌트 생성 후 즉시 DB에 저장 → 생성 모드 진입
-            const newComponent = createEmptyComponent(type);
-            await saveComponent(newComponent);
-            startCreating(newComponent.id);
+            // 빈 엔트리 생성 후 즉시 DB에 저장 → 생성 모드 진입
+            // createComponent는 newlyCreatedIds에 자동 추가
+            const newEntry = createEmptyEntry(type);
+            await createComponent(newEntry);
+            startCreating(newEntry.id);
         }
     };
 
+    // 컴포넌트 삭제 핸들러
+    const handleDeleteComponent = async (id: string) => {
+        const { triggeredPreview } = await deleteComponentFromStore(id);
+        if (triggeredPreview) triggerPreviewRefresh();
+    };
+
     // Add 버튼 클릭 핸들러
-    const handleOpenAddModal = (type: 'show' | 'mixset' | 'link') => {
+    const handleOpenAddModal = (type: 'event' | 'mixset' | 'link') => {
         setAddingType(type);
         setIsAddModalOpen(true);
     };
@@ -106,7 +118,7 @@ export default function EditorClient({
             <div className="p-3">
                 <TreeSidebar
                     onAddComponent={handleOpenAddModal}
-                    onDeleteComponent={deleteComponent}
+                    onDeleteComponent={handleDeleteComponent}
                     username={username}
                 />
             </div>

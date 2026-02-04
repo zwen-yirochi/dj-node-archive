@@ -1,14 +1,14 @@
-import type { ComponentData, EventComponent, LinkComponent, MixsetComponent } from '@/types';
+import type { ContentEntry, EventComponent, LinkComponent, MixsetComponent } from '@/types';
 import type { DBEventWithVenue } from '@/types/database';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
  * DB 이벤트 데이터를 EventComponent로 변환
  */
-export function eventToComponent(event: DBEventWithVenue): EventComponent {
+export function eventToEntry(event: DBEventWithVenue): EventComponent {
     return {
         id: uuidv4(),
-        type: 'show',
+        type: 'event',
         title: event.title || '',
         date: event.date,
         venue: event.venue?.name || '',
@@ -21,17 +21,20 @@ export function eventToComponent(event: DBEventWithVenue): EventComponent {
     };
 }
 
+/** @deprecated Use eventToEntry instead */
+export const eventToComponent = eventToEntry;
+
 /**
- * 빈 컴포넌트 템플릿 생성
+ * 빈 엔트리 템플릿 생성
  */
-export function createEmptyComponent(type: 'show' | 'mixset' | 'link'): ComponentData {
+export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntry {
     const id = uuidv4();
 
     switch (type) {
-        case 'show':
+        case 'event':
             return {
                 id,
-                type: 'show',
+                type: 'event',
                 title: '',
                 date: new Date().toISOString().split('T')[0],
                 venue: '',
@@ -65,3 +68,6 @@ export function createEmptyComponent(type: 'show' | 'mixset' | 'link'): Componen
             } as LinkComponent;
     }
 }
+
+/** @deprecated Use createEmptyEntry instead */
+export const createEmptyComponent = createEmptyEntry;
