@@ -3,13 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -27,7 +21,6 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 interface AccountSectionProps {
@@ -166,11 +159,19 @@ export default function AccountSection({ username }: AccountSectionProps) {
         window.location.href = '/login';
     };
 
+    // 계정 메뉴 아이템
+    const accountMenuItems: DropdownMenuItemConfig[] = [
+        { label: '프로필 편집', onClick: handleOpenEditDialog, icon: Pencil },
+        { label: '내 페이지 보기', href: `/${username}`, icon: ExternalLink, external: true },
+        { type: 'separator' },
+        { label: '로그아웃', onClick: handleLogout, icon: LogOut, variant: 'danger' },
+    ];
+
     return (
         <>
             <div className="mt-auto border-t border-dashboard-border">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                <SimpleDropdown
+                    trigger={
                         <button className="flex w-full cursor-pointer items-center gap-3 p-3 transition-colors hover:bg-dashboard-bg-hover">
                             {/* Avatar */}
                             <Avatar className="h-8 w-8 border border-dashboard-border">
@@ -196,42 +197,12 @@ export default function AccountSection({ username }: AccountSectionProps) {
 
                             <ChevronUp className="h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
                         </button>
-                    </DropdownMenuTrigger>
-
-                    <DropdownMenuContent
-                        align="start"
-                        side="top"
-                        className="w-56 border-dashboard-border bg-dashboard-bg-card shadow-lg"
-                    >
-                        <DropdownMenuItem
-                            onClick={handleOpenEditDialog}
-                            className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
-                        >
-                            <Pencil className="mr-2 h-4 w-4" />
-                            프로필 편집
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem asChild>
-                            <Link
-                                href={`/${username}`}
-                                target="_blank"
-                                className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
-                            >
-                                <ExternalLink className="mr-2 h-4 w-4" />내 페이지 보기
-                            </Link>
-                        </DropdownMenuItem>
-
-                        <DropdownMenuSeparator className="bg-dashboard-border" />
-
-                        <DropdownMenuItem
-                            onClick={handleLogout}
-                            className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600"
-                        >
-                            <LogOut className="mr-2 h-4 w-4" />
-                            로그아웃
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                    }
+                    items={accountMenuItems}
+                    align="start"
+                    side="top"
+                    contentClassName="w-56"
+                />
             </div>
 
             {/* Edit Profile Dialog */}
