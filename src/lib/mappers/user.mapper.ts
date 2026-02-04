@@ -2,7 +2,7 @@
 // 서버/클라이언트 공용 - 순수 함수
 import type { DBComponent, DBUser } from '@/types/database';
 import type {
-    ComponentData,
+    ContentEntry,
     EventComponent,
     LinkComponent,
     MixsetComponent,
@@ -28,7 +28,7 @@ export function mapUserToDatabase(user: Partial<User>): Partial<DBUser> {
     };
 }
 
-export function mapComponentToDomain(dbComp: DBComponent): ComponentData {
+export function mapEntryToDomain(dbComp: DBComponent): ContentEntry {
     const baseId = { id: dbComp.id };
 
     switch (dbComp.type) {
@@ -79,11 +79,11 @@ export function mapComponentToDomain(dbComp: DBComponent): ComponentData {
     }
 }
 
-export function mapComponentToDatabase(
-    comp: ComponentData,
+export function mapEntryToDatabase(
+    entry: ContentEntry,
     position: number
 ): Omit<DBComponent, 'id' | 'created_at' | 'updated_at' | 'page_id'> {
-    const { id, type, ...data } = comp;
+    const { id, type, ...data } = entry;
 
     return {
         type,
@@ -91,3 +91,9 @@ export function mapComponentToDatabase(
         data,
     };
 }
+
+/** @deprecated Use mapEntryToDomain instead */
+export const mapComponentToDomain = mapEntryToDomain;
+
+/** @deprecated Use mapEntryToDatabase instead */
+export const mapComponentToDatabase = mapEntryToDatabase;
