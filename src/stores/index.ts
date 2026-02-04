@@ -18,4 +18,11 @@ export {
     type SidebarSections,
     type SidebarSectionState,
 } from './uiStore';
-export { useComponentStore, getComponentsByType, getSelectedComponent } from './componentStore';
+export {
+    useComponentStore,
+    getEntriesByType,
+    getSelectedEntry,
+    // Deprecated aliases
+    getComponentsByType,
+    getSelectedComponent,
+} from './componentStore';

@@ -7,14 +7,14 @@
 
 import { shouldTriggerPreview } from '@/lib/previewTrigger';
 import { canAddToView } from '@/lib/validators';
-import type { ComponentData, Theme } from '@/types';
+import type { ContentEntry, Theme } from '@/types';
 import { create } from 'zustand';
 
 // ============================================
 // Component Store Interface
 // ============================================
 interface ComponentStore {
-    components: ComponentData[];
+    components: ContentEntry[];
     pageId: string | null;
     theme: Theme | null;
 
@@ -22,19 +22,19 @@ interface ComponentStore {
     newlyCreatedIds: Set<string>;
 
     // Setters
-    setComponents: (components: ComponentData[]) => void;
+    setComponents: (components: ContentEntry[]) => void;
     setPageId: (pageId: string) => void;
     setTheme: (theme: Theme) => void;
 
     // 컴포넌트 관련 유틸리티
-    getComponentById: (id: string) => ComponentData | undefined;
+    getEntryById: (id: string) => ContentEntry | undefined;
     isNewlyCreated: (id: string) => boolean;
 
     // 컴포넌트 CRUD 액션 (분리됨)
     /** 새 컴포넌트 생성 - DB 저장 후 ID 반환, 미리보기 트리거 안 함 */
-    createComponent: (component: ComponentData) => Promise<string>;
+    createComponent: (component: ContentEntry) => Promise<string>;
     /** 기존 컴포넌트 수정 - 미리보기 트리거 여부 반환 */
-    updateComponent: (component: ComponentData) => Promise<{ triggeredPreview: boolean }>;
+    updateComponent: (component: ContentEntry) => Promise<{ triggeredPreview: boolean }>;
     /** 컴포넌트 삭제 - 미리보기 트리거 여부 반환 */
     deleteComponent: (id: string) => Promise<{ triggeredPreview: boolean }>;
 
@@ -62,7 +62,7 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
     setPageId: (pageId) => set({ pageId }),
     setTheme: (theme) => set({ theme }),
 
-    getComponentById: (id) => {
+    getEntryById: (id) => {
         return get().components.find((c) => c.id === id);
     },
 
@@ -268,15 +268,16 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
 // Utility Functions
 // ============================================
 
-export const getComponentsByType = (
-    components: ComponentData[],
-    type: 'event' | 'mixset' | 'link'
-) => components.filter((c) => c.type === type);
+export const getEntriesByType = (entries: ContentEntry[], type: 'event' | 'mixset' | 'link') =>
+    entries.filter((c) => c.type === type);
 
-export const getSelectedComponent = (
-    components: ComponentData[],
-    selectedComponentId: string | null
-) => {
-    if (!selectedComponentId) return null;
-    return components.find((c) => c.id === selectedComponentId) ?? null;
+export const getSelectedEntry = (entries: ContentEntry[], selectedEntryId: string | null) => {
+    if (!selectedEntryId) return null;
+    return entries.find((c) => c.id === selectedEntryId) ?? null;
 };
+
+/** @deprecated Use getEntriesByType instead */
+export const getComponentsByType = getEntriesByType;
+
+/** @deprecated Use getSelectedEntry instead */
+export const getSelectedComponent = getSelectedEntry;
