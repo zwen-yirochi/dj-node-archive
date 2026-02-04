@@ -183,8 +183,6 @@ export default function TreeSidebar({
         toggleSection('view');
     };
 
-    const visibleCount = viewItems.filter((item) => item.isVisible).length;
-
     return (
         <DndContext
             sensors={sensors}
@@ -230,6 +228,13 @@ export default function TreeSidebar({
                                 : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
                         )}
                     >
+                        <FileText className="h-4 w-4 text-dashboard-text-muted" />
+                        <span className="flex-1 text-sm font-medium">Page</span>
+                        {/* {visibleCount > 0 && (
+                            <span className="rounded bg-dashboard-bg-active px-1.5 py-0.5 text-[10px] font-medium text-dashboard-text-muted">
+                                {visibleCount}
+                            </span>
+                        )} */}
                         {/* 접기/펼치기 화살표 */}
                         <button
                             onClick={handlePageToggle}
@@ -241,13 +246,6 @@ export default function TreeSidebar({
                                 <ChevronDown className="h-3.5 w-3.5" />
                             )}
                         </button>
-                        <FileText className="h-4 w-4 text-dashboard-text-muted" />
-                        <span className="flex-1 text-sm font-medium">Page</span>
-                        {visibleCount > 0 && (
-                            <span className="rounded bg-dashboard-bg-active px-1.5 py-0.5 text-[10px] font-medium text-dashboard-text-muted">
-                                {visibleCount}
-                            </span>
-                        )}
                     </div>
 
                     {/* Page ViewSection - 항상 렌더링 (드롭 가능), 접힘 상태에 따라 표시 */}
@@ -280,11 +278,10 @@ export default function TreeSidebar({
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {events.map((component, index) => (
+                                {events.map((component) => (
                                     <TreeItem
                                         key={component.id}
                                         component={component}
-                                        isLast={index === events.length - 1}
                                         onDelete={() => handleDelete(component.id)}
                                     />
                                 ))}
@@ -305,11 +302,10 @@ export default function TreeSidebar({
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {mixsets.map((component, index) => (
+                                {mixsets.map((component) => (
                                     <TreeItem
                                         key={component.id}
                                         component={component}
-                                        isLast={index === mixsets.length - 1}
                                         onDelete={() => handleDelete(component.id)}
                                     />
                                 ))}
@@ -330,11 +326,10 @@ export default function TreeSidebar({
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {links.map((component, index) => (
+                                {links.map((component) => (
                                     <TreeItem
                                         key={component.id}
                                         component={component}
-                                        isLast={index === links.length - 1}
                                         onDelete={() => handleDelete(component.id)}
                                     />
                                 ))}

@@ -63,8 +63,12 @@ export default function ViewSection({
                     items={sortedViewItems.map((item) => item.id)}
                     strategy={verticalListSortingStrategy}
                 >
-                    <div className="py-0.5">
-                        {sortedViewItems.map((viewItem, index) => {
+                    <div className="relative py-0.5">
+                        {/* Tree Line - 세로선 */}
+                        {sortedViewItems.length > 0 && (
+                            <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
+                        )}
+                        {sortedViewItems.map((viewItem) => {
                             const component = components.find((c) => c.id === viewItem.componentId);
                             if (!component) return null;
 
@@ -75,7 +79,6 @@ export default function ViewSection({
                                     isInViewSection
                                     viewItemId={viewItem.id}
                                     isVisible={viewItem.isVisible}
-                                    isLast={index === sortedViewItems.length - 1}
                                     onToggleVisibility={() => toggleViewItemVisibility(viewItem.id)}
                                     onDelete={() => handleDeleteFromView(viewItem.id)}
                                 />

@@ -23,7 +23,6 @@ interface TreeItemProps {
     isInViewSection?: boolean;
     viewItemId?: string;
     isVisible?: boolean;
-    isLast?: boolean;
     onToggleVisibility?: () => void;
     onEdit?: () => void;
     onDelete?: () => void;
@@ -56,7 +55,6 @@ export default function TreeItem({
     isInViewSection = false,
     viewItemId,
     isVisible = true,
-    isLast = false,
     onToggleVisibility,
     onEdit,
     onDelete,
@@ -119,7 +117,7 @@ export default function TreeItem({
             {...attributes}
             {...listeners}
             className={cn(
-                'group relative flex cursor-pointer touch-none items-center rounded-md py-1.5 pr-2 transition-colors',
+                'group relative flex cursor-pointer touch-none items-center rounded-md py-1.5 pl-5 pr-2 transition-colors',
                 isSelected
                     ? 'bg-dashboard-bg-active text-dashboard-text'
                     : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover hover:text-dashboard-text',
@@ -128,17 +126,6 @@ export default function TreeItem({
             )}
             onClick={handleClick}
         >
-            {/* Tree Line */}
-            <div className="relative flex h-full w-7 shrink-0 items-center">
-                <div
-                    className={cn(
-                        'absolute left-3 w-px bg-dashboard-border-hover',
-                        isLast ? '-top-1 h-[calc(50%+4px)]' : '-top-1 h-[calc(100%+4px)]'
-                    )}
-                />
-                <div className="absolute left-3 h-px w-2.5 bg-dashboard-border-hover" />
-            </div>
-
             {/* Type Icon - Page 섹션에서만 표시 */}
             {isInViewSection && (
                 <div
@@ -152,23 +139,13 @@ export default function TreeItem({
             )}
 
             {/* Title */}
-            <span className={cn('min-w-0 flex-1 truncate text-sm', isInViewSection && 'ml-2')}>
+            <span className={cn('ml-2 min-w-0 flex-1 truncate text-sm', isInViewSection && 'ml-2')}>
                 {component.title || '제목 없음'}
             </span>
 
             {/* Right Side - View Section: Visibility + Menu */}
             {isInViewSection ? (
                 <>
-                    <button
-                        onClick={handleVisibilityClick}
-                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors hover:bg-dashboard-bg-active"
-                    >
-                        {isVisible ? (
-                            <Eye className="h-3.5 w-3.5 text-dashboard-text-muted" />
-                        ) : (
-                            <EyeOff className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
-                        )}
-                    </button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button
@@ -188,6 +165,23 @@ export default function TreeItem({
                             >
                                 <Pencil className="mr-2 h-3.5 w-3.5" />
                                 편집
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                                onClick={handleVisibilityClick}
+                                className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
+                            >
+                                {isVisible ? (
+                                    <>
+                                        <Eye className="h-3.5 w-3.5 text-dashboard-text-muted" />
+                                        숨김
+                                    </>
+                                ) : (
+                                    <>
+                                        <EyeOff className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
+                                        표시
+                                    </>
+                                )}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator className="bg-dashboard-border" />
                             <DropdownMenuItem
