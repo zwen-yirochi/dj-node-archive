@@ -2,20 +2,36 @@
 
 import { useComponentStore } from '@/stores/editorStore';
 import { useUserStore } from '@/stores/userStore';
-import { Check, Copy, ExternalLink } from 'lucide-react';
+import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 export default function PreviewPanel() {
     const user = useUserStore((state) => state.user);
-    const components = useComponentStore((state) => state.components);
-    const [refreshKey, setRefreshKey] = useState(0);
+    // previewVersion만 구독 - 조건부 새로고침
+    // 완성된 컴포넌트 변경, 삭제, visibility 변경 시에만 증가
+    const previewVersion = useComponentStore((state) => state.previewVersion);
     const [copied, setCopied] = useState(false);
 
-    // 컴포넌트가 변경되면 자동으로 새로고침
+    // 깜빡임 방지를 위한 이중 버퍼링 상태
+    const [displayedVersion, setDisplayedVersion] = useState(previewVersion);
+    const [isLoading, setIsLoading] = useState(false);
+    const pendingVersionRef = useRef(previewVersion);
+
+    // previewVersion이 변경되면 로딩 시작
     useEffect(() => {
-        setRefreshKey((prev) => prev + 1);
-    }, [components]);
+        if (previewVersion !== displayedVersion) {
+            pendingVersionRef.current = previewVersion;
+            setIsLoading(true);
+        }
+    }, [previewVersion, displayedVersion]);
+
+    // iframe 로드 완료 시 호출
+    const handleIframeLoad = useCallback(() => {
+        // 로딩 중인 버전이 현재 대기 중인 버전과 같으면 표시
+        setDisplayedVersion(pendingVersionRef.current);
+        setIsLoading(false);
+    }, []);
 
     if (!user?.username) {
         return (
@@ -94,6 +110,13 @@ export default function PreviewPanel() {
                             height: `${scaledHeight}px`,
                         }}
                     >
+                        {/* 로딩 인디케이터 */}
+                        {isLoading && (
+                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80">
+                                <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+                            </div>
+                        )}
+
                         {/* iframe을 transform으로 스케일링 */}
                         <div
                             style={{
@@ -103,12 +126,24 @@ export default function PreviewPanel() {
                                 transformOrigin: 'top left',
                             }}
                         >
+                            {/* 현재 표시 중인 iframe (안정적으로 보이는 버전) */}
                             <iframe
-                                key={refreshKey}
+                                key={displayedVersion}
                                 src={`/${user.username}?preview=true`}
                                 className="h-full w-full border-0"
                                 title="페이지 미리보기"
                             />
+
+                            {/* 새 버전 로딩 중인 숨겨진 iframe */}
+                            {isLoading && previewVersion !== displayedVersion && (
+                                <iframe
+                                    key={previewVersion}
+                                    src={`/${user.username}?preview=true&v=${previewVersion}`}
+                                    className="absolute left-0 top-0 h-full w-full border-0 opacity-0"
+                                    title="페이지 미리보기 (로딩 중)"
+                                    onLoad={handleIframeLoad}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>
