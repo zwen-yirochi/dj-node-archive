@@ -40,7 +40,7 @@ import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
 
 interface TreeSidebarProps {
-    onAddComponent: (type: 'show' | 'mixset' | 'link') => void;
+    onAddComponent: (type: 'event' | 'mixset' | 'link') => void;
     onDeleteComponent?: (id: string) => void;
     username: string;
 }
@@ -70,7 +70,7 @@ export default function TreeSidebar({
     const isPageCollapsed = sidebarSections.view.collapsed;
 
     // useMemo로 필터링하여 무한 루프 방지
-    const events = useMemo(() => components.filter((c) => c.type === 'show'), [components]);
+    const events = useMemo(() => components.filter((c) => c.type === 'event'), [components]);
     const mixsets = useMemo(() => components.filter((c) => c.type === 'mixset'), [components]);
     const links = useMemo(() => components.filter((c) => c.type === 'link'), [components]);
 
@@ -151,10 +151,10 @@ export default function TreeSidebar({
             const overComponent = overData.component as ComponentData;
 
             if (activeComponent.type === overComponent.type && active.id !== over.id) {
-                const sectionType = activeComponent.type as 'show' | 'mixset' | 'link';
+                const sectionType = activeComponent.type as 'event' | 'mixset' | 'link';
 
                 let sectionComponents: ComponentData[];
-                if (sectionType === 'show') {
+                if (sectionType === 'event') {
                     sectionComponents = events;
                 } else if (sectionType === 'mixset') {
                     sectionComponents = mixsets;
@@ -271,7 +271,7 @@ export default function TreeSidebar({
                         title="Events"
                         icon={<Calendar className="h-4 w-4" />}
                         count={events.length}
-                        onAdd={() => onAddComponent('show')}
+                        onAdd={() => onAddComponent('event')}
                     >
                         <SortableContext
                             items={events.map((c) => c.id)}

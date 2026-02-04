@@ -3,6 +3,12 @@
 // ==============================================
 
 // ----------------------------------------------
+// Utility Types
+// ----------------------------------------------
+/** ISO 8601 형식의 날짜 문자열 (e.g., "2024-01-15T09:00:00.000Z") */
+export type ISODateString = string;
+
+// ----------------------------------------------
 // User
 // ----------------------------------------------
 export interface User {
@@ -62,9 +68,9 @@ export const THEME_PRESETS: ThemePreset[] = [
 // ----------------------------------------------
 export interface EventComponent {
     id: string;
-    type: 'show';
+    type: 'event';
     title: string;
-    date: string;
+    date: ISODateString;
     venue: string;
     posterUrl: string;
     lineup: string[];
@@ -115,7 +121,7 @@ export interface Page {
 export interface Backlink {
     id: string;
     componentTitle: string;
-    componentType: 'show' | 'mixset';
+    componentType: 'event' | 'mixset';
     mentionerUsername: string;
     mentionerDisplayName: string;
     mentionerAvatarUrl: string;

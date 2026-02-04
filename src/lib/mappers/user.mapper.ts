@@ -36,7 +36,7 @@ export function mapComponentToDomain(dbComp: DBComponent): ComponentData {
             const data = dbComp.data as Record<string, any>;
             return {
                 ...baseId,
-                type: 'show',
+                type: 'event',
                 title: data.title || '',
                 date: data.date || '',
                 venue: data.venue || '',
@@ -85,15 +85,8 @@ export function mapComponentToDatabase(
 ): Omit<DBComponent, 'id' | 'created_at' | 'updated_at' | 'page_id'> {
     const { id, type, ...data } = comp;
 
-    let dbType: 'event' | 'mixset' | 'link';
-    if (type === 'show') {
-        dbType = 'event';
-    } else {
-        dbType = type;
-    }
-
     return {
-        type: dbType,
+        type,
         position,
         data,
     };

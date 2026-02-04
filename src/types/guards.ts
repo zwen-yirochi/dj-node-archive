@@ -6,7 +6,7 @@ import type { ComponentData, EventComponent, LinkComponent, MixsetComponent } fr
  */
 
 export function isEventComponent(component: ComponentData): component is EventComponent {
-    return component.type === 'show';
+    return component.type === 'event';
 }
 
 export function isMixsetComponent(component: ComponentData): component is MixsetComponent {

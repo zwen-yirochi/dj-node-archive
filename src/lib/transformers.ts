@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 export function eventToComponent(event: DBEventWithVenue): EventComponent {
     return {
         id: uuidv4(),
-        type: 'show',
+        type: 'event',
         title: event.title || '',
         date: event.date,
         venue: event.venue?.name || '',
@@ -24,14 +24,14 @@ export function eventToComponent(event: DBEventWithVenue): EventComponent {
 /**
  * 빈 컴포넌트 템플릿 생성
  */
-export function createEmptyComponent(type: 'show' | 'mixset' | 'link'): ComponentData {
+export function createEmptyComponent(type: 'event' | 'mixset' | 'link'): ComponentData {
     const id = uuidv4();
 
     switch (type) {
-        case 'show':
+        case 'event':
             return {
                 id,
-                type: 'show',
+                type: 'event',
                 title: '',
                 date: new Date().toISOString().split('T')[0],
                 venue: '',

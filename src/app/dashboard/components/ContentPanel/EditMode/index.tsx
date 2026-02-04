@@ -109,7 +109,7 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
 
     const getComponentIcon = () => {
         switch (localComponent.type) {
-            case 'show':
+            case 'event':
                 return <Calendar className="h-5 w-5" />;
             case 'mixset':
                 return <Headphones className="h-5 w-5" />;
@@ -120,7 +120,7 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
 
     const getComponentTitle = () => {
         switch (localComponent.type) {
-            case 'show':
+            case 'event':
                 return '공연 편집';
             case 'mixset':
                 return '믹스셋 편집';
@@ -135,7 +135,7 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
     const missingFields = !isViewReady ? getMissingFieldLabels(localComponent, 'view') : [];
 
     const typeStyles = {
-        show: 'bg-blue-50 text-dashboard-type-event',
+        event: 'bg-blue-50 text-dashboard-type-event',
         mixset: 'bg-purple-50 text-dashboard-type-mixset',
         link: 'bg-green-50 text-dashboard-type-link',
     };

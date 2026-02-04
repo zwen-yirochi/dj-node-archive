@@ -113,7 +113,7 @@ export default function InlineEditMode({ component, onSave, onDelete }: InlineEd
 
     const getTypeColor = () => {
         switch (localComponent.type) {
-            case 'show':
+            case 'event':
                 return 'bg-blue-50 text-dashboard-type-event border-blue-200';
             case 'mixset':
                 return 'bg-purple-50 text-dashboard-type-mixset border-purple-200';
@@ -124,7 +124,7 @@ export default function InlineEditMode({ component, onSave, onDelete }: InlineEd
 
     const getTypeIcon = () => {
         switch (localComponent.type) {
-            case 'show':
+            case 'event':
                 return <Calendar className="h-4 w-4" />;
             case 'mixset':
                 return <Headphones className="h-4 w-4" />;

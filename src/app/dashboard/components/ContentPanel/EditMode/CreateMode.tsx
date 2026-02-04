@@ -47,7 +47,7 @@ export default function CreateMode({ component, onSave, onCancel }: CreateModePr
 
     const getComponentIcon = () => {
         switch (localComponent.type) {
-            case 'show':
+            case 'event':
                 return <Calendar className="h-5 w-5" />;
             case 'mixset':
                 return <Headphones className="h-5 w-5" />;
@@ -58,7 +58,7 @@ export default function CreateMode({ component, onSave, onCancel }: CreateModePr
 
     const getComponentTitle = () => {
         switch (localComponent.type) {
-            case 'show':
+            case 'event':
                 return '새 공연 추가';
             case 'mixset':
                 return '새 믹스셋 추가';
@@ -70,7 +70,7 @@ export default function CreateMode({ component, onSave, onCancel }: CreateModePr
     const isSaveEnabled = canCreate(localComponent);
 
     const typeStyles = {
-        show: 'bg-blue-50 text-dashboard-type-event',
+        event: 'bg-blue-50 text-dashboard-type-event',
         mixset: 'bg-purple-50 text-dashboard-type-mixset',
         link: 'bg-green-50 text-dashboard-type-link',
     };

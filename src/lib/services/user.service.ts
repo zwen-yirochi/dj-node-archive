@@ -136,7 +136,7 @@ export async function getComponentsByType(username: string): Promise<Result<Comp
 
     const page = result.data;
     return success({
-        events: page.components.filter((c): c is EventComponent => c.type === 'show'),
+        events: page.components.filter((c): c is EventComponent => c.type === 'event'),
         mixsets: page.components.filter((c): c is MixsetComponent => c.type === 'mixset'),
         links: page.components.filter((c): c is LinkComponent => c.type === 'link'),
     });
