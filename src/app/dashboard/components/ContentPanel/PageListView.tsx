@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { useComponentStore } from '@/stores/componentStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useViewStore } from '@/stores/viewStore';
-import type { ComponentData } from '@/types';
+import type { ContentEntry } from '@/types';
 import {
     closestCenter,
     DndContext,
@@ -29,7 +29,7 @@ import { useMemo, useState } from 'react';
 
 interface SortableItemProps {
     id: string;
-    component: ComponentData;
+    component: ContentEntry;
     isVisible: boolean;
     onToggleVisibility: () => void;
     onRemove: () => void;

@@ -1,13 +1,13 @@
 // app/dashboard/EditorClient.tsx
 'use client';
 
-import { createEmptyComponent, eventToComponent } from '@/lib/transformers';
+import { createEmptyEntry, eventToEntry } from '@/lib/transformers';
 import { useComponentStore } from '@/stores/componentStore';
-import type { ViewItem } from '@/stores/viewStore';
+import type { DisplayEntry } from '@/stores/viewStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useUserStore } from '@/stores/userStore';
 import { useViewStore } from '@/stores/viewStore';
-import type { ComponentData, Theme, User } from '@/types';
+import type { ContentEntry, Theme, User } from '@/types';
 import type { DBEventWithVenue } from '@/types/database';
 import { useEffect, useState } from 'react';
 import { AddComponentModal } from './components/AddComponentModal';
@@ -17,8 +17,8 @@ import TreeSidebar from './components/TreeSidebar';
 
 interface EditorClientProps {
     initialUser: User;
-    initialComponents: ComponentData[];
-    initialViewItems?: ViewItem[];
+    initialComponents: ContentEntry[];
+    initialViewItems?: DisplayEntry[];
     initialTheme?: Theme | null;
     pageId: string;
     username: string;
@@ -85,18 +85,18 @@ export default function EditorClient({
 
         if (eventData) {
             // 이벤트 데이터가 있으면 변환하여 바로 저장 (이미 완성된 데이터)
-            const newComponent = eventToComponent(eventData);
-            await createComponent(newComponent);
+            const newEntry = eventToEntry(eventData);
+            await createComponent(newEntry);
             // 완성된 데이터이므로 바로 생성 완료 처리 + 미리보기 트리거
-            finishCreating(newComponent.id);
+            finishCreating(newEntry.id);
             triggerPreviewRefresh();
-            selectComponent(newComponent.id);
+            selectComponent(newEntry.id);
         } else {
-            // 빈 컴포넌트 생성 후 즉시 DB에 저장 → 생성 모드 진입
+            // 빈 엔트리 생성 후 즉시 DB에 저장 → 생성 모드 진입
             // createComponent는 newlyCreatedIds에 자동 추가
-            const newComponent = createEmptyComponent(type);
-            await createComponent(newComponent);
-            startCreating(newComponent.id);
+            const newEntry = createEmptyEntry(type);
+            await createComponent(newEntry);
+            startCreating(newEntry.id);
         }
     };
 

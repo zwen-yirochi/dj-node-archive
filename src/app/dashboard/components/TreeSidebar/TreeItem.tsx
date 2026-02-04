@@ -6,14 +6,14 @@ import { cn } from '@/lib/utils';
 import { canAddToView, getMissingFieldLabels, getTreeItemStatus } from '@/lib/validators';
 import { useUIStore } from '@/stores/uiStore';
 import { useViewStore } from '@/stores/viewStore';
-import type { ComponentData } from '@/types';
+import type { ContentEntry } from '@/types';
 import type { TreeItemStatus } from '@/types/componentFields';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 
 interface TreeItemProps {
-    component: ComponentData;
+    component: ContentEntry;
     isInViewSection?: boolean;
     viewItemId?: string;
     isVisible?: boolean;

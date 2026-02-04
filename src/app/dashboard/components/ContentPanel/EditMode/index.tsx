@@ -5,7 +5,7 @@ import { toast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { canAddToView, canCreate, getMissingFieldLabels } from '@/lib/validators';
 import { useViewStore } from '@/stores/viewStore';
-import { type ComponentData, isEventComponent, isLinkComponent, isMixsetComponent } from '@/types';
+import { type ContentEntry, isEventComponent, isLinkComponent, isMixsetComponent } from '@/types';
 import {
     AlertCircle,
     Calendar,
@@ -21,8 +21,8 @@ import MixsetEditor from './MixsetEditor';
 import ShowEditor from './ShowEditor';
 
 interface EditModeProps {
-    component: ComponentData;
-    onSave: (component: ComponentData) => Promise<void>;
+    component: ContentEntry;
+    onSave: (component: ContentEntry) => Promise<void>;
     onCancel: () => void;
 }
 
@@ -36,7 +36,7 @@ const AUTO_SAVE_DELAY = 800;
  * - View 무결성 검사
  */
 export default function EditMode({ component, onSave, onCancel }: EditModeProps) {
-    const [localComponent, setLocalComponent] = useState<ComponentData>(component);
+    const [localEntry, setLocalEntry] = useState<ContentEntry>(component);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     const isFirstRender = useRef(true);
 
@@ -45,29 +45,29 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
     const removeFromViewByComponentId = useViewStore((state) => state.removeFromViewByComponentId);
 
     // 저장 로직
-    const saveComponent = useCallback(
-        async (comp: ComponentData) => {
+    const saveEntry = useCallback(
+        async (entry: ContentEntry) => {
             // create tier 검증 실패 시 저장하지 않음
-            if (!canCreate(comp)) {
+            if (!canCreate(entry)) {
                 return;
             }
 
-            // View에 있는 컴포넌트인 경우 View 검증
-            if (isInView(comp.id)) {
-                if (!canAddToView(comp)) {
-                    const missingFields = getMissingFieldLabels(comp, 'view');
+            // View에 있는 엔트리인 경우 View 검증
+            if (isInView(entry.id)) {
+                if (!canAddToView(entry)) {
+                    const missingFields = getMissingFieldLabels(entry, 'view');
                     toast({
                         variant: 'destructive',
                         title: 'Page에서 제거됨',
                         description: `필수 필드 누락: ${missingFields.join(', ')}`,
                     });
-                    await removeFromViewByComponentId(comp.id);
+                    await removeFromViewByComponentId(entry.id);
                 }
             }
 
             setSaveStatus('saving');
             try {
-                await onSave(comp);
+                await onSave(entry);
                 setSaveStatus('saved');
                 // 2초 후 상태 초기화
                 setTimeout(() => setSaveStatus('idle'), 2000);
@@ -85,30 +85,30 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
     );
 
     // 디바운스된 저장 함수
-    const debouncedSave = useDebounce(saveComponent, AUTO_SAVE_DELAY);
+    const debouncedSave = useDebounce(saveEntry, AUTO_SAVE_DELAY);
 
     // 로컬 상태 업데이트 및 자동 저장 트리거
-    const updateLocal = (updates: Partial<ComponentData>) => {
-        setLocalComponent((prev) => {
-            const updated = { ...prev, ...updates } as ComponentData;
+    const updateLocal = (updates: Partial<ContentEntry>) => {
+        setLocalEntry((prev) => {
+            const updated = { ...prev, ...updates } as ContentEntry;
             // 디바운스된 저장 트리거
             debouncedSave(updated);
             return updated;
         });
     };
 
-    // 컴포넌트가 변경되면 로컬 상태 업데이트 (다른 컴포넌트 선택 시)
+    // 엔트리가 변경되면 로컬 상태 업데이트 (다른 엔트리 선택 시)
     useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
             return;
         }
-        setLocalComponent(component);
+        setLocalEntry(component);
         setSaveStatus('idle');
     }, [component.id]); // id가 변경될 때만
 
-    const getComponentIcon = () => {
-        switch (localComponent.type) {
+    const getEntryIcon = () => {
+        switch (localEntry.type) {
             case 'event':
                 return <Calendar className="h-5 w-5" />;
             case 'mixset':
@@ -118,8 +118,8 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
         }
     };
 
-    const getComponentTitle = () => {
-        switch (localComponent.type) {
+    const getEntryTitle = () => {
+        switch (localEntry.type) {
             case 'event':
                 return '공연 편집';
             case 'mixset':
@@ -130,9 +130,9 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
     };
 
     // View 상태
-    const isViewReady = canAddToView(localComponent);
-    const componentIsInView = isInView(localComponent.id);
-    const missingFields = !isViewReady ? getMissingFieldLabels(localComponent, 'view') : [];
+    const isViewReady = canAddToView(localEntry);
+    const entryIsInView = isInView(localEntry.id);
+    const missingFields = !isViewReady ? getMissingFieldLabels(localEntry, 'view') : [];
 
     const typeStyles = {
         event: 'bg-blue-50 text-dashboard-type-event',
@@ -146,13 +146,11 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
             <div className="flex items-center justify-between border-b border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
                 <div className="flex items-center gap-3">
                     <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${typeStyles[localComponent.type]}`}
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${typeStyles[localEntry.type]}`}
                     >
-                        {getComponentIcon()}
+                        {getEntryIcon()}
                     </div>
-                    <h2 className="text-xl font-semibold text-dashboard-text">
-                        {getComponentTitle()}
-                    </h2>
+                    <h2 className="text-xl font-semibold text-dashboard-text">{getEntryTitle()}</h2>
 
                     {/* 저장 상태 표시 */}
                     <div className="flex items-center gap-1.5 text-sm">
@@ -174,7 +172,7 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
                     {!isViewReady && (
                         <Tooltip
                             content={
-                                componentIsInView
+                                entryIsInView
                                     ? `Page에서 제거 예정 - 필드를 채워주세요: ${missingFields.join(', ')}`
                                     : `Page에 추가하려면: ${missingFields.join(', ')}`
                             }
@@ -196,14 +194,14 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
-                {isEventComponent(localComponent) && (
-                    <ShowEditor component={localComponent} onUpdate={updateLocal} />
+                {isEventComponent(localEntry) && (
+                    <ShowEditor component={localEntry} onUpdate={updateLocal} />
                 )}
-                {isMixsetComponent(localComponent) && (
-                    <MixsetEditor component={localComponent} onUpdate={updateLocal} />
+                {isMixsetComponent(localEntry) && (
+                    <MixsetEditor component={localEntry} onUpdate={updateLocal} />
                 )}
-                {isLinkComponent(localComponent) && (
-                    <LinkEditor component={localComponent} onUpdate={updateLocal} />
+                {isLinkComponent(localEntry) && (
+                    <LinkEditor component={localEntry} onUpdate={updateLocal} />
                 )}
             </div>
         </div>
