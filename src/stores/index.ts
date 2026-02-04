@@ -9,7 +9,7 @@
  */
 
 export { useUserStore } from './userStore';
-export { useViewStore, type ViewItem } from './viewStore';
+export { useViewStore, type DisplayEntry, type ViewItem } from './viewStore';
 export {
     useUIStore,
     type ActivePanel,

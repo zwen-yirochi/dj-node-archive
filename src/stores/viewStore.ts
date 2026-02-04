@@ -1,30 +1,33 @@
 /**
  * viewStore.ts - View 상태 관리
  *
- * 공개 페이지에 표시되는 ViewItem과 미리보기 트리거를 관리합니다.
+ * 공개 페이지에 표시되는 DisplayEntry와 미리보기 트리거를 관리합니다.
  * previewVersion이 ComponentStore에서 이동됨.
  */
 
 import { create } from 'zustand';
 
-export interface ViewItem {
+export interface DisplayEntry {
     id: string;
     componentId: string;
     order: number;
     isVisible: boolean;
 }
 
+/** @deprecated Use DisplayEntry instead */
+export type ViewItem = DisplayEntry;
+
 interface ViewStore {
-    viewItems: ViewItem[];
+    viewItems: DisplayEntry[];
 
     // 미리보기 업데이트 트리거 (ComponentStore에서 이동)
     // View 변경, 컴포넌트 변경 시 증가
     previewVersion: number;
 
     // 동기 액션
-    setViewItems: (items: ViewItem[]) => void;
+    setViewItems: (items: DisplayEntry[]) => void;
     isInView: (componentId: string) => boolean;
-    getViewItemByComponentId: (componentId: string) => ViewItem | undefined;
+    getViewItemByComponentId: (componentId: string) => DisplayEntry | undefined;
 
     // 미리보기 트리거
     triggerPreviewRefresh: () => void;
@@ -72,14 +75,14 @@ export const useViewStore = create<ViewStore>((set, get) => ({
 
         // 낙관적 업데이트를 위한 임시 ID
         const tempId = crypto.randomUUID();
-        const newItem: ViewItem = {
+        const newItem: DisplayEntry = {
             id: tempId,
             componentId,
             order: orderIndex,
             isVisible: true,
         };
 
-        let newItems: ViewItem[];
+        let newItems: DisplayEntry[];
         if (position !== undefined) {
             newItems = [...viewItems];
             newItems.splice(position, 0, newItem);
