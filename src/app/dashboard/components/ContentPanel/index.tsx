@@ -1,6 +1,6 @@
 'use client';
 
-import { useComponentStore } from '@/stores/editorStore';
+import { useComponentStore } from '@/stores/componentStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useMemo } from 'react';
 import BioDesignPanel from './BioDesignPanel';

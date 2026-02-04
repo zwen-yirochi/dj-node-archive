@@ -17,6 +17,8 @@ export interface FieldConfig {
     isUrl?: boolean;
     /** 빈 배열 허용 여부 (배열 필드용) */
     allowEmptyArray?: boolean;
+    /** 이 필드 변경 시 미리보기 새로고침 트리거 여부 (공개 페이지에 렌더링되는 필드만 true) */
+    triggersPreview: boolean;
 }
 
 /** 검증 결과 */

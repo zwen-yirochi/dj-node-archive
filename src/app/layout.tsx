@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist, Geist_Mono, Inter } from 'next/font/google';
 import localFont from 'next/font/local';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -13,6 +13,14 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
     variable: '--font-geist-mono',
     subsets: ['latin'],
+});
+
+// Dashboard UI용 메이저 폰트 - 다양한 웨이트 지원
+const inter = Inter({
+    variable: '--font-inter',
+    subsets: ['latin'],
+    weight: ['400', '500', '600', '700'],
+    display: 'swap',
 });
 
 const stripe = localFont({
@@ -44,7 +52,7 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body
-                className={`${geistSans.variable} ${geistMono.variable} ${stripe.variable} ${bokeh.variable} ${nyangi.variable} font-bokeh antialiased text-shadow-def`}
+                className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${stripe.variable} ${bokeh.variable} ${nyangi.variable} antialiased`}
             >
                 <ErrorBoundary>{children}</ErrorBoundary>
                 <Toaster />
