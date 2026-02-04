@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { useComponentStore } from '@/stores/editorStore';
+import { useComponentStore } from '@/stores/componentStore';
 import { useViewStore } from '@/stores/viewStore';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';

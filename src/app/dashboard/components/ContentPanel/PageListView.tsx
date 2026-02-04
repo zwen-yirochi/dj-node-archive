@@ -2,7 +2,7 @@
 
 import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
 import { cn } from '@/lib/utils';
-import { useComponentStore } from '@/stores/editorStore';
+import { useComponentStore } from '@/stores/componentStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useViewStore } from '@/stores/viewStore';
 import type { ComponentData } from '@/types';

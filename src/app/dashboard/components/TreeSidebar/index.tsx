@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/lib/validators';
-import { useComponentStore } from '@/stores/editorStore';
+import { useComponentStore } from '@/stores/componentStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useViewStore } from '@/stores/viewStore';
 import type { ComponentData } from '@/types';

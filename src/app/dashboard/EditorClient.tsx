@@ -2,7 +2,8 @@
 'use client';
 
 import { createEmptyComponent, eventToComponent } from '@/lib/transformers';
-import { useComponentStore, type ViewItem } from '@/stores/editorStore';
+import { useComponentStore } from '@/stores/componentStore';
+import type { ViewItem } from '@/stores/viewStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useUserStore } from '@/stores/userStore';
 import { useViewStore } from '@/stores/viewStore';

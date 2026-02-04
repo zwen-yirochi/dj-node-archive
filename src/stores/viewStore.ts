@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { useComponentStore } from './editorStore';
+import { useComponentStore } from './componentStore';
 
 export interface ViewItem {
     id: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useComponentStore } from '@/stores/editorStore';
+import { useComponentStore } from '@/stores/componentStore';
 import { useUserStore } from '@/stores/userStore';
 import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import Link from 'next/link';
