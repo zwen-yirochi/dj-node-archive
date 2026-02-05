@@ -6,8 +6,8 @@ import {
     updateEventPerformers,
 } from '@/lib/db/queries/performer.queries';
 import { createClient } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
 import type { PerformanceType } from '@/types/database';
+import { NextRequest, NextResponse } from 'next/server';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         return NextResponse.json({ error: '이벤트를 찾을 수 없습니다' }, { status: 404 });
     }
 
-    if (eventResult.data.user_id !== user.id) {
+    if (eventResult.data.created_by !== user.id) {
         return NextResponse.json({ error: '권한이 없습니다' }, { status: 403 });
     }
 
@@ -96,7 +96,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         return NextResponse.json({ error: '이벤트를 찾을 수 없습니다' }, { status: 404 });
     }
 
-    if (eventResult.data.user_id !== user.id) {
+    if (eventResult.data.created_by !== user.id) {
         return NextResponse.json({ error: '권한이 없습니다' }, { status: 403 });
     }
 

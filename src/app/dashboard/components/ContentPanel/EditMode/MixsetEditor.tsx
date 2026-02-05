@@ -84,31 +84,6 @@ export default function MixsetEditor({ component, onUpdate }: MixsetEditorProps)
                         placeholder="믹스셋 제목"
                     />
                 </div>
-                <div>
-                    <label className="mb-2 block text-sm font-medium text-dashboard-text-secondary">
-                        장르
-                    </label>
-                    <input
-                        type="text"
-                        value={component.genre}
-                        onChange={(e) => onUpdate({ genre: e.target.value })}
-                        className="w-full rounded-lg border border-dashboard-border-hover bg-dashboard-bg-card px-4 py-3 focus:border-dashboard-text focus:outline-none focus:ring-1 focus:ring-dashboard-text-muted"
-                        placeholder="Techno, House, etc."
-                    />
-                </div>
-            </div>
-
-            {/* Release Date */}
-            <div>
-                <label className="mb-2 block text-sm font-medium text-dashboard-text-secondary">
-                    발매일
-                </label>
-                <input
-                    type="date"
-                    value={component.releaseDate}
-                    onChange={(e) => onUpdate({ releaseDate: e.target.value })}
-                    className="w-full rounded-lg border border-dashboard-border-hover bg-dashboard-bg-card px-4 py-3 focus:border-dashboard-text focus:outline-none focus:ring-1 focus:ring-dashboard-text-muted"
-                />
             </div>
 
             {/* SoundCloud Embed */}
@@ -118,8 +93,8 @@ export default function MixsetEditor({ component, onUpdate }: MixsetEditorProps)
                 </label>
                 <input
                     type="text"
-                    value={component.soundcloudEmbedUrl || ''}
-                    onChange={(e) => onUpdate({ soundcloudEmbedUrl: e.target.value })}
+                    value={component.soundcloudUrl || ''}
+                    onChange={(e) => onUpdate({ soundcloudUrl: e.target.value })}
                     className="w-full rounded-lg border border-dashboard-border-hover bg-dashboard-bg-card px-4 py-3 focus:border-dashboard-text focus:outline-none focus:ring-1 focus:ring-dashboard-text-muted"
                     placeholder="https://w.soundcloud.com/player/?url=..."
                 />
