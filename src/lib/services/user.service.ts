@@ -6,7 +6,6 @@ import {
 } from '@/lib/db/queries/display-entry.queries';
 import { findUserWithPages, findUserWithPagesById } from '@/lib/db/queries/user.queries';
 import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers/user.mapper';
-import type { Theme } from '@/types';
 import type {
     ContentEntry,
     EventComponent,
@@ -31,7 +30,6 @@ export interface EditorData {
     components: ContentEntry[];
     pageId: string | null;
     displayEntries: DisplayEntry[];
-    theme: Theme | null;
 }
 
 // DB 타입을 도메인 타입으로 변환
@@ -103,7 +101,6 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
             components: [],
             pageId: null,
             displayEntries: [],
-            theme: null,
         });
     }
 
@@ -117,15 +114,11 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
         ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
         : [];
 
-    // Theme 매핑
-    const theme = (page.theme as unknown as Theme) ?? null;
-
     return success({
         user,
         components,
         pageId: page.id,
         displayEntries,
-        theme,
     });
 });
 
@@ -163,7 +156,6 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
             components: [],
             pageId: null,
             displayEntries: [],
-            theme: null,
         });
     }
 
@@ -177,15 +169,11 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
         ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
         : [];
 
-    // Theme 매핑
-    const theme = (page.theme as unknown as Theme) ?? null;
-
     return success({
         user,
         components,
         pageId: page.id,
         displayEntries,
-        theme,
     });
 });
 
