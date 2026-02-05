@@ -1,19 +1,19 @@
-import type { ContentEntry, EventComponent, LinkComponent, MixsetComponent } from './domain';
+import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry } from './domain';
 
 /**
  * ContentEntry 타입 가드 함수들
  * as 캐스팅 대신 타입 가드를 사용하여 타입 안전성 확보
  */
 
-export function isEventComponent(entry: ContentEntry): entry is EventComponent {
+export function isEventComponent(entry: ContentEntry): entry is EventEntry {
     return entry.type === 'event';
 }
 
-export function isMixsetComponent(entry: ContentEntry): entry is MixsetComponent {
+export function isMixsetComponent(entry: ContentEntry): entry is MixsetEntry {
     return entry.type === 'mixset';
 }
 
-export function isLinkComponent(entry: ContentEntry): entry is LinkComponent {
+export function isLinkComponent(entry: ContentEntry): entry is LinkEntry {
     return entry.type === 'link';
 }
 
