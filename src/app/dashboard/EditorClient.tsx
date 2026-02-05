@@ -4,10 +4,10 @@
 import { createEmptyEntry, eventToEntry } from '@/lib/transformers';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
 import type { DisplayEntry } from '@/stores/displayEntryStore';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useUserStore } from '@/stores/userStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
-import type { ContentEntry, Theme, User } from '@/types';
+import type { ContentEntry, User } from '@/types';
 import type { DBEventWithVenue } from '@/types/database';
 import { useEffect, useState } from 'react';
 import { AddComponentModal } from './components/AddComponentModal';
@@ -19,7 +19,6 @@ interface EditorClientProps {
     initialUser: User;
     initialComponents: ContentEntry[];
     initialDisplayEntries?: DisplayEntry[];
-    initialTheme?: Theme | null;
     pageId: string;
     username: string;
 }
@@ -28,7 +27,6 @@ export default function EditorClient({
     initialUser,
     initialComponents,
     initialDisplayEntries = [],
-    initialTheme = null,
     pageId,
     username,
 }: EditorClientProps) {
@@ -38,7 +36,6 @@ export default function EditorClient({
     // Content Entry Store
     const setEntries = useContentEntryStore((state) => state.setEntries);
     const setPageId = useContentEntryStore((state) => state.setPageId);
-    const setTheme = useContentEntryStore((state) => state.setTheme);
     const createEntry = useContentEntryStore((state) => state.createEntry);
     const finishCreating = useContentEntryStore((state) => state.finishCreating);
     const deleteEntryFromStore = useContentEntryStore((state) => state.deleteEntry);
@@ -60,20 +57,15 @@ export default function EditorClient({
         setEntries(initialComponents);
         setDisplayEntries(initialDisplayEntries);
         setPageId(pageId);
-        if (initialTheme) {
-            setTheme(initialTheme);
-        }
     }, [
         initialUser,
         initialComponents,
         initialDisplayEntries,
-        initialTheme,
         pageId,
         setUser,
         setEntries,
         setDisplayEntries,
         setPageId,
-        setTheme,
     ]);
 
     // 엔트리 추가 핸들러
