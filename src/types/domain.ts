@@ -105,14 +105,7 @@ export interface LinkComponent {
 export type ContentEntry = EventComponent | MixsetComponent | LinkComponent;
 export type ContentEntryType = ContentEntry['type'];
 
-/** @deprecated Use ContentEntry instead */
-export type ComponentData = ContentEntry;
-/** @deprecated Use ContentEntryType instead */
-export type ComponentType = ContentEntryType;
-
-// ----------------------------------------------
 // Page
-// ----------------------------------------------
 export interface Page {
     id: string;
     userId: string;
@@ -120,9 +113,7 @@ export interface Page {
     components: ContentEntry[];
 }
 
-// ----------------------------------------------
 // Backlink
-// ----------------------------------------------
 export interface Backlink {
     id: string;
     componentTitle: string;

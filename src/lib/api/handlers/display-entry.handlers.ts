@@ -54,14 +54,14 @@ export async function handleGetDisplayEntries(request: Request, { user }: AuthCo
  */
 export async function handleCreateDisplayEntry(request: Request, { user }: AuthContext) {
     const body = await request.json();
-    const { pageId, componentId, orderIndex } = body as {
+    const { pageId, entryId, orderIndex } = body as {
         pageId: string;
-        componentId: string;
+        entryId: string;
         orderIndex?: number;
     };
 
-    if (!pageId || !componentId) {
-        return validationErrorResponse('pageId와 componentId');
+    if (!pageId || !entryId) {
+        return validationErrorResponse('pageId와 entryId');
     }
 
     // 페이지 소유권 검증
@@ -80,7 +80,7 @@ export async function handleCreateDisplayEntry(request: Request, { user }: AuthC
         finalOrderIndex = maxResult.data + 1;
     }
 
-    const result = await addViewItem(pageId, componentId, finalOrderIndex);
+    const result = await addViewItem(pageId, entryId, finalOrderIndex);
 
     if (!isSuccess(result)) {
         return internalErrorResponse(result.error.message);

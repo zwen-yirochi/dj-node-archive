@@ -4,7 +4,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { canAddToView, canCreate, getMissingFieldLabels } from '@/lib/validators';
-import { useViewStore } from '@/stores/viewStore';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { type ContentEntry, isEventComponent, isLinkComponent, isMixsetComponent } from '@/types';
 import {
     AlertCircle,
@@ -22,7 +22,7 @@ import ShowEditor from './ShowEditor';
 
 interface EditModeProps {
     component: ContentEntry;
-    onSave: (component: ContentEntry) => Promise<void>;
+    onSave: (entry: ContentEntry) => Promise<void>;
     onCancel: () => void;
 }
 
@@ -30,7 +30,7 @@ interface EditModeProps {
 const AUTO_SAVE_DELAY = 800;
 
 /**
- * 편집 모드 - 기존 컴포넌트 수정 시 사용
+ * 편집 모드 - 기존 엔트리 수정 시 사용
  * - 저장 버튼 없음 (자동 저장)
  * - 디바운스로 변경사항 자동 저장
  * - View 무결성 검사
@@ -40,9 +40,9 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     const isFirstRender = useRef(true);
 
-    // View Store
-    const isInView = useViewStore((state) => state.isInView);
-    const removeFromViewByComponentId = useViewStore((state) => state.removeFromViewByComponentId);
+    // Display Entry Store
+    const isInView = useDisplayEntryStore((state) => state.isInView);
+    const removeFromViewByEntryId = useDisplayEntryStore((state) => state.removeFromViewByEntryId);
 
     // 저장 로직
     const saveEntry = useCallback(
@@ -61,7 +61,7 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
                         title: 'Page에서 제거됨',
                         description: `필수 필드 누락: ${missingFields.join(', ')}`,
                     });
-                    await removeFromViewByComponentId(entry.id);
+                    await removeFromViewByEntryId(entry.id);
                 }
             }
 
@@ -77,11 +77,11 @@ export default function EditMode({ component, onSave, onCancel }: EditModeProps)
                 toast({
                     variant: 'destructive',
                     title: '저장 실패',
-                    description: '컴포넌트를 저장하는 중 오류가 발생했습니다.',
+                    description: '엔트리를 저장하는 중 오류가 발생했습니다.',
                 });
             }
         },
-        [isInView, removeFromViewByComponentId, onSave]
+        [isInView, removeFromViewByEntryId, onSave]
     );
 
     // 디바운스된 저장 함수

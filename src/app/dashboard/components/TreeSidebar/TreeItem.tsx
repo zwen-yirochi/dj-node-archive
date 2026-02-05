@@ -5,7 +5,7 @@ import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
 import { cn } from '@/lib/utils';
 import { canAddToView, getMissingFieldLabels, getTreeItemStatus } from '@/lib/validators';
 import { useUIStore } from '@/stores/uiStore';
-import { useViewStore } from '@/stores/viewStore';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import type { ContentEntry } from '@/types';
 import type { TreeItemStatus } from '@/types/componentFields';
 import { useSortable } from '@dnd-kit/sortable';
@@ -13,9 +13,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 
 interface TreeItemProps {
-    component: ContentEntry;
+    entry: ContentEntry;
     isInViewSection?: boolean;
-    viewItemId?: string;
+    displayEntryId?: string;
     isVisible?: boolean;
     onToggleVisibility?: () => void;
     onEdit?: () => void;
@@ -45,37 +45,37 @@ function StatusIcon({
 }
 
 export default function TreeItem({
-    component,
+    entry,
     isInViewSection = false,
-    viewItemId,
+    displayEntryId,
     isVisible = true,
     onToggleVisibility,
     onEdit,
     onDelete,
 }: TreeItemProps) {
     // UI Store
-    const selectedComponentId = useUIStore((state) => state.selectedComponentId);
-    const selectComponent = useUIStore((state) => state.selectComponent);
+    const selectedEntryId = useUIStore((state) => state.selectedEntryId);
+    const selectEntry = useUIStore((state) => state.selectEntry);
 
-    // View Store
-    const viewItems = useViewStore((state) => state.viewItems);
+    // Display Entry Store
+    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
 
     // 상태 계산
-    const isInView = viewItems.some((item) => item.componentId === component.id);
-    const isValid = canAddToView(component);
+    const isInView = displayEntries.some((item) => item.entryId === entry.id);
+    const isValid = canAddToView(entry);
     const status = getTreeItemStatus(isInView, isValid);
-    const missingFields = status === 'warning' ? getMissingFieldLabels(component, 'view') : [];
+    const missingFields = status === 'warning' ? getMissingFieldLabels(entry, 'view') : [];
 
-    const isSelected = selectedComponentId === component.id;
-    const config = COMPONENT_TYPE_CONFIG[component.type];
+    const isSelected = selectedEntryId === entry.id;
+    const config = COMPONENT_TYPE_CONFIG[entry.type];
     const Icon = config.icon;
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-        id: isInViewSection ? viewItemId! : component.id,
+        id: isInViewSection ? displayEntryId! : entry.id,
         data: {
-            type: isInViewSection ? 'view-item' : 'component',
-            component,
-            viewItemId,
+            type: isInViewSection ? 'display-entry' : 'entry',
+            entry,
+            displayEntryId,
         },
     });
 
@@ -85,7 +85,7 @@ export default function TreeItem({
     };
 
     const handleClick = () => {
-        selectComponent(component.id);
+        selectEntry(entry.id);
     };
 
     const handleVisibilityClick = (e?: React.MouseEvent) => {
@@ -94,7 +94,7 @@ export default function TreeItem({
     };
 
     const handleEdit = () => {
-        selectComponent(component.id);
+        selectEntry(entry.id);
         onEdit?.();
     };
 
@@ -102,8 +102,8 @@ export default function TreeItem({
         onDelete?.();
     };
 
-    // 컴포넌트 섹션용 메뉴 아이템
-    const componentMenuItems: DropdownMenuItemConfig[] = [
+    // 엔트리 섹션용 메뉴 아이템
+    const entryMenuItems: DropdownMenuItemConfig[] = [
         { label: '편집', onClick: handleEdit, icon: Pencil },
         { type: 'separator' },
         { label: '삭제', onClick: handleDelete, icon: Trash2, variant: 'danger' },
@@ -151,7 +151,7 @@ export default function TreeItem({
 
             {/* Title */}
             <span className={cn('ml-2 min-w-0 flex-1 truncate text-sm', isInViewSection && 'ml-2')}>
-                {component.title || '제목 없음'}
+                {entry.title || '제목 없음'}
             </span>
 
             {/* Right Side - View Section: Menu */}
@@ -169,7 +169,7 @@ export default function TreeItem({
                     contentClassName="w-36"
                 />
             ) : (
-                /* Right Side - Component Section: Status Icon + Menu (같은 위치) */
+                /* Right Side - Entry Section: Status Icon + Menu (같은 위치) */
                 <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
                     {/* 상태 아이콘 - hover 시 숨김 */}
                     <div className="absolute transition-opacity group-hover:opacity-0">
@@ -185,7 +185,7 @@ export default function TreeItem({
                                 <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
                             </button>
                         }
-                        items={componentMenuItems}
+                        items={entryMenuItems}
                         contentClassName="w-36"
                     />
                 </div>

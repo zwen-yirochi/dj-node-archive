@@ -4,27 +4,24 @@
 
 // Domain types (핵심 비즈니스 타입)
 export type {
-    User,
-    Theme,
     AccentColor,
     BackgroundStyle,
-    ThemePreset,
-    EventComponent,
-    MixsetComponent,
-    LinkComponent,
+    Backlink,
     ContentEntry,
     ContentEntryType,
-    // Deprecated aliases (for backward compatibility)
-    ComponentData,
-    ComponentType,
+    EventComponent,
+    LinkComponent,
+    MixsetComponent,
     Page,
-    Backlink,
+    Theme,
+    ThemePreset,
+    User,
 } from './domain';
 
 export { THEME_PRESETS } from './domain';
 
 // UI types (에디터, 폰트, 아이콘 등)
-export type { EditorState, ArtistSuggestion, FontOption, IconOption } from './ui';
+export type { ArtistSuggestion, EditorState, FontOption, IconOption } from './ui';
 
 export { ICON_OPTIONS } from './ui';
 

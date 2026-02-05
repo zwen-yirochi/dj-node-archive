@@ -1,7 +1,7 @@
 'use client';
 
 import { useUserStore } from '@/stores/userStore';
-import { useViewStore } from '@/stores/viewStore';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useCallback, useEffect, useRef } from 'react';
@@ -9,8 +9,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 export default function PreviewPanel() {
     const user = useUserStore((state) => state.user);
     // previewVersion만 구독 - 조건부 새로고침
-    // View 변경, 완성된 컴포넌트 변경, 삭제 시에만 증가
-    const previewVersion = useViewStore((state) => state.previewVersion);
+    // Display 변경, 완성된 엔트리 변경, 삭제 시에만 증가
+    const previewVersion = useDisplayEntryStore((state) => state.previewVersion);
     const [copied, setCopied] = useState(false);
 
     // 깜빡임 방지를 위한 이중 버퍼링 상태

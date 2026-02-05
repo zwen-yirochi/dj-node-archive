@@ -3,22 +3,22 @@
 import { getViewItemsByPageId, type DBPageViewItem } from '@/lib/db/queries/page-view.queries';
 import { findUserWithPages, findUserWithPagesById } from '@/lib/db/queries/user.queries';
 import { mapComponentToDomain, mapUserToDomain } from '@/lib/mappers/user.mapper';
+import type { Theme } from '@/types';
 import type {
-    ComponentData,
+    ContentEntry,
     EventComponent,
     LinkComponent,
     MixsetComponent,
     Page,
     User,
 } from '@/types/domain';
-import type { Theme } from '@/types';
-import { type Result, createNotFoundError, failure, isSuccess, success } from '@/types/result';
+import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
 import { cache } from 'react';
 
 // View Item 도메인 타입
 export interface DisplayEntry {
     id: string;
-    componentId: string;
+    entryId: string;
     order: number;
     isVisible: boolean;
 }
@@ -28,7 +28,7 @@ export type ViewItem = DisplayEntry;
 
 export interface EditorData {
     user: User;
-    components: ComponentData[];
+    components: ContentEntry[];
     pageId: string | null;
     viewItems: DisplayEntry[];
     theme: Theme | null;
@@ -38,7 +38,7 @@ export interface EditorData {
 function mapViewItemToDomain(dbItem: DBPageViewItem): DisplayEntry {
     return {
         id: dbItem.id,
-        componentId: dbItem.component_id,
+        entryId: dbItem.component_id,
         order: dbItem.order_index,
         isVisible: dbItem.is_visible,
     };
@@ -192,7 +192,7 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
 // 공개 페이지용 - View 항목만 조회
 export interface PublicPageData {
     user: User;
-    components: ComponentData[];
+    components: ContentEntry[];
 }
 
 export const getPublicPageData = cache(
@@ -240,7 +240,7 @@ export const getPublicPageData = cache(
 
         const components = viewItems
             .map((item) => componentMap.get(item.component_id))
-            .filter((c): c is ComponentData => c !== undefined);
+            .filter((c): c is ContentEntry => c !== undefined);
 
         return success({
             user,

@@ -1,8 +1,8 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { useComponentStore } from '@/stores/componentStore';
-import { useViewStore } from '@/stores/viewStore';
+import { useContentEntryStore } from '@/stores/contentEntryStore';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useMemo } from 'react';
@@ -11,34 +11,34 @@ import TreeItem from './TreeItem';
 interface ViewSectionProps {
     isDraggingOver?: boolean;
     isCollapsed?: boolean;
-    onDeleteComponent?: (id: string) => void;
+    onDeleteEntry?: (id: string) => void;
 }
 
 export default function ViewSection({
     isDraggingOver = false,
     isCollapsed = false,
 }: ViewSectionProps) {
-    // View Store
-    const viewItems = useViewStore((state) => state.viewItems);
-    const toggleViewItemVisibility = useViewStore((state) => state.toggleViewItemVisibility);
-    const removeFromView = useViewStore((state) => state.removeFromView);
+    // Display Entry Store
+    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
+    const toggleVisibility = useDisplayEntryStore((state) => state.toggleVisibility);
+    const removeFromView = useDisplayEntryStore((state) => state.removeFromView);
 
-    // Component Store
-    const components = useComponentStore((state) => state.components);
+    // Content Entry Store
+    const entries = useContentEntryStore((state) => state.entries);
 
     const { setNodeRef, isOver } = useDroppable({
         id: 'view-drop-zone',
     });
 
-    const sortedViewItems = useMemo(
-        () => [...viewItems].sort((a, b) => a.order - b.order),
-        [viewItems]
+    const sortedDisplayEntries = useMemo(
+        () => [...displayEntries].sort((a, b) => a.order - b.order),
+        [displayEntries]
     );
 
     const showDropIndicator = isDraggingOver || isOver;
 
-    const handleDeleteFromView = (viewItemId: string) => {
-        removeFromView(viewItemId);
+    const handleDeleteFromView = (displayEntryId: string) => {
+        removeFromView(displayEntryId);
     };
 
     // 드래그 중이면 접힌 상태라도 표시
@@ -60,32 +60,32 @@ export default function ViewSection({
                 )}
             >
                 <SortableContext
-                    items={sortedViewItems.map((item) => item.id)}
+                    items={sortedDisplayEntries.map((item) => item.id)}
                     strategy={verticalListSortingStrategy}
                 >
                     <div className="relative py-0.5">
                         {/* Tree Line - 세로선 */}
-                        {sortedViewItems.length > 0 && (
+                        {sortedDisplayEntries.length > 0 && (
                             <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
                         )}
-                        {sortedViewItems.map((viewItem) => {
-                            const component = components.find((c) => c.id === viewItem.componentId);
-                            if (!component) return null;
+                        {sortedDisplayEntries.map((displayEntry) => {
+                            const entry = entries.find((e) => e.id === displayEntry.entryId);
+                            if (!entry) return null;
 
                             return (
                                 <TreeItem
-                                    key={viewItem.id}
-                                    component={component}
+                                    key={displayEntry.id}
+                                    entry={entry}
                                     isInViewSection
-                                    viewItemId={viewItem.id}
-                                    isVisible={viewItem.isVisible}
-                                    onToggleVisibility={() => toggleViewItemVisibility(viewItem.id)}
-                                    onDelete={() => handleDeleteFromView(viewItem.id)}
+                                    displayEntryId={displayEntry.id}
+                                    isVisible={displayEntry.isVisible}
+                                    onToggleVisibility={() => toggleVisibility(displayEntry.id)}
+                                    onDelete={() => handleDeleteFromView(displayEntry.id)}
                                 />
                             );
                         })}
 
-                        {sortedViewItems.length === 0 && (
+                        {sortedDisplayEntries.length === 0 && (
                             <p
                                 className={cn(
                                     'px-3 py-2 text-center text-xs text-dashboard-text-placeholder',

@@ -13,26 +13,23 @@ export type SidebarSections = {
 };
 
 export type SectionKey = keyof SidebarSections;
-export type EditMode = 'view' | 'edit';
-export type ActivePanel = 'component' | 'bio' | 'page';
+export type ActivePanel = 'entry' | 'bio' | 'page';
 
 interface UIStore {
     // 선택 및 편집 상태
-    selectedComponentId: string | null;
-    editMode: EditMode;
+    selectedEntryId: string | null;
     activePanel: ActivePanel;
-    /** 새 컴포넌트 생성 중인지 여부 */
+    /** 새 엔트리 생성 중인지 여부 */
     isCreating: boolean;
 
     // 사이드바 상태
     sidebarSections: SidebarSections;
 
     // 선택 및 편집 액션
-    selectComponent: (id: string | null) => void;
-    setEditMode: (mode: EditMode) => void;
+    selectEntry: (id: string | null) => void;
     setActivePanel: (panel: ActivePanel) => void;
-    /** 생성 모드 시작 (컴포넌트 선택 + 생성 플래그) */
-    startCreating: (componentId: string) => void;
+    /** 생성 모드 시작 (엔트리 선택 + 생성 플래그) */
+    startCreating: (entryId: string) => void;
     /** 생성 완료 (플래그 해제) */
     finishCreating: () => void;
 
@@ -50,35 +47,30 @@ const initialSidebarSections: SidebarSections = {
 
 export const useUIStore = create<UIStore>((set, get) => ({
     // 초기 상태
-    selectedComponentId: null,
-    editMode: 'view',
-    activePanel: 'component',
+    selectedEntryId: null,
+    activePanel: 'entry',
     isCreating: false,
     sidebarSections: initialSidebarSections,
 
     // 선택 및 편집 액션
-    selectComponent: (id) =>
+    selectEntry: (id) =>
         set({
-            selectedComponentId: id,
-            editMode: 'view', // 선택 시 항상 view 모드로 시작
-            activePanel: 'component', // 컴포넌트 선택 시 component 패널로 전환
-            isCreating: false, // 다른 컴포넌트 선택 시 생성 모드 해제
+            selectedEntryId: id,
+            activePanel: 'entry', // 엔트리 선택 시 entry 패널로 전환
+            isCreating: false, // 다른 엔트리 선택 시 생성 모드 해제
         }),
-
-    setEditMode: (mode) => set({ editMode: mode }),
 
     setActivePanel: (panel) =>
         set({
             activePanel: panel,
-            selectedComponentId: panel === 'page' ? null : get().selectedComponentId,
+            selectedEntryId: panel === 'page' ? null : get().selectedEntryId,
             isCreating: false,
         }),
 
-    startCreating: (componentId) =>
+    startCreating: (entryId) =>
         set({
-            selectedComponentId: componentId,
-            editMode: 'edit',
-            activePanel: 'component',
+            selectedEntryId: entryId,
+            activePanel: 'entry',
             isCreating: true,
         }),
 
@@ -103,3 +95,10 @@ export const useUIStore = create<UIStore>((set, get) => ({
             },
         })),
 }));
+
+// ============================================
+// Deprecated Aliases (호환성 유지)
+// ============================================
+
+/** @deprecated EditMode is no longer used - inline editing doesn't need separate modes */
+export type EditMode = 'view' | 'edit';

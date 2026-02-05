@@ -3,13 +3,20 @@
  *
  * 각 store의 역할:
  * - useUserStore: 사용자 정보
- * - useViewStore: View 아이템 관리
- * - useUIStore: UI 상태 (선택, 편집 모드, 사이드바 등)
- * - useComponentStore: 컴포넌트 데이터 및 미리보기 트리거
+ * - useDisplayEntryStore: Display entry 관리 (공개 페이지 구성)
+ * - useUIStore: UI 상태 (선택, 사이드바 등)
+ * - useContentEntryStore: 콘텐츠 엔트리 데이터 및 미리보기 트리거
  */
 
-export { useUserStore } from './userStore';
-export { useViewStore, type DisplayEntry, type ViewItem } from './viewStore';
+export {
+    // Deprecated aliases
+    getComponentsByType,
+    getEntriesByType,
+    getSelectedComponent,
+    getSelectedEntry,
+    useContentEntryStore,
+} from './contentEntryStore';
+export { useDisplayEntryStore, type DisplayEntry, type ViewItem } from './displayEntryStore';
 export {
     useUIStore,
     type ActivePanel,
@@ -18,11 +25,4 @@ export {
     type SidebarSections,
     type SidebarSectionState,
 } from './uiStore';
-export {
-    useComponentStore,
-    getEntriesByType,
-    getSelectedEntry,
-    // Deprecated aliases
-    getComponentsByType,
-    getSelectedComponent,
-} from './componentStore';
+export { useUserStore } from './userStore';

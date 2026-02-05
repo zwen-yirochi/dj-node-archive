@@ -28,10 +28,10 @@ import type { AuthContext } from '@/lib/api';
  */
 export async function handleCreateEntry(request: Request, { user }: AuthContext) {
     const body = await request.json();
-    const { pageId, component } = body as { pageId: string; component: ContentEntry };
+    const { pageId, entry } = body as { pageId: string; entry: ContentEntry };
 
-    if (!pageId || !component) {
-        return validationErrorResponse('pageId와 component');
+    if (!pageId || !entry) {
+        return validationErrorResponse('pageId와 entry');
     }
 
     // 페이지 소유권 검증
@@ -47,9 +47,9 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
     }
 
     const newPosition = maxPositionResult.data + 1;
-    const dbEntry = mapEntryToDatabase(component, newPosition);
+    const dbEntry = mapEntryToDatabase(entry, newPosition);
 
-    const result = await createComponent(component.id, {
+    const result = await createComponent(entry.id, {
         page_id: pageId,
         type: dbEntry.type,
         position: dbEntry.position,
@@ -77,14 +77,14 @@ export async function handleUpdateEntry(request: Request, { user }: AuthContext,
     }
 
     const body = await request.json();
-    const { component } = body as { component: ContentEntry };
+    const { entry } = body as { entry: ContentEntry };
 
-    if (!component) {
-        return validationErrorResponse('component');
+    if (!entry) {
+        return validationErrorResponse('entry');
     }
 
     // position은 유지하면서 type과 data만 업데이트
-    const dbEntry = mapEntryToDatabase(component, 0);
+    const dbEntry = mapEntryToDatabase(entry, 0);
 
     const result = await updateComponent(id, {
         type: dbEntry.type,
