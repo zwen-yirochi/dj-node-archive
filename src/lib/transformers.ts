@@ -1,23 +1,23 @@
 import type { ContentEntry, EventComponent, LinkComponent, MixsetComponent } from '@/types';
-import type { DBEventWithVenue } from '@/types/database';
+import type { DBEvent } from '@/types/database';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
  * DB 이벤트 데이터를 EventComponent로 변환
  */
-export function eventToEntry(event: DBEventWithVenue): EventComponent {
+export function eventToEntry(event: DBEvent): EventComponent {
     return {
         id: uuidv4(),
         type: 'event',
         title: event.title || '',
         date: event.date,
         venue: event.venue?.name || '',
+        venueId: event.venue?.venue_id,
         posterUrl: event.data?.poster_url || '',
-        lineup: event.data?.lineup_text?.split('\n').filter(Boolean) || [],
-        description: event.data?.notes || '',
-        links: event.data?.set_recording_url
-            ? [{ title: '세트 녹음', url: event.data.set_recording_url }]
-            : [],
+        lineup: event.lineup?.map((item) => item.name) || [],
+        description: event.data?.description || '',
+        links: event.data?.links || [],
+        eventId: event.id,
     };
 }
 
