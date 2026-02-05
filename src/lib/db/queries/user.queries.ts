@@ -46,7 +46,7 @@ export async function findUserWithPages(username: string): Promise<Result<DBUser
                 *,
                 pages (
                     *,
-                    components (
+                    entries (
                         id,
                         type,
                         position,
@@ -107,7 +107,7 @@ export async function findUserWithPagesById(userId: string): Promise<Result<DBUs
                 *,
                 pages (
                     *,
-                    components (
+                    entries (
                         id,
                         type,
                         position,

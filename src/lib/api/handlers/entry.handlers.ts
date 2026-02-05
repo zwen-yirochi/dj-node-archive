@@ -1,19 +1,19 @@
 // lib/api/handlers/entry.handlers.ts
-// ContentEntry(구 Component) API 핸들러
+// ContentEntry API 핸들러
 import {
-    createComponent,
+    createEntry,
     getMaxPosition,
-    updateComponent,
-    deleteComponent,
-    updateComponentPositions,
-} from '@/lib/db/queries/component.queries';
+    updateEntry,
+    deleteEntry,
+    updateEntryPositions,
+} from '@/lib/db/queries/entry.queries';
 import { mapEntryToDatabase } from '@/lib/mappers/user.mapper';
 import { isSuccess } from '@/types/result';
 import type { ContentEntry } from '@/types/domain';
 import {
     verifyPageOwnership,
-    verifyComponentOwnership,
-    verifyComponentsOwnership,
+    verifyEntryOwnership,
+    verifyEntriesOwnership,
     successResponse,
     forbiddenResponse,
     notFoundResponse,
@@ -49,7 +49,7 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
     const newPosition = maxPositionResult.data + 1;
     const dbEntry = mapEntryToDatabase(entry, newPosition);
 
-    const result = await createComponent(entry.id, {
+    const result = await createEntry(entry.id, {
         page_id: pageId,
         type: dbEntry.type,
         position: dbEntry.position,
@@ -69,11 +69,9 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
  */
 export async function handleUpdateEntry(request: Request, { user }: AuthContext, id: string) {
     // 소유권 검증
-    const ownership = await verifyComponentOwnership(id, user.id);
+    const ownership = await verifyEntryOwnership(id, user.id);
     if (!ownership.ok) {
-        return ownership.reason === 'not_found'
-            ? notFoundResponse('컴포넌트')
-            : forbiddenResponse();
+        return ownership.reason === 'not_found' ? notFoundResponse('엔트리') : forbiddenResponse();
     }
 
     const body = await request.json();
@@ -86,14 +84,14 @@ export async function handleUpdateEntry(request: Request, { user }: AuthContext,
     // position은 유지하면서 type과 data만 업데이트
     const dbEntry = mapEntryToDatabase(entry, 0);
 
-    const result = await updateComponent(id, {
+    const result = await updateEntry(id, {
         type: dbEntry.type,
         data: dbEntry.data,
     });
 
     if (!isSuccess(result)) {
         return result.error.code === 'NOT_FOUND'
-            ? notFoundResponse('컴포넌트')
+            ? notFoundResponse('엔트리')
             : internalErrorResponse(result.error.message);
     }
 
@@ -106,14 +104,12 @@ export async function handleUpdateEntry(request: Request, { user }: AuthContext,
  */
 export async function handleDeleteEntry({ user }: AuthContext, id: string) {
     // 소유권 검증
-    const ownership = await verifyComponentOwnership(id, user.id);
+    const ownership = await verifyEntryOwnership(id, user.id);
     if (!ownership.ok) {
-        return ownership.reason === 'not_found'
-            ? notFoundResponse('컴포넌트')
-            : forbiddenResponse();
+        return ownership.reason === 'not_found' ? notFoundResponse('엔트리') : forbiddenResponse();
     }
 
-    const result = await deleteComponent(id);
+    const result = await deleteEntry(id);
 
     if (!isSuccess(result)) {
         return internalErrorResponse(result.error.message);
@@ -139,16 +135,14 @@ export async function handleReorderEntries(request: Request, { user }: AuthConte
         return validationErrorResponse('updates 배열');
     }
 
-    // 모든 컴포넌트의 소유권 일괄 검증
-    const componentIds = updates.map((u) => u.id);
-    const ownership = await verifyComponentsOwnership(componentIds, user.id);
+    // 모든 엔트리의 소유권 일괄 검증
+    const entryIds = updates.map((u) => u.id);
+    const ownership = await verifyEntriesOwnership(entryIds, user.id);
     if (!ownership.ok) {
-        return ownership.reason === 'not_found'
-            ? notFoundResponse('컴포넌트')
-            : forbiddenResponse();
+        return ownership.reason === 'not_found' ? notFoundResponse('엔트리') : forbiddenResponse();
     }
 
-    const result = await updateComponentPositions(updates);
+    const result = await updateEntryPositions(updates);
 
     if (!isSuccess(result)) {
         return internalErrorResponse(result.error.message);

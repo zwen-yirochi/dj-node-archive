@@ -6,19 +6,19 @@ type OwnershipResult =
     | { ok: false; reason: 'not_found' | 'forbidden' };
 
 /**
- * 컴포넌트의 소유권 검증
- * component → page → user_id 확인
+ * 엔트리의 소유권 검증
+ * entry → page → user_id 확인
  */
-export async function verifyComponentOwnership(
-    componentId: string,
+export async function verifyEntryOwnership(
+    entryId: string,
     userId: string
 ): Promise<OwnershipResult> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
-        .from('components')
+        .from('entries')
         .select('page_id, pages!inner(user_id)')
-        .eq('id', componentId)
+        .eq('id', entryId)
         .single();
 
     if (error || !data) {
@@ -34,37 +34,42 @@ export async function verifyComponentOwnership(
 }
 
 /**
- * 여러 컴포넌트의 소유권 일괄 검증
+ * 여러 엔트리의 소유권 일괄 검증
  */
-export async function verifyComponentsOwnership(
-    componentIds: string[],
+export async function verifyEntriesOwnership(
+    entryIds: string[],
     userId: string
 ): Promise<OwnershipResult> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
-        .from('components')
+        .from('entries')
         .select('id, page_id, pages!inner(user_id)')
-        .in('id', componentIds);
+        .in('id', entryIds);
 
-    if (error || !data || data.length !== componentIds.length) {
+    if (error || !data || data.length !== entryIds.length) {
         return { ok: false, reason: 'not_found' };
     }
 
-    // 모든 컴포넌트가 같은 페이지에 속하고, 해당 페이지가 현재 사용자 소유인지 확인
-    const pageIds = new Set(data.map((c) => c.page_id));
+    // 모든 엔트리가 같은 페이지에 속하고, 해당 페이지가 현재 사용자 소유인지 확인
+    const pageIds = new Set(data.map((e) => e.page_id));
     if (pageIds.size !== 1) {
         return { ok: false, reason: 'forbidden' };
     }
 
-    const firstComponent = data[0];
-    const page = firstComponent.pages as unknown as { user_id: string };
+    const firstEntry = data[0];
+    const page = firstEntry.pages as unknown as { user_id: string };
     if (page.user_id !== userId) {
         return { ok: false, reason: 'forbidden' };
     }
 
-    return { ok: true, pageId: firstComponent.page_id };
+    return { ok: true, pageId: firstEntry.page_id };
 }
+
+/** @deprecated Use verifyEntryOwnership instead */
+export const verifyComponentOwnership = verifyEntryOwnership;
+/** @deprecated Use verifyEntriesOwnership instead */
+export const verifyComponentsOwnership = verifyEntriesOwnership;
 
 /**
  * ViewItem의 소유권 검증

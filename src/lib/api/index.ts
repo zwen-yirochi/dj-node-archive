@@ -11,9 +11,12 @@ export {
     internalErrorResponse,
 } from './responses';
 export {
-    verifyComponentOwnership,
-    verifyComponentsOwnership,
+    verifyEntryOwnership,
+    verifyEntriesOwnership,
     verifyViewItemOwnership,
     verifyViewItemsOwnership,
     verifyPageOwnership,
+    // Deprecated aliases
+    verifyComponentOwnership,
+    verifyComponentsOwnership,
 } from './ownership';

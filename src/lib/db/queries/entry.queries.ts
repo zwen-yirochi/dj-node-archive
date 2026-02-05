@@ -1,7 +1,7 @@
-// lib/db/queries/component.queries.ts
-// 서버 전용 - 컴포넌트 DB 쿼리
+// lib/db/queries/entry.queries.ts
+// 서버 전용 - Entry DB 쿼리
 import { createClient } from '@/lib/supabase/server';
-import type { DBComponent, DBComponentType, ComponentDataType } from '@/types/database';
+import type { DBEntry, DBEntryType, EntryDataType } from '@/types/database';
 import {
     type Result,
     success,
@@ -10,26 +10,23 @@ import {
     createNotFoundError,
 } from '@/types/result';
 
-export interface CreateComponentInput {
+export interface CreateEntryInput {
     page_id: string;
-    type: DBComponentType;
+    type: DBEntryType;
     position: number;
-    data: ComponentDataType;
+    data: EntryDataType;
 }
 
-export interface UpdateComponentInput {
-    type?: DBComponentType;
-    data?: ComponentDataType;
+export interface UpdateEntryInput {
+    type?: DBEntryType;
+    data?: EntryDataType;
 }
 
-export async function createComponent(
-    id: string,
-    input: CreateComponentInput
-): Promise<Result<DBComponent>> {
+export async function createEntry(id: string, input: CreateEntryInput): Promise<Result<DBEntry>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
-            .from('components')
+            .from('entries')
             .insert({
                 id,
                 page_id: input.page_id,
@@ -41,25 +38,22 @@ export async function createComponent(
             .single();
 
         if (error) {
-            return failure(createDatabaseError(error.message, 'createComponent', error));
+            return failure(createDatabaseError(error.message, 'createEntry', error));
         }
 
         return success(data);
     } catch (err) {
         return failure(
-            createDatabaseError('컴포넌트 생성 중 오류가 발생했습니다.', 'createComponent', err)
+            createDatabaseError('엔트리 생성 중 오류가 발생했습니다.', 'createEntry', err)
         );
     }
 }
 
-export async function updateComponent(
-    id: string,
-    input: UpdateComponentInput
-): Promise<Result<DBComponent>> {
+export async function updateEntry(id: string, input: UpdateEntryInput): Promise<Result<DBEntry>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
-            .from('components')
+            .from('entries')
             .update({
                 ...input,
                 updated_at: new Date().toISOString(),
@@ -70,37 +64,37 @@ export async function updateComponent(
 
         if (error) {
             if (error.code === 'PGRST116') {
-                return failure(createNotFoundError(`컴포넌트를 찾을 수 없습니다.`, 'component'));
+                return failure(createNotFoundError(`엔트리를 찾을 수 없습니다.`, 'entry'));
             }
-            return failure(createDatabaseError(error.message, 'updateComponent', error));
+            return failure(createDatabaseError(error.message, 'updateEntry', error));
         }
 
         return success(data);
     } catch (err) {
         return failure(
-            createDatabaseError('컴포넌트 수정 중 오류가 발생했습니다.', 'updateComponent', err)
+            createDatabaseError('엔트리 수정 중 오류가 발생했습니다.', 'updateEntry', err)
         );
     }
 }
 
-export async function deleteComponent(id: string): Promise<Result<void>> {
+export async function deleteEntry(id: string): Promise<Result<void>> {
     try {
         const supabase = await createClient();
-        const { error } = await supabase.from('components').delete().eq('id', id);
+        const { error } = await supabase.from('entries').delete().eq('id', id);
 
         if (error) {
-            return failure(createDatabaseError(error.message, 'deleteComponent', error));
+            return failure(createDatabaseError(error.message, 'deleteEntry', error));
         }
 
         return success(undefined);
     } catch (err) {
         return failure(
-            createDatabaseError('컴포넌트 삭제 중 오류가 발생했습니다.', 'deleteComponent', err)
+            createDatabaseError('엔트리 삭제 중 오류가 발생했습니다.', 'deleteEntry', err)
         );
     }
 }
 
-export async function updateComponentPositions(
+export async function updateEntryPositions(
     updates: { id: string; position: number }[]
 ): Promise<Result<void>> {
     try {
@@ -109,7 +103,7 @@ export async function updateComponentPositions(
         const results = await Promise.all(
             updates.map(({ id, position }) =>
                 supabase
-                    .from('components')
+                    .from('entries')
                     .update({ position, updated_at: new Date().toISOString() })
                     .eq('id', id)
             )
@@ -120,7 +114,7 @@ export async function updateComponentPositions(
             return failure(
                 createDatabaseError(
                     failedUpdate.error.message,
-                    'updateComponentPositions',
+                    'updateEntryPositions',
                     failedUpdate.error
                 )
             );
@@ -130,8 +124,8 @@ export async function updateComponentPositions(
     } catch (err) {
         return failure(
             createDatabaseError(
-                '컴포넌트 순서 변경 중 오류가 발생했습니다.',
-                'updateComponentPositions',
+                '엔트리 순서 변경 중 오류가 발생했습니다.',
+                'updateEntryPositions',
                 err
             )
         );
@@ -142,7 +136,7 @@ export async function getMaxPosition(pageId: string): Promise<Result<number>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
-            .from('components')
+            .from('entries')
             .select('position')
             .eq('page_id', pageId)
             .order('position', { ascending: false })
@@ -151,7 +145,7 @@ export async function getMaxPosition(pageId: string): Promise<Result<number>> {
 
         if (error) {
             if (error.code === 'PGRST116') {
-                // 컴포넌트가 없는 경우
+                // 엔트리가 없는 경우
                 return success(-1);
             }
             return failure(createDatabaseError(error.message, 'getMaxPosition', error));

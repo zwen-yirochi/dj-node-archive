@@ -110,7 +110,7 @@ export interface Page {
     id: string;
     userId: string;
     slug: string;
-    components: ContentEntry[];
+    entries: ContentEntry[];
 }
 
 // Backlink

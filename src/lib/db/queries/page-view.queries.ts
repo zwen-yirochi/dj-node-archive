@@ -13,7 +13,7 @@ import {
 export interface DBPageViewItem {
     id: string;
     page_id: string;
-    component_id: string;
+    entry_id: string;
     order_index: number;
     is_visible: boolean;
     created_at: string;
@@ -46,10 +46,10 @@ export async function getViewItemsByPageId(pageId: string): Promise<Result<DBPag
     }
 }
 
-// View에 컴포넌트 추가
+// View에 엔트리 추가
 export async function addViewItem(
     pageId: string,
-    componentId: string,
+    entryId: string,
     orderIndex: number
 ): Promise<Result<DBPageViewItem>> {
     try {
@@ -58,7 +58,7 @@ export async function addViewItem(
             .from('page_view_items')
             .insert({
                 page_id: pageId,
-                component_id: componentId,
+                entry_id: entryId,
                 order_index: orderIndex,
                 is_visible: true,
             })
