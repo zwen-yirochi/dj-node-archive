@@ -83,11 +83,13 @@ export function mapEntryToDatabase(
     entry: ContentEntry,
     position: number
 ): Omit<DBEntry, 'id' | 'created_at' | 'updated_at' | 'page_id'> {
-    const { id, type, ...data } = entry;
+    const { id: _id, type, ...data } = entry;
 
     return {
         type,
         position,
-        data,
+        is_visible: true,
+        // Domain types use camelCase, stored as-is in jsonb
+        data: data as DBEntry['data'],
     };
 }
