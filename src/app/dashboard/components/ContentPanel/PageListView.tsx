@@ -1,10 +1,10 @@
 'use client';
 
-import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
+import { COMPONENT_TYPE_CONFIG } from '@/constants/entries/entryConfig';
 import { cn } from '@/lib/utils';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
 import { useDisplayEntryStore } from '@/stores/displayEntryStore';
+import { useUIStore } from '@/stores/uiStore';
 import type { ContentEntry } from '@/types';
 import {
     closestCenter,

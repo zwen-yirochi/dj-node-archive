@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
+import { COMPONENT_TYPE_CONFIG } from '@/constants/entries/entryConfig';
 import { type ContentEntry, isEventComponent, isLinkComponent, isMixsetComponent } from '@/types';
 import { Pencil, Trash2 } from 'lucide-react';
 import LinkDetail from './LinkDetail';

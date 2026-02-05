@@ -1,4 +1,4 @@
-import { LINK_ICON_COMPONENTS } from '@/constants/componentConfig';
+import { LINK_ICON_COMPONENTS } from '@/constants/entries/entryConfig';
 import type { LinkComponent } from '@/types';
 import { ExternalLink, Globe } from 'lucide-react';
 

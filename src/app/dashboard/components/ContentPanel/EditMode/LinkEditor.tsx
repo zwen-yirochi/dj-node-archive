@@ -1,6 +1,6 @@
 'use client';
 
-import { LINK_ICON_COMPONENTS } from '@/constants/componentConfig';
+import { LINK_ICON_COMPONENTS } from '@/constants/entries/entryConfig';
 import { ICON_OPTIONS, type LinkComponent } from '@/types';
 import { Globe } from 'lucide-react';
 
