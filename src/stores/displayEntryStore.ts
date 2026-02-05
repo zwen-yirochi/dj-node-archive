@@ -14,9 +14,6 @@ export interface DisplayEntry {
     isVisible: boolean;
 }
 
-/** @deprecated Use DisplayEntry instead */
-export type ViewItem = DisplayEntry;
-
 interface DisplayEntryStore {
     displayEntries: DisplayEntry[];
 

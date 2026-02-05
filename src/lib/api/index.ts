@@ -16,9 +16,4 @@ export {
     verifyDisplayEntryOwnership,
     verifyDisplayEntriesOwnership,
     verifyPageOwnership,
-    // Deprecated aliases
-    verifyComponentOwnership,
-    verifyComponentsOwnership,
-    verifyViewItemOwnership,
-    verifyViewItemsOwnership,
 } from './ownership';

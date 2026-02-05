@@ -20,9 +20,6 @@ export interface DBDisplayEntry {
     updated_at: string;
 }
 
-/** @deprecated Use DBDisplayEntry instead */
-export type DBPageViewItem = DBDisplayEntry;
-
 // 페이지의 DisplayEntry 조회
 export async function getDisplayEntriesByPageId(pageId: string): Promise<Result<DBDisplayEntry[]>> {
     try {
@@ -48,9 +45,6 @@ export async function getDisplayEntriesByPageId(pageId: string): Promise<Result<
         );
     }
 }
-
-/** @deprecated Use getDisplayEntriesByPageId instead */
-export const getViewItemsByPageId = getDisplayEntriesByPageId;
 
 // DisplayEntry 추가
 export async function addDisplayEntry(
@@ -83,9 +77,6 @@ export async function addDisplayEntry(
     }
 }
 
-/** @deprecated Use addDisplayEntry instead */
-export const addViewItem = addDisplayEntry;
-
 // DisplayEntry 제거
 export async function removeDisplayEntry(id: string): Promise<Result<void>> {
     try {
@@ -107,9 +98,6 @@ export async function removeDisplayEntry(id: string): Promise<Result<void>> {
         );
     }
 }
-
-/** @deprecated Use removeDisplayEntry instead */
-export const removeViewItem = removeDisplayEntry;
 
 // DisplayEntry 순서 일괄 변경
 export async function updateDisplayEntryOrder(
@@ -148,9 +136,6 @@ export async function updateDisplayEntryOrder(
         );
     }
 }
-
-/** @deprecated Use updateDisplayEntryOrder instead */
-export const updateViewItemOrder = updateDisplayEntryOrder;
 
 // DisplayEntry 표시 여부 토글
 export async function toggleDisplayEntryVisibility(id: string): Promise<Result<DBDisplayEntry>> {
@@ -208,9 +193,6 @@ export async function toggleDisplayEntryVisibility(id: string): Promise<Result<D
     }
 }
 
-/** @deprecated Use toggleDisplayEntryVisibility instead */
-export const toggleViewItemVisibility = toggleDisplayEntryVisibility;
-
 // DisplayEntry 표시 여부 직접 설정
 export async function setDisplayEntryVisibility(
     id: string,
@@ -249,9 +231,6 @@ export async function setDisplayEntryVisibility(
     }
 }
 
-/** @deprecated Use setDisplayEntryVisibility instead */
-export const setViewItemVisibility = setDisplayEntryVisibility;
-
 // 특정 페이지의 최대 order_index 조회
 export async function getMaxDisplayEntryOrderIndex(pageId: string): Promise<Result<number>> {
     try {
@@ -285,6 +264,3 @@ export async function getMaxDisplayEntryOrderIndex(pageId: string): Promise<Resu
         );
     }
 }
-
-/** @deprecated Use getMaxDisplayEntryOrderIndex instead */
-export const getMaxViewItemOrderIndex = getMaxDisplayEntryOrderIndex;

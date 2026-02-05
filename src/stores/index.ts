@@ -16,7 +16,7 @@ export {
     getSelectedEntry,
     useContentEntryStore,
 } from './contentEntryStore';
-export { useDisplayEntryStore, type DisplayEntry, type ViewItem } from './displayEntryStore';
+export { useDisplayEntryStore, type DisplayEntry } from './displayEntryStore';
 export {
     useUIStore,
     type ActivePanel,

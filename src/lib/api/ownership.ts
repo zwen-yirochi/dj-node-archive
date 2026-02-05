@@ -66,11 +66,6 @@ export async function verifyEntriesOwnership(
     return { ok: true, pageId: firstEntry.page_id };
 }
 
-/** @deprecated Use verifyEntryOwnership instead */
-export const verifyComponentOwnership = verifyEntryOwnership;
-/** @deprecated Use verifyEntriesOwnership instead */
-export const verifyComponentsOwnership = verifyEntriesOwnership;
-
 /**
  * DisplayEntry의 소유권 검증
  * display_entry → page → user_id 확인
@@ -98,9 +93,6 @@ export async function verifyDisplayEntryOwnership(
 
     return { ok: true, pageId: data.page_id };
 }
-
-/** @deprecated Use verifyDisplayEntryOwnership instead */
-export const verifyViewItemOwnership = verifyDisplayEntryOwnership;
 
 /**
  * 여러 DisplayEntry의 소유권 일괄 검증
@@ -133,9 +125,6 @@ export async function verifyDisplayEntriesOwnership(
 
     return { ok: true, pageId: firstItem.page_id };
 }
-
-/** @deprecated Use verifyDisplayEntriesOwnership instead */
-export const verifyViewItemsOwnership = verifyDisplayEntriesOwnership;
 
 /**
  * 페이지의 소유권 검증

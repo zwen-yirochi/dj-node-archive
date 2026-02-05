@@ -18,16 +18,13 @@ import type {
 import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
 import { cache } from 'react';
 
-// View Item 도메인 타입
+// DisplayEntry 도메인 타입
 export interface DisplayEntry {
     id: string;
     entryId: string;
     order: number;
     isVisible: boolean;
 }
-
-/** @deprecated Use DisplayEntry instead */
-export type ViewItem = DisplayEntry;
 
 export interface EditorData {
     user: User;
