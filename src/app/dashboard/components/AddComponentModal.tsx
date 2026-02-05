@@ -9,7 +9,7 @@ import type { DBEventWithVenue } from '@/types/database';
 import { Calendar, Link, Loader2, Music, Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-type ComponentType = 'event' | 'mixset' | 'link';
+type EntryType = 'event' | 'mixset' | 'link';
 
 interface AddComponentModalProps {
     open: boolean;
@@ -19,21 +19,21 @@ interface AddComponentModalProps {
 
 const componentTypes = [
     {
-        id: 'event' as ComponentType,
+        id: 'event' as EntryType,
         icon: Calendar,
         label: '이벤트 / 공연',
         description: '공연 기록을 추가합니다',
         color: 'pink',
     },
     {
-        id: 'mixset' as ComponentType,
+        id: 'mixset' as EntryType,
         icon: Music,
         label: '믹스셋',
         description: 'DJ 믹스나 녹음을 추가합니다',
         color: 'cyan',
     },
     {
-        id: 'link' as ComponentType,
+        id: 'link' as EntryType,
         icon: Link,
         label: '링크',
         description: 'SNS나 외부 링크를 추가합니다',
@@ -42,7 +42,7 @@ const componentTypes = [
 ];
 
 export function AddComponentModal({ open, onOpenChange, onAddComponent }: AddComponentModalProps) {
-    const [selectedType, setSelectedType] = useState<ComponentType>('event');
+    const [selectedType, setSelectedType] = useState<EntryType>('event');
     const [searchQuery, setSearchQuery] = useState('');
     const [events, setEvents] = useState<DBEventWithVenue[]>([]);
     const [filteredEvents, setFilteredEvents] = useState<DBEventWithVenue[]>([]);
@@ -92,7 +92,7 @@ export function AddComponentModal({ open, onOpenChange, onAddComponent }: AddCom
         onOpenChange(false);
     };
 
-    const handleSelectType = (type: ComponentType) => {
+    const handleSelectType = (type: EntryType) => {
         setSelectedType(type);
         if (type !== 'event') {
             onAddComponent(type === 'mixset' ? 'mixset' : 'link');

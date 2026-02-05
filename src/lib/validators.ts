@@ -1,4 +1,4 @@
-import { COMPONENT_FIELDS, type ComponentType } from '@/constants/componentFields';
+import { COMPONENT_FIELDS, type EntryType } from '@/constants/componentFields';
 import type { ContentEntry } from '@/types';
 import type { FieldConfig, TreeItemStatus, ValidationResult } from '@/types/componentFields';
 
@@ -45,7 +45,7 @@ function validateFieldValue(value: unknown, config: FieldConfig): boolean {
 /**
  * 특정 검증 단계에서 필수인 필드 목록 반환
  */
-export function getRequiredFields(type: ComponentType, tier: 'create' | 'view'): FieldConfig[] {
+export function getRequiredFields(type: EntryType, tier: 'create' | 'view'): FieldConfig[] {
     const fields = COMPONENT_FIELDS[type];
 
     if (tier === 'create') {
@@ -60,7 +60,7 @@ export function getRequiredFields(type: ComponentType, tier: 'create' | 'view'):
  * 필드가 특정 단계에서 필수인지 확인
  */
 export function isFieldRequired(
-    type: ComponentType,
+    type: EntryType,
     fieldKey: string,
     tier: 'create' | 'view'
 ): boolean {
@@ -79,7 +79,7 @@ export function isFieldRequired(
 /**
  * 필드 설정 가져오기
  */
-export function getFieldConfig(type: ComponentType, fieldKey: string): FieldConfig | undefined {
+export function getFieldConfig(type: EntryType, fieldKey: string): FieldConfig | undefined {
     return COMPONENT_FIELDS[type].find((f) => f.key === fieldKey);
 }
 
@@ -97,7 +97,7 @@ export function validateEntry(
     entry: ContentEntry,
     tier: 'create' | 'view' = 'view'
 ): ValidationResult {
-    const type = entry.type as ComponentType;
+    const type = entry.type as EntryType;
     const requiredFields = getRequiredFields(type, tier);
 
     const errors: string[] = [];
@@ -168,7 +168,7 @@ export function canAddToView(entry: ContentEntry): boolean {
  * Page 사용 가능 기준으로 계산
  */
 export function getCompletionPercentage(entry: ContentEntry): number {
-    const type = entry.type as ComponentType;
+    const type = entry.type as EntryType;
     const requiredFields = getRequiredFields(type, 'view');
 
     if (requiredFields.length === 0) return 100;
@@ -191,7 +191,7 @@ export function getMissingFieldLabels(
     entry: ContentEntry,
     tier: 'create' | 'view' = 'view'
 ): string[] {
-    const type = entry.type as ComponentType;
+    const type = entry.type as EntryType;
     const fields = COMPONENT_FIELDS[type];
     const result = validateEntry(entry, tier);
 

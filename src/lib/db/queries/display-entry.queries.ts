@@ -1,5 +1,5 @@
-// lib/db/queries/page-view.queries.ts
-// 서버 전용 - page_view_items DB 쿼리
+// lib/db/queries/display-entry.queries.ts
+// 서버 전용 - DisplayEntry (page_view_items) DB 쿼리
 import { createClient } from '@/lib/supabase/server';
 import {
     type Result,
@@ -10,18 +10,18 @@ import {
 } from '@/types/result';
 
 // DB 타입 정의
-export interface DBPageViewItem {
+export interface DBDisplayEntry {
     id: string;
     page_id: string;
-    component_id: string;
+    entry_id: string;
     order_index: number;
     is_visible: boolean;
     created_at: string;
     updated_at: string;
 }
 
-// 페이지의 view items 조회
-export async function getViewItemsByPageId(pageId: string): Promise<Result<DBPageViewItem[]>> {
+// 페이지의 DisplayEntry 조회
+export async function getDisplayEntriesByPageId(pageId: string): Promise<Result<DBDisplayEntry[]>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
@@ -31,34 +31,34 @@ export async function getViewItemsByPageId(pageId: string): Promise<Result<DBPag
             .order('order_index', { ascending: true });
 
         if (error) {
-            return failure(createDatabaseError(error.message, 'getViewItemsByPageId', error));
+            return failure(createDatabaseError(error.message, 'getDisplayEntriesByPageId', error));
         }
 
         return success(data || []);
     } catch (err) {
         return failure(
             createDatabaseError(
-                'View items 조회 중 오류가 발생했습니다.',
-                'getViewItemsByPageId',
+                'DisplayEntry 조회 중 오류가 발생했습니다.',
+                'getDisplayEntriesByPageId',
                 err
             )
         );
     }
 }
 
-// View에 컴포넌트 추가
-export async function addViewItem(
+// DisplayEntry 추가
+export async function addDisplayEntry(
     pageId: string,
-    componentId: string,
+    entryId: string,
     orderIndex: number
-): Promise<Result<DBPageViewItem>> {
+): Promise<Result<DBDisplayEntry>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('page_view_items')
             .insert({
                 page_id: pageId,
-                component_id: componentId,
+                entry_id: entryId,
                 order_index: orderIndex,
                 is_visible: true,
             })
@@ -66,37 +66,41 @@ export async function addViewItem(
             .single();
 
         if (error) {
-            return failure(createDatabaseError(error.message, 'addViewItem', error));
+            return failure(createDatabaseError(error.message, 'addDisplayEntry', error));
         }
 
         return success(data);
     } catch (err) {
         return failure(
-            createDatabaseError('View item 추가 중 오류가 발생했습니다.', 'addViewItem', err)
+            createDatabaseError('DisplayEntry 추가 중 오류가 발생했습니다.', 'addDisplayEntry', err)
         );
     }
 }
 
-// View에서 제거
-export async function removeViewItem(id: string): Promise<Result<void>> {
+// DisplayEntry 제거
+export async function removeDisplayEntry(id: string): Promise<Result<void>> {
     try {
         const supabase = await createClient();
         const { error } = await supabase.from('page_view_items').delete().eq('id', id);
 
         if (error) {
-            return failure(createDatabaseError(error.message, 'removeViewItem', error));
+            return failure(createDatabaseError(error.message, 'removeDisplayEntry', error));
         }
 
         return success(undefined);
     } catch (err) {
         return failure(
-            createDatabaseError('View item 삭제 중 오류가 발생했습니다.', 'removeViewItem', err)
+            createDatabaseError(
+                'DisplayEntry 삭제 중 오류가 발생했습니다.',
+                'removeDisplayEntry',
+                err
+            )
         );
     }
 }
 
-// View items 순서 일괄 변경
-export async function updateViewItemOrder(
+// DisplayEntry 순서 일괄 변경
+export async function updateDisplayEntryOrder(
     updates: { id: string; orderIndex: number }[]
 ): Promise<Result<void>> {
     try {
@@ -115,7 +119,7 @@ export async function updateViewItemOrder(
             return failure(
                 createDatabaseError(
                     failedUpdate.error.message,
-                    'updateViewItemOrder',
+                    'updateDisplayEntryOrder',
                     failedUpdate.error
                 )
             );
@@ -125,16 +129,16 @@ export async function updateViewItemOrder(
     } catch (err) {
         return failure(
             createDatabaseError(
-                'View item 순서 변경 중 오류가 발생했습니다.',
-                'updateViewItemOrder',
+                'DisplayEntry 순서 변경 중 오류가 발생했습니다.',
+                'updateDisplayEntryOrder',
                 err
             )
         );
     }
 }
 
-// View item 표시 여부 변경
-export async function toggleViewItemVisibility(id: string): Promise<Result<DBPageViewItem>> {
+// DisplayEntry 표시 여부 토글
+export async function toggleDisplayEntryVisibility(id: string): Promise<Result<DBDisplayEntry>> {
     try {
         const supabase = await createClient();
 
@@ -148,11 +152,15 @@ export async function toggleViewItemVisibility(id: string): Promise<Result<DBPag
         if (selectError) {
             if (selectError.code === 'PGRST116') {
                 return failure(
-                    createNotFoundError('View item을 찾을 수 없습니다.', 'page_view_item')
+                    createNotFoundError('DisplayEntry를 찾을 수 없습니다.', 'display_entry')
                 );
             }
             return failure(
-                createDatabaseError(selectError.message, 'toggleViewItemVisibility', selectError)
+                createDatabaseError(
+                    selectError.message,
+                    'toggleDisplayEntryVisibility',
+                    selectError
+                )
             );
         }
 
@@ -168,26 +176,28 @@ export async function toggleViewItemVisibility(id: string): Promise<Result<DBPag
             .single();
 
         if (error) {
-            return failure(createDatabaseError(error.message, 'toggleViewItemVisibility', error));
+            return failure(
+                createDatabaseError(error.message, 'toggleDisplayEntryVisibility', error)
+            );
         }
 
         return success(data);
     } catch (err) {
         return failure(
             createDatabaseError(
-                'View item 표시 여부 변경 중 오류가 발생했습니다.',
-                'toggleViewItemVisibility',
+                'DisplayEntry 표시 여부 변경 중 오류가 발생했습니다.',
+                'toggleDisplayEntryVisibility',
                 err
             )
         );
     }
 }
 
-// View item 표시 여부 직접 설정
-export async function setViewItemVisibility(
+// DisplayEntry 표시 여부 직접 설정
+export async function setDisplayEntryVisibility(
     id: string,
     isVisible: boolean
-): Promise<Result<DBPageViewItem>> {
+): Promise<Result<DBDisplayEntry>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
@@ -203,18 +213,18 @@ export async function setViewItemVisibility(
         if (error) {
             if (error.code === 'PGRST116') {
                 return failure(
-                    createNotFoundError('View item을 찾을 수 없습니다.', 'page_view_item')
+                    createNotFoundError('DisplayEntry를 찾을 수 없습니다.', 'display_entry')
                 );
             }
-            return failure(createDatabaseError(error.message, 'setViewItemVisibility', error));
+            return failure(createDatabaseError(error.message, 'setDisplayEntryVisibility', error));
         }
 
         return success(data);
     } catch (err) {
         return failure(
             createDatabaseError(
-                'View item 표시 여부 설정 중 오류가 발생했습니다.',
-                'setViewItemVisibility',
+                'DisplayEntry 표시 여부 설정 중 오류가 발생했습니다.',
+                'setDisplayEntryVisibility',
                 err
             )
         );
@@ -222,7 +232,7 @@ export async function setViewItemVisibility(
 }
 
 // 특정 페이지의 최대 order_index 조회
-export async function getMaxViewItemOrderIndex(pageId: string): Promise<Result<number>> {
+export async function getMaxDisplayEntryOrderIndex(pageId: string): Promise<Result<number>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
@@ -235,10 +245,12 @@ export async function getMaxViewItemOrderIndex(pageId: string): Promise<Result<n
 
         if (error) {
             if (error.code === 'PGRST116') {
-                // view items가 없는 경우
+                // DisplayEntry가 없는 경우
                 return success(-1);
             }
-            return failure(createDatabaseError(error.message, 'getMaxViewItemOrderIndex', error));
+            return failure(
+                createDatabaseError(error.message, 'getMaxDisplayEntryOrderIndex', error)
+            );
         }
 
         return success(data.order_index);
@@ -246,7 +258,7 @@ export async function getMaxViewItemOrderIndex(pageId: string): Promise<Result<n
         return failure(
             createDatabaseError(
                 '최대 order_index 조회 중 오류가 발생했습니다.',
-                'getMaxViewItemOrderIndex',
+                'getMaxDisplayEntryOrderIndex',
                 err
             )
         );

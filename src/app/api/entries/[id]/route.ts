@@ -1,6 +1,5 @@
-// app/api/components/[id]/route.ts
-// @deprecated 이 경로는 /api/entries/[id]로 마이그레이션됩니다.
-// 새 코드에서는 /api/entries/[id]를 사용해주세요.
+// app/api/entries/[id]/route.ts
+// ContentEntry API - 새 경로 (기존: /api/components/[id])
 import { withAuth } from '@/lib/api';
 import { handleUpdateEntry, handleDeleteEntry } from '@/lib/api/handlers';
 

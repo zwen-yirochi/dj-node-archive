@@ -26,6 +26,3 @@ export function getEntryTypeLabel(entry: ContentEntry): string {
     if (isLinkComponent(entry)) return 'Link';
     return 'Unknown';
 }
-
-/** @deprecated Use getEntryTypeLabel instead */
-export const getComponentTypeLabel = getEntryTypeLabel;

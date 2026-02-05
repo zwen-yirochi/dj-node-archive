@@ -2,9 +2,9 @@
 
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/lib/validators';
-import { useComponentStore } from '@/stores/componentStore';
+import { useContentEntryStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
-import { useViewStore } from '@/stores/viewStore';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import type { ContentEntry } from '@/types';
 import {
     closestCenter,
@@ -40,25 +40,21 @@ import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
 
 interface TreeSidebarProps {
-    onAddComponent: (type: 'event' | 'mixset' | 'link') => void;
-    onDeleteComponent?: (id: string) => void;
+    onAddEntry: (type: 'event' | 'mixset' | 'link') => void;
+    onDeleteEntry?: (id: string) => void;
     username: string;
 }
 
-export default function TreeSidebar({
-    onAddComponent,
-    onDeleteComponent,
-    username,
-}: TreeSidebarProps) {
-    // Component Store
-    const components = useComponentStore((state) => state.components);
-    const pageId = useComponentStore((state) => state.pageId);
-    const reorderSectionItems = useComponentStore((state) => state.reorderSectionItems);
+export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: TreeSidebarProps) {
+    // Content Entry Store
+    const entries = useContentEntryStore((state) => state.entries);
+    const pageId = useContentEntryStore((state) => state.pageId);
+    const reorderSectionItems = useContentEntryStore((state) => state.reorderSectionItems);
 
-    // View Store
-    const viewItems = useViewStore((state) => state.viewItems);
-    const addToView = useViewStore((state) => state.addToView);
-    const reorderView = useViewStore((state) => state.reorderView);
+    // Display Entry Store
+    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
+    const addToView = useDisplayEntryStore((state) => state.addToView);
+    const reorderView = useDisplayEntryStore((state) => state.reorderView);
 
     // UI Store
     const activePanel = useUIStore((state) => state.activePanel);
@@ -70,14 +66,14 @@ export default function TreeSidebar({
     const isPageCollapsed = sidebarSections.view.collapsed;
 
     // useMemo로 필터링하여 무한 루프 방지
-    const events = useMemo(() => components.filter((c) => c.type === 'event'), [components]);
-    const mixsets = useMemo(() => components.filter((c) => c.type === 'mixset'), [components]);
-    const links = useMemo(() => components.filter((c) => c.type === 'link'), [components]);
+    const events = useMemo(() => entries.filter((e) => e.type === 'event'), [entries]);
+    const mixsets = useMemo(() => entries.filter((e) => e.type === 'mixset'), [entries]);
+    const links = useMemo(() => entries.filter((e) => e.type === 'link'), [entries]);
 
     const [activeItem, setActiveItem] = useState<{
-        component: ContentEntry;
-        isViewItem: boolean;
-        viewItemId?: string;
+        entry: ContentEntry;
+        isDisplayEntry: boolean;
+        displayEntryId?: string;
     } | null>(null);
 
     const [isDraggingOverView, setIsDraggingOverView] = useState(false);
@@ -97,11 +93,11 @@ export default function TreeSidebar({
         const { active } = event;
         const data = active.data.current;
 
-        if (data?.component) {
+        if (data?.entry) {
             setActiveItem({
-                component: data.component,
-                isViewItem: data.type === 'view-item',
-                viewItemId: data.viewItemId,
+                entry: data.entry,
+                isDisplayEntry: data.type === 'display-entry',
+                displayEntryId: data.displayEntryId,
             });
         }
     };
@@ -122,22 +118,22 @@ export default function TreeSidebar({
         const overData = over.data.current;
 
         // View 드롭존에 드롭한 경우
-        if (over.id === 'view-drop-zone' && activeData?.type === 'component' && pageId) {
-            const component = activeData.component as ContentEntry;
-            // 유효성 검사: 필수 필드가 채워진 컴포넌트만 View에 추가 가능
-            if (!canAddToView(component)) {
+        if (over.id === 'view-drop-zone' && activeData?.type === 'entry' && pageId) {
+            const entry = activeData.entry as ContentEntry;
+            // 유효성 검사: 필수 필드가 채워진 엔트리만 View에 추가 가능
+            if (!canAddToView(entry)) {
                 // TODO: Toast로 사용자에게 알림
-                console.warn('컴포넌트를 완성해야 Page에 추가할 수 있습니다.');
+                console.warn('엔트리를 완성해야 Page에 추가할 수 있습니다.');
                 return;
             }
-            addToView(pageId, component.id);
+            addToView(pageId, entry.id);
             return;
         }
 
         // View 섹션 내에서 순서 변경
-        if (activeData?.type === 'view-item') {
-            if (overData?.type === 'view-item') {
-                const overIndex = viewItems.findIndex((item) => item.id === over.id);
+        if (activeData?.type === 'display-entry') {
+            if (overData?.type === 'display-entry') {
+                const overIndex = displayEntries.findIndex((item) => item.id === over.id);
                 if (overIndex !== -1) {
                     reorderView(active.id as string, overIndex);
                 }
@@ -146,9 +142,9 @@ export default function TreeSidebar({
         }
 
         // 섹션 내 엔트리 순서 변경
-        if (activeData?.type === 'component' && overData?.type === 'component') {
-            const activeEntry = activeData.component as ContentEntry;
-            const overEntry = overData.component as ContentEntry;
+        if (activeData?.type === 'entry' && overData?.type === 'entry') {
+            const activeEntry = activeData.entry as ContentEntry;
+            const overEntry = overData.entry as ContentEntry;
 
             if (activeEntry.type === overEntry.type && active.id !== over.id) {
                 const sectionType = activeEntry.type as 'event' | 'mixset' | 'link';
@@ -162,7 +158,7 @@ export default function TreeSidebar({
                     sectionEntries = links;
                 }
 
-                const overIndex = sectionEntries.findIndex((c) => c.id === over.id);
+                const overIndex = sectionEntries.findIndex((e) => e.id === over.id);
                 if (overIndex !== -1) {
                     reorderSectionItems(sectionType, activeEntry.id, overIndex);
                 }
@@ -170,8 +166,8 @@ export default function TreeSidebar({
         }
     };
 
-    const handleDelete = (componentId: string) => {
-        onDeleteComponent?.(componentId);
+    const handleDelete = (entryId: string) => {
+        onDeleteEntry?.(entryId);
     };
 
     const handlePageClick = () => {
@@ -253,7 +249,7 @@ export default function TreeSidebar({
                         <ViewSection
                             isDraggingOver={isDraggingOverView}
                             isCollapsed={isPageCollapsed}
-                            onDeleteComponent={handleDelete}
+                            onDeleteEntry={handleDelete}
                         />
                     </div>
 
@@ -271,18 +267,18 @@ export default function TreeSidebar({
                         title="Events"
                         icon={<Calendar className="h-4 w-4" />}
                         count={events.length}
-                        onAdd={() => onAddComponent('event')}
+                        onAdd={() => onAddEntry('event')}
                     >
                         <SortableContext
-                            items={events.map((c) => c.id)}
+                            items={events.map((e) => e.id)}
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {events.map((component) => (
+                                {events.map((entry) => (
                                     <TreeItem
-                                        key={component.id}
-                                        component={component}
-                                        onDelete={() => handleDelete(component.id)}
+                                        key={entry.id}
+                                        entry={entry}
+                                        onDelete={() => handleDelete(entry.id)}
                                     />
                                 ))}
                             </div>
@@ -295,18 +291,18 @@ export default function TreeSidebar({
                         title="Mixsets"
                         icon={<Headphones className="h-4 w-4" />}
                         count={mixsets.length}
-                        onAdd={() => onAddComponent('mixset')}
+                        onAdd={() => onAddEntry('mixset')}
                     >
                         <SortableContext
-                            items={mixsets.map((c) => c.id)}
+                            items={mixsets.map((e) => e.id)}
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {mixsets.map((component) => (
+                                {mixsets.map((entry) => (
                                     <TreeItem
-                                        key={component.id}
-                                        component={component}
-                                        onDelete={() => handleDelete(component.id)}
+                                        key={entry.id}
+                                        entry={entry}
+                                        onDelete={() => handleDelete(entry.id)}
                                     />
                                 ))}
                             </div>
@@ -319,18 +315,18 @@ export default function TreeSidebar({
                         title="Links"
                         icon={<LinkIcon className="h-4 w-4" />}
                         count={links.length}
-                        onAdd={() => onAddComponent('link')}
+                        onAdd={() => onAddEntry('link')}
                     >
                         <SortableContext
-                            items={links.map((c) => c.id)}
+                            items={links.map((e) => e.id)}
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {links.map((component) => (
+                                {links.map((entry) => (
                                     <TreeItem
-                                        key={component.id}
-                                        component={component}
-                                        onDelete={() => handleDelete(component.id)}
+                                        key={entry.id}
+                                        entry={entry}
+                                        onDelete={() => handleDelete(entry.id)}
                                     />
                                 ))}
                             </div>
@@ -347,7 +343,7 @@ export default function TreeSidebar({
                 {activeItem && (
                     <div className="rounded-lg border border-dashboard-border bg-dashboard-bg-card px-3 py-2 shadow-lg">
                         <span className="text-sm text-dashboard-text">
-                            {activeItem.component.title || '제목 없음'}
+                            {activeItem.entry.title || '제목 없음'}
                         </span>
                     </div>
                 )}

@@ -52,4 +52,4 @@ export const COMPONENT_TYPE_CONFIG = {
     },
 } as const;
 
-export type ComponentType = keyof typeof COMPONENT_TYPE_CONFIG;
+export type EntryType = keyof typeof COMPONENT_TYPE_CONFIG;

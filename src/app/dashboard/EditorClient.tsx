@@ -2,11 +2,11 @@
 'use client';
 
 import { createEmptyEntry, eventToEntry } from '@/lib/transformers';
-import { useComponentStore } from '@/stores/componentStore';
-import type { DisplayEntry } from '@/stores/viewStore';
+import { useContentEntryStore } from '@/stores/contentEntryStore';
+import type { DisplayEntry } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useUserStore } from '@/stores/userStore';
-import { useViewStore } from '@/stores/viewStore';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import type { ContentEntry, Theme, User } from '@/types';
 import type { DBEventWithVenue } from '@/types/database';
 import { useEffect, useState } from 'react';
@@ -18,7 +18,7 @@ import TreeSidebar from './components/TreeSidebar';
 interface EditorClientProps {
     initialUser: User;
     initialComponents: ContentEntry[];
-    initialViewItems?: DisplayEntry[];
+    initialDisplayEntries?: DisplayEntry[];
     initialTheme?: Theme | null;
     pageId: string;
     username: string;
@@ -27,7 +27,7 @@ interface EditorClientProps {
 export default function EditorClient({
     initialUser,
     initialComponents,
-    initialViewItems = [],
+    initialDisplayEntries = [],
     initialTheme = null,
     pageId,
     username,
@@ -35,20 +35,20 @@ export default function EditorClient({
     // User Store
     const setUser = useUserStore((state) => state.setUser);
 
-    // Component Store
-    const setComponents = useComponentStore((state) => state.setComponents);
-    const setPageId = useComponentStore((state) => state.setPageId);
-    const setTheme = useComponentStore((state) => state.setTheme);
-    const createComponent = useComponentStore((state) => state.createComponent);
-    const finishCreating = useComponentStore((state) => state.finishCreating);
-    const deleteComponentFromStore = useComponentStore((state) => state.deleteComponent);
+    // Content Entry Store
+    const setEntries = useContentEntryStore((state) => state.setEntries);
+    const setPageId = useContentEntryStore((state) => state.setPageId);
+    const setTheme = useContentEntryStore((state) => state.setTheme);
+    const createEntry = useContentEntryStore((state) => state.createEntry);
+    const finishCreating = useContentEntryStore((state) => state.finishCreating);
+    const deleteEntryFromStore = useContentEntryStore((state) => state.deleteEntry);
 
-    // View Store
-    const setViewItems = useViewStore((state) => state.setViewItems);
-    const triggerPreviewRefresh = useViewStore((state) => state.triggerPreviewRefresh);
+    // Display Entry Store
+    const setDisplayEntries = useDisplayEntryStore((state) => state.setDisplayEntries);
+    const triggerPreviewRefresh = useDisplayEntryStore((state) => state.triggerPreviewRefresh);
 
     // UI Store
-    const selectComponent = useUIStore((state) => state.selectComponent);
+    const selectEntry = useUIStore((state) => state.selectEntry);
     const startCreating = useUIStore((state) => state.startCreating);
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -57,8 +57,8 @@ export default function EditorClient({
     // Zustand 초기화
     useEffect(() => {
         setUser(initialUser);
-        setComponents(initialComponents);
-        setViewItems(initialViewItems);
+        setEntries(initialComponents);
+        setDisplayEntries(initialDisplayEntries);
         setPageId(pageId);
         if (initialTheme) {
             setTheme(initialTheme);
@@ -66,18 +66,18 @@ export default function EditorClient({
     }, [
         initialUser,
         initialComponents,
-        initialViewItems,
+        initialDisplayEntries,
         initialTheme,
         pageId,
         setUser,
-        setComponents,
-        setViewItems,
+        setEntries,
+        setDisplayEntries,
         setPageId,
         setTheme,
     ]);
 
-    // 컴포넌트 추가 핸들러
-    const handleAddComponent = async (
+    // 엔트리 추가 핸들러
+    const handleAddEntry = async (
         type: 'event' | 'mixset' | 'link',
         eventData?: DBEventWithVenue
     ) => {
@@ -86,23 +86,23 @@ export default function EditorClient({
         if (eventData) {
             // 이벤트 데이터가 있으면 변환하여 바로 저장 (이미 완성된 데이터)
             const newEntry = eventToEntry(eventData);
-            await createComponent(newEntry);
+            await createEntry(newEntry);
             // 완성된 데이터이므로 바로 생성 완료 처리 + 미리보기 트리거
             finishCreating(newEntry.id);
             triggerPreviewRefresh();
-            selectComponent(newEntry.id);
+            selectEntry(newEntry.id);
         } else {
             // 빈 엔트리 생성 후 즉시 DB에 저장 → 생성 모드 진입
-            // createComponent는 newlyCreatedIds에 자동 추가
+            // createEntry는 newlyCreatedIds에 자동 추가
             const newEntry = createEmptyEntry(type);
-            await createComponent(newEntry);
+            await createEntry(newEntry);
             startCreating(newEntry.id);
         }
     };
 
-    // 컴포넌트 삭제 핸들러
-    const handleDeleteComponent = async (id: string) => {
-        const { triggeredPreview } = await deleteComponentFromStore(id);
+    // 엔트리 삭제 핸들러
+    const handleDeleteEntry = async (id: string) => {
+        const { triggeredPreview } = await deleteEntryFromStore(id);
         if (triggeredPreview) triggerPreviewRefresh();
     };
 
@@ -117,8 +117,8 @@ export default function EditorClient({
             {/* TreeSidebar - 왼쪽 */}
             <div className="p-3">
                 <TreeSidebar
-                    onAddComponent={handleOpenAddModal}
-                    onDeleteComponent={handleDeleteComponent}
+                    onAddEntry={handleOpenAddModal}
+                    onDeleteEntry={handleDeleteEntry}
                     username={username}
                 />
             </div>
@@ -140,7 +140,7 @@ export default function EditorClient({
             <AddComponentModal
                 open={isAddModalOpen}
                 onOpenChange={setIsAddModalOpen}
-                onAddComponent={handleAddComponent}
+                onAddComponent={handleAddEntry}
             />
         </div>
     );

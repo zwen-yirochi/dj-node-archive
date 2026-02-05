@@ -21,7 +21,7 @@ export interface Page {
     updated_at: string;
 }
 
-export type ComponentType = 'event' | 'mixset' | 'link' | 'text' | 'image';
+export type EntryType = 'event' | 'mixset' | 'link' | 'text' | 'image';
 
 export interface LinkData {
     title: string;
@@ -55,31 +55,31 @@ export interface MixsetData {
     description: string;
 }
 
-export type ComponentDataType = EventData | MixsetData | LinkData | TextData | ImageData;
+export type EntryDataType = EventData | MixsetData | LinkData | TextData | ImageData;
 
-export interface Component {
+export interface Entry {
     id: string;
     page_id: string;
-    type: ComponentType;
+    type: EntryType;
     position: number;
-    data: ComponentDataType;
+    data: EntryDataType;
     created_at: string;
     updated_at: string;
 }
 
-export interface PageWithComponents extends Page {
-    components: Component[];
+export interface PageWithEntries extends Page {
+    entries: Entry[];
 }
 
 export interface UserWithPages extends User {
-    pages: PageWithComponents[];
+    pages: PageWithEntries[];
 }
 
 export type DBUser = User;
 export type DBPage = Page;
-export type DBComponent = Component;
-export type DBComponentType = ComponentType;
-export type DBPageWithComponents = PageWithComponents;
+export type DBEntry = Entry;
+export type DBEntryType = EntryType;
+export type DBPageWithEntries = PageWithEntries;
 export type DBUserWithPages = UserWithPages;
 
 // ============================================
