@@ -72,11 +72,11 @@ export const verifyComponentOwnership = verifyEntryOwnership;
 export const verifyComponentsOwnership = verifyEntriesOwnership;
 
 /**
- * ViewItem의 소유권 검증
- * view_item → page → user_id 확인
+ * DisplayEntry의 소유권 검증
+ * display_entry → page → user_id 확인
  */
-export async function verifyViewItemOwnership(
-    viewItemId: string,
+export async function verifyDisplayEntryOwnership(
+    displayEntryId: string,
     userId: string
 ): Promise<OwnershipResult> {
     const supabase = await createClient();
@@ -84,7 +84,7 @@ export async function verifyViewItemOwnership(
     const { data, error } = await supabase
         .from('page_view_items')
         .select('page_id, pages!inner(user_id)')
-        .eq('id', viewItemId)
+        .eq('id', displayEntryId)
         .single();
 
     if (error || !data) {
@@ -99,11 +99,14 @@ export async function verifyViewItemOwnership(
     return { ok: true, pageId: data.page_id };
 }
 
+/** @deprecated Use verifyDisplayEntryOwnership instead */
+export const verifyViewItemOwnership = verifyDisplayEntryOwnership;
+
 /**
- * 여러 ViewItem의 소유권 일괄 검증
+ * 여러 DisplayEntry의 소유권 일괄 검증
  */
-export async function verifyViewItemsOwnership(
-    viewItemIds: string[],
+export async function verifyDisplayEntriesOwnership(
+    displayEntryIds: string[],
     userId: string
 ): Promise<OwnershipResult> {
     const supabase = await createClient();
@@ -111,9 +114,9 @@ export async function verifyViewItemsOwnership(
     const { data, error } = await supabase
         .from('page_view_items')
         .select('id, page_id, pages!inner(user_id)')
-        .in('id', viewItemIds);
+        .in('id', displayEntryIds);
 
-    if (error || !data || data.length !== viewItemIds.length) {
+    if (error || !data || data.length !== displayEntryIds.length) {
         return { ok: false, reason: 'not_found' };
     }
 
@@ -130,6 +133,9 @@ export async function verifyViewItemsOwnership(
 
     return { ok: true, pageId: firstItem.page_id };
 }
+
+/** @deprecated Use verifyDisplayEntriesOwnership instead */
+export const verifyViewItemsOwnership = verifyDisplayEntriesOwnership;
 
 /**
  * 페이지의 소유권 검증

@@ -1,6 +1,9 @@
 // lib/services/user.service.ts
 // 서버 전용 - 'use server' 없어도 됨 (기본이 서버)
-import { getViewItemsByPageId, type DBPageViewItem } from '@/lib/db/queries/page-view.queries';
+import {
+    getDisplayEntriesByPageId,
+    type DBDisplayEntry,
+} from '@/lib/db/queries/display-entry.queries';
 import { findUserWithPages, findUserWithPagesById } from '@/lib/db/queries/user.queries';
 import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers/user.mapper';
 import type { Theme } from '@/types';
@@ -30,12 +33,12 @@ export interface EditorData {
     user: User;
     components: ContentEntry[];
     pageId: string | null;
-    viewItems: DisplayEntry[];
+    displayEntries: DisplayEntry[];
     theme: Theme | null;
 }
 
 // DB 타입을 도메인 타입으로 변환
-function mapViewItemToDomain(dbItem: DBPageViewItem): DisplayEntry {
+function mapDisplayEntryToDomain(dbItem: DBDisplayEntry): DisplayEntry {
     return {
         id: dbItem.id,
         entryId: dbItem.entry_id,
@@ -102,7 +105,7 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
             user,
             components: [],
             pageId: null,
-            viewItems: [],
+            displayEntries: [],
             theme: null,
         });
     }
@@ -111,10 +114,10 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
         .sort((a, b) => a.position - b.position)
         .map(mapEntryToDomain);
 
-    // View items 조회
-    const viewItemsResult = await getViewItemsByPageId(page.id);
-    const viewItems = isSuccess(viewItemsResult)
-        ? viewItemsResult.data.map(mapViewItemToDomain)
+    // DisplayEntry 조회
+    const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
+    const displayEntries = isSuccess(displayEntriesResult)
+        ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
         : [];
 
     // Theme 매핑
@@ -124,7 +127,7 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
         user,
         components,
         pageId: page.id,
-        viewItems,
+        displayEntries,
         theme,
     });
 });
@@ -162,7 +165,7 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
             user,
             components: [],
             pageId: null,
-            viewItems: [],
+            displayEntries: [],
             theme: null,
         });
     }
@@ -171,10 +174,10 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
         .sort((a, b) => a.position - b.position)
         .map(mapEntryToDomain);
 
-    // View items 조회
-    const viewItemsResult = await getViewItemsByPageId(page.id);
-    const viewItems = isSuccess(viewItemsResult)
-        ? viewItemsResult.data.map(mapViewItemToDomain)
+    // DisplayEntry 조회
+    const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
+    const displayEntries = isSuccess(displayEntriesResult)
+        ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
         : [];
 
     // Theme 매핑
@@ -184,12 +187,12 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
         user,
         components,
         pageId: page.id,
-        viewItems,
+        displayEntries,
         theme,
     });
 });
 
-// 공개 페이지용 - View 항목만 조회
+// 공개 페이지용 - DisplayEntry 항목만 조회
 export interface PublicPageData {
     user: User;
     components: ContentEntry[];
@@ -214,11 +217,11 @@ export const getPublicPageData = cache(
             });
         }
 
-        // View items 조회
-        const viewItemsResult = await getViewItemsByPageId(page.id);
+        // DisplayEntry 조회
+        const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
 
-        if (!isSuccess(viewItemsResult) || viewItemsResult.data.length === 0) {
-            // View items가 없으면 기존 방식대로 모든 컴포넌트 반환
+        if (!isSuccess(displayEntriesResult) || displayEntriesResult.data.length === 0) {
+            // DisplayEntry가 없으면 기존 방식대로 모든 컴포넌트 반환
             const components = (page.entries || [])
                 .sort((a, b) => a.position - b.position)
                 .map(mapEntryToDomain);
@@ -229,14 +232,14 @@ export const getPublicPageData = cache(
             });
         }
 
-        // View items가 있으면 해당 컴포넌트만 순서대로 반환
-        const viewItems = viewItemsResult.data
+        // DisplayEntry가 있으면 해당 컴포넌트만 순서대로 반환
+        const displayEntries = displayEntriesResult.data
             .filter((item) => item.is_visible)
             .sort((a, b) => a.order_index - b.order_index);
 
         const componentMap = new Map((page.entries || []).map((c) => [c.id, mapEntryToDomain(c)]));
 
-        const components = viewItems
+        const components = displayEntries
             .map((item) => componentMap.get(item.entry_id))
             .filter((c): c is ContentEntry => c !== undefined);
 

@@ -18,7 +18,7 @@ import TreeSidebar from './components/TreeSidebar';
 interface EditorClientProps {
     initialUser: User;
     initialComponents: ContentEntry[];
-    initialViewItems?: DisplayEntry[];
+    initialDisplayEntries?: DisplayEntry[];
     initialTheme?: Theme | null;
     pageId: string;
     username: string;
@@ -27,7 +27,7 @@ interface EditorClientProps {
 export default function EditorClient({
     initialUser,
     initialComponents,
-    initialViewItems = [],
+    initialDisplayEntries = [],
     initialTheme = null,
     pageId,
     username,
@@ -58,7 +58,7 @@ export default function EditorClient({
     useEffect(() => {
         setUser(initialUser);
         setEntries(initialComponents);
-        setDisplayEntries(initialViewItems);
+        setDisplayEntries(initialDisplayEntries);
         setPageId(pageId);
         if (initialTheme) {
             setTheme(initialTheme);
@@ -66,7 +66,7 @@ export default function EditorClient({
     }, [
         initialUser,
         initialComponents,
-        initialViewItems,
+        initialDisplayEntries,
         initialTheme,
         pageId,
         setUser,

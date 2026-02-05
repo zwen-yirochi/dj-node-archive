@@ -13,10 +13,12 @@ export {
 export {
     verifyEntryOwnership,
     verifyEntriesOwnership,
-    verifyViewItemOwnership,
-    verifyViewItemsOwnership,
+    verifyDisplayEntryOwnership,
+    verifyDisplayEntriesOwnership,
     verifyPageOwnership,
     // Deprecated aliases
     verifyComponentOwnership,
     verifyComponentsOwnership,
+    verifyViewItemOwnership,
+    verifyViewItemsOwnership,
 } from './ownership';

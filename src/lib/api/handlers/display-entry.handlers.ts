@@ -1,18 +1,18 @@
 // lib/api/handlers/display-entry.handlers.ts
-// DisplayEntry(구 ViewItem) API 핸들러
+// DisplayEntry API 핸들러
 import {
-    getViewItemsByPageId,
-    addViewItem,
-    getMaxViewItemOrderIndex,
-    removeViewItem,
-    setViewItemVisibility,
-    updateViewItemOrder,
-} from '@/lib/db/queries/page-view.queries';
+    getDisplayEntriesByPageId,
+    addDisplayEntry,
+    getMaxDisplayEntryOrderIndex,
+    removeDisplayEntry,
+    setDisplayEntryVisibility,
+    updateDisplayEntryOrder,
+} from '@/lib/db/queries/display-entry.queries';
 import { isSuccess } from '@/types/result';
 import {
     verifyPageOwnership,
-    verifyViewItemOwnership,
-    verifyViewItemsOwnership,
+    verifyDisplayEntryOwnership,
+    verifyDisplayEntriesOwnership,
     successResponse,
     forbiddenResponse,
     notFoundResponse,
@@ -39,7 +39,7 @@ export async function handleGetDisplayEntries(request: Request, { user }: AuthCo
         return ownership.reason === 'not_found' ? notFoundResponse('페이지') : forbiddenResponse();
     }
 
-    const result = await getViewItemsByPageId(pageId);
+    const result = await getDisplayEntriesByPageId(pageId);
 
     if (!isSuccess(result)) {
         return internalErrorResponse(result.error.message);
@@ -73,14 +73,14 @@ export async function handleCreateDisplayEntry(request: Request, { user }: AuthC
     // orderIndex가 제공되지 않으면 자동 계산
     let finalOrderIndex = orderIndex;
     if (finalOrderIndex === undefined) {
-        const maxResult = await getMaxViewItemOrderIndex(pageId);
+        const maxResult = await getMaxDisplayEntryOrderIndex(pageId);
         if (!isSuccess(maxResult)) {
             return internalErrorResponse(maxResult.error.message);
         }
         finalOrderIndex = maxResult.data + 1;
     }
 
-    const result = await addViewItem(pageId, entryId, finalOrderIndex);
+    const result = await addDisplayEntry(pageId, entryId, finalOrderIndex);
 
     if (!isSuccess(result)) {
         return internalErrorResponse(result.error.message);
@@ -99,10 +99,10 @@ export async function handleUpdateDisplayEntry(
     id: string
 ) {
     // 소유권 검증
-    const ownership = await verifyViewItemOwnership(id, user.id);
+    const ownership = await verifyDisplayEntryOwnership(id, user.id);
     if (!ownership.ok) {
         return ownership.reason === 'not_found'
-            ? notFoundResponse('View item')
+            ? notFoundResponse('DisplayEntry')
             : forbiddenResponse();
     }
 
@@ -113,11 +113,11 @@ export async function handleUpdateDisplayEntry(
         return validationErrorResponse('isVisible');
     }
 
-    const result = await setViewItemVisibility(id, isVisible);
+    const result = await setDisplayEntryVisibility(id, isVisible);
 
     if (!isSuccess(result)) {
         return result.error.code === 'NOT_FOUND'
-            ? notFoundResponse('View item')
+            ? notFoundResponse('DisplayEntry')
             : internalErrorResponse(result.error.message);
     }
 
@@ -130,14 +130,14 @@ export async function handleUpdateDisplayEntry(
  */
 export async function handleDeleteDisplayEntry({ user }: AuthContext, id: string) {
     // 소유권 검증
-    const ownership = await verifyViewItemOwnership(id, user.id);
+    const ownership = await verifyDisplayEntryOwnership(id, user.id);
     if (!ownership.ok) {
         return ownership.reason === 'not_found'
-            ? notFoundResponse('View item')
+            ? notFoundResponse('DisplayEntry')
             : forbiddenResponse();
     }
 
-    const result = await removeViewItem(id);
+    const result = await removeDisplayEntry(id);
 
     if (!isSuccess(result)) {
         return internalErrorResponse(result.error.message);
@@ -163,16 +163,16 @@ export async function handleReorderDisplayEntries(request: Request, { user }: Au
         return validationErrorResponse('updates 배열');
     }
 
-    // 모든 view items의 소유권 일괄 검증
-    const viewItemIds = updates.map((u) => u.id);
-    const ownership = await verifyViewItemsOwnership(viewItemIds, user.id);
+    // 모든 DisplayEntry의 소유권 일괄 검증
+    const displayEntryIds = updates.map((u) => u.id);
+    const ownership = await verifyDisplayEntriesOwnership(displayEntryIds, user.id);
     if (!ownership.ok) {
         return ownership.reason === 'not_found'
-            ? notFoundResponse('View item')
+            ? notFoundResponse('DisplayEntry')
             : forbiddenResponse();
     }
 
-    const result = await updateViewItemOrder(updates);
+    const result = await updateDisplayEntryOrder(updates);
 
     if (!isSuccess(result)) {
         return internalErrorResponse(result.error.message);
