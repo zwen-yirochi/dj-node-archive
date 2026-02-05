@@ -7,7 +7,7 @@
 
 import { shouldTriggerPreview } from '@/lib/previewTrigger';
 import { canAddToView } from '@/lib/validators';
-import type { ContentEntry, Theme } from '@/types';
+import type { ContentEntry } from '@/types';
 import { create } from 'zustand';
 
 // ============================================
@@ -16,7 +16,6 @@ import { create } from 'zustand';
 interface ContentEntryStore {
     entries: ContentEntry[];
     pageId: string | null;
-    theme: Theme | null;
 
     // 새로 생성된 엔트리 ID 추적 (isCreating 파생용)
     newlyCreatedIds: Set<string>;
@@ -24,7 +23,6 @@ interface ContentEntryStore {
     // Setters
     setEntries: (entries: ContentEntry[]) => void;
     setPageId: (pageId: string) => void;
-    setTheme: (theme: Theme) => void;
 
     // 엔트리 관련 유틸리티
     getEntryById: (id: string) => ContentEntry | undefined;
@@ -55,12 +53,10 @@ interface ContentEntryStore {
 export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
     entries: [],
     pageId: null,
-    theme: null,
     newlyCreatedIds: new Set<string>(),
 
     setEntries: (entries) => set({ entries }),
     setPageId: (pageId) => set({ pageId }),
-    setTheme: (theme) => set({ theme }),
 
     getEntryById: (id) => {
         return get().entries.find((e) => e.id === id);
