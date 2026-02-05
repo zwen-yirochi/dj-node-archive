@@ -5,7 +5,7 @@
  * 미리보기 새로고침을 트리거하도록 중앙 관리합니다.
  */
 
-import { COMPONENT_FIELDS, type ComponentType } from '@/constants/componentFields';
+import { COMPONENT_FIELDS, type EntryType } from '@/constants/componentFields';
 import type { ContentEntry } from '@/types';
 
 /**
@@ -44,7 +44,7 @@ export function shouldTriggerPreview(
     previousEntry: ContentEntry,
     updatedEntry: ContentEntry
 ): boolean {
-    const type = updatedEntry.type as ComponentType;
+    const type = updatedEntry.type as EntryType;
     const fields = COMPONENT_FIELDS[type];
 
     if (!fields) return false;
@@ -72,7 +72,7 @@ export function shouldTriggerPreview(
  * @param fieldKey - 필드 키
  * @returns 해당 필드가 미리보기를 트리거하면 true
  */
-export function doesFieldTriggerPreview(type: ComponentType, fieldKey: string): boolean {
+export function doesFieldTriggerPreview(type: EntryType, fieldKey: string): boolean {
     const fields = COMPONENT_FIELDS[type];
     const field = fields?.find((f) => f.key === fieldKey);
     return field?.triggersPreview ?? false;
@@ -84,7 +84,7 @@ export function doesFieldTriggerPreview(type: ComponentType, fieldKey: string): 
  * @param type - 컴포넌트 타입
  * @returns triggersPreview가 true인 필드 키 목록
  */
-export function getPreviewTriggerFields(type: ComponentType): string[] {
+export function getPreviewTriggerFields(type: EntryType): string[] {
     const fields = COMPONENT_FIELDS[type];
     return fields?.filter((f) => f.triggersPreview).map((f) => f.key) ?? [];
 }

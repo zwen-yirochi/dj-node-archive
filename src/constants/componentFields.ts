@@ -84,4 +84,7 @@ export const COMPONENT_FIELDS = {
     link: LINK_FIELDS,
 } as const;
 
-export type ComponentType = keyof typeof COMPONENT_FIELDS;
+export type EntryType = keyof typeof COMPONENT_FIELDS;
+
+/** @deprecated Use EntryType instead */
+export type ComponentType = EntryType;
