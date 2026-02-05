@@ -1,21 +1,17 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import {
-    EditableDateField,
-    EditableField,
-    EditableTagsField,
-} from '@/components/ui/editable-field';
+import { EditableDateField, EditableField } from '@/components/ui/editable-field';
 import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 import { cn } from '@/lib/utils';
 import {
     type ContentEntry,
-    type EventComponent,
-    isEventComponent,
-    isLinkComponent,
-    isMixsetComponent,
-    type LinkComponent,
-    type MixsetComponent,
+    type EventEntry,
+    isEventEntry,
+    isLinkEntry,
+    isMixsetEntry,
+    type LinkEntry,
+    type MixsetEntry,
     ICON_OPTIONS,
 } from '@/types';
 import {
@@ -177,31 +173,31 @@ export default function InlineEditMode({ component, onSave, onDelete }: InlineEd
                 <p className="mb-4 text-xs text-dashboard-text-placeholder">
                     더블클릭하여 편집 · Enter로 저장 · Escape로 취소
                 </p>
-                {isEventComponent(localEntry) && (
+                {isEventEntry(localEntry) && (
                     <ShowInlineEdit
                         component={localEntry}
                         onUpdate={(updates) => {
-                            const updated = { ...localEntry, ...updates } as EventComponent;
+                            const updated = { ...localEntry, ...updates } as EventEntry;
                             setLocalEntry(updated);
                             debouncedSave(updated);
                         }}
                     />
                 )}
-                {isMixsetComponent(localEntry) && (
+                {isMixsetEntry(localEntry) && (
                     <MixsetInlineEdit
                         component={localEntry}
                         onUpdate={(updates) => {
-                            const updated = { ...localEntry, ...updates } as MixsetComponent;
+                            const updated = { ...localEntry, ...updates } as MixsetEntry;
                             setLocalEntry(updated);
                             debouncedSave(updated);
                         }}
                     />
                 )}
-                {isLinkComponent(localEntry) && (
+                {isLinkEntry(localEntry) && (
                     <LinkInlineEdit
                         component={localEntry}
                         onUpdate={(updates) => {
-                            const updated = { ...localEntry, ...updates } as LinkComponent;
+                            const updated = { ...localEntry, ...updates } as LinkEntry;
                             setLocalEntry(updated);
                             debouncedSave(updated);
                         }}
@@ -217,14 +213,14 @@ function ShowInlineEdit({
     component,
     onUpdate,
 }: {
-    component: EventComponent;
-    onUpdate: (updates: Partial<EventComponent>) => void;
+    component: EventEntry;
+    onUpdate: (updates: Partial<EventEntry>) => void;
 }) {
     return (
         <div className="space-y-4">
             {/* Poster */}
             <ImageEditor
-                value={component.posterUrl}
+                value={component.posterUrl || ''}
                 onSave={(url) => onUpdate({ posterUrl: url })}
                 aspectRatio="3/4"
                 placeholder="포스터 이미지"
@@ -253,8 +249,8 @@ function ShowInlineEdit({
                 <div className="flex items-center gap-3 text-sm">
                     <MapPin className="h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
                     <EditableField
-                        value={component.venue}
-                        onSave={(value) => onUpdate({ venue: value })}
+                        value={component.venue.name}
+                        onSave={(value) => onUpdate({ venue: { ...component.venue, name: value } })}
                         placeholder="장소를 입력하세요"
                         required
                         className="flex-1 text-dashboard-text-secondary"
@@ -262,7 +258,7 @@ function ShowInlineEdit({
                 </div>
                 <div className="flex items-start gap-3 text-sm">
                     <Users className="mt-0.5 h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
-                    <EditableTagsField
+                    <EditablePerformersField
                         value={component.lineup}
                         onSave={(value) => onUpdate({ lineup: value })}
                         placeholder="@username으로 아티스트 태그"
@@ -273,7 +269,7 @@ function ShowInlineEdit({
 
             {/* Description */}
             <EditableField
-                value={component.description}
+                value={component.description || ''}
                 onSave={(value) => onUpdate({ description: value })}
                 placeholder="쇼에 대한 설명을 입력하세요..."
                 multiline
@@ -292,14 +288,14 @@ function MixsetInlineEdit({
     component,
     onUpdate,
 }: {
-    component: MixsetComponent;
-    onUpdate: (updates: Partial<MixsetComponent>) => void;
+    component: MixsetEntry;
+    onUpdate: (updates: Partial<MixsetEntry>) => void;
 }) {
     return (
         <div className="space-y-4">
             {/* Cover */}
             <ImageEditor
-                value={component.coverUrl}
+                value={component.coverUrl || ''}
                 onSave={(url) => onUpdate({ coverUrl: url })}
                 aspectRatio="1/1"
                 placeholder="커버 이미지"
@@ -314,40 +310,22 @@ function MixsetInlineEdit({
                 className="text-center text-xl font-bold text-dashboard-text"
             />
 
-            {/* Info */}
-            <div className="flex items-center justify-center gap-4 text-sm text-dashboard-text-muted">
-                <EditableField
-                    value={component.genre}
-                    onSave={(value) => onUpdate({ genre: value })}
-                    placeholder="장르"
-                    className="text-center"
-                />
-                {component.releaseDate && (
-                    <span className="h-1 w-1 rounded-full bg-dashboard-border-hover" />
-                )}
-                <EditableDateField
-                    value={component.releaseDate}
-                    onSave={(value) => onUpdate({ releaseDate: value })}
-                    className="text-center"
-                />
-            </div>
-
-            {/* SoundCloud Embed URL */}
+            {/* SoundCloud URL */}
             <div className="rounded-xl bg-dashboard-bg-muted p-4">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                    SoundCloud 임베드
+                    SoundCloud URL
                 </p>
                 <EditableField
-                    value={component.soundcloudEmbedUrl || ''}
-                    onSave={(value) => onUpdate({ soundcloudEmbedUrl: value })}
-                    placeholder="https://w.soundcloud.com/player/?url=..."
+                    value={component.soundcloudUrl || ''}
+                    onSave={(value) => onUpdate({ soundcloudUrl: value })}
+                    placeholder="https://soundcloud.com/..."
                     className="text-sm text-dashboard-text-secondary"
                 />
             </div>
 
             {/* Description */}
             <EditableField
-                value={component.description}
+                value={component.description || ''}
                 onSave={(value) => onUpdate({ description: value })}
                 placeholder="믹스셋에 대한 설명..."
                 multiline
@@ -369,11 +347,11 @@ function LinkInlineEdit({
     component,
     onUpdate,
 }: {
-    component: LinkComponent;
-    onUpdate: (updates: Partial<LinkComponent>) => void;
+    component: LinkEntry;
+    onUpdate: (updates: Partial<LinkEntry>) => void;
 }) {
     const [showIconSelector, setShowIconSelector] = useState(false);
-    const IconComponent = iconComponents[component.icon] || Globe;
+    const IconComponent = iconComponents[component.icon || ''] || Globe;
 
     return (
         <div className="space-y-4 py-4 text-center">
@@ -435,6 +413,98 @@ function LinkInlineEdit({
                     className="text-sm text-dashboard-text-muted"
                 />
             </div>
+        </div>
+    );
+}
+
+// ===== Performers 필드 에디터 (lineup용) =====
+function EditablePerformersField({
+    value,
+    onSave,
+    placeholder,
+    className,
+}: {
+    value: { id?: string; name: string }[];
+    onSave: (value: { id?: string; name: string }[]) => void;
+    placeholder?: string;
+    className?: string;
+}) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+
+    const addPerformer = (name: string) => {
+        const formattedName = name.startsWith('@') ? name : `@${name}`;
+        if (!value.some((p) => p.name === formattedName)) {
+            onSave([...value, { name: formattedName }]);
+        }
+        setInputValue('');
+    };
+
+    const removePerformer = (performer: { id?: string; name: string }) => {
+        onSave(value.filter((p) => p.name !== performer.name));
+    };
+
+    if (isEditing) {
+        return (
+            <div className={cn('flex flex-wrap gap-1', className)}>
+                {value.map((performer) => (
+                    <span
+                        key={performer.id || performer.name}
+                        className="inline-flex items-center gap-1 rounded-full bg-dashboard-bg-card px-2 py-0.5 text-xs"
+                    >
+                        {performer.name}
+                        <button
+                            onClick={() => removePerformer(performer)}
+                            className="text-dashboard-text-placeholder hover:text-red-500"
+                        >
+                            <X className="h-3 w-3" />
+                        </button>
+                    </span>
+                ))}
+                <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && inputValue.trim()) {
+                            e.preventDefault();
+                            addPerformer(inputValue.trim());
+                        } else if (e.key === 'Escape') {
+                            setIsEditing(false);
+                        } else if (e.key === 'Backspace' && inputValue === '' && value.length > 0) {
+                            removePerformer(value[value.length - 1]);
+                        }
+                    }}
+                    onBlur={() => {
+                        if (inputValue.trim()) {
+                            addPerformer(inputValue.trim());
+                        }
+                        setIsEditing(false);
+                    }}
+                    className="min-w-[80px] flex-1 border-none bg-transparent text-sm focus:outline-none"
+                    placeholder={placeholder}
+                    autoFocus
+                />
+            </div>
+        );
+    }
+
+    return (
+        <div className={cn('cursor-pointer', className)} onDoubleClick={() => setIsEditing(true)}>
+            {value.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                    {value.map((performer) => (
+                        <span
+                            key={performer.id || performer.name}
+                            className="text-dashboard-text-secondary"
+                        >
+                            {performer.name}
+                        </span>
+                    ))}
+                </div>
+            ) : (
+                <span className="text-dashboard-text-placeholder">{placeholder}</span>
+            )}
         </div>
     );
 }

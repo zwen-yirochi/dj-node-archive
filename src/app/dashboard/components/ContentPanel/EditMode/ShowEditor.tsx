@@ -1,28 +1,29 @@
 'use client';
 
-import type { EventComponent } from '@/types';
+import type { EventEntry } from '@/types';
 import { Image as ImageIcon, X } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
-interface ShowEditorProps {
-    component: EventComponent;
-    onUpdate: (updates: Partial<EventComponent>) => void;
+interface EventEditorProps {
+    component: EventEntry;
+    onUpdate: (updates: Partial<EventEntry>) => void;
 }
 
-export default function ShowEditor({ component, onUpdate }: ShowEditorProps) {
+export default function EventEditor({ component, onUpdate }: EventEditorProps) {
     const [tagInput, setTagInput] = useState('');
 
     const addTag = (username: string) => {
-        const tag = username.startsWith('@') ? username : `@${username}`;
-        if (!component.lineup.includes(tag)) {
-            onUpdate({ lineup: [...component.lineup, tag] });
+        const name = username.startsWith('@') ? username : `@${username}`;
+        const newPerformer = { name };
+        if (!component.lineup.some((p) => p.name === name)) {
+            onUpdate({ lineup: [...component.lineup, newPerformer] });
         }
         setTagInput('');
     };
 
-    const removeTag = (tag: string) => {
-        onUpdate({ lineup: component.lineup.filter((t) => t !== tag) });
+    const removeTag = (performer: { id?: string; name: string }) => {
+        onUpdate({ lineup: component.lineup.filter((p) => p.name !== performer.name) });
     };
 
     const handleTagKeyDown = (e: React.KeyboardEvent) => {
@@ -113,8 +114,10 @@ export default function ShowEditor({ component, onUpdate }: ShowEditorProps) {
                     </label>
                     <input
                         type="text"
-                        value={component.venue}
-                        onChange={(e) => onUpdate({ venue: e.target.value })}
+                        value={component.venue.name}
+                        onChange={(e) =>
+                            onUpdate({ venue: { ...component.venue, name: e.target.value } })
+                        }
                         className="w-full rounded-lg border border-dashboard-border-hover bg-dashboard-bg-card px-4 py-3 focus:border-dashboard-text focus:outline-none focus:ring-1 focus:ring-dashboard-text-muted"
                         placeholder="클럽, 베뉴 이름"
                     />
@@ -127,14 +130,14 @@ export default function ShowEditor({ component, onUpdate }: ShowEditorProps) {
                     라인업
                 </label>
                 <div className="flex min-h-[48px] flex-wrap gap-2 rounded-lg border border-dashboard-border-hover bg-dashboard-bg-card p-2">
-                    {component.lineup.map((tag) => (
+                    {component.lineup.map((performer) => (
                         <span
-                            key={tag}
+                            key={performer.id || performer.name}
                             className="inline-flex items-center gap-1 rounded-full bg-dashboard-bg-muted px-3 py-1 text-sm"
                         >
-                            {tag}
+                            {performer.name}
                             <button
-                                onClick={() => removeTag(tag)}
+                                onClick={() => removeTag(performer)}
                                 className="text-dashboard-text-placeholder hover:text-dashboard-text-secondary"
                             >
                                 <X className="h-3 w-3" />
@@ -160,7 +163,7 @@ export default function ShowEditor({ component, onUpdate }: ShowEditorProps) {
                     설명
                 </label>
                 <textarea
-                    value={component.description}
+                    value={component.description || ''}
                     onChange={(e) => onUpdate({ description: e.target.value })}
                     className="w-full resize-none rounded-lg border border-dashboard-border-hover bg-dashboard-bg-card px-4 py-3 focus:border-dashboard-text focus:outline-none focus:ring-1 focus:ring-dashboard-text-muted"
                     placeholder="쇼에 대한 설명을 입력하세요..."
