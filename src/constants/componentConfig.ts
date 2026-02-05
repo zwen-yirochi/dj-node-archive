@@ -53,6 +53,3 @@ export const COMPONENT_TYPE_CONFIG = {
 } as const;
 
 export type EntryType = keyof typeof COMPONENT_TYPE_CONFIG;
-
-/** @deprecated Use EntryType instead */
-export type ComponentType = EntryType;

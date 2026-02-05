@@ -85,6 +85,3 @@ export const COMPONENT_FIELDS = {
 } as const;
 
 export type EntryType = keyof typeof COMPONENT_FIELDS;
-
-/** @deprecated Use EntryType instead */
-export type ComponentType = EntryType;

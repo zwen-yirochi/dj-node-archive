@@ -82,21 +82,6 @@ export type DBEntryType = EntryType;
 export type DBPageWithEntries = PageWithEntries;
 export type DBUserWithPages = UserWithPages;
 
-/** @deprecated Use EntryType instead */
-export type ComponentType = EntryType;
-/** @deprecated Use EntryDataType instead */
-export type ComponentDataType = EntryDataType;
-/** @deprecated Use Entry instead */
-export type Component = Entry;
-/** @deprecated Use DBEntry instead */
-export type DBComponent = DBEntry;
-/** @deprecated Use DBEntryType instead */
-export type DBComponentType = DBEntryType;
-/** @deprecated Use PageWithEntries instead */
-export type PageWithComponents = PageWithEntries;
-/** @deprecated Use DBPageWithEntries instead */
-export type DBPageWithComponents = DBPageWithEntries;
-
 // ============================================
 // Venue Types
 // ============================================
