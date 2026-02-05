@@ -1,6 +1,6 @@
-import { COMPONENT_FIELDS, type EntryType } from '@/constants/componentFields';
+import { COMPONENT_FIELDS, type EntryType } from '@/constants/entries/entryFields';
 import type { ContentEntry } from '@/types';
-import type { FieldConfig, TreeItemStatus, ValidationResult } from '@/types/componentFields';
+import type { FieldConfig, TreeItemStatus, ValidationResult } from '@/types/entryFields';
 
 // ============================================
 // 내부 헬퍼 함수

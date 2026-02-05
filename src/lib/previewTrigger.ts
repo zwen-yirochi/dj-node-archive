@@ -5,7 +5,7 @@
  * 미리보기 새로고침을 트리거하도록 중앙 관리합니다.
  */
 
-import { COMPONENT_FIELDS, type EntryType } from '@/constants/componentFields';
+import { COMPONENT_FIELDS, type EntryType } from '@/constants/entries/entryFields';
 import type { ContentEntry } from '@/types';
 
 /**
