@@ -212,7 +212,7 @@ export function VenueAutocomplete({
                                     </div>
                                 )}
                             </div>
-                            {venue.event_count > 0 && (
+                            {(venue.event_count ?? 0) > 0 && (
                                 <span className="text-xs text-muted-foreground">
                                     {venue.event_count}개 이벤트
                                 </span>
