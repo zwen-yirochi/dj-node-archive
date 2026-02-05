@@ -2,12 +2,8 @@
 // types/mappers.ts - DB ↔ Domain 변환 함수
 // ==============================================
 
-import type {
-    Event as DBEvent,
-    EventWithVenue as DBEventWithVenue,
-    VenueReference as DBVenueReference,
-} from './database';
-import type { EventComponent, MixsetComponent, LinkComponent } from './domain';
+import type { DBEvent, DBVenue } from './database';
+import type { EventComponent } from './domain';
 
 // ----------------------------------------------
 // Event Mappers
@@ -16,52 +12,46 @@ import type { EventComponent, MixsetComponent, LinkComponent } from './domain';
 /**
  * DB Event → Domain EventComponent
  * @param dbEvent - DB에서 가져온 이벤트
- * @param venueName - 베뉴 이름 (조인 또는 별도 조회 필요)
  */
-export function dbEventToComponent(dbEvent: DBEvent, venueName: string = ''): EventComponent {
+export function dbEventToComponent(dbEvent: DBEvent): EventComponent {
     return {
         id: dbEvent.id,
         type: 'event',
         title: dbEvent.title ?? '',
         date: dbEvent.date,
-        venue: venueName,
+        venue: dbEvent.venue?.name ?? '',
+        venueId: dbEvent.venue?.venue_id,
         posterUrl: dbEvent.data?.poster_url ?? '',
-        lineup: dbEvent.data?.lineup_text?.split(',').map((s) => s.trim()) ?? [],
-        description: dbEvent.data?.notes ?? '',
+        lineup: dbEvent.lineup?.map((item) => item.name) ?? [],
+        description: dbEvent.data?.description ?? '',
+        links: dbEvent.data?.links,
         eventId: dbEvent.id,
-        venueId: dbEvent.venue_ref_id,
     };
-}
-
-/**
- * DB EventWithVenue → Domain EventComponent
- * @param dbEvent - 베뉴가 조인된 이벤트
- */
-export function dbEventWithVenueToComponent(dbEvent: DBEventWithVenue): EventComponent {
-    return dbEventToComponent(dbEvent, dbEvent.venue.name);
 }
 
 /**
  * Domain EventComponent → DB Event (생성/수정용)
  * @param component - 도메인 컴포넌트
- * @param userId - 사용자 ID
- * @param venueRefId - 베뉴 참조 ID
+ * @param createdBy - 생성자 user ID
  */
 export function componentToDbEvent(
     component: EventComponent,
-    userId: string,
-    venueRefId: string
-): Omit<DBEvent, 'id' | 'created_at' | 'updated_at'> {
+    createdBy: string
+): Omit<DBEvent, 'id' | 'slug' | 'is_public' | 'created_at' | 'updated_at'> {
     return {
-        user_id: userId,
-        venue_ref_id: venueRefId,
         title: component.title,
         date: component.date,
+        venue: {
+            venue_id: component.venueId,
+            name: component.venue,
+        },
+        lineup: component.lineup.map((name) => ({ name })),
         data: {
             poster_url: component.posterUrl,
-            notes: component.description,
-            lineup_text: component.lineup.join(', '),
+            description: component.description,
+            links: component.links,
         },
+        created_by: createdBy,
     };
 }
 
@@ -69,7 +59,7 @@ export function componentToDbEvent(
 // Venue Mappers
 // ----------------------------------------------
 
-export function dbVenueToString(venue: DBVenueReference): string {
+export function dbVenueToString(venue: DBVenue): string {
     if (venue.city && venue.country) {
         return `${venue.name}, ${venue.city}, ${venue.country}`;
     }
@@ -89,7 +79,7 @@ export function dbVenueToString(venue: DBVenueReference): string {
 export function snakeToCamel<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
     const result: Record<string, unknown> = {};
     for (const key in obj) {
-        const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+        const camelKey = key.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
         result[camelKey] = obj[key];
     }
     return result;
