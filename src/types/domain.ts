@@ -1,5 +1,5 @@
 // ==============================================
-// types/domain.ts - 핵심 도메인 타입 (단일 소스)
+// types/domain.ts - 핵심 도메인 타입 (UI용)
 // ==============================================
 
 // ----------------------------------------------
@@ -17,54 +17,12 @@ export interface User {
     displayName: string;
     avatarUrl: string;
     bio: string;
+    instagram?: string;
+    soundcloud?: string;
 }
 
 // ----------------------------------------------
-// Theme
-// ----------------------------------------------
-export type AccentColor = 'pink' | 'cyan' | 'purple';
-export type BackgroundStyle = 'gradient' | 'solid' | 'image';
-
-export interface Theme {
-    accentColor: AccentColor;
-    backgroundStyle: BackgroundStyle;
-    backgroundImage?: string;
-}
-
-export interface ThemePreset {
-    id: string;
-    name: string;
-    accentColor: AccentColor;
-    backgroundColor: string;
-    previewGradient: string;
-}
-
-export const THEME_PRESETS: ThemePreset[] = [
-    {
-        id: 'neon-pink',
-        name: 'Neon Pink',
-        accentColor: 'pink',
-        backgroundColor: '#0a0a0b',
-        previewGradient: 'linear-gradient(135deg, #ff2d92 0%, #a855f7 100%)',
-    },
-    {
-        id: 'cyber-cyan',
-        name: 'Cyber Cyan',
-        accentColor: 'cyan',
-        backgroundColor: '#0a0a0b',
-        previewGradient: 'linear-gradient(135deg, #00f0ff 0%, #a855f7 100%)',
-    },
-    {
-        id: 'purple-haze',
-        name: 'Purple Haze',
-        accentColor: 'purple',
-        backgroundColor: '#0a0a0b',
-        previewGradient: 'linear-gradient(135deg, #a855f7 0%, #ff2d92 100%)',
-    },
-];
-
-// ----------------------------------------------
-// Components (Discriminated Union)
+// Entry Components (Discriminated Union)
 // ----------------------------------------------
 export interface EventComponent {
     id: string;
@@ -72,13 +30,12 @@ export interface EventComponent {
     title: string;
     date: ISODateString;
     venue: string;
+    venueId?: string;
     posterUrl: string;
     lineup: string[];
     description: string;
     links?: { title: string; url: string }[];
-    // 원본 이벤트 연결 (이벤트 import 시)
     eventId?: string;
-    venueId?: string;
 }
 
 export interface MixsetComponent {
@@ -92,6 +49,7 @@ export interface MixsetComponent {
     description: string;
     releaseDate: string;
     genre: string;
+    mixsetId?: string;
 }
 
 export interface LinkComponent {
@@ -105,15 +63,22 @@ export interface LinkComponent {
 export type ContentEntry = EventComponent | MixsetComponent | LinkComponent;
 export type ContentEntryType = ContentEntry['type'];
 
+// ----------------------------------------------
 // Page
+// ----------------------------------------------
 export interface Page {
     id: string;
     userId: string;
     slug: string;
+    title?: string;
+    bio?: string;
+    avatarUrl?: string;
     entries: ContentEntry[];
 }
 
+// ----------------------------------------------
 // Backlink
+// ----------------------------------------------
 export interface Backlink {
     id: string;
     componentTitle: string;
