@@ -1,6 +1,6 @@
 // lib/mappers/user.mapper.ts
 // 서버/클라이언트 공용 - 순수 함수
-import type { DBComponent, DBUser } from '@/types/database';
+import type { DBEntry, DBUser } from '@/types/database';
 import type {
     ContentEntry,
     EventComponent,
@@ -28,7 +28,7 @@ export function mapUserToDatabase(user: Partial<User>): Partial<DBUser> {
     };
 }
 
-export function mapEntryToDomain(dbComp: DBComponent): ContentEntry {
+export function mapEntryToDomain(dbComp: DBEntry): ContentEntry {
     const baseId = { id: dbComp.id };
 
     switch (dbComp.type) {
@@ -82,7 +82,7 @@ export function mapEntryToDomain(dbComp: DBComponent): ContentEntry {
 export function mapEntryToDatabase(
     entry: ContentEntry,
     position: number
-): Omit<DBComponent, 'id' | 'created_at' | 'updated_at' | 'page_id'> {
+): Omit<DBEntry, 'id' | 'created_at' | 'updated_at' | 'page_id'> {
     const { id, type, ...data } = entry;
 
     return {
@@ -91,9 +91,3 @@ export function mapEntryToDatabase(
         data,
     };
 }
-
-/** @deprecated Use mapEntryToDomain instead */
-export const mapComponentToDomain = mapEntryToDomain;
-
-/** @deprecated Use mapEntryToDatabase instead */
-export const mapComponentToDatabase = mapEntryToDatabase;
