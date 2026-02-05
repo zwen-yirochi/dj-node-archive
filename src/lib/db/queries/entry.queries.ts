@@ -1,7 +1,7 @@
 // lib/db/queries/entry.queries.ts
 // 서버 전용 - Entry DB 쿼리
 import { createClient } from '@/lib/supabase/server';
-import type { DBEntry, DBEntryType, EntryDataType } from '@/types/database';
+import type { DBEntry, DBEntryType, DBEntryData } from '@/types/database';
 import {
     type Result,
     success,
@@ -14,12 +14,12 @@ export interface CreateEntryInput {
     page_id: string;
     type: DBEntryType;
     position: number;
-    data: EntryDataType;
+    data: DBEntryData;
 }
 
 export interface UpdateEntryInput {
     type?: DBEntryType;
-    data?: EntryDataType;
+    data?: DBEntryData;
 }
 
 export async function createEntry(id: string, input: CreateEntryInput): Promise<Result<DBEntry>> {
