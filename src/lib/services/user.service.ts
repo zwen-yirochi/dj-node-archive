@@ -1,41 +1,42 @@
 // lib/services/user.service.ts
 // 서버 전용 - 'use server' 없어도 됨 (기본이 서버)
-import { getViewItemsByPageId, type DBPageViewItem } from '@/lib/db/queries/page-view.queries';
+import {
+    getDisplayEntriesByPageId,
+    type DBDisplayEntry,
+} from '@/lib/db/queries/display-entry.queries';
 import { findUserWithPages, findUserWithPagesById } from '@/lib/db/queries/user.queries';
-import { mapComponentToDomain, mapUserToDomain } from '@/lib/mappers/user.mapper';
+import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers/user.mapper';
 import type {
-    ComponentData,
+    ContentEntry,
     EventComponent,
     LinkComponent,
     MixsetComponent,
     Page,
     User,
 } from '@/types/domain';
-import type { Theme } from '@/types';
-import { type Result, createNotFoundError, failure, isSuccess, success } from '@/types/result';
+import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
 import { cache } from 'react';
 
-// View Item 도메인 타입
-export interface ViewItem {
+// DisplayEntry 도메인 타입
+export interface DisplayEntry {
     id: string;
-    componentId: string;
+    entryId: string;
     order: number;
     isVisible: boolean;
 }
 
 export interface EditorData {
     user: User;
-    components: ComponentData[];
+    components: ContentEntry[];
     pageId: string | null;
-    viewItems: ViewItem[];
-    theme: Theme | null;
+    displayEntries: DisplayEntry[];
 }
 
 // DB 타입을 도메인 타입으로 변환
-function mapViewItemToDomain(dbItem: DBPageViewItem): ViewItem {
+function mapDisplayEntryToDomain(dbItem: DBDisplayEntry): DisplayEntry {
     return {
         id: dbItem.id,
-        componentId: dbItem.component_id,
+        entryId: dbItem.entry_id,
         order: dbItem.order_index,
         isVisible: dbItem.is_visible,
     };
@@ -71,15 +72,15 @@ export const getUserPage = cache(async (username: string): Promise<Result<Page>>
     }
 
     const dbPage = dbData.pages[0];
-    const components = (dbPage.components || [])
+    const entries = (dbPage.entries || [])
         .sort((a, b) => a.position - b.position)
-        .map(mapComponentToDomain);
+        .map(mapEntryToDomain);
 
     return success({
         id: dbPage.id,
         userId: dbData.id,
         slug: dbPage.slug,
-        components,
+        entries,
     });
 });
 
@@ -99,30 +100,25 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
             user,
             components: [],
             pageId: null,
-            viewItems: [],
-            theme: null,
+            displayEntries: [],
         });
     }
 
-    const components = (page.components || [])
+    const components = (page.entries || [])
         .sort((a, b) => a.position - b.position)
-        .map(mapComponentToDomain);
+        .map(mapEntryToDomain);
 
-    // View items 조회
-    const viewItemsResult = await getViewItemsByPageId(page.id);
-    const viewItems = isSuccess(viewItemsResult)
-        ? viewItemsResult.data.map(mapViewItemToDomain)
+    // DisplayEntry 조회
+    const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
+    const displayEntries = isSuccess(displayEntriesResult)
+        ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
         : [];
-
-    // Theme 매핑
-    const theme = (page.theme as unknown as Theme) ?? null;
 
     return success({
         user,
         components,
         pageId: page.id,
-        viewItems,
-        theme,
+        displayEntries,
     });
 });
 
@@ -136,9 +132,9 @@ export async function getComponentsByType(username: string): Promise<Result<Comp
 
     const page = result.data;
     return success({
-        events: page.components.filter((c): c is EventComponent => c.type === 'show'),
-        mixsets: page.components.filter((c): c is MixsetComponent => c.type === 'mixset'),
-        links: page.components.filter((c): c is LinkComponent => c.type === 'link'),
+        events: page.entries.filter((c): c is EventComponent => c.type === 'event'),
+        mixsets: page.entries.filter((c): c is MixsetComponent => c.type === 'mixset'),
+        links: page.entries.filter((c): c is LinkComponent => c.type === 'link'),
     });
 }
 
@@ -159,37 +155,32 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
             user,
             components: [],
             pageId: null,
-            viewItems: [],
-            theme: null,
+            displayEntries: [],
         });
     }
 
-    const components = (page.components || [])
+    const components = (page.entries || [])
         .sort((a, b) => a.position - b.position)
-        .map(mapComponentToDomain);
+        .map(mapEntryToDomain);
 
-    // View items 조회
-    const viewItemsResult = await getViewItemsByPageId(page.id);
-    const viewItems = isSuccess(viewItemsResult)
-        ? viewItemsResult.data.map(mapViewItemToDomain)
+    // DisplayEntry 조회
+    const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
+    const displayEntries = isSuccess(displayEntriesResult)
+        ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
         : [];
-
-    // Theme 매핑
-    const theme = (page.theme as unknown as Theme) ?? null;
 
     return success({
         user,
         components,
         pageId: page.id,
-        viewItems,
-        theme,
+        displayEntries,
     });
 });
 
-// 공개 페이지용 - View 항목만 조회
+// 공개 페이지용 - DisplayEntry 항목만 조회
 export interface PublicPageData {
     user: User;
-    components: ComponentData[];
+    components: ContentEntry[];
 }
 
 export const getPublicPageData = cache(
@@ -211,14 +202,14 @@ export const getPublicPageData = cache(
             });
         }
 
-        // View items 조회
-        const viewItemsResult = await getViewItemsByPageId(page.id);
+        // DisplayEntry 조회
+        const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
 
-        if (!isSuccess(viewItemsResult) || viewItemsResult.data.length === 0) {
-            // View items가 없으면 기존 방식대로 모든 컴포넌트 반환
-            const components = (page.components || [])
+        if (!isSuccess(displayEntriesResult) || displayEntriesResult.data.length === 0) {
+            // DisplayEntry가 없으면 기존 방식대로 모든 컴포넌트 반환
+            const components = (page.entries || [])
                 .sort((a, b) => a.position - b.position)
-                .map(mapComponentToDomain);
+                .map(mapEntryToDomain);
 
             return success({
                 user,
@@ -226,18 +217,16 @@ export const getPublicPageData = cache(
             });
         }
 
-        // View items가 있으면 해당 컴포넌트만 순서대로 반환
-        const viewItems = viewItemsResult.data
+        // DisplayEntry가 있으면 해당 컴포넌트만 순서대로 반환
+        const displayEntries = displayEntriesResult.data
             .filter((item) => item.is_visible)
             .sort((a, b) => a.order_index - b.order_index);
 
-        const componentMap = new Map(
-            (page.components || []).map((c) => [c.id, mapComponentToDomain(c)])
-        );
+        const componentMap = new Map((page.entries || []).map((c) => [c.id, mapEntryToDomain(c)]));
 
-        const components = viewItems
-            .map((item) => componentMap.get(item.component_id))
-            .filter((c): c is ComponentData => c !== undefined);
+        const components = displayEntries
+            .map((item) => componentMap.get(item.entry_id))
+            .filter((c): c is ContentEntry => c !== undefined);
 
         return success({
             user,

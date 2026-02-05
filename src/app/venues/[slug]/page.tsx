@@ -159,9 +159,11 @@ export default async function VenuePage({ params }: PageProps) {
                                                 <div className="text-sm text-muted-foreground">
                                                     {formatDate(event.date)}
                                                 </div>
-                                                {event.data?.lineup_text && (
+                                                {event.lineup && event.lineup.length > 0 && (
                                                     <div className="mt-1 truncate text-xs text-muted-foreground">
-                                                        {event.data.lineup_text}
+                                                        {event.lineup
+                                                            .map((item) => item.name)
+                                                            .join(', ')}
                                                     </div>
                                                 )}
                                             </div>

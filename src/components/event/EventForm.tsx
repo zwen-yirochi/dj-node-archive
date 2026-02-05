@@ -8,20 +8,21 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { VenueSelector } from '@/components/venue/VenueSelector';
 import { ArtistTagger, TaggedArtist } from '@/components/artist/ArtistTagger';
-import type { DBVenueSearchResult, DBEventWithVenue } from '@/types/database';
+import type { DBVenueSearchResult, DBEvent, DBEventLineupItem } from '@/types/database';
 
 export interface EventFormData {
-    venue_ref_id: string;
-    venue?: DBVenueSearchResult | null;
+    venue: {
+        venue_id?: string;
+        name: string;
+    };
     title?: string;
     date: string;
-    data?: {
+    lineup: DBEventLineupItem[];
+    data: {
         poster_url?: string;
-        notes?: string;
-        set_recording_url?: string;
-        lineup_text?: string;
+        description?: string;
+        links?: { title: string; url: string }[];
     };
-    performers?: TaggedArtist[];
 }
 
 export interface EventFormProps {
@@ -47,11 +48,7 @@ export function EventForm({
     const [title, setTitle] = useState(initialData?.title || '');
     const [date, setDate] = useState(initialData?.date || '');
     const [posterUrl, setPosterUrl] = useState(initialData?.data?.poster_url || '');
-    const [notes, setNotes] = useState(initialData?.data?.notes || '');
-    const [setRecordingUrl, setSetRecordingUrl] = useState(
-        initialData?.data?.set_recording_url || ''
-    );
-    const [lineupText, setLineupText] = useState(initialData?.data?.lineup_text || '');
+    const [description, setDescription] = useState(initialData?.data?.description || '');
     const [performers, setPerformers] = useState<TaggedArtist[]>(initialPerformers || []);
     const [error, setError] = useState<string | null>(null);
 
@@ -70,18 +67,24 @@ export function EventForm({
         }
 
         try {
+            // Convert performers to lineup format
+            const lineup: DBEventLineupItem[] = performers.map((p) => ({
+                artist_id: p.type === 'artist' ? p.id : undefined,
+                name: p.name,
+            }));
+
             await onSubmit({
-                venue_ref_id: venue.id,
-                venue,
+                venue: {
+                    venue_id: venue.id,
+                    name: venue.name,
+                },
                 title: title.trim() || undefined,
                 date,
+                lineup,
                 data: {
                     poster_url: posterUrl.trim() || undefined,
-                    notes: notes.trim() || undefined,
-                    set_recording_url: setRecordingUrl.trim() || undefined,
-                    lineup_text: lineupText.trim() || undefined,
+                    description: description.trim() || undefined,
                 },
-                performers,
             });
         } catch (err) {
             setError(err instanceof Error ? err.message : '저장에 실패했습니다.');
@@ -141,18 +144,6 @@ export function EventForm({
                 />
             </div>
 
-            {/* 세트 녹음 URL (선택) */}
-            <div className="space-y-2">
-                <Label htmlFor="set_recording_url">세트 녹음 URL (선택)</Label>
-                <Input
-                    id="set_recording_url"
-                    type="url"
-                    value={setRecordingUrl}
-                    onChange={(e) => setSetRecordingUrl(e.target.value)}
-                    placeholder="SoundCloud, Mixcloud 등"
-                />
-            </div>
-
             {/* 라인업 - 아티스트 태깅 */}
             <div className="space-y-2">
                 <Label>라인업 (선택)</Label>
@@ -166,27 +157,15 @@ export function EventForm({
                 </p>
             </div>
 
-            {/* 추가 라인업 메모 (선택) */}
+            {/* 설명 (선택) */}
             <div className="space-y-2">
-                <Label htmlFor="lineup_text">라인업 메모 (선택)</Label>
+                <Label htmlFor="description">설명 (선택)</Label>
                 <Textarea
-                    id="lineup_text"
-                    value={lineupText}
-                    onChange={(e) => setLineupText(e.target.value)}
-                    placeholder="추가 라인업 정보나 메모"
-                    rows={2}
-                />
-            </div>
-
-            {/* 메모 (선택) */}
-            <div className="space-y-2">
-                <Label htmlFor="notes">메모 (선택)</Label>
-                <Textarea
-                    id="notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="개인 메모"
-                    rows={2}
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="이벤트에 대한 설명"
+                    rows={3}
                 />
             </div>
 
@@ -215,20 +194,34 @@ export function EventForm({
 }
 
 // 기존 이벤트를 폼 데이터로 변환하는 헬퍼
-export function eventToFormData(event: DBEventWithVenue): {
+export function eventToFormData(event: DBEvent): {
     initialData: Partial<EventFormData>;
-    initialVenue: DBVenueSearchResult;
+    initialVenue: DBVenueSearchResult | null;
+    initialPerformers: TaggedArtist[];
 } {
+    // Convert lineup to TaggedArtist format
+    // Note: entries without artist_id are treated as artist type with temporary id
+    const performers: TaggedArtist[] = (event.lineup || []).map((item, index) => ({
+        id: item.artist_id || `temp-${index}`,
+        name: item.name,
+        type: 'artist' as const,
+    }));
+
     return {
         initialData: {
-            venue_ref_id: event.venue_ref_id,
+            venue: event.venue,
             title: event.title || '',
             date: event.date,
+            lineup: event.lineup || [],
             data: event.data || {},
         },
-        initialVenue: {
-            ...event.venue,
-            event_count: 0,
-        },
+        initialVenue: event.venue?.venue_id
+            ? {
+                  id: event.venue.venue_id,
+                  name: event.venue.name,
+                  slug: '', // Will be filled by actual lookup if needed
+              }
+            : null,
+        initialPerformers: performers,
     };
 }

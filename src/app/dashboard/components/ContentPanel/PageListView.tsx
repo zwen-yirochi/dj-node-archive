@@ -1,10 +1,11 @@
 'use client';
 
+import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
 import { cn } from '@/lib/utils';
-import { useComponentStore } from '@/stores/editorStore';
+import { useContentEntryStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
-import { useViewStore } from '@/stores/viewStore';
-import type { ComponentData } from '@/types';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
+import type { ContentEntry } from '@/types';
 import {
     closestCenter,
     DndContext,
@@ -23,41 +24,12 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import {
-    Calendar,
-    Eye,
-    EyeOff,
-    GripVertical,
-    Headphones,
-    Link as LinkIcon,
-    Trash2,
-} from 'lucide-react';
+import { Calendar, Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-
-const typeConfig = {
-    show: {
-        icon: Calendar,
-        label: 'Event',
-        color: 'text-dashboard-type-event',
-        bgColor: 'bg-blue-50',
-    },
-    mixset: {
-        icon: Headphones,
-        label: 'Mixset',
-        color: 'text-dashboard-type-mixset',
-        bgColor: 'bg-purple-50',
-    },
-    link: {
-        icon: LinkIcon,
-        label: 'Link',
-        color: 'text-dashboard-type-link',
-        bgColor: 'bg-green-50',
-    },
-};
 
 interface SortableItemProps {
     id: string;
-    component: ComponentData;
+    entry: ContentEntry;
     isVisible: boolean;
     onToggleVisibility: () => void;
     onRemove: () => void;
@@ -66,7 +38,7 @@ interface SortableItemProps {
 
 function SortableItem({
     id,
-    component,
+    entry,
     isVisible,
     onToggleVisibility,
     onRemove,
@@ -81,7 +53,7 @@ function SortableItem({
         transition,
     };
 
-    const config = typeConfig[component.type];
+    const config = COMPONENT_TYPE_CONFIG[entry.type];
     const Icon = config.icon;
 
     return (
@@ -118,7 +90,7 @@ function SortableItem({
             {/* Content */}
             <div className="min-w-0 flex-1 cursor-pointer" onClick={onSelect}>
                 <p className="truncate text-sm font-medium text-dashboard-text">
-                    {component.title || '제목 없음'}
+                    {entry.title || '제목 없음'}
                 </p>
                 <p className="text-xs text-dashboard-text-muted">{config.label}</p>
             </div>
@@ -150,23 +122,23 @@ function SortableItem({
 }
 
 export default function PageListView() {
-    // View Store
-    const viewItems = useViewStore((state) => state.viewItems);
-    const reorderView = useViewStore((state) => state.reorderView);
-    const toggleViewItemVisibility = useViewStore((state) => state.toggleViewItemVisibility);
-    const removeFromView = useViewStore((state) => state.removeFromView);
+    // Display Entry Store
+    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
+    const reorderView = useDisplayEntryStore((state) => state.reorderView);
+    const toggleVisibility = useDisplayEntryStore((state) => state.toggleVisibility);
+    const removeFromView = useDisplayEntryStore((state) => state.removeFromView);
 
-    // Component Store
-    const components = useComponentStore((state) => state.components);
+    // Content Entry Store
+    const entries = useContentEntryStore((state) => state.entries);
 
     // UI Store
-    const selectComponent = useUIStore((state) => state.selectComponent);
+    const selectEntry = useUIStore((state) => state.selectEntry);
 
     const [activeId, setActiveId] = useState<string | null>(null);
 
-    const sortedViewItems = useMemo(
-        () => [...viewItems].sort((a, b) => a.order - b.order),
-        [viewItems]
+    const sortedDisplayEntries = useMemo(
+        () => [...displayEntries].sort((a, b) => a.order - b.order),
+        [displayEntries]
     );
 
     const sensors = useSensors(
@@ -190,18 +162,16 @@ export default function PageListView() {
 
         if (!over || active.id === over.id) return;
 
-        const overIndex = sortedViewItems.findIndex((item) => item.id === over.id);
+        const overIndex = sortedDisplayEntries.findIndex((item) => item.id === over.id);
         if (overIndex !== -1) {
             reorderView(active.id as string, overIndex);
         }
     };
 
-    const activeItem = activeId ? sortedViewItems.find((item) => item.id === activeId) : null;
-    const activeComponent = activeItem
-        ? components.find((c) => c.id === activeItem.componentId)
-        : null;
+    const activeItem = activeId ? sortedDisplayEntries.find((item) => item.id === activeId) : null;
+    const activeEntry = activeItem ? entries.find((e) => e.id === activeItem.entryId) : null;
 
-    const visibleCount = viewItems.filter((item) => item.isVisible).length;
+    const visibleCount = displayEntries.filter((item) => item.isVisible).length;
 
     return (
         <div className="flex h-full flex-col">
@@ -209,17 +179,17 @@ export default function PageListView() {
             <div className="border-b bg-dashboard-bg-muted px-6 py-4">
                 <h2 className="text-lg font-semibold text-dashboard-text">Page 구성</h2>
                 <p className="mt-1 text-sm text-dashboard-text-muted">
-                    공개 페이지에 표시될 컴포넌트를 관리합니다. 드래그하여 순서를 변경하세요.
+                    공개 페이지에 표시될 엔트리를 관리합니다. 드래그하여 순서를 변경하세요.
                 </p>
                 <div className="mt-2 flex items-center gap-4 text-xs text-dashboard-text-muted">
-                    <span>전체 {viewItems.length}개</span>
+                    <span>전체 {displayEntries.length}개</span>
                     <span>공개 {visibleCount}개</span>
                 </div>
             </div>
 
             {/* List */}
             <div className="flex-1 overflow-y-auto p-4">
-                {sortedViewItems.length === 0 ? (
+                {sortedDisplayEntries.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                         <div className="text-center">
                             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-dashboard-bg-muted">
@@ -229,7 +199,7 @@ export default function PageListView() {
                                 Page가 비어있습니다
                             </p>
                             <p className="mt-1 text-xs text-dashboard-text-placeholder">
-                                사이드바에서 컴포넌트를 드래그하여 추가하세요
+                                사이드바에서 엔트리를 드래그하여 추가하세요
                             </p>
                         </div>
                     </div>
@@ -241,27 +211,27 @@ export default function PageListView() {
                         onDragEnd={handleDragEnd}
                     >
                         <SortableContext
-                            items={sortedViewItems.map((item) => item.id)}
+                            items={sortedDisplayEntries.map((item) => item.id)}
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="space-y-2">
-                                {sortedViewItems.map((viewItem) => {
-                                    const component = components.find(
-                                        (c) => c.id === viewItem.componentId
+                                {sortedDisplayEntries.map((displayEntry) => {
+                                    const entry = entries.find(
+                                        (e) => e.id === displayEntry.entryId
                                     );
-                                    if (!component) return null;
+                                    if (!entry) return null;
 
                                     return (
                                         <SortableItem
-                                            key={viewItem.id}
-                                            id={viewItem.id}
-                                            component={component}
-                                            isVisible={viewItem.isVisible}
+                                            key={displayEntry.id}
+                                            id={displayEntry.id}
+                                            entry={entry}
+                                            isVisible={displayEntry.isVisible}
                                             onToggleVisibility={() =>
-                                                toggleViewItemVisibility(viewItem.id)
+                                                toggleVisibility(displayEntry.id)
                                             }
-                                            onRemove={() => removeFromView(viewItem.id)}
-                                            onSelect={() => selectComponent(component.id)}
+                                            onRemove={() => removeFromView(displayEntry.id)}
+                                            onSelect={() => selectEntry(entry.id)}
                                         />
                                     );
                                 })}
@@ -269,7 +239,7 @@ export default function PageListView() {
                         </SortableContext>
 
                         <DragOverlay>
-                            {activeComponent && (
+                            {activeEntry && (
                                 <div className="flex items-center gap-3 rounded-lg border border-dashboard-border-hover bg-dashboard-bg-card p-3 shadow-xl">
                                     <div className="text-dashboard-text-placeholder">
                                         <GripVertical className="h-5 w-5" />
@@ -277,23 +247,25 @@ export default function PageListView() {
                                     <div
                                         className={cn(
                                             'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                                            typeConfig[activeComponent.type].bgColor
+                                            COMPONENT_TYPE_CONFIG[activeEntry.type].bgColor
                                         )}
                                     >
                                         {(() => {
-                                            const Icon = typeConfig[activeComponent.type].icon;
+                                            const Icon =
+                                                COMPONENT_TYPE_CONFIG[activeEntry.type].icon;
                                             return (
                                                 <Icon
                                                     className={cn(
                                                         'h-4 w-4',
-                                                        typeConfig[activeComponent.type].color
+                                                        COMPONENT_TYPE_CONFIG[activeEntry.type]
+                                                            .color
                                                     )}
                                                 />
                                             );
                                         })()}
                                     </div>
                                     <span className="text-sm font-medium text-dashboard-text">
-                                        {activeComponent.title || '제목 없음'}
+                                        {activeEntry.title || '제목 없음'}
                                     </span>
                                 </div>
                             )}

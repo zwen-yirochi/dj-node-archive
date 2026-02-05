@@ -1,18 +1,22 @@
 /**
  * Store exports
  *
- * 새 코드에서는 개별 store를 직접 사용하는 것을 권장합니다:
+ * 각 store의 역할:
  * - useUserStore: 사용자 정보
- * - useViewStore: View 아이템 관리
- * - useUIStore: UI 상태 (선택, 편집 모드, 사이드바 등)
- * - useComponentStore: 컴포넌트 데이터
- *
- * useEditorStore는 기존 코드 호환성을 위해 유지됩니다.
+ * - useDisplayEntryStore: Display entry 관리 (공개 페이지 구성)
+ * - useUIStore: UI 상태 (선택, 사이드바 등)
+ * - useContentEntryStore: 콘텐츠 엔트리 데이터 및 미리보기 트리거
  */
 
-// Individual stores (권장)
-export { useUserStore } from './userStore';
-export { useViewStore, type ViewItem } from './viewStore';
+export {
+    // Deprecated aliases
+    getComponentsByType,
+    getEntriesByType,
+    getSelectedComponent,
+    getSelectedEntry,
+    useContentEntryStore,
+} from './contentEntryStore';
+export { useDisplayEntryStore, type DisplayEntry } from './displayEntryStore';
 export {
     useUIStore,
     type ActivePanel,
@@ -21,7 +25,4 @@ export {
     type SidebarSections,
     type SidebarSectionState,
 } from './uiStore';
-export { useComponentStore } from './editorStore';
-
-// Legacy facade (호환성)
-export { useEditorStore, getComponentsByType, getSelectedComponent } from './editorStore';
+export { useUserStore } from './userStore';

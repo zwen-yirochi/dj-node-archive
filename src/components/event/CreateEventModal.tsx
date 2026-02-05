@@ -9,12 +9,12 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { EventForm, type EventFormData } from './EventForm';
-import type { DBEventWithVenue } from '@/types/database';
+import type { DBEvent } from '@/types/database';
 
 export interface CreateEventModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onCreated?: (event: DBEventWithVenue) => void;
+    onCreated?: (event: DBEvent) => void;
 }
 
 export function CreateEventModal({ open, onOpenChange, onCreated }: CreateEventModalProps) {
@@ -28,9 +28,10 @@ export function CreateEventModal({ open, onOpenChange, onCreated }: CreateEventM
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    venue_ref_id: data.venue_ref_id,
+                    venue: data.venue,
                     title: data.title,
                     date: data.date,
+                    lineup: data.lineup,
                     data: data.data,
                 }),
             });
@@ -41,27 +42,7 @@ export function CreateEventModal({ open, onOpenChange, onCreated }: CreateEventM
                 throw new Error(json.error || '이벤트 생성에 실패했습니다.');
             }
 
-            const eventId = json.data.id;
-
-            // 퍼포머 저장 (있는 경우)
-            if (data.performers && data.performers.length > 0) {
-                const performersPayload = data.performers.map((p) => ({
-                    user_id: p.type === 'user' ? p.id : undefined,
-                    artist_ref_id: p.type === 'artist' ? p.id : undefined,
-                }));
-
-                await fetch(`/api/events/${eventId}/performers`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ performers: performersPayload }),
-                });
-            }
-
-            // 생성된 이벤트에 venue 정보 추가
-            const createdEvent: DBEventWithVenue = {
-                ...json.data,
-                venue: data.venue!,
-            };
+            const createdEvent: DBEvent = json.data;
 
             onCreated?.(createdEvent);
             onOpenChange(false);

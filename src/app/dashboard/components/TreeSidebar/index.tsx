@@ -1,10 +1,11 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { useComponentStore } from '@/stores/editorStore';
+import { canAddToView } from '@/lib/validators';
+import { useContentEntryStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
-import { useViewStore } from '@/stores/viewStore';
-import type { ComponentData } from '@/types';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
+import type { ContentEntry } from '@/types';
 import {
     closestCenter,
     DndContext,
@@ -22,7 +23,15 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Calendar, FileText, Headphones, Link as LinkIcon, Palette } from 'lucide-react';
+import {
+    Calendar,
+    ChevronDown,
+    ChevronRight,
+    FileText,
+    Headphones,
+    Link as LinkIcon,
+    Palette,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import AccountSection from './AccountSection';
@@ -31,39 +40,40 @@ import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
 
 interface TreeSidebarProps {
-    onAddComponent: (type: 'show' | 'mixset' | 'link') => void;
-    onDeleteComponent?: (id: string) => void;
+    onAddEntry: (type: 'event' | 'mixset' | 'link') => void;
+    onDeleteEntry?: (id: string) => void;
     username: string;
 }
 
-export default function TreeSidebar({
-    onAddComponent,
-    onDeleteComponent,
-    username,
-}: TreeSidebarProps) {
-    // Component Store
-    const components = useComponentStore((state) => state.components);
-    const pageId = useComponentStore((state) => state.pageId);
-    const reorderSectionItems = useComponentStore((state) => state.reorderSectionItems);
+export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: TreeSidebarProps) {
+    // Content Entry Store
+    const entries = useContentEntryStore((state) => state.entries);
+    const pageId = useContentEntryStore((state) => state.pageId);
+    const reorderSectionItems = useContentEntryStore((state) => state.reorderSectionItems);
 
-    // View Store
-    const viewItems = useViewStore((state) => state.viewItems);
-    const addToView = useViewStore((state) => state.addToView);
-    const reorderView = useViewStore((state) => state.reorderView);
+    // Display Entry Store
+    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
+    const addToView = useDisplayEntryStore((state) => state.addToView);
+    const reorderView = useDisplayEntryStore((state) => state.reorderView);
 
     // UI Store
     const activePanel = useUIStore((state) => state.activePanel);
     const setActivePanel = useUIStore((state) => state.setActivePanel);
+    const sidebarSections = useUIStore((state) => state.sidebarSections);
+    const toggleSection = useUIStore((state) => state.toggleSection);
+
+    // Page 섹션 접힘 상태
+    const isPageCollapsed = sidebarSections.view.collapsed;
 
     // useMemo로 필터링하여 무한 루프 방지
-    const events = useMemo(() => components.filter((c) => c.type === 'show'), [components]);
-    const mixsets = useMemo(() => components.filter((c) => c.type === 'mixset'), [components]);
-    const links = useMemo(() => components.filter((c) => c.type === 'link'), [components]);
+    const events = useMemo(() => entries.filter((e) => e.type === 'event'), [entries]);
+    const mixsets = useMemo(() => entries.filter((e) => e.type === 'mixset'), [entries]);
+    const links = useMemo(() => entries.filter((e) => e.type === 'link'), [entries]);
 
     const [activeItem, setActiveItem] = useState<{
-        component: ComponentData;
-        isViewItem: boolean;
-        viewItemId?: string;
+        entry: ContentEntry;
+        isDisplayEntry: boolean;
+        displayEntryId?: string;
     } | null>(null);
 
     const [isDraggingOverView, setIsDraggingOverView] = useState(false);
@@ -83,11 +93,11 @@ export default function TreeSidebar({
         const { active } = event;
         const data = active.data.current;
 
-        if (data?.component) {
+        if (data?.entry) {
             setActiveItem({
-                component: data.component,
-                isViewItem: data.type === 'view-item',
-                viewItemId: data.viewItemId,
+                entry: data.entry,
+                isDisplayEntry: data.type === 'display-entry',
+                displayEntryId: data.displayEntryId,
             });
         }
     };
@@ -108,15 +118,22 @@ export default function TreeSidebar({
         const overData = over.data.current;
 
         // View 드롭존에 드롭한 경우
-        if (over.id === 'view-drop-zone' && activeData?.type === 'component' && pageId) {
-            addToView(pageId, activeData.component.id);
+        if (over.id === 'view-drop-zone' && activeData?.type === 'entry' && pageId) {
+            const entry = activeData.entry as ContentEntry;
+            // 유효성 검사: 필수 필드가 채워진 엔트리만 View에 추가 가능
+            if (!canAddToView(entry)) {
+                // TODO: Toast로 사용자에게 알림
+                console.warn('엔트리를 완성해야 Page에 추가할 수 있습니다.');
+                return;
+            }
+            addToView(pageId, entry.id);
             return;
         }
 
         // View 섹션 내에서 순서 변경
-        if (activeData?.type === 'view-item') {
-            if (overData?.type === 'view-item') {
-                const overIndex = viewItems.findIndex((item) => item.id === over.id);
+        if (activeData?.type === 'display-entry') {
+            if (overData?.type === 'display-entry') {
+                const overIndex = displayEntries.findIndex((item) => item.id === over.id);
                 if (overIndex !== -1) {
                     reorderView(active.id as string, overIndex);
                 }
@@ -124,36 +141,43 @@ export default function TreeSidebar({
             return;
         }
 
-        // 섹션 내 컴포넌트 순서 변경
-        if (activeData?.type === 'component' && overData?.type === 'component') {
-            const activeComponent = activeData.component as ComponentData;
-            const overComponent = overData.component as ComponentData;
+        // 섹션 내 엔트리 순서 변경
+        if (activeData?.type === 'entry' && overData?.type === 'entry') {
+            const activeEntry = activeData.entry as ContentEntry;
+            const overEntry = overData.entry as ContentEntry;
 
-            if (activeComponent.type === overComponent.type && active.id !== over.id) {
-                const sectionType = activeComponent.type as 'show' | 'mixset' | 'link';
+            if (activeEntry.type === overEntry.type && active.id !== over.id) {
+                const sectionType = activeEntry.type as 'event' | 'mixset' | 'link';
 
-                let sectionComponents: ComponentData[];
-                if (sectionType === 'show') {
-                    sectionComponents = events;
+                let sectionEntries: ContentEntry[];
+                if (sectionType === 'event') {
+                    sectionEntries = events;
                 } else if (sectionType === 'mixset') {
-                    sectionComponents = mixsets;
+                    sectionEntries = mixsets;
                 } else {
-                    sectionComponents = links;
+                    sectionEntries = links;
                 }
 
-                const overIndex = sectionComponents.findIndex((c) => c.id === over.id);
+                const overIndex = sectionEntries.findIndex((e) => e.id === over.id);
                 if (overIndex !== -1) {
-                    reorderSectionItems(sectionType, activeComponent.id, overIndex);
+                    reorderSectionItems(sectionType, activeEntry.id, overIndex);
                 }
             }
         }
     };
 
-    const handleDelete = (componentId: string) => {
-        onDeleteComponent?.(componentId);
+    const handleDelete = (entryId: string) => {
+        onDeleteEntry?.(entryId);
     };
 
-    const visibleCount = viewItems.filter((item) => item.isVisible).length;
+    const handlePageClick = () => {
+        setActivePanel('page');
+    };
+
+    const handlePageToggle = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        toggleSection('view');
+    };
 
     return (
         <DndContext
@@ -190,11 +214,11 @@ export default function TreeSidebar({
                         <span className="flex-1 text-sm font-medium">Bio design</span>
                     </button>
 
-                    {/* Page */}
-                    <button
-                        onClick={() => setActivePanel('page')}
+                    {/* Page - 클릭하면 패널 전환, 화살표 클릭하면 접기/펼치기 */}
+                    <div
+                        onClick={handlePageClick}
                         className={cn(
-                            'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
+                            'group mb-1 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
                             activePanel === 'page'
                                 ? 'bg-dashboard-bg-active text-dashboard-text'
                                 : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
@@ -202,22 +226,32 @@ export default function TreeSidebar({
                     >
                         <FileText className="h-4 w-4 text-dashboard-text-muted" />
                         <span className="flex-1 text-sm font-medium">Page</span>
-                        {visibleCount > 0 && (
+                        {/* {visibleCount > 0 && (
                             <span className="rounded bg-dashboard-bg-active px-1.5 py-0.5 text-[10px] font-medium text-dashboard-text-muted">
                                 {visibleCount}
                             </span>
-                        )}
-                    </button>
+                        )} */}
+                        {/* 접기/펼치기 화살표 */}
+                        <button
+                            onClick={handlePageToggle}
+                            className="flex h-4 w-4 items-center justify-center text-dashboard-text-placeholder hover:text-dashboard-text-muted"
+                        >
+                            {isPageCollapsed ? (
+                                <ChevronRight className="h-3.5 w-3.5" />
+                            ) : (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                            )}
+                        </button>
+                    </div>
 
-                    {/* Page 드롭존 - Page 선택 시에만 확장 */}
-                    {activePanel === 'page' && (
-                        <div className="mb-3 ml-3">
-                            <ViewSection
-                                isDraggingOver={isDraggingOverView}
-                                onDeleteComponent={handleDelete}
-                            />
-                        </div>
-                    )}
+                    {/* Page ViewSection - 항상 렌더링 (드롭 가능), 접힘 상태에 따라 표시 */}
+                    <div className="mb-3 ml-3">
+                        <ViewSection
+                            isDraggingOver={isDraggingOverView}
+                            isCollapsed={isPageCollapsed}
+                            onDeleteEntry={handleDelete}
+                        />
+                    </div>
 
                     {/* Divider */}
                     <div className="my-3 border-t border-dashboard-border" />
@@ -233,19 +267,18 @@ export default function TreeSidebar({
                         title="Events"
                         icon={<Calendar className="h-4 w-4" />}
                         count={events.length}
-                        onAdd={() => onAddComponent('show')}
+                        onAdd={() => onAddEntry('event')}
                     >
                         <SortableContext
-                            items={events.map((c) => c.id)}
+                            items={events.map((e) => e.id)}
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {events.map((component, index) => (
+                                {events.map((entry) => (
                                     <TreeItem
-                                        key={component.id}
-                                        component={component}
-                                        isLast={index === events.length - 1}
-                                        onDelete={() => handleDelete(component.id)}
+                                        key={entry.id}
+                                        entry={entry}
+                                        onDelete={() => handleDelete(entry.id)}
                                     />
                                 ))}
                             </div>
@@ -258,19 +291,18 @@ export default function TreeSidebar({
                         title="Mixsets"
                         icon={<Headphones className="h-4 w-4" />}
                         count={mixsets.length}
-                        onAdd={() => onAddComponent('mixset')}
+                        onAdd={() => onAddEntry('mixset')}
                     >
                         <SortableContext
-                            items={mixsets.map((c) => c.id)}
+                            items={mixsets.map((e) => e.id)}
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {mixsets.map((component, index) => (
+                                {mixsets.map((entry) => (
                                     <TreeItem
-                                        key={component.id}
-                                        component={component}
-                                        isLast={index === mixsets.length - 1}
-                                        onDelete={() => handleDelete(component.id)}
+                                        key={entry.id}
+                                        entry={entry}
+                                        onDelete={() => handleDelete(entry.id)}
                                     />
                                 ))}
                             </div>
@@ -283,19 +315,18 @@ export default function TreeSidebar({
                         title="Links"
                         icon={<LinkIcon className="h-4 w-4" />}
                         count={links.length}
-                        onAdd={() => onAddComponent('link')}
+                        onAdd={() => onAddEntry('link')}
                     >
                         <SortableContext
-                            items={links.map((c) => c.id)}
+                            items={links.map((e) => e.id)}
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {links.map((component, index) => (
+                                {links.map((entry) => (
                                     <TreeItem
-                                        key={component.id}
-                                        component={component}
-                                        isLast={index === links.length - 1}
-                                        onDelete={() => handleDelete(component.id)}
+                                        key={entry.id}
+                                        entry={entry}
+                                        onDelete={() => handleDelete(entry.id)}
                                     />
                                 ))}
                             </div>
@@ -312,7 +343,7 @@ export default function TreeSidebar({
                 {activeItem && (
                     <div className="rounded-lg border border-dashboard-border bg-dashboard-bg-card px-3 py-2 shadow-lg">
                         <span className="text-sm text-dashboard-text">
-                            {activeItem.component.title || '제목 없음'}
+                            {activeItem.entry.title || '제목 없음'}
                         </span>
                     </div>
                 )}

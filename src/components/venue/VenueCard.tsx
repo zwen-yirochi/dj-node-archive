@@ -39,7 +39,7 @@ export function VenueCard({ venue, className }: VenueCardProps) {
                         )}
                     </div>
 
-                    {venue.event_count > 0 && (
+                    {(venue.event_count ?? 0) > 0 && (
                         <div className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
                             <Calendar className="h-3 w-3" />
                             <span>{venue.event_count}</span>

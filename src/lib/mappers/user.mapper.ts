@@ -1,8 +1,8 @@
 // lib/mappers/user.mapper.ts
 // 서버/클라이언트 공용 - 순수 함수
-import type { DBComponent, DBUser } from '@/types/database';
+import type { DBEntry, DBUser } from '@/types/database';
 import type {
-    ComponentData,
+    ContentEntry,
     EventComponent,
     LinkComponent,
     MixsetComponent,
@@ -28,7 +28,7 @@ export function mapUserToDatabase(user: Partial<User>): Partial<DBUser> {
     };
 }
 
-export function mapComponentToDomain(dbComp: DBComponent): ComponentData {
+export function mapEntryToDomain(dbComp: DBEntry): ContentEntry {
     const baseId = { id: dbComp.id };
 
     switch (dbComp.type) {
@@ -36,7 +36,7 @@ export function mapComponentToDomain(dbComp: DBComponent): ComponentData {
             const data = dbComp.data as Record<string, any>;
             return {
                 ...baseId,
-                type: 'show',
+                type: 'event',
                 title: data.title || '',
                 date: data.date || '',
                 venue: data.venue || '',
@@ -79,22 +79,17 @@ export function mapComponentToDomain(dbComp: DBComponent): ComponentData {
     }
 }
 
-export function mapComponentToDatabase(
-    comp: ComponentData,
+export function mapEntryToDatabase(
+    entry: ContentEntry,
     position: number
-): Omit<DBComponent, 'id' | 'created_at' | 'updated_at' | 'page_id'> {
-    const { id, type, ...data } = comp;
-
-    let dbType: 'event' | 'mixset' | 'link';
-    if (type === 'show') {
-        dbType = 'event';
-    } else {
-        dbType = type;
-    }
+): Omit<DBEntry, 'id' | 'created_at' | 'updated_at' | 'page_id'> {
+    const { id: _id, type, ...data } = entry;
 
     return {
-        type: dbType,
+        type,
         position,
-        data,
+        is_visible: true,
+        // Domain types use camelCase, stored as-is in jsonb
+        data: data as DBEntry['data'],
     };
 }

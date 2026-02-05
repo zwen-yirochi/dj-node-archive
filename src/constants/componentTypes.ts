@@ -3,13 +3,13 @@
 // ==============================================
 
 import { Calendar, Headphones, Link, type LucideIcon } from 'lucide-react';
-import type { ComponentType } from '@/types';
+import type { ContentEntryType } from '@/types';
 
 // ----------------------------------------------
 // Component Type Configuration
 // ----------------------------------------------
 
-export interface ComponentTypeConfig {
+export interface ContentEntryTypeConfig {
     label: string;
     icon: LucideIcon;
     color: string;
@@ -17,8 +17,8 @@ export interface ComponentTypeConfig {
     badgeColor: string;
 }
 
-export const COMPONENT_TYPE_CONFIG: Record<ComponentType, ComponentTypeConfig> = {
-    show: {
+export const COMPONENT_TYPE_CONFIG: Record<ContentEntryType, ContentEntryTypeConfig> = {
+    event: {
         label: 'Event',
         icon: Calendar,
         color: 'text-dashboard-type-event',
@@ -45,15 +45,15 @@ export const COMPONENT_TYPE_CONFIG: Record<ComponentType, ComponentTypeConfig> =
 // Helper Functions
 // ----------------------------------------------
 
-export function getComponentConfig(type: ComponentType): ComponentTypeConfig {
+export function getComponentConfig(type: ContentEntryType): ContentEntryTypeConfig {
     return COMPONENT_TYPE_CONFIG[type];
 }
 
-export function getComponentLabel(type: ComponentType): string {
+export function getComponentLabel(type: ContentEntryType): string {
     return COMPONENT_TYPE_CONFIG[type].label;
 }
 
-export function getComponentIcon(type: ComponentType): LucideIcon {
+export function getComponentIcon(type: ContentEntryType): LucideIcon {
     return COMPONENT_TYPE_CONFIG[type].icon;
 }
 

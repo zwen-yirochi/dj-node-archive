@@ -1,21 +1,15 @@
 // app/dashboard/EditorClient.tsx
 'use client';
 
-import { useComponentStore, type ViewItem } from '@/stores/editorStore';
+import { createEmptyEntry, eventToEntry } from '@/lib/transformers';
+import { useContentEntryStore } from '@/stores/contentEntryStore';
+import type { DisplayEntry } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useUserStore } from '@/stores/userStore';
-import { useViewStore } from '@/stores/viewStore';
-import type {
-    ComponentData,
-    EventComponent,
-    LinkComponent,
-    MixsetComponent,
-    Theme,
-    User,
-} from '@/types';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
+import type { ContentEntry, User } from '@/types';
 import type { DBEventWithVenue } from '@/types/database';
 import { useEffect, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { AddComponentModal } from './components/AddComponentModal';
 import ContentPanel from './components/ContentPanel';
 import PreviewPanel from './components/PreviewPanel';
@@ -23,9 +17,8 @@ import TreeSidebar from './components/TreeSidebar';
 
 interface EditorClientProps {
     initialUser: User;
-    initialComponents: ComponentData[];
-    initialViewItems?: ViewItem[];
-    initialTheme?: Theme | null;
+    initialComponents: ContentEntry[];
+    initialDisplayEntries?: DisplayEntry[];
     pageId: string;
     username: string;
 }
@@ -33,129 +26,80 @@ interface EditorClientProps {
 export default function EditorClient({
     initialUser,
     initialComponents,
-    initialViewItems = [],
-    initialTheme = null,
+    initialDisplayEntries = [],
     pageId,
     username,
 }: EditorClientProps) {
     // User Store
     const setUser = useUserStore((state) => state.setUser);
 
-    // Component Store
-    const components = useComponentStore((state) => state.components);
-    const setComponents = useComponentStore((state) => state.setComponents);
-    const setPageId = useComponentStore((state) => state.setPageId);
-    const setTheme = useComponentStore((state) => state.setTheme);
-    const saveComponent = useComponentStore((state) => state.saveComponent);
-    const deleteComponent = useComponentStore((state) => state.deleteComponent);
+    // Content Entry Store
+    const setEntries = useContentEntryStore((state) => state.setEntries);
+    const setPageId = useContentEntryStore((state) => state.setPageId);
+    const createEntry = useContentEntryStore((state) => state.createEntry);
+    const finishCreating = useContentEntryStore((state) => state.finishCreating);
+    const deleteEntryFromStore = useContentEntryStore((state) => state.deleteEntry);
 
-    // View Store
-    const setViewItems = useViewStore((state) => state.setViewItems);
+    // Display Entry Store
+    const setDisplayEntries = useDisplayEntryStore((state) => state.setDisplayEntries);
+    const triggerPreviewRefresh = useDisplayEntryStore((state) => state.triggerPreviewRefresh);
 
     // UI Store
-    const selectComponent = useUIStore((state) => state.selectComponent);
-    const setEditMode = useUIStore((state) => state.setEditMode);
+    const selectEntry = useUIStore((state) => state.selectEntry);
+    const startCreating = useUIStore((state) => state.startCreating);
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [_addingType, setAddingType] = useState<'show' | 'mixset' | 'link'>('show');
+    const [_addingType, setAddingType] = useState<'event' | 'mixset' | 'link'>('event');
 
     // Zustand 초기화
     useEffect(() => {
         setUser(initialUser);
-        setComponents(initialComponents);
-        setViewItems(initialViewItems);
+        setEntries(initialComponents);
+        setDisplayEntries(initialDisplayEntries);
         setPageId(pageId);
-        if (initialTheme) {
-            setTheme(initialTheme);
-        }
     }, [
         initialUser,
         initialComponents,
-        initialViewItems,
-        initialTheme,
+        initialDisplayEntries,
         pageId,
         setUser,
-        setComponents,
-        setViewItems,
+        setEntries,
+        setDisplayEntries,
         setPageId,
-        setTheme,
     ]);
 
-    // 이벤트 데이터를 EventComponent로 변환
-    const eventToComponent = (event: DBEventWithVenue): EventComponent => ({
-        id: uuidv4(),
-        type: 'show',
-        title: event.title || '',
-        date: event.date,
-        venue: event.venue?.name || '',
-        posterUrl: event.data?.poster_url || '',
-        lineup: event.data?.lineup_text?.split('\n').filter(Boolean) || [],
-        description: event.data?.notes || '',
-        links: event.data?.set_recording_url
-            ? [{ title: '세트 녹음', url: event.data.set_recording_url }]
-            : [],
-    });
-
-    // 빈 컴포넌트 템플릿 생성
-    const createEmptyComponent = (type: 'show' | 'mixset' | 'link'): ComponentData => {
-        const id = uuidv4();
-        switch (type) {
-            case 'show':
-                return {
-                    id,
-                    type: 'show',
-                    title: '',
-                    date: new Date().toISOString().split('T')[0],
-                    venue: '',
-                    posterUrl: '',
-                    lineup: [],
-                    description: '',
-                    links: [],
-                } as EventComponent;
-            case 'mixset':
-                return {
-                    id,
-                    type: 'mixset',
-                    title: '',
-                    coverUrl: '',
-                    audioUrl: '',
-                    soundcloudEmbedUrl: '',
-                    tracklist: [],
-                    description: '',
-                    releaseDate: new Date().toISOString().split('T')[0],
-                    genre: '',
-                } as MixsetComponent;
-            case 'link':
-                return {
-                    id,
-                    type: 'link',
-                    title: '',
-                    url: '',
-                    icon: 'globe',
-                } as LinkComponent;
-        }
-    };
-
-    // 컴포넌트 추가 핸들러
-    const handleAddComponent = (type: 'show' | 'mixset' | 'link', eventData?: DBEventWithVenue) => {
+    // 엔트리 추가 핸들러
+    const handleAddEntry = async (
+        type: 'event' | 'mixset' | 'link',
+        eventData?: DBEventWithVenue
+    ) => {
         setIsAddModalOpen(false);
 
         if (eventData) {
-            // 이벤트 데이터가 있으면 변환하여 바로 저장
-            const newComponent = eventToComponent(eventData);
-            saveComponent(newComponent);
+            // 이벤트 데이터가 있으면 변환하여 바로 저장 (이미 완성된 데이터)
+            const newEntry = eventToEntry(eventData);
+            await createEntry(newEntry);
+            // 완성된 데이터이므로 바로 생성 완료 처리 + 미리보기 트리거
+            finishCreating(newEntry.id);
+            triggerPreviewRefresh();
+            selectEntry(newEntry.id);
         } else {
-            // 빈 컴포넌트로 에디터 열기
-            const newComponent = createEmptyComponent(type);
-            // 임시로 컴포넌트 추가 후 선택하여 편집 모드로
-            setComponents([...components, newComponent]);
-            selectComponent(newComponent.id);
-            setEditMode('edit');
+            // 빈 엔트리 생성 후 즉시 DB에 저장 → 생성 모드 진입
+            // createEntry는 newlyCreatedIds에 자동 추가
+            const newEntry = createEmptyEntry(type);
+            await createEntry(newEntry);
+            startCreating(newEntry.id);
         }
     };
 
+    // 엔트리 삭제 핸들러
+    const handleDeleteEntry = async (id: string) => {
+        const { triggeredPreview } = await deleteEntryFromStore(id);
+        if (triggeredPreview) triggerPreviewRefresh();
+    };
+
     // Add 버튼 클릭 핸들러
-    const handleOpenAddModal = (type: 'show' | 'mixset' | 'link') => {
+    const handleOpenAddModal = (type: 'event' | 'mixset' | 'link') => {
         setAddingType(type);
         setIsAddModalOpen(true);
     };
@@ -165,8 +109,8 @@ export default function EditorClient({
             {/* TreeSidebar - 왼쪽 */}
             <div className="p-3">
                 <TreeSidebar
-                    onAddComponent={handleOpenAddModal}
-                    onDeleteComponent={deleteComponent}
+                    onAddEntry={handleOpenAddModal}
+                    onDeleteEntry={handleDeleteEntry}
                     username={username}
                 />
             </div>
@@ -188,7 +132,7 @@ export default function EditorClient({
             <AddComponentModal
                 open={isAddModalOpen}
                 onOpenChange={setIsAddModalOpen}
-                onAddComponent={handleAddComponent}
+                onAddComponent={handleAddEntry}
             />
         </div>
     );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -9,68 +9,21 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { EventForm, eventToFormData, type EventFormData } from './EventForm';
-import type { TaggedArtist } from '@/components/artist/ArtistTagger';
-import type { DBEventWithVenue } from '@/types/database';
+import type { DBEvent } from '@/types/database';
 
 export interface EditEventModalProps {
-    event: DBEventWithVenue | null;
+    event: DBEvent | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onUpdated?: (event: DBEventWithVenue) => void;
+    onUpdated?: (event: DBEvent) => void;
 }
 
 export function EditEventModal({ event, open, onOpenChange, onUpdated }: EditEventModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [initialPerformers, setInitialPerformers] = useState<TaggedArtist[]>([]);
-
-    // 기존 퍼포머 로드
-    useEffect(() => {
-        if (event && open) {
-            fetch(`/api/events/${event.id}/performers`)
-                .then((res) => res.json())
-                .then((json) => {
-                    if (json.data) {
-                        const performers: TaggedArtist[] = json.data
-                            .map(
-                                (p: {
-                                    user?: {
-                                        id: string;
-                                        username: string;
-                                        display_name?: string;
-                                        avatar_url?: string;
-                                    };
-                                    artist?: { id: string; name: string; instagram?: string };
-                                }) => {
-                                    if (p.user) {
-                                        return {
-                                            type: 'user' as const,
-                                            id: p.user.id,
-                                            name: p.user.display_name || p.user.username,
-                                            username: p.user.username,
-                                            avatar_url: p.user.avatar_url,
-                                        };
-                                    } else if (p.artist) {
-                                        return {
-                                            type: 'artist' as const,
-                                            id: p.artist.id,
-                                            name: p.artist.name,
-                                            instagram: p.artist.instagram,
-                                        };
-                                    }
-                                    return null;
-                                }
-                            )
-                            .filter(Boolean);
-                        setInitialPerformers(performers);
-                    }
-                })
-                .catch(console.error);
-        }
-    }, [event, open]);
 
     if (!event) return null;
 
-    const { initialData, initialVenue } = eventToFormData(event);
+    const { initialData, initialVenue, initialPerformers } = eventToFormData(event);
 
     const handleSubmit = async (data: EventFormData) => {
         setIsSubmitting(true);
@@ -80,9 +33,10 @@ export function EditEventModal({ event, open, onOpenChange, onUpdated }: EditEve
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    venue_ref_id: data.venue_ref_id,
+                    venue: data.venue,
                     title: data.title,
                     date: data.date,
+                    lineup: data.lineup,
                     data: data.data,
                 }),
             });
@@ -93,25 +47,7 @@ export function EditEventModal({ event, open, onOpenChange, onUpdated }: EditEve
                 throw new Error(json.error || '이벤트 수정에 실패했습니다.');
             }
 
-            // 퍼포머 업데이트
-            if (data.performers) {
-                const performersPayload = data.performers.map((p) => ({
-                    user_id: p.type === 'user' ? p.id : undefined,
-                    artist_ref_id: p.type === 'artist' ? p.id : undefined,
-                }));
-
-                await fetch(`/api/events/${event.id}/performers`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ performers: performersPayload }),
-                });
-            }
-
-            // 수정된 이벤트에 venue 정보 추가
-            const updatedEvent: DBEventWithVenue = {
-                ...json.data,
-                venue: data.venue!,
-            };
+            const updatedEvent: DBEvent = json.data;
 
             onUpdated?.(updatedEvent);
             onOpenChange(false);

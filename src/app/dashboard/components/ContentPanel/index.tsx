@@ -1,32 +1,37 @@
 'use client';
 
-import { useComponentStore } from '@/stores/editorStore';
+import { useContentEntryStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useMemo } from 'react';
 import BioDesignPanel from './BioDesignPanel';
-import EditMode from './EditMode';
+import CreateMode from './EditMode/CreateMode';
 import EmptyState from './EmptyState';
+import InlineEditMode from './InlineEditMode';
 import PageListView from './PageListView';
-import ViewMode from './ViewMode';
 
 export default function ContentPanel() {
     // UI Store
-    const selectedComponentId = useUIStore((state) => state.selectedComponentId);
-    const editMode = useUIStore((state) => state.editMode);
+    const selectedEntryId = useUIStore((state) => state.selectedEntryId);
     const activePanel = useUIStore((state) => state.activePanel);
-    const setEditMode = useUIStore((state) => state.setEditMode);
-    const selectComponent = useUIStore((state) => state.selectComponent);
+    const isCreating = useUIStore((state) => state.isCreating);
+    const selectEntry = useUIStore((state) => state.selectEntry);
+    const finishCreatingUI = useUIStore((state) => state.finishCreating);
 
-    // Component Store
-    const components = useComponentStore((state) => state.components);
-    const saveComponent = useComponentStore((state) => state.saveComponent);
-    const deleteComponent = useComponentStore((state) => state.deleteComponent);
+    // Content Entry Store
+    const entries = useContentEntryStore((state) => state.entries);
+    const updateEntry = useContentEntryStore((state) => state.updateEntry);
+    const deleteEntry = useContentEntryStore((state) => state.deleteEntry);
+    const finishCreatingEntry = useContentEntryStore((state) => state.finishCreating);
 
-    // useMemo로 선택된 컴포넌트 찾기
-    const selectedComponent = useMemo(() => {
-        if (!selectedComponentId) return null;
-        return components.find((c) => c.id === selectedComponentId) ?? null;
-    }, [selectedComponentId, components]);
+    // Display Entry Store
+    const triggerPreviewRefresh = useDisplayEntryStore((state) => state.triggerPreviewRefresh);
+
+    // useMemo로 선택된 엔트리 찾기
+    const selectedEntry = useMemo(() => {
+        if (!selectedEntryId) return null;
+        return entries.find((e) => e.id === selectedEntryId) ?? null;
+    }, [selectedEntryId, entries]);
 
     // Bio design 패널 모드
     if (activePanel === 'bio') {
@@ -46,8 +51,8 @@ export default function ContentPanel() {
         );
     }
 
-    // 선택된 컴포넌트가 없으면 EmptyState
-    if (!selectedComponent) {
+    // 선택된 엔트리가 없으면 EmptyState
+    if (!selectedEntry) {
         return (
             <div className="flex h-full items-center justify-center rounded-2xl">
                 <EmptyState />
@@ -55,37 +60,57 @@ export default function ContentPanel() {
         );
     }
 
-    // 편집 모드
-    if (editMode === 'edit') {
+    // 엔트리 저장 핸들러 (미리보기 트리거 처리)
+    const handleSave = async (entry: typeof selectedEntry) => {
+        const { triggeredPreview } = await updateEntry(entry);
+        if (triggeredPreview) {
+            triggerPreviewRefresh();
+        }
+    };
+
+    // 엔트리 삭제 핸들러 (미리보기 트리거 처리)
+    const handleDelete = async () => {
+        const { triggeredPreview } = await deleteEntry(selectedEntry.id);
+        if (triggeredPreview) {
+            triggerPreviewRefresh();
+        }
+        selectEntry(null);
+    };
+
+    // 생성 완료 핸들러 (UIStore + ContentEntryStore 동기화)
+    const handleFinishCreating = () => {
+        finishCreatingUI();
+        finishCreatingEntry(selectedEntry.id);
+    };
+
+    // 생성 모드 (새 엔트리) - 별도 유지
+    if (isCreating) {
         return (
             <div className="h-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
-                <EditMode
-                    component={selectedComponent}
-                    onSave={async (component) => {
-                        await saveComponent(component);
-                        setEditMode('view');
+                <CreateMode
+                    component={selectedEntry}
+                    onSave={async (entry) => {
+                        const { triggeredPreview } = await updateEntry(entry);
+                        if (triggeredPreview) {
+                            triggerPreviewRefresh();
+                        }
+                        handleFinishCreating();
                     }}
-                    onCancel={() => setEditMode('view')}
-                    onDelete={async () => {
-                        await deleteComponent(selectedComponent.id);
-                        selectComponent(null);
+                    onCancel={async () => {
+                        // 생성 취소 시 엔트리 삭제 (미리보기 트리거 없음 - 아직 불완전한 상태)
+                        await deleteEntry(selectedEntry.id);
+                        handleFinishCreating();
+                        selectEntry(null);
                     }}
                 />
             </div>
         );
     }
 
-    // 뷰 모드
+    // 인라인 편집 모드 (View + Edit 통합)
     return (
         <div className="h-full overflow-hidden rounded-2xl border border-white/10">
-            <ViewMode
-                component={selectedComponent}
-                onEdit={() => setEditMode('edit')}
-                onDelete={async () => {
-                    await deleteComponent(selectedComponent.id);
-                    selectComponent(null);
-                }}
-            />
+            <InlineEditMode component={selectedEntry} onSave={handleSave} onDelete={handleDelete} />
         </div>
     );
 }
