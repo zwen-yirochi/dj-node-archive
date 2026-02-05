@@ -41,6 +41,5 @@ next-env.d.ts
 *.swo
 *~
 
-docs
 .claude
 .mcp.json
