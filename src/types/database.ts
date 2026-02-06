@@ -60,10 +60,24 @@ export interface EventSelfData {
     links?: { title: string; url: string }[];
 }
 
-/** type='mixset' - mixsets 테이블 참조 */
-export interface MixsetEntryData {
+/** type='mixset' 참조형 - mixsets 테이블 참조 */
+export interface MixsetReferenceData {
     mixset_id: string;
 }
+
+/** type='mixset' 자체형 - 프라이빗 믹스셋 */
+export interface MixsetSelfData {
+    title: string;
+    tracklist?: Track[];
+    cover_url?: string;
+    audio_url?: string;
+    soundcloud_url?: string;
+    mixcloud_url?: string;
+    description?: string;
+    duration_minutes?: number;
+}
+
+export type MixsetEntryData = MixsetReferenceData | MixsetSelfData;
 
 export type EntryType = 'link' | 'event' | 'mixset';
 export type EntryData = LinkEntryData | EventReferenceData | EventSelfData | MixsetEntryData;
@@ -210,6 +224,10 @@ export interface UserWithPage extends User {
     page: Page;
 }
 
+export interface UserWithPages extends User {
+    pages: PageWithEntries[];
+}
+
 export interface EventWithRelations extends Event {
     venue_detail?: Venue;
     performers?: Artist[];
@@ -230,8 +248,22 @@ export function isLinkEntry(data: EntryData): data is LinkEntryData {
     return 'url' in data && !('event_id' in data) && !('mixset_id' in data);
 }
 
-export function isMixsetEntry(data: EntryData): data is MixsetEntryData {
+export function isMixsetReference(data: EntryData): data is MixsetReferenceData {
     return 'mixset_id' in data;
+}
+
+export function isMixsetSelf(data: EntryData): data is MixsetSelfData {
+    return (
+        'title' in data &&
+        'tracklist' in data &&
+        !('event_id' in data) &&
+        !('mixset_id' in data) &&
+        !('url' in data)
+    );
+}
+
+export function isMixsetEntry(data: EntryData): data is MixsetEntryData {
+    return isMixsetReference(data) || isMixsetSelf(data);
 }
 
 // ============================================
@@ -242,7 +274,7 @@ export type DBPage = Page;
 export type DBEntry = Entry;
 export type DBEntryType = EntryType;
 export type DBPageWithEntries = PageWithEntries;
-export type DBUserWithPages = UserWithPage;
+export type DBUserWithPages = UserWithPages;
 
 export type VenueReference = Venue;
 export type DBVenueReference = Venue;
