@@ -1,9 +1,7 @@
 // types/domain.ts - UI/프론트엔드용 도메인 타입
 // camelCase, 화면 표시에 최적화
 
-// ============================================
 // User & Page
-// ============================================
 export interface User {
     id: string;
     username: string;
@@ -85,6 +83,13 @@ export interface LinkEntry {
 export type ContentEntry = EventEntry | MixsetEntry | LinkEntry;
 export type ContentEntryType = ContentEntry['type'];
 
+export interface DisplayEntry {
+    id: string;
+    entryId: string;
+    order: number;
+    isVisible: boolean;
+}
+
 // ============================================
 // Venue & Artist (UI용)
 // ============================================
@@ -155,9 +160,7 @@ export interface Backlink {
     mentionerAvatarUrl?: string;
 }
 
-// ============================================
 // Type Guards
-// ============================================
 export function isEventEntry(entry: ContentEntry): entry is EventEntry {
     return entry.type === 'event';
 }

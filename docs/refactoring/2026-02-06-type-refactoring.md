@@ -255,23 +255,24 @@ interface Mention {
 ### Phase 1: 타입 정의
 
 - [x] `database.ts` - DB 타입
-- [ ] `domain.ts` - 도메인 타입
-- [ ] `guards.ts` - 타입 가드
-- [ ] `index.ts` - export 정리
+- [x] `domain.ts` - 도메인 타입
+- [x] `guards.ts` - 타입 가드
+- [x] `index.ts` - export 정리
 
 ### Phase 2: 매퍼/변환
 
-- [ ] `mappers/user.mapper.ts`
-- [ ] `transformers.ts`
+- [x] `mappers/user.mapper.ts`
+- [x] `types/mappers.ts`
+- [x] `transformers.ts`
 
 ### Phase 3: DB 쿼리
 
-- [ ] `user.queries.ts`
-- [ ] `entry.queries.ts`
-- [ ] `event.queries.ts`
-- [ ] `venue.queries.ts`
-- [ ] `artist.queries.ts`
-- [ ] `performer.queries.ts` → 삭제
+- [x] `user.queries.ts`
+- [x] `entry.queries.ts`
+- [x] `event.queries.ts`
+- [x] `venue.queries.ts` (테이블명: venues)
+- [x] `artist.queries.ts` (테이블명: artists)
+- [x] `performer.queries.ts` → 삭제 완료
 
 ### Phase 4: API
 

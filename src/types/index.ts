@@ -4,41 +4,42 @@
 // Domain types (UI/프론트엔드용)
 // ============================================
 export type {
-    // User & Page
-    User,
-    Page,
+    Artist,
+    Backlink,
     // Entries
     ContentEntry,
     ContentEntryType,
+    DisplayEntry,
+    Event,
     EventEntry,
-    MixsetEntry,
     LinkEntry,
+    Mixset,
+    MixsetEntry,
+    Page,
+    // User & Page
+    User,
     // Entities
     Venue,
-    Artist,
-    Event,
-    Mixset,
-    Backlink,
 } from './domain';
 
 // Type guards
-export { isEventEntry, isMixsetEntry, isLinkEntry } from './domain';
+export { isEventEntry, isLinkEntry, isMixsetEntry } from './domain';
 
 // Legacy aliases (호환성)
 export {
-    type EventComponent,
-    type MixsetComponent,
-    type LinkComponent,
     isEventComponent,
-    isMixsetComponent,
     isLinkComponent,
+    isMixsetComponent,
+    type EventComponent,
+    type LinkComponent,
+    type MixsetComponent,
 } from './domain';
 
 // ============================================
 // UI types (에디터, 폰트, 아이콘 등)
 // ============================================
-export type { ArtistSuggestion, EditorState, FontOption, IconOption } from './ui';
 export { ICON_OPTIONS } from './ui';
+export type { ArtistSuggestion, EditorState, FontOption, IconOption } from './ui';
 
 // ============================================
 // Result types (에러 처리)
