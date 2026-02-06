@@ -1,12 +1,12 @@
 // app/dashboard/EditorClient.tsx
 'use client';
 
-import { useContentEntryStore } from '@/stores/contentEntryStore';
+import { initializeContentEntryStore, useContentEntryStore } from '@/stores/contentEntryStore';
 import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUserStore } from '@/stores/userStore';
 import type { ContentEntry, User } from '@/types';
 import type { DisplayEntry } from '@/types/domain';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import ContentPanel from './components/ContentPanel';
 import PreviewPanel from './components/PreviewPanel';
 import TreeSidebar from './components/TreeSidebar';
@@ -26,45 +26,28 @@ export default function EditorClient({
     pageId,
     username,
 }: EditorClientProps) {
-    const initialized = useRef(false);
+    // Store 상태 직접 확인 (hook 사용 안 함)
+    const currentPageId = useContentEntryStore.getState().pageId;
 
-    // User Store
-    const setUser = useUserStore((state) => state.setUser);
+    // pageId가 없거나 다르면 초기화
+    if (currentPageId !== pageId) {
+        useUserStore.setState({ user: initialUser });
+        initializeContentEntryStore({ entries: initialEntries, pageId });
+        useDisplayEntryStore.setState({ displayEntries: initialDisplayEntries });
+    }
 
     // Content Entry Store
-    const setEntries = useContentEntryStore((state) => state.setEntries);
-    const setPageId = useContentEntryStore((state) => state.setPageId);
     const deleteEntryFromStore = useContentEntryStore((state) => state.deleteEntry);
 
     // Display Entry Store
-    const setDisplayEntries = useDisplayEntryStore((state) => state.setDisplayEntries);
     const triggerPreviewRefresh = useDisplayEntryStore((state) => state.triggerPreviewRefresh);
-
-    // 동기적 초기화 (첫 렌더 시 즉시 실행)
-    if (!initialized.current) {
-        setUser(initialUser);
-        setEntries(initialEntries);
-        setDisplayEntries(initialDisplayEntries);
-        setPageId(pageId);
-        initialized.current = true;
-    }
 
     // props 변경 시 업데이트
     useEffect(() => {
-        setUser(initialUser);
-        setEntries(initialEntries);
-        setDisplayEntries(initialDisplayEntries);
-        setPageId(pageId);
-    }, [
-        initialUser,
-        initialEntries,
-        initialDisplayEntries,
-        pageId,
-        setUser,
-        setEntries,
-        setDisplayEntries,
-        setPageId,
-    ]);
+        useUserStore.setState({ user: initialUser });
+        initializeContentEntryStore({ entries: initialEntries, pageId });
+        useDisplayEntryStore.setState({ displayEntries: initialDisplayEntries });
+    }, [initialUser, initialEntries, initialDisplayEntries, pageId]);
 
     // 엔트리 삭제 핸들러
     const handleDeleteEntry = async (id: string) => {
