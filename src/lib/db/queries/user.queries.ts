@@ -1,7 +1,7 @@
 // lib/db/queries/user.queries.ts
 // 서버 전용 - 순수 DB 쿼리
 import { createClient } from '@/lib/supabase/server';
-import type { DBUser, DBUserWithPages } from '@/types/database';
+import type { User, UserWithPages } from '@/types/database';
 import {
     type Result,
     success,
@@ -10,7 +10,7 @@ import {
     createNotFoundError,
 } from '@/types/result';
 
-export async function findUserByUsername(username: string): Promise<Result<DBUser>> {
+export async function findUserByUsername(username: string): Promise<Result<User>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
@@ -36,7 +36,7 @@ export async function findUserByUsername(username: string): Promise<Result<DBUse
     }
 }
 
-export async function findUserWithPages(username: string): Promise<Result<DBUserWithPages>> {
+export async function findUserWithPages(username: string): Promise<Result<UserWithPages>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
@@ -50,6 +50,7 @@ export async function findUserWithPages(username: string): Promise<Result<DBUser
                         id,
                         type,
                         position,
+                        is_visible,
                         data,
                         created_at,
                         updated_at
@@ -77,7 +78,7 @@ export async function findUserWithPages(username: string): Promise<Result<DBUser
     }
 }
 
-export async function findUserById(userId: string): Promise<Result<DBUser>> {
+export async function findUserById(userId: string): Promise<Result<User>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
@@ -97,7 +98,7 @@ export async function findUserById(userId: string): Promise<Result<DBUser>> {
     }
 }
 
-export async function findUserWithPagesById(userId: string): Promise<Result<DBUserWithPages>> {
+export async function findUserWithPagesById(userId: string): Promise<Result<UserWithPages>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
@@ -111,6 +112,7 @@ export async function findUserWithPagesById(userId: string): Promise<Result<DBUs
                         id,
                         type,
                         position,
+                        is_visible,
                         data,
                         created_at,
                         updated_at
@@ -143,7 +145,7 @@ export async function updateUser(
         bio?: string;
         avatar_url?: string;
     }
-): Promise<Result<DBUser>> {
+): Promise<Result<User>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase

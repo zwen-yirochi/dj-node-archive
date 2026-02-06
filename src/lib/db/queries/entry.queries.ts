@@ -1,7 +1,7 @@
 // lib/db/queries/entry.queries.ts
 // 서버 전용 - Entry DB 쿼리
 import { createClient } from '@/lib/supabase/server';
-import type { DBEntry, DBEntryType, EntryDataType } from '@/types/database';
+import type { Entry, EntryType, EntryData } from '@/types/database';
 import {
     type Result,
     success,
@@ -12,17 +12,19 @@ import {
 
 export interface CreateEntryInput {
     page_id: string;
-    type: DBEntryType;
+    type: EntryType;
     position: number;
-    data: EntryDataType;
+    is_visible?: boolean;
+    data: EntryData;
 }
 
 export interface UpdateEntryInput {
-    type?: DBEntryType;
-    data?: EntryDataType;
+    type?: EntryType;
+    is_visible?: boolean;
+    data?: EntryData;
 }
 
-export async function createEntry(id: string, input: CreateEntryInput): Promise<Result<DBEntry>> {
+export async function createEntry(id: string, input: CreateEntryInput): Promise<Result<Entry>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
@@ -32,6 +34,7 @@ export async function createEntry(id: string, input: CreateEntryInput): Promise<
                 page_id: input.page_id,
                 type: input.type,
                 position: input.position,
+                is_visible: input.is_visible ?? true,
                 data: input.data,
             })
             .select()
@@ -49,7 +52,7 @@ export async function createEntry(id: string, input: CreateEntryInput): Promise<
     }
 }
 
-export async function updateEntry(id: string, input: UpdateEntryInput): Promise<Result<DBEntry>> {
+export async function updateEntry(id: string, input: UpdateEntryInput): Promise<Result<Entry>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
