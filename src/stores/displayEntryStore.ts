@@ -2,38 +2,24 @@
  * displayEntryStore.ts - Display Entry 상태 관리
  *
  * 공개 페이지에 표시되는 DisplayEntry와 미리보기 트리거를 관리합니다.
- * previewVersion이 ContentEntryStore에서 이동됨.
  */
 
+import { DisplayEntry } from '@/types';
 import { create } from 'zustand';
-
-export interface DisplayEntry {
-    id: string;
-    entryId: string;
-    order: number;
-    isVisible: boolean;
-}
 
 interface DisplayEntryStore {
     displayEntries: DisplayEntry[];
+    previewVersion: number; // Display 변경, 엔트리 변경 시 증가
 
-    // 미리보기 업데이트 트리거 (ContentEntryStore에서 이동)
-    // Display 변경, 엔트리 변경 시 증가
-    previewVersion: number;
-
-    // 동기 액션
     setDisplayEntries: (entries: DisplayEntry[]) => void;
-    isInView: (entryId: string) => boolean;
+    isDisplayed: (entryId: string) => boolean;
     getDisplayEntryByEntryId: (entryId: string) => DisplayEntry | undefined;
-
-    // 미리보기 트리거
     triggerPreviewRefresh: () => void;
 
-    // 비동기 액션 (API 연동)
-    addToView: (pageId: string, entryId: string, position?: number) => Promise<void>;
-    removeFromView: (displayEntryId: string) => Promise<void>;
-    removeFromViewByEntryId: (entryId: string) => Promise<void>;
-    reorderView: (displayEntryId: string, newPosition: number) => Promise<void>;
+    addToDisplay: (pageId: string, entryId: string, position?: number) => Promise<void>;
+    removeFromDisplay: (displayEntryId: string) => Promise<void>;
+    removeFromDisplayByEntryId: (entryId: string) => Promise<void>;
+    reorderDisplay: (displayEntryId: string, newPosition: number) => Promise<void>;
     toggleVisibility: (displayEntryId: string) => Promise<void>;
 }
 
@@ -43,7 +29,7 @@ export const useDisplayEntryStore = create<DisplayEntryStore>((set, get) => ({
 
     setDisplayEntries: (entries) => set({ displayEntries: entries }),
 
-    isInView: (entryId) => {
+    isDisplayed: (entryId) => {
         return get().displayEntries.some((entry) => entry.entryId === entryId);
     },
 
@@ -55,7 +41,7 @@ export const useDisplayEntryStore = create<DisplayEntryStore>((set, get) => ({
         set((state) => ({ previewVersion: state.previewVersion + 1 }));
     },
 
-    addToView: async (pageId, entryId, position) => {
+    addToDisplay: async (pageId, entryId, position) => {
         const { displayEntries } = get();
 
         // 이미 View에 있으면 추가하지 않음
@@ -138,7 +124,7 @@ export const useDisplayEntryStore = create<DisplayEntryStore>((set, get) => ({
         }
     },
 
-    removeFromView: async (displayEntryId) => {
+    removeFromDisplay: async (displayEntryId) => {
         const { displayEntries } = get();
         const previousEntries = displayEntries;
 
@@ -183,14 +169,14 @@ export const useDisplayEntryStore = create<DisplayEntryStore>((set, get) => ({
         }
     },
 
-    removeFromViewByEntryId: async (entryId) => {
+    removeFromDisplayByEntryId: async (entryId) => {
         const displayEntry = get().getDisplayEntryByEntryId(entryId);
         if (displayEntry) {
-            await get().removeFromView(displayEntry.id);
+            await get().removeFromDisplay(displayEntry.id);
         }
     },
 
-    reorderView: async (displayEntryId, newPosition) => {
+    reorderDisplay: async (displayEntryId, newPosition) => {
         const { displayEntries } = get();
         const previousEntries = displayEntries;
 

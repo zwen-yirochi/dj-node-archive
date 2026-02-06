@@ -6,7 +6,7 @@ export interface SidebarSectionState {
 }
 
 export type SidebarSections = {
-    view: SidebarSectionState;
+    page: SidebarSectionState;
     events: SidebarSectionState;
     mixsets: SidebarSectionState;
     links: SidebarSectionState;
@@ -16,39 +16,30 @@ export type SectionKey = keyof SidebarSections;
 export type ActivePanel = 'entry' | 'bio' | 'page';
 
 interface UIStore {
-    // 선택 및 편집 상태
     selectedEntryId: string | null;
     activePanel: ActivePanel;
-    /** 새 엔트리 생성 중인지 여부 */
     isCreating: boolean;
+    sidebarSections: SidebarSections; // 사이드바 상태
 
-    // 사이드바 상태
-    sidebarSections: SidebarSections;
-
-    // 선택 및 편집 액션
     selectEntry: (id: string | null) => void;
     setActivePanel: (panel: ActivePanel) => void;
-    /** 생성 모드 시작 (엔트리 선택 + 생성 플래그) */
     startCreating: (entryId: string) => void;
-    /** 생성 완료 (플래그 해제) */
     finishCreating: () => void;
 
-    // 사이드바 액션
     toggleSection: (section: SectionKey) => void;
     setSectionCollapsed: (section: SectionKey, collapsed: boolean) => void;
 }
 
 const initialSidebarSections: SidebarSections = {
-    view: { collapsed: false },
-    events: { collapsed: false },
-    mixsets: { collapsed: false },
-    links: { collapsed: false },
+    page: { collapsed: true },
+    events: { collapsed: true },
+    mixsets: { collapsed: true },
+    links: { collapsed: true },
 };
 
 export const useUIStore = create<UIStore>((set, get) => ({
-    // 초기 상태
-    selectedEntryId: null,
-    activePanel: 'entry',
+    selectedEntryId: 'page',
+    activePanel: 'page',
     isCreating: false,
     sidebarSections: initialSidebarSections,
 
@@ -95,10 +86,6 @@ export const useUIStore = create<UIStore>((set, get) => ({
             },
         })),
 }));
-
-// ============================================
-// Deprecated Aliases (호환성 유지)
-// ============================================
 
 /** @deprecated EditMode is no longer used - inline editing doesn't need separate modes */
 export type EditMode = 'view' | 'edit';
