@@ -37,10 +37,10 @@ interface UIStore {
 }
 
 const initialSidebarSections: SidebarSections = {
-    page: { collapsed: true },
-    events: { collapsed: true },
-    mixsets: { collapsed: true },
-    links: { collapsed: true },
+    page: { collapsed: false },
+    events: { collapsed: false },
+    mixsets: { collapsed: false },
+    links: { collapsed: false },
 };
 
 export const useUIStore = create<UIStore>((set, get) => ({
