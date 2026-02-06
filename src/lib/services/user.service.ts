@@ -4,7 +4,11 @@ import {
     getDisplayEntriesByPageId,
     type DBDisplayEntry,
 } from '@/lib/db/queries/display-entry.queries';
-import { findUserWithPages, findUserWithPagesById } from '@/lib/db/queries/user.queries';
+import {
+    findUserWithPages,
+    findUserWithPagesById,
+    findUserWithPagesByAuthId,
+} from '@/lib/db/queries/user.queries';
 import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers';
 import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry, User } from '@/types/domain';
 import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
@@ -147,44 +151,46 @@ export async function getComponentsByType(username: string): Promise<Result<Comp
     });
 }
 
-// 인증된 사용자 ID로 에디터 데이터 조회
-export const getEditorDataByUserId = cache(async (userId: string): Promise<Result<EditorData>> => {
-    const result = await findUserWithPagesById(userId);
+// 인증된 사용자 Auth ID로 에디터 데이터 조회
+export const getEditorDataByAuthUserId = cache(
+    async (authUserId: string): Promise<Result<EditorData>> => {
+        const result = await findUserWithPagesByAuthId(authUserId);
 
-    if (!isSuccess(result)) {
-        return result;
-    }
+        if (!isSuccess(result)) {
+            return result;
+        }
 
-    const dbData = result.data;
-    const user = mapUserToDomain(dbData);
-    const page = dbData.pages?.[0];
+        const dbData = result.data;
+        const user = mapUserToDomain(dbData);
+        const page = dbData.pages?.[0];
 
-    if (!page) {
+        if (!page) {
+            return success({
+                user,
+                contentEntries: [],
+                pageId: null,
+                displayEntries: [],
+            });
+        }
+
+        const contentEntries = (page.entries || [])
+            .sort((a, b) => a.position - b.position)
+            .map(mapEntryToDomain);
+
+        // DisplayEntry 조회
+        const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
+        const displayEntries = isSuccess(displayEntriesResult)
+            ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
+            : [];
+
         return success({
             user,
-            contentEntries: [],
-            pageId: null,
-            displayEntries: [],
+            contentEntries,
+            pageId: page.id,
+            displayEntries,
         });
     }
-
-    const contentEntries = (page.entries || [])
-        .sort((a, b) => a.position - b.position)
-        .map(mapEntryToDomain);
-
-    // DisplayEntry 조회
-    const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
-    const displayEntries = isSuccess(displayEntriesResult)
-        ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
-        : [];
-
-    return success({
-        user,
-        contentEntries,
-        pageId: page.id,
-        displayEntries,
-    });
-});
+);
 
 // 공개 페이지용 - DisplayEntry 항목만 조회
 export interface PublicPageData {
