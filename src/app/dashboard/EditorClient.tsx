@@ -6,7 +6,7 @@ import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUserStore } from '@/stores/userStore';
 import type { ContentEntry, User } from '@/types';
 import type { DisplayEntry } from '@/types/domain';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import ContentPanel from './components/ContentPanel';
 import PreviewPanel from './components/PreviewPanel';
 import TreeSidebar from './components/TreeSidebar';
@@ -26,6 +26,8 @@ export default function EditorClient({
     pageId,
     username,
 }: EditorClientProps) {
+    const initialized = useRef(false);
+
     // User Store
     const setUser = useUserStore((state) => state.setUser);
 
@@ -38,7 +40,16 @@ export default function EditorClient({
     const setDisplayEntries = useDisplayEntryStore((state) => state.setDisplayEntries);
     const triggerPreviewRefresh = useDisplayEntryStore((state) => state.triggerPreviewRefresh);
 
-    // Zustand 초기화
+    // 동기적 초기화 (첫 렌더 시 즉시 실행)
+    if (!initialized.current) {
+        setUser(initialUser);
+        setEntries(initialEntries);
+        setDisplayEntries(initialDisplayEntries);
+        setPageId(pageId);
+        initialized.current = true;
+    }
+
+    // props 변경 시 업데이트
     useEffect(() => {
         setUser(initialUser);
         setEntries(initialEntries);
