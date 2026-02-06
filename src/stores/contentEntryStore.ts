@@ -32,11 +32,15 @@ interface ContentEntryStore {
         newPosition: number
     ) => Promise<void>;
 
-    // Visibility 관련 액션
-    toggleVisibility: (entryId: string) => Promise<void>;
-    addToDisplay: (entryId: string) => Promise<void>;
-    removeFromDisplay: (entryId: string) => Promise<void>;
-    getVisibleEntries: () => ContentEntry[];
+    // Display 관련 액션 (displayOrder 기반)
+    addToDisplay: (entryId: string) => Promise<void>; // displayOrder 설정
+    removeFromDisplay: (entryId: string) => Promise<void>; // displayOrder = null
+    reorderDisplayEntries: (entryId: string, newIndex: number) => Promise<void>; // Page 내 순서 변경
+    toggleVisibility: (entryId: string) => Promise<void>; // isVisible 토글 (임시 숨김)
+
+    // Getter
+    getDisplayedEntries: () => ContentEntry[]; // displayOrder !== null
+    getVisibleOnPageEntries: () => ContentEntry[]; // displayOrder !== null && isVisible
 }
 
 // Store instance for imperative access
@@ -222,8 +226,10 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
         const { entries } = get();
         const previousEntries = entries;
 
-        const sectionEntries = entries.filter((e) => e.type === type);
-        const otherEntries = entries.filter((e) => e.type !== type);
+        // position 순으로 정렬 후 작업
+        const sectionEntries = entries
+            .filter((e) => e.type === type)
+            .sort((a, b) => a.position - b.position);
 
         const currentIndex = sectionEntries.findIndex((e) => e.id === entryId);
         if (currentIndex === -1) return;
@@ -232,8 +238,25 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
         const [movedEntry] = reorderedSection.splice(currentIndex, 1);
         reorderedSection.splice(newPosition, 0, movedEntry);
 
-        const allEntries = [...otherEntries, ...reorderedSection];
-        set({ entries: allEntries });
+        // 새 position 매핑 생성
+        const positionMap = new Map<string, number>();
+        reorderedSection.forEach((entry, index) => {
+            positionMap.set(entry.id, index);
+        });
+
+        // 전체 entries를 순회하며 해당 타입만 position 업데이트
+        // displayOrder는 변경하지 않음!
+        const updatedEntries = entries.map((entry) => {
+            if (entry.type === type) {
+                const newPos = positionMap.get(entry.id);
+                if (newPos !== undefined) {
+                    return { ...entry, position: newPos };
+                }
+            }
+            return entry;
+        });
+
+        set({ entries: updatedEntries });
 
         try {
             const updates = reorderedSection.map((entry, index) => ({
@@ -258,15 +281,147 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
     },
 
     /**
-     * Visibility 토글
-     * - is_visible 값을 반전
+     * Page에 추가 (displayOrder 설정)
+     */
+    addToDisplay: async (entryId) => {
+        const { entries } = get();
+        const previousEntries = entries;
+        const targetEntry = entries.find((e) => e.id === entryId);
+
+        // 이미 Page에 있으면 무시 (displayOrder가 숫자인 경우)
+        if (!targetEntry || typeof targetEntry.displayOrder === 'number') return;
+
+        // 현재 displayed 엔트리 중 최대 displayOrder 계산
+        const displayedOrders = entries
+            .filter((e) => typeof e.displayOrder === 'number')
+            .map((e) => e.displayOrder!);
+        const maxDisplayOrder = displayedOrders.length > 0 ? Math.max(...displayedOrders) : -1;
+        const newDisplayOrder = maxDisplayOrder + 1;
+
+        // 낙관적 업데이트 + 미리보기 트리거
+        set((state) => ({
+            entries: entries.map((e) =>
+                e.id === entryId ? { ...e, displayOrder: newDisplayOrder, isVisible: true } : e
+            ),
+            previewVersion: state.previewVersion + 1,
+        }));
+
+        try {
+            const response = await fetch(`/api/entries/${entryId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ displayOrder: newDisplayOrder, isVisible: true }),
+            });
+
+            if (!response.ok) {
+                set({ entries: previousEntries });
+                console.error('Display 추가 실패');
+            }
+        } catch (error) {
+            set({ entries: previousEntries });
+            console.error('Display 추가 오류:', error);
+        }
+    },
+
+    /**
+     * Page에서 제거 (displayOrder = null)
+     */
+    removeFromDisplay: async (entryId) => {
+        const { entries } = get();
+        const previousEntries = entries;
+        const targetEntry = entries.find((e) => e.id === entryId);
+
+        // 이미 Page에 없으면 무시 (displayOrder가 숫자가 아닌 경우)
+        if (!targetEntry || typeof targetEntry.displayOrder !== 'number') return;
+
+        // 낙관적 업데이트 + 미리보기 트리거
+        set((state) => ({
+            entries: entries.map((e) => (e.id === entryId ? { ...e, displayOrder: null } : e)),
+            previewVersion: state.previewVersion + 1,
+        }));
+
+        try {
+            const response = await fetch(`/api/entries/${entryId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ displayOrder: null }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Display 제거 실패:', response.status, errorText);
+                set({ entries: previousEntries });
+            }
+        } catch (error) {
+            set({ entries: previousEntries });
+            console.error('Display 제거 오류:', error);
+        }
+    },
+
+    /**
+     * Page 내 순서 변경 (displayOrder 재배치)
+     */
+    reorderDisplayEntries: async (entryId, newIndex) => {
+        const { entries } = get();
+        const previousEntries = entries;
+
+        // displayed 엔트리만 추출하고 displayOrder 순으로 정렬
+        const displayedEntries = entries
+            .filter((e) => typeof e.displayOrder === 'number')
+            .sort((a, b) => a.displayOrder! - b.displayOrder!);
+
+        const currentIndex = displayedEntries.findIndex((e) => e.id === entryId);
+        if (currentIndex === -1) return;
+
+        // 순서 변경
+        const reordered = [...displayedEntries];
+        const [moved] = reordered.splice(currentIndex, 1);
+        reordered.splice(newIndex, 0, moved);
+
+        // 새 displayOrder 할당
+        const updates = reordered.map((entry, index) => ({
+            id: entry.id,
+            displayOrder: index,
+        }));
+
+        // 낙관적 업데이트
+        const updatedEntries = entries.map((e) => {
+            const update = updates.find((u) => u.id === e.id);
+            return update ? { ...e, displayOrder: update.displayOrder } : e;
+        });
+
+        set((state) => ({
+            entries: updatedEntries,
+            previewVersion: state.previewVersion + 1,
+        }));
+
+        try {
+            const response = await fetch('/api/entries/reorder-display', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ updates }),
+            });
+
+            if (!response.ok) {
+                set({ entries: previousEntries });
+                console.error('Display 순서 변경 실패');
+            }
+        } catch (error) {
+            set({ entries: previousEntries });
+            console.error('Display 순서 변경 오류:', error);
+        }
+    },
+
+    /**
+     * Visibility 토글 (Page에 있을 때 임시 숨김/표시)
      */
     toggleVisibility: async (entryId) => {
         const { entries } = get();
         const previousEntries = entries;
         const targetEntry = entries.find((e) => e.id === entryId);
 
-        if (!targetEntry) return;
+        // Page에 없으면 무시 (displayOrder가 숫자가 아닌 경우)
+        if (!targetEntry || typeof targetEntry.displayOrder !== 'number') return;
 
         // 낙관적 업데이트 + 미리보기 트리거
         set((state) => ({
@@ -292,76 +447,21 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
     },
 
     /**
-     * Display에 추가 (is_visible = true)
+     * Page에 표시된 엔트리 목록 (displayOrder가 숫자인 경우만)
      */
-    addToDisplay: async (entryId) => {
-        const { entries } = get();
-        const previousEntries = entries;
-        const targetEntry = entries.find((e) => e.id === entryId);
-
-        if (!targetEntry || targetEntry.isVisible) return; // 이미 visible이면 무시
-
-        // 낙관적 업데이트 + 미리보기 트리거
-        set((state) => ({
-            entries: entries.map((e) => (e.id === entryId ? { ...e, isVisible: true } : e)),
-            previewVersion: state.previewVersion + 1,
-        }));
-
-        try {
-            const response = await fetch(`/api/entries/${entryId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ isVisible: true }),
-            });
-
-            if (!response.ok) {
-                set({ entries: previousEntries });
-                console.error('Display 추가 실패');
-            }
-        } catch (error) {
-            set({ entries: previousEntries });
-            console.error('Display 추가 오류:', error);
-        }
+    getDisplayedEntries: () => {
+        return get()
+            .entries.filter((e) => typeof e.displayOrder === 'number')
+            .sort((a, b) => a.displayOrder! - b.displayOrder!);
     },
 
     /**
-     * Display에서 제거 (is_visible = false)
+     * 공개 페이지에 실제로 보이는 엔트리 (displayOrder가 숫자 && isVisible)
      */
-    removeFromDisplay: async (entryId) => {
-        const { entries } = get();
-        const previousEntries = entries;
-        const targetEntry = entries.find((e) => e.id === entryId);
-
-        if (!targetEntry || !targetEntry.isVisible) return; // 이미 hidden이면 무시
-
-        // 낙관적 업데이트 + 미리보기 트리거
-        set((state) => ({
-            entries: entries.map((e) => (e.id === entryId ? { ...e, isVisible: false } : e)),
-            previewVersion: state.previewVersion + 1,
-        }));
-
-        try {
-            const response = await fetch(`/api/entries/${entryId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ isVisible: false }),
-            });
-
-            if (!response.ok) {
-                set({ entries: previousEntries });
-                console.error('Display 제거 실패');
-            }
-        } catch (error) {
-            set({ entries: previousEntries });
-            console.error('Display 제거 오류:', error);
-        }
-    },
-
-    /**
-     * Visible 엔트리 목록 반환
-     */
-    getVisibleEntries: () => {
-        return get().entries.filter((e) => e.isVisible);
+    getVisibleOnPageEntries: () => {
+        return get()
+            .entries.filter((e) => typeof e.displayOrder === 'number' && e.isVisible)
+            .sort((a, b) => a.displayOrder! - b.displayOrder!);
     },
 }));
 

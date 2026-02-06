@@ -3,9 +3,11 @@
 import {
     createEntry,
     getMaxPosition,
+    getMaxDisplayOrder,
     updateEntry,
     deleteEntry,
     updateEntryPositions,
+    updateDisplayOrders,
 } from '@/lib/db/queries/entry.queries';
 import { createEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
 import { findUserByAuthId } from '@/lib/db/queries/user.queries';
@@ -120,6 +122,8 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
  * Body 옵션:
  * 1. { entry: ContentEntry } - 전체 엔트리 수정
  * 2. { isVisible: boolean } - visibility만 토글
+ * 3. { displayOrder: number | null } - Page에 추가/제거
+ * 4. { displayOrder: number | null, isVisible: boolean } - 둘 다 변경
  */
 export async function handleUpdateEntry(request: Request, { user }: AuthContext, id: string) {
     // 소유권 검증
@@ -129,11 +133,24 @@ export async function handleUpdateEntry(request: Request, { user }: AuthContext,
     }
 
     const body = await request.json();
-    const { entry, isVisible } = body as { entry?: ContentEntry; isVisible?: boolean };
+    const { entry, isVisible, displayOrder } = body as {
+        entry?: ContentEntry;
+        isVisible?: boolean;
+        displayOrder?: number | null;
+    };
 
-    // Case 1: Visibility 토글만
-    if (typeof isVisible === 'boolean') {
-        const result = await updateEntry(id, { is_visible: isVisible });
+    // Case 1: displayOrder 및/또는 isVisible만 변경
+    if (displayOrder !== undefined || typeof isVisible === 'boolean') {
+        const updateData: { is_visible?: boolean; display_order?: number | null } = {};
+
+        if (typeof isVisible === 'boolean') {
+            updateData.is_visible = isVisible;
+        }
+        if (displayOrder !== undefined) {
+            updateData.display_order = displayOrder;
+        }
+
+        const result = await updateEntry(id, updateData);
 
         if (!isSuccess(result)) {
             return result.error.code === 'NOT_FOUND'
@@ -146,7 +163,7 @@ export async function handleUpdateEntry(request: Request, { user }: AuthContext,
 
     // Case 2: 전체 엔트리 수정
     if (!entry) {
-        return validationErrorResponse('entry 또는 isVisible');
+        return validationErrorResponse('entry, isVisible, 또는 displayOrder');
     }
 
     // position은 유지하면서 type과 data만 업데이트
@@ -193,7 +210,7 @@ interface ReorderItem {
 
 /**
  * PATCH /api/entries/reorder (또는 /api/components/reorder)
- * Entry 순서 변경
+ * Entry 순서 변경 (Components 섹션 내)
  */
 export async function handleReorderEntries(request: Request, { user }: AuthContext) {
     const body = await request.json();
@@ -217,4 +234,66 @@ export async function handleReorderEntries(request: Request, { user }: AuthConte
     }
 
     return successResponse(null);
+}
+
+interface DisplayOrderItem {
+    id: string;
+    displayOrder: number | null;
+}
+
+/**
+ * PATCH /api/entries/reorder-display
+ * Page 내 Entry 순서 변경 (display_order)
+ */
+export async function handleReorderDisplayEntries(request: Request, { user }: AuthContext) {
+    const body = await request.json();
+    const { updates } = body as { updates: DisplayOrderItem[] };
+
+    if (!updates || !Array.isArray(updates) || updates.length === 0) {
+        return validationErrorResponse('updates 배열');
+    }
+
+    // 모든 엔트리의 소유권 일괄 검증
+    const entryIds = updates.map((u) => u.id);
+    const ownership = await verifyEntriesOwnership(entryIds, user.id);
+    if (!ownership.ok) {
+        return ownership.reason === 'not_found' ? notFoundResponse('엔트리') : forbiddenResponse();
+    }
+
+    const result = await updateDisplayOrders(
+        updates.map((u) => ({ id: u.id, display_order: u.displayOrder }))
+    );
+
+    if (!isSuccess(result)) {
+        return internalErrorResponse(result.error.message);
+    }
+
+    return successResponse(null);
+}
+
+/**
+ * GET /api/entries/max-display-order?pageId=xxx
+ * 최대 display_order 조회 (Page에 추가할 때 사용)
+ */
+export async function handleGetMaxDisplayOrder(request: Request, { user }: AuthContext) {
+    const { searchParams } = new URL(request.url);
+    const pageId = searchParams.get('pageId');
+
+    if (!pageId) {
+        return validationErrorResponse('pageId');
+    }
+
+    // 페이지 소유권 검증
+    const ownership = await verifyPageOwnership(pageId, user.id);
+    if (!ownership.ok) {
+        return ownership.reason === 'not_found' ? notFoundResponse('페이지') : forbiddenResponse();
+    }
+
+    const result = await getMaxDisplayOrder(pageId);
+
+    if (!isSuccess(result)) {
+        return internalErrorResponse(result.error.message);
+    }
+
+    return successResponse({ maxDisplayOrder: result.data });
 }

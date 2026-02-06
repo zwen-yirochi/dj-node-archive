@@ -4,6 +4,8 @@ export {
     handleUpdateEntry,
     handleDeleteEntry,
     handleReorderEntries,
+    handleReorderDisplayEntries,
+    handleGetMaxDisplayOrder,
 } from './entry.handlers';
 
 // NOTE: display-entry handlers are deprecated.

@@ -54,8 +54,8 @@ export default function TreeItem({
     const selectedEntryId = useUIStore((state) => state.selectedEntryId);
     const selectEntry = useUIStore((state) => state.selectEntry);
 
-    // 상태 계산 - entry.isVisible로 직접 확인
-    const isInView = entry.isVisible;
+    // 상태 계산 - displayOrder가 숫자이면 Page에 있음
+    const isInView = typeof entry.displayOrder === 'number';
     const isValid = canAddToView(entry);
     const status = getTreeItemStatus(isInView, isValid);
     const missingFields = status === 'warning' ? getMissingFieldLabels(entry, 'view') : [];

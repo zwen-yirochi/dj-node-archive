@@ -26,9 +26,13 @@ export default function ViewSection({
         id: 'view-drop-zone',
     });
 
-    // isVisible === true인 엔트리만 position 순으로 정렬
-    const visibleEntries = useMemo(
-        () => entries.filter((e) => e.isVisible).sort((a, b) => a.position - b.position),
+    // displayOrder가 숫자인 엔트리만 displayOrder 순으로 정렬 (Page에 표시된 엔트리)
+    // null과 undefined 모두 제외
+    const displayedEntries = useMemo(
+        () =>
+            entries
+                .filter((e) => typeof e.displayOrder === 'number')
+                .sort((a, b) => a.displayOrder! - b.displayOrder!),
         [entries]
     );
 
@@ -57,15 +61,15 @@ export default function ViewSection({
                 )}
             >
                 <SortableContext
-                    items={visibleEntries.map((entry) => `view-${entry.id}`)}
+                    items={displayedEntries.map((entry) => `view-${entry.id}`)}
                     strategy={verticalListSortingStrategy}
                 >
                     <div className="relative py-0.5">
                         {/* Tree Line - 세로선 */}
-                        {visibleEntries.length > 0 && (
+                        {displayedEntries.length > 0 && (
                             <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
                         )}
-                        {visibleEntries.map((entry) => (
+                        {displayedEntries.map((entry) => (
                             <TreeItem
                                 key={`view-${entry.id}`}
                                 entry={entry}
@@ -76,7 +80,7 @@ export default function ViewSection({
                             />
                         ))}
 
-                        {visibleEntries.length === 0 && (
+                        {displayedEntries.length === 0 && (
                             <p
                                 className={cn(
                                     'px-3 py-2 text-center text-xs text-dashboard-text-placeholder',

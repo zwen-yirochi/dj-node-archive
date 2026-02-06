@@ -121,19 +121,24 @@ function SortableItem({
 }
 
 export default function PageListView() {
-    // Content Entry Store - entries.isVisible로 필터링
+    // Content Entry Store - displayOrder로 필터링
     const entries = useContentEntryStore((state) => state.entries);
     const toggleVisibility = useContentEntryStore((state) => state.toggleVisibility);
     const removeFromDisplay = useContentEntryStore((state) => state.removeFromDisplay);
+    const reorderDisplayEntries = useContentEntryStore((state) => state.reorderDisplayEntries);
 
     // UI Store
     const selectEntry = useUIStore((state) => state.selectEntry);
 
     const [activeId, setActiveId] = useState<string | null>(null);
 
-    // isVisible === true인 엔트리를 position 순으로 정렬
-    const visibleEntries = useMemo(
-        () => entries.filter((e) => e.isVisible).sort((a, b) => a.position - b.position),
+    // displayOrder가 숫자인 엔트리만 displayOrder 순으로 정렬 (Page에 표시된 엔트리)
+    // null과 undefined 모두 제외
+    const displayedEntries = useMemo(
+        () =>
+            entries
+                .filter((e) => typeof e.displayOrder === 'number')
+                .sort((a, b) => a.displayOrder! - b.displayOrder!),
         [entries]
     );
 
@@ -158,13 +163,17 @@ export default function PageListView() {
 
         if (!over || active.id === over.id) return;
 
-        // TODO: View 내 순서 변경 기능 구현 (position 업데이트)
-        // 현재는 미구현
+        // Page 내 순서 변경 (displayOrder 업데이트)
+        const newIndex = displayedEntries.findIndex((e) => e.id === over.id);
+        if (newIndex !== -1) {
+            reorderDisplayEntries(active.id as string, newIndex);
+        }
     };
 
-    const activeEntry = activeId ? visibleEntries.find((e) => e.id === activeId) : null;
+    const activeEntry = activeId ? displayedEntries.find((e) => e.id === activeId) : null;
 
-    const visibleCount = visibleEntries.length;
+    // 실제 공개 표시되는 엔트리 수 (displayOrder !== null && isVisible)
+    const visibleCount = displayedEntries.filter((e) => e.isVisible).length;
 
     return (
         <div className="flex h-full flex-col">
@@ -175,14 +184,14 @@ export default function PageListView() {
                     공개 페이지에 표시될 엔트리를 관리합니다. 드래그하여 순서를 변경하세요.
                 </p>
                 <div className="mt-2 flex items-center gap-4 text-xs text-dashboard-text-muted">
-                    <span>전체 {visibleEntries.length}개</span>
+                    <span>전체 {displayedEntries.length}개</span>
                     <span>공개 {visibleCount}개</span>
                 </div>
             </div>
 
             {/* List */}
             <div className="flex-1 overflow-y-auto p-4">
-                {visibleEntries.length === 0 ? (
+                {displayedEntries.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                         <div className="text-center">
                             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-dashboard-bg-muted">
@@ -204,11 +213,11 @@ export default function PageListView() {
                         onDragEnd={handleDragEnd}
                     >
                         <SortableContext
-                            items={visibleEntries.map((entry) => entry.id)}
+                            items={displayedEntries.map((entry) => entry.id)}
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="space-y-2">
-                                {visibleEntries.map((entry) => (
+                                {displayedEntries.map((entry) => (
                                     <SortableItem
                                         key={entry.id}
                                         id={entry.id}
