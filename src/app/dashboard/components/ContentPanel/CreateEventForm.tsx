@@ -1,12 +1,27 @@
 'use client';
 
+import {
+    EVENT_VALIDATION_RULES,
+    PUBLISH_OPTIONS,
+    type EventFormData,
+    type PublishOption,
+} from '@/app/dashboard/constants/entry';
+import { searchArtists, searchVenues } from '@/app/dashboard/services/search';
 import { Button } from '@/components/ui/button';
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import OptionSelector from '@/components/ui/OptionSelector';
-import SearchableInput, { type SearchOption } from '@/components/ui/SearchableInput';
-import TagSearchInput, { type TagOption } from '@/components/ui/TagSearchInput';
+import SearchableInput from '@/components/ui/SearchableInput';
+import TagSearchInput from '@/components/ui/TagSearchInput';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
@@ -16,93 +31,36 @@ import { useUIStore } from '@/stores/uiStore';
 import type { EventEntry } from '@/types/domain';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
-// 생성 옵션 타입
-type PublishOption = 'publish' | 'private';
-
-const PUBLISH_OPTIONS = [
-    {
-        id: 'publish' as const,
-        label: 'Publish',
-        description: 'Visible to everyone. Requires all fields.',
-    },
-    {
-        id: 'private' as const,
-        label: 'Private',
-        description: 'Only visible to you. Requires title and poster.',
-    },
-];
-
-interface EventFormData {
-    title: string;
-    posterUrl: string;
-    date: string;
-    venue: { id?: string; name: string };
-    lineup: { id?: string; name: string }[];
-    description: string;
-}
-
-const initialFormData: EventFormData = {
-    title: '',
-    posterUrl: '',
-    date: '',
-    venue: { name: '' },
-    lineup: [],
-    description: '',
-};
-
-// API 검색 함수
-async function searchVenues(query: string): Promise<SearchOption[]> {
-    try {
-        const res = await fetch(`/api/venues/search?q=${encodeURIComponent(query)}&limit=10`);
-        if (!res.ok) return [];
-        const json = await res.json();
-        const venues = json.data || [];
-        return venues.map((v: { id: string; name: string; city?: string }) => ({
-            id: v.id,
-            name: v.name,
-            subtitle: v.city || undefined,
-        }));
-    } catch {
-        return [];
-    }
-}
-
-async function searchArtists(query: string): Promise<TagOption[]> {
-    try {
-        const res = await fetch(`/api/artists/search?q=${encodeURIComponent(query)}&type=all`);
-        if (!res.ok) return [];
-        const data = await res.json();
-        // API returns { users: [], artists: [] }
-        const results: TagOption[] = [];
-        if (data.users) {
-            results.push(
-                ...data.users.map((u: { id: string; display_name: string; username: string }) => ({
-                    id: u.id,
-                    name: u.display_name || u.username,
-                    subtitle: 'Platform user',
-                }))
-            );
-        }
-        if (data.artists) {
-            results.push(
-                ...data.artists.map((a: { id: string; name: string }) => ({
-                    id: a.id,
-                    name: a.name,
-                    subtitle: 'Artist reference',
-                }))
-            );
-        }
-        return results;
-    } catch {
-        return [];
-    }
-}
+// 공통 Input 스타일
+const inputClassName =
+    'border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-dashboard-border-hover focus:ring-1';
 
 export default function CreateEventForm() {
-    const [formData, setFormData] = useState<EventFormData>(initialFormData);
+    const form = useForm<EventFormData>({
+        mode: 'onTouched',
+        defaultValues: {
+            title: '',
+            posterUrl: '',
+            date: '',
+            venue: { name: '' },
+            lineup: [],
+            description: '',
+        },
+    });
+
+    const {
+        control,
+        handleSubmit,
+        watch,
+        reset,
+        setError,
+        clearErrors,
+        formState: { errors, isSubmitting },
+    } = form;
+
     const [publishOption, setPublishOption] = useState<PublishOption>('private');
-    const [isSaving, setIsSaving] = useState(false);
 
     // Stores
     const createEntry = useContentEntryStore((state) => state.createEntry);
@@ -111,16 +69,26 @@ export default function CreateEventForm() {
     const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
     const selectEntry = useUIStore((state) => state.selectEntry);
 
+    // watch 최적화: 필요한 필드만 구독
+    const [title, posterUrl, date, venue, lineup, description] = watch([
+        'title',
+        'posterUrl',
+        'date',
+        'venue',
+        'lineup',
+        'description',
+    ]);
+
     // 필수 필드 검증
-    const hasRequiredFields = formData.title.trim() && formData.posterUrl.trim();
+    const hasRequiredFields = title?.trim() && posterUrl?.trim();
 
     // 모든 필드 검증 (Publishing용)
     const hasAllFields =
         hasRequiredFields &&
-        formData.date &&
-        formData.venue.name.trim() &&
-        formData.lineup.length > 0 &&
-        formData.description.trim();
+        date &&
+        venue?.name?.trim() &&
+        lineup?.length > 0 &&
+        description?.trim();
 
     // 생성 버튼 활성화 조건
     const canCreate = hasRequiredFields;
@@ -128,14 +96,16 @@ export default function CreateEventForm() {
     // Publishing 옵션 활성화 조건
     const canPublish = hasAllFields;
 
-    const updateField = <K extends keyof EventFormData>(field: K, value: EventFormData[K]) => {
-        setFormData((prev) => ({ ...prev, [field]: value }));
+    // 취소 핸들러
+    const handleCancel = () => {
+        reset();
+        closeCreatePanel();
     };
 
-    const handleCreate = async () => {
-        if (!canCreate) return;
+    const onSubmit = async (data: EventFormData) => {
+        // 기존 서버 에러 클리어
+        clearErrors('root');
 
-        // Publishing 선택했는데 모든 필드가 안 채워진 경우
         if (publishOption === 'publish' && !canPublish) {
             toast({
                 variant: 'destructive',
@@ -145,15 +115,14 @@ export default function CreateEventForm() {
             return;
         }
 
-        setIsSaving(true);
         try {
             const newEntry = createEmptyEntry('event') as EventEntry;
-            newEntry.title = formData.title.trim();
-            newEntry.posterUrl = formData.posterUrl.trim();
-            newEntry.date = formData.date || new Date().toISOString().split('T')[0];
-            newEntry.venue = formData.venue;
-            newEntry.lineup = formData.lineup;
-            newEntry.description = formData.description.trim();
+            newEntry.title = data.title.trim();
+            newEntry.posterUrl = data.posterUrl.trim();
+            newEntry.date = data.date || new Date().toISOString().split('T')[0];
+            newEntry.venue = data.venue;
+            newEntry.lineup = data.lineup;
+            newEntry.description = data.description.trim();
 
             await createEntry(newEntry);
             finishCreatingEntry(newEntry.id);
@@ -166,134 +135,206 @@ export default function CreateEventForm() {
                 description:
                     publishOption === 'publish' ? 'Event published.' : 'Event saved as private.',
             });
-        } catch {
-            toast({
-                variant: 'destructive',
-                title: 'Creation failed',
-                description: 'An error occurred while creating the event.',
-            });
-        } finally {
-            setIsSaving(false);
+        } catch (error) {
+            // 서버 에러를 폼에 표시
+            const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+
+            // 특정 필드 에러인 경우 해당 필드에 표시
+            if (message.includes('title')) {
+                setError('title', { type: 'server', message });
+            } else if (message.includes('poster')) {
+                setError('posterUrl', { type: 'server', message });
+            } else {
+                // 일반 에러는 root에 설정
+                setError('root', { type: 'server', message });
+                toast({
+                    variant: 'destructive',
+                    title: 'Creation failed',
+                    description: message,
+                });
+            }
         }
     };
 
     return (
-        <div className="space-y-6">
-            {/* Title (Required) */}
-            <div className="space-y-2">
-                <Label htmlFor="event-title" className="text-dashboard-text-secondary">
-                    Title <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                    id="event-title"
-                    value={formData.title}
-                    onChange={(e) => updateField('title', e.target.value)}
-                    placeholder="Enter event title"
-                    autoFocus
-                    className="border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-1 focus:ring-dashboard-border-hover"
-                />
-            </div>
+        <Form {...form}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Root 에러 표시 */}
+                {errors.root && (
+                    <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+                        {errors.root.message}
+                    </div>
+                )}
 
-            {/* Poster Upload (Required) */}
-            <div className="space-y-2">
-                <Label className="text-dashboard-text-secondary">
-                    Poster <span className="text-red-500">*</span>
-                </Label>
-                <ImageUpload
-                    value={formData.posterUrl}
-                    onChange={(url) => updateField('posterUrl', url)}
-                    aspectRatio="poster"
+                {/* Title (Required) */}
+                <FormField
+                    control={control}
+                    name="title"
+                    rules={EVENT_VALIDATION_RULES.title}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-dashboard-text-secondary">
+                                Title <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                                <Input
+                                    {...field}
+                                    placeholder="Enter event title"
+                                    autoFocus
+                                    autoComplete="off"
+                                    className={inputClassName}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-            </div>
 
-            {/* Date */}
-            <div className="space-y-2">
-                <Label htmlFor="event-date" className="text-dashboard-text-secondary">
-                    Date
-                </Label>
-                <Input
-                    id="event-date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => updateField('date', e.target.value)}
-                    className="border-dashboard-border bg-dashboard-bg-muted text-dashboard-text focus:border-dashboard-border-hover focus:ring-1 focus:ring-dashboard-border-hover"
+                {/* Poster Upload (Required) */}
+                <FormField
+                    control={control}
+                    name="posterUrl"
+                    rules={EVENT_VALIDATION_RULES.posterUrl}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-dashboard-text-secondary">
+                                Poster <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                                <ImageUpload
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    aspectRatio="poster"
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-            </div>
 
-            {/* Venue */}
-            <div className="space-y-2">
-                <Label className="text-dashboard-text-secondary">Venue</Label>
-                <SearchableInput
-                    value={formData.venue}
-                    onChange={(venue) => updateField('venue', venue)}
-                    searchFn={searchVenues}
-                    placeholder="Search or enter venue name"
+                {/* Date */}
+                <FormField
+                    control={control}
+                    name="date"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-dashboard-text-secondary">Date</FormLabel>
+                            <FormControl>
+                                <Input {...field} type="date" className={inputClassName} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-            </div>
 
-            {/* Lineup */}
-            <div className="space-y-2">
-                <Label className="text-dashboard-text-secondary">Lineup</Label>
-                <TagSearchInput
-                    value={formData.lineup}
-                    onChange={(lineup) => updateField('lineup', lineup)}
-                    searchFn={searchArtists}
-                    placeholder="Search or add artists"
+                {/* Venue */}
+                <FormField
+                    control={control}
+                    name="venue"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-dashboard-text-secondary">Venue</FormLabel>
+                            <FormControl>
+                                <SearchableInput
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    searchFn={searchVenues}
+                                    placeholder="Search or enter venue name"
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-            </div>
 
-            {/* Description */}
-            <div className="space-y-2">
-                <Label htmlFor="event-description" className="text-dashboard-text-secondary">
-                    Description
-                </Label>
-                <Textarea
-                    id="event-description"
-                    value={formData.description}
-                    onChange={(e) => updateField('description', e.target.value)}
-                    placeholder="Enter event description"
-                    rows={4}
-                    className="resize-none border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-1 focus:ring-dashboard-border-hover"
+                {/* Lineup */}
+                <FormField
+                    control={control}
+                    name="lineup"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-dashboard-text-secondary">Lineup</FormLabel>
+                            <FormControl>
+                                <TagSearchInput
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    searchFn={searchArtists}
+                                    placeholder="Search or add artists"
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-            </div>
 
-            {/* Publish Option */}
-            <div className="space-y-2">
-                <Label className="text-dashboard-text-secondary">Visibility</Label>
-                <OptionSelector
-                    options={PUBLISH_OPTIONS.map((opt) => ({
-                        ...opt,
-                        description:
-                            opt.id === 'publish' && !canPublish
-                                ? 'Fill all fields to enable publishing'
-                                : opt.description,
-                    }))}
-                    value={publishOption}
-                    onChange={(value) => {
-                        if (value === 'publish' && !canPublish) {
-                            toast({
-                                variant: 'destructive',
-                                title: 'Cannot publish',
-                                description: 'All fields must be filled to publish.',
-                            });
-                            return;
-                        }
-                        setPublishOption(value);
-                    }}
+                {/* Description */}
+                <FormField
+                    control={control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-dashboard-text-secondary">
+                                Description
+                            </FormLabel>
+                            <FormControl>
+                                <Textarea
+                                    {...field}
+                                    placeholder="Enter event description"
+                                    rows={4}
+                                    className={`${inputClassName} resize-none`}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
-            </div>
 
-            {/* Create Button */}
-            <div className="flex justify-end pt-4">
-                <Button
-                    onClick={handleCreate}
-                    disabled={!canCreate || isSaving}
-                    className="bg-dashboard-text text-white hover:bg-dashboard-text/90"
-                >
-                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Event
-                </Button>
-            </div>
-        </div>
+                {/* Publish Option */}
+                <div className="space-y-2">
+                    <Label className="text-dashboard-text-secondary">Visibility</Label>
+                    <OptionSelector
+                        options={PUBLISH_OPTIONS.map((opt) => ({
+                            ...opt,
+                            description:
+                                opt.id === 'publish' && !canPublish
+                                    ? 'Fill all fields to enable publishing'
+                                    : opt.description,
+                        }))}
+                        value={publishOption}
+                        onChange={(value) => {
+                            if (value === 'publish' && !canPublish) {
+                                toast({
+                                    variant: 'destructive',
+                                    title: 'Cannot publish',
+                                    description: 'All fields must be filled to publish.',
+                                });
+                                return;
+                            }
+                            setPublishOption(value);
+                        }}
+                    />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-3 pt-4">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={handleCancel}
+                        className="text-dashboard-text-secondary hover:bg-dashboard-bg-muted hover:text-dashboard-text"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        disabled={!canCreate || isSubmitting}
+                        className="bg-dashboard-text text-white hover:bg-dashboard-text/90"
+                    >
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Create Event
+                    </Button>
+                </div>
+            </form>
+        </Form>
     );
 }
