@@ -38,6 +38,9 @@ interface ContentEntryStore {
     reorderDisplayEntries: (entryId: string, newIndex: number) => Promise<void>; // Page 내 순서 변경
     toggleVisibility: (entryId: string) => Promise<void>; // isVisible 토글 (임시 숨김)
 
+    // Setter
+    setDisplayedEntries: (entries: ContentEntry[]) => void; // 초기 displayed entries 설정
+
     // Getter
     getDisplayedEntries: () => ContentEntry[]; // displayOrder !== null
     getVisibleOnPageEntries: () => ContentEntry[]; // displayOrder !== null && isVisible
@@ -52,6 +55,17 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
 
     setEntries: (entries) => set({ entries }),
     setPageId: (pageId) => set({ pageId }),
+
+    setDisplayedEntries: (displayedEntries) => {
+        // displayedEntries를 기존 entries에 병합 (id 기준으로 업데이트)
+        set((state) => {
+            const updatedEntries = state.entries.map((entry) => {
+                const displayed = displayedEntries.find((d) => d.id === entry.id);
+                return displayed ? displayed : entry;
+            });
+            return { entries: updatedEntries };
+        });
+    },
 
     getEntryById: (id) => {
         return get().entries.find((e) => e.id === id);
@@ -469,11 +483,20 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
 export const useContentEntryStore = contentEntryStore;
 
 // Imperative access for initialization
-export const initializeContentEntryStore = (data: { entries: ContentEntry[]; pageId: string }) => {
-    contentEntryStore.setState({
-        entries: data.entries,
-        pageId: data.pageId,
-    });
+export const initializeContentEntryStore = (data: {
+    entries: ContentEntry[];
+    displayedEntries?: ContentEntry[];
+    pageId: string;
+}) => {
+    const { setEntries, setPageId, setDisplayedEntries } = contentEntryStore.getState();
+
+    setEntries(data.entries);
+    setPageId(data.pageId);
+
+    // displayedEntries가 별도로 제공되면 병합
+    if (data.displayedEntries) {
+        setDisplayedEntries(data.displayedEntries);
+    }
 };
 
 // ============================================
