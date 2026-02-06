@@ -31,7 +31,8 @@ interface ContentEntryStore {
     ) => Promise<void>;
 }
 
-export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
+// Store instance for imperative access
+const contentEntryStore = create<ContentEntryStore>((set, get) => ({
     entries: [],
     pageId: null,
     newlyCreatedIds: new Set<string>(),
@@ -243,6 +244,17 @@ export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
         }
     },
 }));
+
+// Hook export (기존 사용처와 호환)
+export const useContentEntryStore = contentEntryStore;
+
+// Imperative access for initialization
+export const initializeContentEntryStore = (data: { entries: ContentEntry[]; pageId: string }) => {
+    contentEntryStore.setState({
+        entries: data.entries,
+        pageId: data.pageId,
+    });
+};
 
 // ============================================
 // Utility Functions
