@@ -2,7 +2,6 @@
 
 import { cn } from '@/lib/utils';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useMemo } from 'react';
@@ -18,27 +17,25 @@ export default function ViewSection({
     isDraggingOver = false,
     isCollapsed = false,
 }: ViewSectionProps) {
-    // Display Entry Store
-    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
-    const toggleVisibility = useDisplayEntryStore((state) => state.toggleVisibility);
-    const removeFromView = useDisplayEntryStore((state) => state.removeFromDisplay);
-
-    // Content Entry Store
+    // Content Entry Store - is_visible 기반으로 직접 필터링
     const entries = useContentEntryStore((state) => state.entries);
+    const toggleVisibility = useContentEntryStore((state) => state.toggleVisibility);
+    const removeFromDisplay = useContentEntryStore((state) => state.removeFromDisplay);
 
     const { setNodeRef, isOver } = useDroppable({
         id: 'view-drop-zone',
     });
 
-    const sortedDisplayEntries = useMemo(
-        () => [...displayEntries].sort((a, b) => a.order - b.order),
-        [displayEntries]
+    // isVisible === true인 엔트리만 position 순으로 정렬
+    const visibleEntries = useMemo(
+        () => entries.filter((e) => e.isVisible).sort((a, b) => a.position - b.position),
+        [entries]
     );
 
     const showDropIndicator = isDraggingOver || isOver;
 
-    const handleDeleteFromView = (displayEntryId: string) => {
-        removeFromView(displayEntryId);
+    const handleRemoveFromView = (entryId: string) => {
+        removeFromDisplay(entryId);
     };
 
     // 드래그 중이면 접힌 상태라도 표시
@@ -60,32 +57,26 @@ export default function ViewSection({
                 )}
             >
                 <SortableContext
-                    items={sortedDisplayEntries.map((item) => item.id)}
+                    items={visibleEntries.map((entry) => `view-${entry.id}`)}
                     strategy={verticalListSortingStrategy}
                 >
                     <div className="relative py-0.5">
                         {/* Tree Line - 세로선 */}
-                        {sortedDisplayEntries.length > 0 && (
+                        {visibleEntries.length > 0 && (
                             <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
                         )}
-                        {sortedDisplayEntries.map((displayEntry) => {
-                            const entry = entries.find((e) => e.id === displayEntry.entryId);
-                            if (!entry) return null;
+                        {visibleEntries.map((entry) => (
+                            <TreeItem
+                                key={`view-${entry.id}`}
+                                entry={entry}
+                                isInViewSection
+                                isVisible={entry.isVisible}
+                                onToggleVisibility={() => toggleVisibility(entry.id)}
+                                onDelete={() => handleRemoveFromView(entry.id)}
+                            />
+                        ))}
 
-                            return (
-                                <TreeItem
-                                    key={displayEntry.id}
-                                    entry={entry}
-                                    isInViewSection
-                                    displayEntryId={displayEntry.id}
-                                    isVisible={displayEntry.isVisible}
-                                    onToggleVisibility={() => toggleVisibility(displayEntry.id)}
-                                    onDelete={() => handleDeleteFromView(displayEntry.id)}
-                                />
-                            );
-                        })}
-
-                        {sortedDisplayEntries.length === 0 && (
+                        {visibleEntries.length === 0 && (
                             <p
                                 className={cn(
                                     'px-3 py-2 text-center text-xs text-dashboard-text-placeholder',

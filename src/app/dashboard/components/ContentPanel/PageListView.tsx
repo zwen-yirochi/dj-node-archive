@@ -3,7 +3,6 @@
 import { COMPONENT_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
 import { cn } from '@/lib/utils';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { ContentEntry } from '@/types';
 import {
@@ -122,23 +121,20 @@ function SortableItem({
 }
 
 export default function PageListView() {
-    // Display Entry Store
-    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
-    const reorderView = useDisplayEntryStore((state) => state.reorderDisplay);
-    const toggleVisibility = useDisplayEntryStore((state) => state.toggleVisibility);
-    const removeFromView = useDisplayEntryStore((state) => state.removeFromDisplay);
-
-    // Content Entry Store
+    // Content Entry Store - entries.isVisible로 필터링
     const entries = useContentEntryStore((state) => state.entries);
+    const toggleVisibility = useContentEntryStore((state) => state.toggleVisibility);
+    const removeFromDisplay = useContentEntryStore((state) => state.removeFromDisplay);
 
     // UI Store
     const selectEntry = useUIStore((state) => state.selectEntry);
 
     const [activeId, setActiveId] = useState<string | null>(null);
 
-    const sortedDisplayEntries = useMemo(
-        () => [...displayEntries].sort((a, b) => a.order - b.order),
-        [displayEntries]
+    // isVisible === true인 엔트리를 position 순으로 정렬
+    const visibleEntries = useMemo(
+        () => entries.filter((e) => e.isVisible).sort((a, b) => a.position - b.position),
+        [entries]
     );
 
     const sensors = useSensors(
@@ -162,16 +158,13 @@ export default function PageListView() {
 
         if (!over || active.id === over.id) return;
 
-        const overIndex = sortedDisplayEntries.findIndex((item) => item.id === over.id);
-        if (overIndex !== -1) {
-            reorderView(active.id as string, overIndex);
-        }
+        // TODO: View 내 순서 변경 기능 구현 (position 업데이트)
+        // 현재는 미구현
     };
 
-    const activeItem = activeId ? sortedDisplayEntries.find((item) => item.id === activeId) : null;
-    const activeEntry = activeItem ? entries.find((e) => e.id === activeItem.entryId) : null;
+    const activeEntry = activeId ? visibleEntries.find((e) => e.id === activeId) : null;
 
-    const visibleCount = displayEntries.filter((item) => item.isVisible).length;
+    const visibleCount = visibleEntries.length;
 
     return (
         <div className="flex h-full flex-col">
@@ -182,14 +175,14 @@ export default function PageListView() {
                     공개 페이지에 표시될 엔트리를 관리합니다. 드래그하여 순서를 변경하세요.
                 </p>
                 <div className="mt-2 flex items-center gap-4 text-xs text-dashboard-text-muted">
-                    <span>전체 {displayEntries.length}개</span>
+                    <span>전체 {visibleEntries.length}개</span>
                     <span>공개 {visibleCount}개</span>
                 </div>
             </div>
 
             {/* List */}
             <div className="flex-1 overflow-y-auto p-4">
-                {sortedDisplayEntries.length === 0 ? (
+                {visibleEntries.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                         <div className="text-center">
                             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-dashboard-bg-muted">
@@ -211,30 +204,21 @@ export default function PageListView() {
                         onDragEnd={handleDragEnd}
                     >
                         <SortableContext
-                            items={sortedDisplayEntries.map((item) => item.id)}
+                            items={visibleEntries.map((entry) => entry.id)}
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="space-y-2">
-                                {sortedDisplayEntries.map((displayEntry) => {
-                                    const entry = entries.find(
-                                        (e) => e.id === displayEntry.entryId
-                                    );
-                                    if (!entry) return null;
-
-                                    return (
-                                        <SortableItem
-                                            key={displayEntry.id}
-                                            id={displayEntry.id}
-                                            entry={entry}
-                                            isVisible={displayEntry.isVisible}
-                                            onToggleVisibility={() =>
-                                                toggleVisibility(displayEntry.id)
-                                            }
-                                            onRemove={() => removeFromView(displayEntry.id)}
-                                            onSelect={() => selectEntry(entry.id)}
-                                        />
-                                    );
-                                })}
+                                {visibleEntries.map((entry) => (
+                                    <SortableItem
+                                        key={entry.id}
+                                        id={entry.id}
+                                        entry={entry}
+                                        isVisible={entry.isVisible}
+                                        onToggleVisibility={() => toggleVisibility(entry.id)}
+                                        onRemove={() => removeFromDisplay(entry.id)}
+                                        onSelect={() => selectEntry(entry.id)}
+                                    />
+                                ))}
                             </div>
                         </SortableContext>
 

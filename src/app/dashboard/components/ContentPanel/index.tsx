@@ -1,7 +1,6 @@
 'use client';
 
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useMemo } from 'react';
 import BioDesignPanel from './BioDesignPanel';
@@ -23,9 +22,7 @@ export default function ContentPanel() {
     const updateEntry = useContentEntryStore((state) => state.updateEntry);
     const deleteEntry = useContentEntryStore((state) => state.deleteEntry);
     const finishCreatingEntry = useContentEntryStore((state) => state.finishCreating);
-
-    // Display Entry Store
-    const triggerPreviewRefresh = useDisplayEntryStore((state) => state.triggerPreviewRefresh);
+    const triggerPreviewRefresh = useContentEntryStore((state) => state.triggerPreviewRefresh);
 
     // useMemo로 선택된 엔트리 찾기
     const selectedEntry = useMemo(() => {

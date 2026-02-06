@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { mapEventToEntry } from '@/lib/mappers';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { DBEventWithVenue } from '@/types/database';
 import { Calendar, Loader2, MapPin, Search } from 'lucide-react';
@@ -28,7 +27,7 @@ export default function EventImportSearch() {
     // Stores
     const createEntry = useContentEntryStore((state) => state.createEntry);
     const finishCreatingEntry = useContentEntryStore((state) => state.finishCreating);
-    const triggerPreviewRefresh = useDisplayEntryStore((state) => state.triggerPreviewRefresh);
+    const triggerPreviewRefresh = useContentEntryStore((state) => state.triggerPreviewRefresh);
     const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
     const selectEntry = useUIStore((state) => state.selectEntry);
 

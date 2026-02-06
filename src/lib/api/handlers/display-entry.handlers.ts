@@ -11,6 +11,7 @@ import {
 import { isSuccess } from '@/types/result';
 import {
     verifyPageOwnership,
+    verifyEntryOwnership,
     verifyDisplayEntryOwnership,
     verifyDisplayEntriesOwnership,
     successResponse,
@@ -54,33 +55,32 @@ export async function handleGetDisplayEntries(request: Request, { user }: AuthCo
  */
 export async function handleCreateDisplayEntry(request: Request, { user }: AuthContext) {
     const body = await request.json();
-    const { pageId, entryId, orderIndex } = body as {
-        pageId: string;
+    const { entryId, orderIndex } = body as {
         entryId: string;
         orderIndex?: number;
     };
 
-    if (!pageId || !entryId) {
-        return validationErrorResponse('pageId와 entryId');
+    if (!entryId) {
+        return validationErrorResponse('entryId');
     }
 
-    // 페이지 소유권 검증
-    const ownership = await verifyPageOwnership(pageId, user.id);
+    // 엔트리 소유권 검증 (entry → page → user)
+    const ownership = await verifyEntryOwnership(entryId, user.id);
     if (!ownership.ok) {
-        return ownership.reason === 'not_found' ? notFoundResponse('페이지') : forbiddenResponse();
+        return ownership.reason === 'not_found' ? notFoundResponse('엔트리') : forbiddenResponse();
     }
 
     // orderIndex가 제공되지 않으면 자동 계산
     let finalOrderIndex = orderIndex;
     if (finalOrderIndex === undefined) {
-        const maxResult = await getMaxDisplayEntryOrderIndex(pageId);
+        const maxResult = await getMaxDisplayEntryOrderIndex(ownership.pageId);
         if (!isSuccess(maxResult)) {
             return internalErrorResponse(maxResult.error.message);
         }
         finalOrderIndex = maxResult.data + 1;
     }
 
-    const result = await addDisplayEntry(pageId, entryId, finalOrderIndex);
+    const result = await addDisplayEntry(entryId, finalOrderIndex);
 
     if (!isSuccess(result)) {
         return internalErrorResponse(result.error.message);

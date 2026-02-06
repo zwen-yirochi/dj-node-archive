@@ -36,13 +36,12 @@ export default async function DashboardPage() {
         throw new Error(result.error.message);
     }
 
-    const { user, contentEntries, pageId, displayEntries } = result.data;
+    const { user, contentEntries, pageId } = result.data;
 
     return (
         <EditorClient
             initialUser={user}
             initialEntries={contentEntries}
-            initialDisplayEntries={displayEntries}
             pageId={pageId as string}
             username={user.username}
         />

@@ -2,10 +2,8 @@
 'use client';
 
 import { initializeContentEntryStore, useContentEntryStore } from '@/stores/contentEntryStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUserStore } from '@/stores/userStore';
 import type { ContentEntry, User } from '@/types';
-import type { DisplayEntry } from '@/types/domain';
 import { useEffect } from 'react';
 import ContentPanel from './components/ContentPanel';
 import PreviewPanel from './components/PreviewPanel';
@@ -14,7 +12,6 @@ import TreeSidebar from './components/TreeSidebar';
 interface EditorClientProps {
     initialUser: User;
     initialEntries: ContentEntry[];
-    initialDisplayEntries?: DisplayEntry[];
     pageId: string;
     username: string;
 }
@@ -22,7 +19,6 @@ interface EditorClientProps {
 export default function EditorClient({
     initialUser,
     initialEntries,
-    initialDisplayEntries = [],
     pageId,
     username,
 }: EditorClientProps) {
@@ -33,21 +29,17 @@ export default function EditorClient({
     if (currentPageId !== pageId) {
         useUserStore.setState({ user: initialUser });
         initializeContentEntryStore({ entries: initialEntries, pageId });
-        useDisplayEntryStore.setState({ displayEntries: initialDisplayEntries });
     }
 
     // Content Entry Store
     const deleteEntryFromStore = useContentEntryStore((state) => state.deleteEntry);
-
-    // Display Entry Store
-    const triggerPreviewRefresh = useDisplayEntryStore((state) => state.triggerPreviewRefresh);
+    const triggerPreviewRefresh = useContentEntryStore((state) => state.triggerPreviewRefresh);
 
     // props 변경 시 업데이트
     useEffect(() => {
         useUserStore.setState({ user: initialUser });
         initializeContentEntryStore({ entries: initialEntries, pageId });
-        useDisplayEntryStore.setState({ displayEntries: initialDisplayEntries });
-    }, [initialUser, initialEntries, initialDisplayEntries, pageId]);
+    }, [initialUser, initialEntries, pageId]);
 
     // 엔트리 삭제 핸들러
     const handleDeleteEntry = async (id: string) => {

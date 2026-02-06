@@ -12,7 +12,6 @@ import OptionSelector from '@/components/ui/OptionSelector';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { type EntryType, useUIStore } from '@/stores/uiStore';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
@@ -31,7 +30,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
     // Stores
     const createEntry = useContentEntryStore((state) => state.createEntry);
     const finishCreatingEntry = useContentEntryStore((state) => state.finishCreating);
-    const triggerPreviewRefresh = useDisplayEntryStore((state) => state.triggerPreviewRefresh);
+    const triggerPreviewRefresh = useContentEntryStore((state) => state.triggerPreviewRefresh);
     const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
     const selectEntry = useUIStore((state) => state.selectEntry);
 

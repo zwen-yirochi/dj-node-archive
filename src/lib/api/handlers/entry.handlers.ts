@@ -7,9 +7,11 @@ import {
     deleteEntry,
     updateEntryPositions,
 } from '@/lib/db/queries/entry.queries';
+import { createEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
+import { findUserByAuthId } from '@/lib/db/queries/user.queries';
 import { mapEntryToDatabase } from '@/lib/mappers';
 import { isSuccess } from '@/types/result';
-import type { ContentEntry } from '@/types/domain';
+import type { ContentEntry, EventEntry } from '@/types/domain';
 import {
     verifyPageOwnership,
     verifyEntryOwnership,
@@ -25,10 +27,21 @@ import type { AuthContext } from '@/lib/api';
 /**
  * POST /api/entries (또는 /api/components)
  * Entry 생성
+ *
+ * publishOption === 'publish' 이고 type === 'event'인 경우:
+ * 1. events 테이블에 이벤트 생성
+ * 2. entries 테이블에 reference_id로 참조하는 엔트리 생성
+ *
+ * 그 외의 경우:
+ * - entries.data에 직접 데이터 저장
  */
 export async function handleCreateEntry(request: Request, { user }: AuthContext) {
     const body = await request.json();
-    const { pageId, entry } = body as { pageId: string; entry: ContentEntry };
+    const { pageId, entry, publishOption } = body as {
+        pageId: string;
+        entry: ContentEntry;
+        publishOption?: 'publish' | 'private';
+    };
 
     if (!pageId || !entry) {
         return validationErrorResponse('pageId와 entry');
@@ -47,25 +60,66 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
     }
 
     const newPosition = maxPositionResult.data + 1;
+    let referenceId: string | null = null;
+
+    // Publish 옵션이고 event 타입인 경우: events 테이블에 먼저 생성
+    if (publishOption === 'publish' && entry.type === 'event') {
+        const eventEntry = entry as EventEntry;
+
+        // user.id는 auth.users.id이므로 users.id로 변환 필요
+        const userResult = await findUserByAuthId(user.id);
+        if (!isSuccess(userResult) || !userResult.data) {
+            return internalErrorResponse('사용자 정보를 찾을 수 없습니다.');
+        }
+        const userId = userResult.data.id;
+
+        const eventResult = await createEvent({
+            title: eventEntry.title,
+            slug: generateEventSlug(eventEntry.title, eventEntry.date),
+            date: eventEntry.date,
+            venue: eventEntry.venue || { name: '' },
+            lineup: eventEntry.lineup || [],
+            data: {
+                poster_url: eventEntry.posterUrl,
+                description: eventEntry.description,
+                links: eventEntry.links,
+            },
+            is_public: true,
+            created_by: userId,
+        });
+
+        if (!isSuccess(eventResult)) {
+            return internalErrorResponse(eventResult.error.message);
+        }
+
+        referenceId = eventResult.data.id;
+    }
+
     const dbEntry = mapEntryToDatabase(entry, newPosition);
 
+    // Option B: 둘 다 유지 - entries.data에 전체 데이터, reference_id는 플래그
     const result = await createEntry(entry.id, {
         page_id: pageId,
         type: dbEntry.type,
         position: dbEntry.position,
-        data: dbEntry.data,
+        reference_id: referenceId,
+        data: dbEntry.data, // 항상 전체 데이터 저장
     });
 
     if (!isSuccess(result)) {
         return internalErrorResponse(result.error.message);
     }
 
-    return successResponse(result.data, 201);
+    return successResponse({ ...result.data, referenceId }, 201);
 }
 
 /**
  * PATCH /api/entries/[id] (또는 /api/components/[id])
  * Entry 수정
+ *
+ * Body 옵션:
+ * 1. { entry: ContentEntry } - 전체 엔트리 수정
+ * 2. { isVisible: boolean } - visibility만 토글
  */
 export async function handleUpdateEntry(request: Request, { user }: AuthContext, id: string) {
     // 소유권 검증
@@ -75,10 +129,24 @@ export async function handleUpdateEntry(request: Request, { user }: AuthContext,
     }
 
     const body = await request.json();
-    const { entry } = body as { entry: ContentEntry };
+    const { entry, isVisible } = body as { entry?: ContentEntry; isVisible?: boolean };
 
+    // Case 1: Visibility 토글만
+    if (typeof isVisible === 'boolean') {
+        const result = await updateEntry(id, { is_visible: isVisible });
+
+        if (!isSuccess(result)) {
+            return result.error.code === 'NOT_FOUND'
+                ? notFoundResponse('엔트리')
+                : internalErrorResponse(result.error.message);
+        }
+
+        return successResponse(result.data);
+    }
+
+    // Case 2: 전체 엔트리 수정
     if (!entry) {
-        return validationErrorResponse('entry');
+        return validationErrorResponse('entry 또는 isVisible');
     }
 
     // position은 유지하면서 type과 data만 업데이트

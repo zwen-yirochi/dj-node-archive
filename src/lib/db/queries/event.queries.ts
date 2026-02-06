@@ -311,6 +311,28 @@ export async function updateEvent(
 // Delete
 // ============================================
 
+// ============================================
+// Helpers
+// ============================================
+
+/**
+ * 이벤트 slug 생성
+ * @example "summer-festival-2024-08-15"
+ */
+export function generateEventSlug(title: string, date: string): string {
+    const dateStr = date.split('T')[0]; // YYYY-MM-DD
+    const slugBase = title
+        .toLowerCase()
+        .replace(/[^a-z0-9가-힣\s]+/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/^-|-$/g, '');
+    return `${slugBase}-${dateStr}-${Date.now().toString(36)}`;
+}
+
+// ============================================
+// Delete
+// ============================================
+
 export async function deleteEvent(eventId: string, userId: string): Promise<Result<void>> {
     try {
         const supabase = await createClient();

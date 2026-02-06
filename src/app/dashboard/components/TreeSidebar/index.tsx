@@ -3,7 +3,6 @@
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/lib/validators';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { ContentEntry } from '@/types';
 import {
@@ -49,11 +48,7 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
     const entries = useContentEntryStore((state) => state.entries);
     const pageId = useContentEntryStore((state) => state.pageId);
     const reorderSectionItems = useContentEntryStore((state) => state.reorderSectionItems);
-
-    // Display Entry Store
-    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
-    const addToView = useDisplayEntryStore((state) => state.addToDisplay);
-    const reorderView = useDisplayEntryStore((state) => state.reorderDisplay);
+    const addToDisplay = useContentEntryStore((state) => state.addToDisplay);
 
     // UI Store
     const activePanel = useUIStore((state) => state.activePanel);
@@ -116,8 +111,8 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
         const activeData = active.data.current;
         const overData = over.data.current;
 
-        // View 드롭존에 드롭한 경우
-        if (over.id === 'view-drop-zone' && activeData?.type === 'entry' && pageId) {
+        // View 드롭존에 드롭한 경우 - is_visible = true로 설정
+        if (over.id === 'view-drop-zone' && activeData?.type === 'entry') {
             const entry = activeData.entry as ContentEntry;
             // 유효성 검사: 필수 필드가 채워진 엔트리만 View에 추가 가능
             if (!canAddToView(entry)) {
@@ -125,18 +120,16 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
                 console.warn('엔트리를 완성해야 Page에 추가할 수 있습니다.');
                 return;
             }
-            addToView(pageId, entry.id);
+            // entries.is_visible = true로 설정
+            addToDisplay(entry.id);
             return;
         }
 
-        // View 섹션 내에서 순서 변경
+        // View 섹션 내에서 순서 변경 (display-entry 타입)
+        // TODO: View 내 순서 변경 기능 구현 (position 업데이트)
         if (activeData?.type === 'display-entry') {
-            if (overData?.type === 'display-entry') {
-                const overIndex = displayEntries.findIndex((item) => item.id === over.id);
-                if (overIndex !== -1) {
-                    reorderView(active.id as string, overIndex);
-                }
-            }
+            // 현재는 position 기반 reorder 미구현
+            // 필요시 reorderViewItems 액션 추가 필요
             return;
         }
 

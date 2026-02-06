@@ -13,14 +13,16 @@ interface ContentEntryStore {
     entries: ContentEntry[];
     pageId: string | null;
     newlyCreatedIds: Set<string>;
+    previewVersion: number; // Display 변경 시 증가
 
     setEntries: (entries: ContentEntry[]) => void;
     setPageId: (pageId: string) => void;
     getEntryById: (id: string) => ContentEntry | undefined;
     isNewlyCreated: (id: string) => boolean;
+    triggerPreviewRefresh: () => void;
 
     // 엔트리 CRUD 액션
-    createEntry: (entry: ContentEntry) => Promise<string>;
+    createEntry: (entry: ContentEntry, publishOption?: 'publish' | 'private') => Promise<string>;
     updateEntry: (entry: ContentEntry) => Promise<{ triggeredPreview: boolean }>;
     deleteEntry: (id: string) => Promise<{ triggeredPreview: boolean }>;
     finishCreating: (id: string) => void;
@@ -29,6 +31,12 @@ interface ContentEntryStore {
         entryId: string,
         newPosition: number
     ) => Promise<void>;
+
+    // Visibility 관련 액션
+    toggleVisibility: (entryId: string) => Promise<void>;
+    addToDisplay: (entryId: string) => Promise<void>;
+    removeFromDisplay: (entryId: string) => Promise<void>;
+    getVisibleEntries: () => ContentEntry[];
 }
 
 // Store instance for imperative access
@@ -36,6 +44,7 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
     entries: [],
     pageId: null,
     newlyCreatedIds: new Set<string>(),
+    previewVersion: 0,
 
     setEntries: (entries) => set({ entries }),
     setPageId: (pageId) => set({ pageId }),
@@ -48,13 +57,17 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
         return get().newlyCreatedIds.has(id);
     },
 
+    triggerPreviewRefresh: () => {
+        set((state) => ({ previewVersion: state.previewVersion + 1 }));
+    },
+
     /**
      * 새 엔트리 생성
      * - DB에 POST
      * - newlyCreatedIds에 추가
      * - 미리보기 트리거 안 함 (생성 중에는 불완전한 상태)
      */
-    createEntry: async (entry) => {
+    createEntry: async (entry, publishOption = 'private') => {
         const { entries, pageId, newlyCreatedIds } = get();
 
         // pageId 검증
@@ -77,7 +90,7 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
             const response = await fetch('/api/entries', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pageId, entry }),
+                body: JSON.stringify({ pageId, entry, publishOption }),
             });
 
             if (!response.ok) {
@@ -242,6 +255,113 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
             set({ entries: previousEntries });
             console.error('엔트리 순서 변경 오류:', error);
         }
+    },
+
+    /**
+     * Visibility 토글
+     * - is_visible 값을 반전
+     */
+    toggleVisibility: async (entryId) => {
+        const { entries } = get();
+        const previousEntries = entries;
+        const targetEntry = entries.find((e) => e.id === entryId);
+
+        if (!targetEntry) return;
+
+        // 낙관적 업데이트 + 미리보기 트리거
+        set((state) => ({
+            entries: entries.map((e) => (e.id === entryId ? { ...e, isVisible: !e.isVisible } : e)),
+            previewVersion: state.previewVersion + 1,
+        }));
+
+        try {
+            const response = await fetch(`/api/entries/${entryId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isVisible: !targetEntry.isVisible }),
+            });
+
+            if (!response.ok) {
+                set({ entries: previousEntries });
+                console.error('Visibility 변경 실패');
+            }
+        } catch (error) {
+            set({ entries: previousEntries });
+            console.error('Visibility 변경 오류:', error);
+        }
+    },
+
+    /**
+     * Display에 추가 (is_visible = true)
+     */
+    addToDisplay: async (entryId) => {
+        const { entries } = get();
+        const previousEntries = entries;
+        const targetEntry = entries.find((e) => e.id === entryId);
+
+        if (!targetEntry || targetEntry.isVisible) return; // 이미 visible이면 무시
+
+        // 낙관적 업데이트 + 미리보기 트리거
+        set((state) => ({
+            entries: entries.map((e) => (e.id === entryId ? { ...e, isVisible: true } : e)),
+            previewVersion: state.previewVersion + 1,
+        }));
+
+        try {
+            const response = await fetch(`/api/entries/${entryId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isVisible: true }),
+            });
+
+            if (!response.ok) {
+                set({ entries: previousEntries });
+                console.error('Display 추가 실패');
+            }
+        } catch (error) {
+            set({ entries: previousEntries });
+            console.error('Display 추가 오류:', error);
+        }
+    },
+
+    /**
+     * Display에서 제거 (is_visible = false)
+     */
+    removeFromDisplay: async (entryId) => {
+        const { entries } = get();
+        const previousEntries = entries;
+        const targetEntry = entries.find((e) => e.id === entryId);
+
+        if (!targetEntry || !targetEntry.isVisible) return; // 이미 hidden이면 무시
+
+        // 낙관적 업데이트 + 미리보기 트리거
+        set((state) => ({
+            entries: entries.map((e) => (e.id === entryId ? { ...e, isVisible: false } : e)),
+            previewVersion: state.previewVersion + 1,
+        }));
+
+        try {
+            const response = await fetch(`/api/entries/${entryId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isVisible: false }),
+            });
+
+            if (!response.ok) {
+                set({ entries: previousEntries });
+                console.error('Display 제거 실패');
+            }
+        } catch (error) {
+            set({ entries: previousEntries });
+            console.error('Display 제거 오류:', error);
+        }
+    },
+
+    /**
+     * Visible 엔트리 목록 반환
+     */
+    getVisibleEntries: () => {
+        return get().entries.filter((e) => e.isVisible);
     },
 }));
 

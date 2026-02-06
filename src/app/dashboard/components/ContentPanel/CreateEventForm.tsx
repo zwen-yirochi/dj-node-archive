@@ -26,7 +26,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { EventEntry } from '@/types/domain';
 import { Loader2 } from 'lucide-react';
@@ -65,7 +64,6 @@ export default function CreateEventForm() {
     // Stores
     const createEntry = useContentEntryStore((state) => state.createEntry);
     const finishCreatingEntry = useContentEntryStore((state) => state.finishCreating);
-    const triggerPreviewRefresh = useDisplayEntryStore((state) => state.triggerPreviewRefresh);
     const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
     const selectEntry = useUIStore((state) => state.selectEntry);
 
@@ -124,9 +122,8 @@ export default function CreateEventForm() {
             newEntry.lineup = data.lineup;
             newEntry.description = data.description.trim();
 
-            await createEntry(newEntry);
+            await createEntry(newEntry, publishOption);
             finishCreatingEntry(newEntry.id);
-            triggerPreviewRefresh();
             closeCreatePanel();
             selectEntry(newEntry.id);
 

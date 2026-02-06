@@ -15,6 +15,7 @@ export interface CreateEntryInput {
     type: EntryType;
     position: number;
     is_visible?: boolean;
+    reference_id?: string | null; // events.id 또는 mixsets.id 참조
     data: EntryData;
 }
 
@@ -35,6 +36,7 @@ export async function createEntry(id: string, input: CreateEntryInput): Promise<
                 type: input.type,
                 position: input.position,
                 is_visible: input.is_visible ?? true,
+                reference_id: input.reference_id ?? null,
                 data: input.data,
             })
             .select()

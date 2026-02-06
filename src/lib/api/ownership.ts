@@ -75,7 +75,7 @@ export async function verifyEntriesOwnership(
 
 /**
  * DisplayEntry의 소유권 검증
- * display_entry → page → user → auth_user_id 확인
+ * display_entry → entry → page → user → auth_user_id 확인
  * @param displayEntryId - DisplayEntry ID
  * @param authUserId - auth.users.id (Supabase Auth ID)
  */
@@ -87,7 +87,7 @@ export async function verifyDisplayEntryOwnership(
 
     const { data, error } = await supabase
         .from('page_view_items')
-        .select('page_id, pages!inner(user_id, users!inner(auth_user_id))')
+        .select('entry_id, entries!inner(page_id, pages!inner(user_id, users!inner(auth_user_id)))')
         .eq('id', displayEntryId)
         .single();
 
@@ -95,12 +95,15 @@ export async function verifyDisplayEntryOwnership(
         return { ok: false, reason: 'not_found' };
     }
 
-    const page = data.pages as unknown as { user_id: string; users: { auth_user_id: string } };
-    if (page.users.auth_user_id !== authUserId) {
+    const entry = data.entries as unknown as {
+        page_id: string;
+        pages: { user_id: string; users: { auth_user_id: string } };
+    };
+    if (entry.pages.users.auth_user_id !== authUserId) {
         return { ok: false, reason: 'forbidden' };
     }
 
-    return { ok: true, pageId: data.page_id };
+    return { ok: true, pageId: entry.page_id };
 }
 
 /**
@@ -116,25 +119,36 @@ export async function verifyDisplayEntriesOwnership(
 
     const { data, error } = await supabase
         .from('page_view_items')
-        .select('id, page_id, pages!inner(user_id, users!inner(auth_user_id))')
+        .select(
+            'id, entry_id, entries!inner(page_id, pages!inner(user_id, users!inner(auth_user_id)))'
+        )
         .in('id', displayEntryIds);
 
     if (error || !data || data.length !== displayEntryIds.length) {
         return { ok: false, reason: 'not_found' };
     }
 
-    const pageIds = new Set(data.map((v) => v.page_id));
+    // entries를 통해 page_id 추출
+    const pageIds = new Set(
+        data.map((v) => {
+            const entry = v.entries as unknown as { page_id: string };
+            return entry.page_id;
+        })
+    );
     if (pageIds.size !== 1) {
         return { ok: false, reason: 'forbidden' };
     }
 
     const firstItem = data[0];
-    const page = firstItem.pages as unknown as { user_id: string; users: { auth_user_id: string } };
-    if (page.users.auth_user_id !== authUserId) {
+    const entry = firstItem.entries as unknown as {
+        page_id: string;
+        pages: { user_id: string; users: { auth_user_id: string } };
+    };
+    if (entry.pages.users.auth_user_id !== authUserId) {
         return { ok: false, reason: 'forbidden' };
     }
 
-    return { ok: true, pageId: firstItem.page_id };
+    return { ok: true, pageId: entry.page_id };
 }
 
 /**

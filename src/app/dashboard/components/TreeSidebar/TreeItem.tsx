@@ -4,7 +4,6 @@ import { COMPONENT_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
 import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 import { cn } from '@/lib/utils';
 import { canAddToView, getMissingFieldLabels, getTreeItemStatus } from '@/lib/validators';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { ContentEntry } from '@/types';
 import type { TreeItemStatus } from '@/types/entryFields';
@@ -15,7 +14,6 @@ import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 
 interface TreeItemProps {
     entry: ContentEntry;
     isInViewSection?: boolean;
-    displayEntryId?: string;
     isVisible?: boolean;
     onToggleVisibility?: () => void;
     onEdit?: () => void;
@@ -47,7 +45,6 @@ function StatusIcon({
 export default function TreeItem({
     entry,
     isInViewSection = false,
-    displayEntryId,
     isVisible = true,
     onToggleVisibility,
     onEdit,
@@ -57,11 +54,8 @@ export default function TreeItem({
     const selectedEntryId = useUIStore((state) => state.selectedEntryId);
     const selectEntry = useUIStore((state) => state.selectEntry);
 
-    // Display Entry Store
-    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
-
-    // 상태 계산
-    const isInView = displayEntries.some((item) => item.entryId === entry.id);
+    // 상태 계산 - entry.isVisible로 직접 확인
+    const isInView = entry.isVisible;
     const isValid = canAddToView(entry);
     const status = getTreeItemStatus(isInView, isValid);
     const missingFields = status === 'warning' ? getMissingFieldLabels(entry, 'view') : [];
@@ -70,12 +64,14 @@ export default function TreeItem({
     const config = COMPONENT_TYPE_CONFIG[entry.type];
     const Icon = config.icon;
 
+    // ViewSection에서는 'view-{id}' 형식의 ID 사용 (SortableContext와 일치)
+    const sortableId = isInViewSection ? `view-${entry.id}` : entry.id;
+
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-        id: isInViewSection ? displayEntryId! : entry.id,
+        id: sortableId,
         data: {
             type: isInViewSection ? 'display-entry' : 'entry',
             entry,
-            displayEntryId,
         },
     });
 
