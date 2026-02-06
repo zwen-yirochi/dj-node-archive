@@ -56,6 +56,12 @@ export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
     createEntry: async (entry) => {
         const { entries, pageId, newlyCreatedIds } = get();
 
+        // pageId 검증
+        if (!pageId) {
+            console.error('createEntry 실패: pageId가 설정되지 않았습니다.');
+            throw new Error('Page ID is not set. Please refresh the page.');
+        }
+
         // 낙관적 업데이트: 엔트리 추가 + newlyCreatedIds에 등록
         const updatedEntries = [...entries, entry];
         const updatedNewlyCreatedIds = new Set(newlyCreatedIds);
