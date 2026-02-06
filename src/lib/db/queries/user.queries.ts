@@ -138,6 +138,106 @@ export async function findUserWithPagesById(userId: string): Promise<Result<User
     }
 }
 
+export async function findUserWithPagesByAuthId(
+    authUserId: string
+): Promise<Result<UserWithPages>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('users')
+            .select(
+                `
+                *,
+                pages (
+                    *,
+                    entries (
+                        id,
+                        type,
+                        position,
+                        is_visible,
+                        data,
+                        created_at,
+                        updated_at
+                    )
+                )
+            `
+            )
+            .eq('auth_user_id', authUserId)
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                return failure(createNotFoundError(`사용자를 찾을 수 없습니다.`, 'user'));
+            }
+            return failure(createDatabaseError(error.message, 'findUserWithPagesByAuthId', error));
+        }
+
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError(
+                '사용자 조회 중 오류가 발생했습니다.',
+                'findUserWithPagesByAuthId',
+                err
+            )
+        );
+    }
+}
+
+export async function findUserByAuthId(authUserId: string): Promise<Result<User | null>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('auth_user_id', authUserId)
+            .maybeSingle();
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'findUserByAuthId', error));
+        }
+
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError('사용자 조회 중 오류가 발생했습니다.', 'findUserByAuthId', err)
+        );
+    }
+}
+
+export async function createUser(userData: {
+    auth_user_id: string;
+    email: string;
+    username: string;
+    display_name: string;
+    avatar_url?: string;
+}): Promise<Result<User>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('users')
+            .insert({
+                auth_user_id: userData.auth_user_id,
+                email: userData.email,
+                username: userData.username,
+                display_name: userData.display_name,
+                avatar_url: userData.avatar_url || '',
+            })
+            .select()
+            .single();
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'createUser', error));
+        }
+
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError('사용자 생성 중 오류가 발생했습니다.', 'createUser', err)
+        );
+    }
+}
+
 export async function updateUser(
     userId: string,
     updates: {

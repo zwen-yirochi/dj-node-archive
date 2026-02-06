@@ -1,6 +1,8 @@
 // app/dashboard/page.tsx
 import { getUser } from '@/app/actions/auth';
-import { getEditorDataByUserId } from '@/lib/services/user.service';
+import { syncUserFromAuth } from '@/lib/api/handlers/auth.handlers';
+import { getEditorDataByAuthUserId } from '@/lib/services/user.service';
+import { isSuccess } from '@/types/result';
 import { notFound, redirect } from 'next/navigation';
 import EditorClient from './EditorClient';
 
@@ -16,7 +18,16 @@ export default async function DashboardPage() {
         redirect('/login');
     }
 
-    const result = await getEditorDataByUserId(authUser.id);
+    let result = await getEditorDataByAuthUserId(authUser.id);
+
+    // 사용자가 없으면 동기화 시도
+    if (!result.success && result.error.code === 'NOT_FOUND') {
+        const syncResult = await syncUserFromAuth(authUser);
+        if (isSuccess(syncResult)) {
+            // 동기화 성공 후 다시 조회
+            result = await getEditorDataByAuthUserId(authUser.id);
+        }
+    }
 
     if (!result.success) {
         if (result.error.code === 'NOT_FOUND') {
