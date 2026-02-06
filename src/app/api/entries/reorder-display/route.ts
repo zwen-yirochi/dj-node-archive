@@ -1,5 +1,5 @@
-// app/api/display-entries/reorder/route.ts
-// DisplayEntry API - 새 경로 (기존: /api/view-items/reorder)
+// app/api/entries/reorder-display/route.ts
+// Page 내 Entry 순서 변경 (display_order)
 import { withAuth } from '@/lib/api';
 import { handleReorderDisplayEntries } from '@/lib/api/handlers';
 

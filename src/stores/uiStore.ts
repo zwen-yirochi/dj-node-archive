@@ -14,27 +14,33 @@ export type SidebarSections = {
 
 export type SectionKey = keyof SidebarSections;
 export type ActivePanel = 'entry' | 'bio' | 'page';
+export type EntryType = 'event' | 'mixset' | 'link';
 
 interface UIStore {
     selectedEntryId: string | null;
     activePanel: ActivePanel;
     isCreating: boolean;
     sidebarSections: SidebarSections; // 사이드바 상태
+    createPanelType: EntryType | null; // 생성 패널 타입 (null이면 닫힘)
 
     selectEntry: (id: string | null) => void;
     setActivePanel: (panel: ActivePanel) => void;
     startCreating: (entryId: string) => void;
     finishCreating: () => void;
 
+    // 생성 패널 액션
+    openCreatePanel: (type: EntryType) => void;
+    closeCreatePanel: () => void;
+
     toggleSection: (section: SectionKey) => void;
     setSectionCollapsed: (section: SectionKey, collapsed: boolean) => void;
 }
 
 const initialSidebarSections: SidebarSections = {
-    page: { collapsed: true },
-    events: { collapsed: true },
-    mixsets: { collapsed: true },
-    links: { collapsed: true },
+    page: { collapsed: false },
+    events: { collapsed: false },
+    mixsets: { collapsed: false },
+    links: { collapsed: false },
 };
 
 export const useUIStore = create<UIStore>((set, get) => ({
@@ -42,6 +48,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
     activePanel: 'page',
     isCreating: false,
     sidebarSections: initialSidebarSections,
+    createPanelType: null,
 
     // 선택 및 편집 액션
     selectEntry: (id) =>
@@ -66,6 +73,17 @@ export const useUIStore = create<UIStore>((set, get) => ({
         }),
 
     finishCreating: () => set({ isCreating: false }),
+
+    // 생성 패널 액션
+    openCreatePanel: (type) =>
+        set({
+            createPanelType: type,
+            selectedEntryId: null,
+            activePanel: 'entry',
+            isCreating: false,
+        }),
+
+    closeCreatePanel: () => set({ createPanelType: null }),
 
     // 사이드바 액션
     toggleSection: (section) =>

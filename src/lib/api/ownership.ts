@@ -7,17 +7,19 @@ type OwnershipResult =
 
 /**
  * 엔트리의 소유권 검증
- * entry → page → user_id 확인
+ * entry → page → user → auth_user_id 확인
+ * @param entryId - 엔트리 ID
+ * @param authUserId - auth.users.id (Supabase Auth ID)
  */
 export async function verifyEntryOwnership(
     entryId: string,
-    userId: string
+    authUserId: string
 ): Promise<OwnershipResult> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('entries')
-        .select('page_id, pages!inner(user_id)')
+        .select('page_id, pages!inner(user_id, users!inner(auth_user_id))')
         .eq('id', entryId)
         .single();
 
@@ -25,8 +27,8 @@ export async function verifyEntryOwnership(
         return { ok: false, reason: 'not_found' };
     }
 
-    const page = data.pages as unknown as { user_id: string };
-    if (page.user_id !== userId) {
+    const page = data.pages as unknown as { user_id: string; users: { auth_user_id: string } };
+    if (page.users.auth_user_id !== authUserId) {
         return { ok: false, reason: 'forbidden' };
     }
 
@@ -35,16 +37,18 @@ export async function verifyEntryOwnership(
 
 /**
  * 여러 엔트리의 소유권 일괄 검증
+ * @param entryIds - 엔트리 ID 배열
+ * @param authUserId - auth.users.id (Supabase Auth ID)
  */
 export async function verifyEntriesOwnership(
     entryIds: string[],
-    userId: string
+    authUserId: string
 ): Promise<OwnershipResult> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('entries')
-        .select('id, page_id, pages!inner(user_id)')
+        .select('id, page_id, pages!inner(user_id, users!inner(auth_user_id))')
         .in('id', entryIds);
 
     if (error || !data || data.length !== entryIds.length) {
@@ -58,8 +62,11 @@ export async function verifyEntriesOwnership(
     }
 
     const firstEntry = data[0];
-    const page = firstEntry.pages as unknown as { user_id: string };
-    if (page.user_id !== userId) {
+    const page = firstEntry.pages as unknown as {
+        user_id: string;
+        users: { auth_user_id: string };
+    };
+    if (page.users.auth_user_id !== authUserId) {
         return { ok: false, reason: 'forbidden' };
     }
 
@@ -68,17 +75,19 @@ export async function verifyEntriesOwnership(
 
 /**
  * DisplayEntry의 소유권 검증
- * display_entry → page → user_id 확인
+ * display_entry → entry → page → user → auth_user_id 확인
+ * @param displayEntryId - DisplayEntry ID
+ * @param authUserId - auth.users.id (Supabase Auth ID)
  */
 export async function verifyDisplayEntryOwnership(
     displayEntryId: string,
-    userId: string
+    authUserId: string
 ): Promise<OwnershipResult> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('page_view_items')
-        .select('page_id, pages!inner(user_id)')
+        .select('entry_id, entries!inner(page_id, pages!inner(user_id, users!inner(auth_user_id)))')
         .eq('id', displayEntryId)
         .single();
 
@@ -86,58 +95,77 @@ export async function verifyDisplayEntryOwnership(
         return { ok: false, reason: 'not_found' };
     }
 
-    const page = data.pages as unknown as { user_id: string };
-    if (page.user_id !== userId) {
+    const entry = data.entries as unknown as {
+        page_id: string;
+        pages: { user_id: string; users: { auth_user_id: string } };
+    };
+    if (entry.pages.users.auth_user_id !== authUserId) {
         return { ok: false, reason: 'forbidden' };
     }
 
-    return { ok: true, pageId: data.page_id };
+    return { ok: true, pageId: entry.page_id };
 }
 
 /**
  * 여러 DisplayEntry의 소유권 일괄 검증
+ * @param displayEntryIds - DisplayEntry ID 배열
+ * @param authUserId - auth.users.id (Supabase Auth ID)
  */
 export async function verifyDisplayEntriesOwnership(
     displayEntryIds: string[],
-    userId: string
+    authUserId: string
 ): Promise<OwnershipResult> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('page_view_items')
-        .select('id, page_id, pages!inner(user_id)')
+        .select(
+            'id, entry_id, entries!inner(page_id, pages!inner(user_id, users!inner(auth_user_id)))'
+        )
         .in('id', displayEntryIds);
 
     if (error || !data || data.length !== displayEntryIds.length) {
         return { ok: false, reason: 'not_found' };
     }
 
-    const pageIds = new Set(data.map((v) => v.page_id));
+    // entries를 통해 page_id 추출
+    const pageIds = new Set(
+        data.map((v) => {
+            const entry = v.entries as unknown as { page_id: string };
+            return entry.page_id;
+        })
+    );
     if (pageIds.size !== 1) {
         return { ok: false, reason: 'forbidden' };
     }
 
     const firstItem = data[0];
-    const page = firstItem.pages as unknown as { user_id: string };
-    if (page.user_id !== userId) {
+    const entry = firstItem.entries as unknown as {
+        page_id: string;
+        pages: { user_id: string; users: { auth_user_id: string } };
+    };
+    if (entry.pages.users.auth_user_id !== authUserId) {
         return { ok: false, reason: 'forbidden' };
     }
 
-    return { ok: true, pageId: firstItem.page_id };
+    return { ok: true, pageId: entry.page_id };
 }
 
 /**
  * 페이지의 소유권 검증
+ * @param pageId - 페이지 ID
+ * @param authUserId - auth.users.id (Supabase Auth ID)
  */
 export async function verifyPageOwnership(
     pageId: string,
-    userId: string
+    authUserId: string
 ): Promise<OwnershipResult> {
     const supabase = await createClient();
 
+    // pages → users 조인하여 auth_user_id로 검증
     const { data, error } = await supabase
         .from('pages')
-        .select('id, user_id')
+        .select('id, user_id, users!inner(auth_user_id)')
         .eq('id', pageId)
         .single();
 
@@ -145,7 +173,8 @@ export async function verifyPageOwnership(
         return { ok: false, reason: 'not_found' };
     }
 
-    if (data.user_id !== userId) {
+    const user = data.users as unknown as { auth_user_id: string };
+    if (user.auth_user_id !== authUserId) {
         return { ok: false, reason: 'forbidden' };
     }
 

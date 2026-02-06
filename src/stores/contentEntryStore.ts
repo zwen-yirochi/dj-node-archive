@@ -13,14 +13,16 @@ interface ContentEntryStore {
     entries: ContentEntry[];
     pageId: string | null;
     newlyCreatedIds: Set<string>;
+    previewVersion: number; // Display 변경 시 증가
 
     setEntries: (entries: ContentEntry[]) => void;
     setPageId: (pageId: string) => void;
     getEntryById: (id: string) => ContentEntry | undefined;
     isNewlyCreated: (id: string) => boolean;
+    triggerPreviewRefresh: () => void;
 
     // 엔트리 CRUD 액션
-    createEntry: (entry: ContentEntry) => Promise<string>;
+    createEntry: (entry: ContentEntry, publishOption?: 'publish' | 'private') => Promise<string>;
     updateEntry: (entry: ContentEntry) => Promise<{ triggeredPreview: boolean }>;
     deleteEntry: (id: string) => Promise<{ triggeredPreview: boolean }>;
     finishCreating: (id: string) => void;
@@ -29,15 +31,41 @@ interface ContentEntryStore {
         entryId: string,
         newPosition: number
     ) => Promise<void>;
+
+    // Display 관련 액션 (displayOrder 기반)
+    addToDisplay: (entryId: string) => Promise<void>; // displayOrder 설정
+    removeFromDisplay: (entryId: string) => Promise<void>; // displayOrder = null
+    reorderDisplayEntries: (entryId: string, newIndex: number) => Promise<void>; // Page 내 순서 변경
+    toggleVisibility: (entryId: string) => Promise<void>; // isVisible 토글 (임시 숨김)
+
+    // Setter
+    setDisplayedEntries: (entries: ContentEntry[]) => void; // 초기 displayed entries 설정
+
+    // Getter
+    getDisplayedEntries: () => ContentEntry[]; // displayOrder !== null
+    getVisibleOnPageEntries: () => ContentEntry[]; // displayOrder !== null && isVisible
 }
 
-export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
+// Store instance for imperative access
+const contentEntryStore = create<ContentEntryStore>((set, get) => ({
     entries: [],
     pageId: null,
     newlyCreatedIds: new Set<string>(),
+    previewVersion: 0,
 
     setEntries: (entries) => set({ entries }),
     setPageId: (pageId) => set({ pageId }),
+
+    setDisplayedEntries: (displayedEntries) => {
+        // displayedEntries를 기존 entries에 병합 (id 기준으로 업데이트)
+        set((state) => {
+            const updatedEntries = state.entries.map((entry) => {
+                const displayed = displayedEntries.find((d) => d.id === entry.id);
+                return displayed ? displayed : entry;
+            });
+            return { entries: updatedEntries };
+        });
+    },
 
     getEntryById: (id) => {
         return get().entries.find((e) => e.id === id);
@@ -47,14 +75,24 @@ export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
         return get().newlyCreatedIds.has(id);
     },
 
+    triggerPreviewRefresh: () => {
+        set((state) => ({ previewVersion: state.previewVersion + 1 }));
+    },
+
     /**
      * 새 엔트리 생성
      * - DB에 POST
      * - newlyCreatedIds에 추가
      * - 미리보기 트리거 안 함 (생성 중에는 불완전한 상태)
      */
-    createEntry: async (entry) => {
+    createEntry: async (entry, publishOption = 'private') => {
         const { entries, pageId, newlyCreatedIds } = get();
+
+        // pageId 검증
+        if (!pageId) {
+            console.error('createEntry 실패: pageId가 설정되지 않았습니다.');
+            throw new Error('Page ID is not set. Please refresh the page.');
+        }
 
         // 낙관적 업데이트: 엔트리 추가 + newlyCreatedIds에 등록
         const updatedEntries = [...entries, entry];
@@ -70,7 +108,7 @@ export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
             const response = await fetch('/api/entries', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pageId, entry }),
+                body: JSON.stringify({ pageId, entry, publishOption }),
             });
 
             if (!response.ok) {
@@ -202,8 +240,10 @@ export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
         const { entries } = get();
         const previousEntries = entries;
 
-        const sectionEntries = entries.filter((e) => e.type === type);
-        const otherEntries = entries.filter((e) => e.type !== type);
+        // position 순으로 정렬 후 작업
+        const sectionEntries = entries
+            .filter((e) => e.type === type)
+            .sort((a, b) => a.position - b.position);
 
         const currentIndex = sectionEntries.findIndex((e) => e.id === entryId);
         if (currentIndex === -1) return;
@@ -212,8 +252,25 @@ export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
         const [movedEntry] = reorderedSection.splice(currentIndex, 1);
         reorderedSection.splice(newPosition, 0, movedEntry);
 
-        const allEntries = [...otherEntries, ...reorderedSection];
-        set({ entries: allEntries });
+        // 새 position 매핑 생성
+        const positionMap = new Map<string, number>();
+        reorderedSection.forEach((entry, index) => {
+            positionMap.set(entry.id, index);
+        });
+
+        // 전체 entries를 순회하며 해당 타입만 position 업데이트
+        // displayOrder는 변경하지 않음!
+        const updatedEntries = entries.map((entry) => {
+            if (entry.type === type) {
+                const newPos = positionMap.get(entry.id);
+                if (newPos !== undefined) {
+                    return { ...entry, position: newPos };
+                }
+            }
+            return entry;
+        });
+
+        set({ entries: updatedEntries });
 
         try {
             const updates = reorderedSection.map((entry, index) => ({
@@ -236,7 +293,211 @@ export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
             console.error('엔트리 순서 변경 오류:', error);
         }
     },
+
+    /**
+     * Page에 추가 (displayOrder 설정)
+     */
+    addToDisplay: async (entryId) => {
+        const { entries } = get();
+        const previousEntries = entries;
+        const targetEntry = entries.find((e) => e.id === entryId);
+
+        // 이미 Page에 있으면 무시 (displayOrder가 숫자인 경우)
+        if (!targetEntry || typeof targetEntry.displayOrder === 'number') return;
+
+        // 현재 displayed 엔트리 중 최대 displayOrder 계산
+        const displayedOrders = entries
+            .filter((e) => typeof e.displayOrder === 'number')
+            .map((e) => e.displayOrder!);
+        const maxDisplayOrder = displayedOrders.length > 0 ? Math.max(...displayedOrders) : -1;
+        const newDisplayOrder = maxDisplayOrder + 1;
+
+        // 낙관적 업데이트 + 미리보기 트리거
+        set((state) => ({
+            entries: entries.map((e) =>
+                e.id === entryId ? { ...e, displayOrder: newDisplayOrder, isVisible: true } : e
+            ),
+            previewVersion: state.previewVersion + 1,
+        }));
+
+        try {
+            const response = await fetch(`/api/entries/${entryId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ displayOrder: newDisplayOrder, isVisible: true }),
+            });
+
+            if (!response.ok) {
+                set({ entries: previousEntries });
+                console.error('Display 추가 실패');
+            }
+        } catch (error) {
+            set({ entries: previousEntries });
+            console.error('Display 추가 오류:', error);
+        }
+    },
+
+    /**
+     * Page에서 제거 (displayOrder = null)
+     */
+    removeFromDisplay: async (entryId) => {
+        const { entries } = get();
+        const previousEntries = entries;
+        const targetEntry = entries.find((e) => e.id === entryId);
+
+        // 이미 Page에 없으면 무시 (displayOrder가 숫자가 아닌 경우)
+        if (!targetEntry || typeof targetEntry.displayOrder !== 'number') return;
+
+        // 낙관적 업데이트 + 미리보기 트리거
+        set((state) => ({
+            entries: entries.map((e) => (e.id === entryId ? { ...e, displayOrder: null } : e)),
+            previewVersion: state.previewVersion + 1,
+        }));
+
+        try {
+            const response = await fetch(`/api/entries/${entryId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ displayOrder: null }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Display 제거 실패:', response.status, errorText);
+                set({ entries: previousEntries });
+            }
+        } catch (error) {
+            set({ entries: previousEntries });
+            console.error('Display 제거 오류:', error);
+        }
+    },
+
+    /**
+     * Page 내 순서 변경 (displayOrder 재배치)
+     */
+    reorderDisplayEntries: async (entryId, newIndex) => {
+        const { entries } = get();
+        const previousEntries = entries;
+
+        // displayed 엔트리만 추출하고 displayOrder 순으로 정렬
+        const displayedEntries = entries
+            .filter((e) => typeof e.displayOrder === 'number')
+            .sort((a, b) => a.displayOrder! - b.displayOrder!);
+
+        const currentIndex = displayedEntries.findIndex((e) => e.id === entryId);
+        if (currentIndex === -1) return;
+
+        // 순서 변경
+        const reordered = [...displayedEntries];
+        const [moved] = reordered.splice(currentIndex, 1);
+        reordered.splice(newIndex, 0, moved);
+
+        // 새 displayOrder 할당
+        const updates = reordered.map((entry, index) => ({
+            id: entry.id,
+            displayOrder: index,
+        }));
+
+        // 낙관적 업데이트
+        const updatedEntries = entries.map((e) => {
+            const update = updates.find((u) => u.id === e.id);
+            return update ? { ...e, displayOrder: update.displayOrder } : e;
+        });
+
+        set((state) => ({
+            entries: updatedEntries,
+            previewVersion: state.previewVersion + 1,
+        }));
+
+        try {
+            const response = await fetch('/api/entries/reorder-display', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ updates }),
+            });
+
+            if (!response.ok) {
+                set({ entries: previousEntries });
+                console.error('Display 순서 변경 실패');
+            }
+        } catch (error) {
+            set({ entries: previousEntries });
+            console.error('Display 순서 변경 오류:', error);
+        }
+    },
+
+    /**
+     * Visibility 토글 (Page에 있을 때 임시 숨김/표시)
+     */
+    toggleVisibility: async (entryId) => {
+        const { entries } = get();
+        const previousEntries = entries;
+        const targetEntry = entries.find((e) => e.id === entryId);
+
+        // Page에 없으면 무시 (displayOrder가 숫자가 아닌 경우)
+        if (!targetEntry || typeof targetEntry.displayOrder !== 'number') return;
+
+        // 낙관적 업데이트 + 미리보기 트리거
+        set((state) => ({
+            entries: entries.map((e) => (e.id === entryId ? { ...e, isVisible: !e.isVisible } : e)),
+            previewVersion: state.previewVersion + 1,
+        }));
+
+        try {
+            const response = await fetch(`/api/entries/${entryId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isVisible: !targetEntry.isVisible }),
+            });
+
+            if (!response.ok) {
+                set({ entries: previousEntries });
+                console.error('Visibility 변경 실패');
+            }
+        } catch (error) {
+            set({ entries: previousEntries });
+            console.error('Visibility 변경 오류:', error);
+        }
+    },
+
+    /**
+     * Page에 표시된 엔트리 목록 (displayOrder가 숫자인 경우만)
+     */
+    getDisplayedEntries: () => {
+        return get()
+            .entries.filter((e) => typeof e.displayOrder === 'number')
+            .sort((a, b) => a.displayOrder! - b.displayOrder!);
+    },
+
+    /**
+     * 공개 페이지에 실제로 보이는 엔트리 (displayOrder가 숫자 && isVisible)
+     */
+    getVisibleOnPageEntries: () => {
+        return get()
+            .entries.filter((e) => typeof e.displayOrder === 'number' && e.isVisible)
+            .sort((a, b) => a.displayOrder! - b.displayOrder!);
+    },
 }));
+
+// Hook export (기존 사용처와 호환)
+export const useContentEntryStore = contentEntryStore;
+
+// Imperative access for initialization
+export const initializeContentEntryStore = (data: {
+    entries: ContentEntry[];
+    displayedEntries?: ContentEntry[];
+    pageId: string;
+}) => {
+    const { setEntries, setPageId, setDisplayedEntries } = contentEntryStore.getState();
+
+    setEntries(data.entries);
+    setPageId(data.pageId);
+
+    // displayedEntries가 별도로 제공되면 병합
+    if (data.displayedEntries) {
+        setDisplayedEntries(data.displayedEntries);
+    }
+};
 
 // ============================================
 // Utility Functions

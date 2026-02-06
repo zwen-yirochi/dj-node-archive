@@ -12,7 +12,6 @@ import {
 // DB 타입 정의
 export interface DBDisplayEntry {
     id: string;
-    page_id: string;
     entry_id: string;
     order_index: number;
     is_visible: boolean;
@@ -20,21 +19,25 @@ export interface DBDisplayEntry {
     updated_at: string;
 }
 
-// 페이지의 DisplayEntry 조회
+// 페이지의 DisplayEntry 조회 (entries 테이블 조인)
 export async function getDisplayEntriesByPageId(pageId: string): Promise<Result<DBDisplayEntry[]>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('page_view_items')
-            .select('*')
-            .eq('page_id', pageId)
+            .select(
+                'id, entry_id, order_index, is_visible, created_at, updated_at, entries!inner(page_id)'
+            )
+            .eq('entries.page_id', pageId)
             .order('order_index', { ascending: true });
 
         if (error) {
             return failure(createDatabaseError(error.message, 'getDisplayEntriesByPageId', error));
         }
 
-        return success(data || []);
+        // entries 조인 결과 제거하고 반환
+        const result = (data || []).map(({ entries, ...item }) => item) as DBDisplayEntry[];
+        return success(result);
     } catch (err) {
         return failure(
             createDatabaseError(
@@ -48,7 +51,6 @@ export async function getDisplayEntriesByPageId(pageId: string): Promise<Result<
 
 // DisplayEntry 추가
 export async function addDisplayEntry(
-    pageId: string,
     entryId: string,
     orderIndex: number
 ): Promise<Result<DBDisplayEntry>> {
@@ -57,7 +59,6 @@ export async function addDisplayEntry(
         const { data, error } = await supabase
             .from('page_view_items')
             .insert({
-                page_id: pageId,
                 entry_id: entryId,
                 order_index: orderIndex,
                 is_visible: true,
@@ -231,14 +232,14 @@ export async function setDisplayEntryVisibility(
     }
 }
 
-// 특정 페이지의 최대 order_index 조회
+// 특정 페이지의 최대 order_index 조회 (entries 조인)
 export async function getMaxDisplayEntryOrderIndex(pageId: string): Promise<Result<number>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('page_view_items')
-            .select('order_index')
-            .eq('page_id', pageId)
+            .select('order_index, entries!inner(page_id)')
+            .eq('entries.page_id', pageId)
             .order('order_index', { ascending: false })
             .limit(1)
             .single();

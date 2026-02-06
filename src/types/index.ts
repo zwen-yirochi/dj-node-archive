@@ -9,7 +9,6 @@ export type {
     // Entries
     ContentEntry,
     ContentEntryType,
-    DisplayEntry,
     Event,
     EventEntry,
     LinkEntry,
@@ -24,6 +23,9 @@ export type {
 
 // Type guards
 export { isEventEntry, isLinkEntry, isMixsetEntry } from './domain';
+
+// Helper functions for display state
+export { isDisplayed, isVisibleOnPage } from './domain';
 
 // Legacy aliases (호환성)
 export {

@@ -1,10 +1,6 @@
 // lib/services/user.service.ts
 // 서버 전용 - 'use server' 없어도 됨 (기본이 서버)
 import {
-    getDisplayEntriesByPageId,
-    type DBDisplayEntry,
-} from '@/lib/db/queries/display-entry.queries';
-import {
     findUserWithPages,
     findUserWithPagesById,
     findUserWithPagesByAuthId,
@@ -13,14 +9,6 @@ import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers';
 import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry, User } from '@/types/domain';
 import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
 import { cache } from 'react';
-
-// DisplayEntry 도메인 타입
-export interface DisplayEntry {
-    id: string;
-    entryId: string;
-    order: number;
-    isVisible: boolean;
-}
 
 // 페이지와 엔트리를 포함한 도메인 타입
 export interface PageWithEntries {
@@ -38,17 +26,6 @@ export interface EditorData {
     user: User;
     contentEntries: ContentEntry[];
     pageId: string | null;
-    displayEntries: DisplayEntry[];
-}
-
-// DB 타입을 도메인 타입으로 변환
-function mapDisplayEntryToDomain(dbItem: DBDisplayEntry): DisplayEntry {
-    return {
-        id: dbItem.id,
-        entryId: dbItem.entry_id,
-        order: dbItem.order_index,
-        isVisible: dbItem.is_visible,
-    };
 }
 
 export interface ComponentsByType {
@@ -67,6 +44,12 @@ export const getUser = cache(async (username: string): Promise<Result<User>> => 
     return success(mapUserToDomain(result.data));
 });
 
+// Helper: pages가 배열 또는 단일 객체일 수 있음
+function getFirstPage<T>(pages: T[] | T | null | undefined): T | undefined {
+    if (!pages) return undefined;
+    return Array.isArray(pages) ? pages[0] : pages;
+}
+
 // React cache로 감싸서 요청당 한 번만 실행
 export const getUserPage = cache(async (username: string): Promise<Result<PageWithEntries>> => {
     const result = await findUserWithPages(username);
@@ -76,11 +59,12 @@ export const getUserPage = cache(async (username: string): Promise<Result<PageWi
     }
 
     const dbData = result.data;
-    if (!dbData.pages?.[0]) {
+    const dbPage = getFirstPage(dbData.pages);
+
+    if (!dbPage) {
         return failure(createNotFoundError(`'${username}'의 페이지를 찾을 수 없습니다.`, 'page'));
     }
 
-    const dbPage = dbData.pages[0];
     const entries = (dbPage.entries || [])
         .sort((a, b) => a.position - b.position)
         .map(mapEntryToDomain);
@@ -106,14 +90,13 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
 
     const dbData = result.data;
     const user = mapUserToDomain(dbData);
-    const page = dbData.pages?.[0];
+    const page = getFirstPage(dbData.pages);
 
     if (!page) {
         return success({
             user,
             contentEntries: [],
             pageId: null,
-            displayEntries: [],
         });
     }
 
@@ -121,17 +104,10 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
         .sort((a, b) => a.position - b.position)
         .map(mapEntryToDomain);
 
-    // DisplayEntry 조회
-    const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
-    const displayEntries = isSuccess(displayEntriesResult)
-        ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
-        : [];
-
     return success({
         user,
         contentEntries,
         pageId: page.id,
-        displayEntries,
     });
 });
 
@@ -162,14 +138,14 @@ export const getEditorDataByAuthUserId = cache(
 
         const dbData = result.data;
         const user = mapUserToDomain(dbData);
-        const page = dbData.pages?.[0];
+
+        const page = getFirstPage(dbData.pages);
 
         if (!page) {
             return success({
                 user,
                 contentEntries: [],
                 pageId: null,
-                displayEntries: [],
             });
         }
 
@@ -177,22 +153,15 @@ export const getEditorDataByAuthUserId = cache(
             .sort((a, b) => a.position - b.position)
             .map(mapEntryToDomain);
 
-        // DisplayEntry 조회
-        const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
-        const displayEntries = isSuccess(displayEntriesResult)
-            ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
-            : [];
-
         return success({
             user,
             contentEntries,
             pageId: page.id,
-            displayEntries,
         });
     }
 );
 
-// 공개 페이지용 - DisplayEntry 항목만 조회
+// 공개 페이지용 - is_visible = true인 엔트리만 조회
 export interface PublicPageData {
     user: User;
     components: ContentEntry[];
@@ -208,7 +177,7 @@ export const getPublicPageData = cache(
 
         const dbData = result.data;
         const user = mapUserToDomain(dbData);
-        const page = dbData.pages?.[0];
+        const page = getFirstPage(dbData.pages);
 
         if (!page) {
             return success({
@@ -217,31 +186,11 @@ export const getPublicPageData = cache(
             });
         }
 
-        // DisplayEntry 조회
-        const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
-
-        if (!isSuccess(displayEntriesResult) || displayEntriesResult.data.length === 0) {
-            // DisplayEntry가 없으면 기존 방식대로 모든 컴포넌트 반환
-            const components = (page.entries || [])
-                .sort((a, b) => a.position - b.position)
-                .map(mapEntryToDomain);
-
-            return success({
-                user,
-                components,
-            });
-        }
-
-        // DisplayEntry가 있으면 해당 컴포넌트만 순서대로 반환
-        const displayEntries = displayEntriesResult.data
-            .filter((item) => item.is_visible)
-            .sort((a, b) => a.order_index - b.order_index);
-
-        const componentMap = new Map((page.entries || []).map((c) => [c.id, mapEntryToDomain(c)]));
-
-        const components = displayEntries
-            .map((item) => componentMap.get(item.entry_id))
-            .filter((c): c is ContentEntry => c !== undefined);
+        // is_visible = true인 엔트리만 position 순으로 반환
+        const components = (page.entries || [])
+            .filter((entry) => entry.is_visible)
+            .sort((a, b) => a.position - b.position)
+            .map(mapEntryToDomain);
 
         return success({
             user,

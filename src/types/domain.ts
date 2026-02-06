@@ -26,12 +26,22 @@ export interface Page {
 // Entry Types (Discriminated Union)
 // ============================================
 
-/** Event Entry - 참조형/자체형 통합 */
-export interface EventEntry {
+/**
+ * Entry 공통 필드
+ * - position: Components 섹션 내 순서
+ * - displayOrder: Page 섹션 내 순서 (null이면 Page에 미표시)
+ * - isVisible: Page에 있을 때 일시적 숨김 여부
+ */
+interface EntryBase {
     id: string;
-    type: 'event';
     position: number;
-    isVisible: boolean;
+    displayOrder: number | null; // null = Page에 미표시
+    isVisible: boolean; // displayOrder가 있을 때만 의미 있음
+}
+
+/** Event Entry - 참조형/자체형 통합 */
+export interface EventEntry extends EntryBase {
+    type: 'event';
 
     // 표시용 데이터
     title: string;
@@ -47,11 +57,8 @@ export interface EventEntry {
 }
 
 /** Mixset Entry */
-export interface MixsetEntry {
-    id: string;
+export interface MixsetEntry extends EntryBase {
     type: 'mixset';
-    position: number;
-    isVisible: boolean;
 
     // 표시용 데이터
     title: string;
@@ -68,11 +75,8 @@ export interface MixsetEntry {
 }
 
 /** Link Entry */
-export interface LinkEntry {
-    id: string;
+export interface LinkEntry extends EntryBase {
     type: 'link';
-    position: number;
-    isVisible: boolean;
 
     title: string;
     url: string;
@@ -83,11 +87,14 @@ export interface LinkEntry {
 export type ContentEntry = EventEntry | MixsetEntry | LinkEntry;
 export type ContentEntryType = ContentEntry['type'];
 
-export interface DisplayEntry {
-    id: string;
-    entryId: string;
-    order: number;
-    isVisible: boolean;
+/** Entry가 Page에 표시되는지 여부 (displayOrder가 숫자면 표시) */
+export function isDisplayed(entry: ContentEntry): boolean {
+    return typeof entry.displayOrder === 'number';
+}
+
+/** Entry가 공개 페이지에 실제로 보이는지 (displayOrder가 숫자이고 isVisible이면 보임) */
+export function isVisibleOnPage(entry: ContentEntry): boolean {
+    return typeof entry.displayOrder === 'number' && entry.isVisible;
 }
 
 // ============================================

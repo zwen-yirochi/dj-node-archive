@@ -1,4 +1,4 @@
-import { COMPONENT_FIELDS, type EntryType } from '@/constants/entries/entryFields';
+import { COMPONENT_FIELDS, type EntryType } from '@/app/dashboard/constants/entryFields';
 import type { ContentEntry } from '@/types';
 import type { FieldConfig, TreeItemStatus, ValidationResult } from '@/types/entryFields';
 
@@ -102,11 +102,9 @@ export function validateEntry(
 
     const errors: string[] = [];
     const missingFields: string[] = [];
-
     for (const field of requiredFields) {
         const value = (entry as unknown as Record<string, unknown>)[field.key];
         const isValid = validateFieldValue(value, field);
-
         if (!isValid) {
             missingFields.push(field.key);
             if (field.isUrl && value && typeof value === 'string' && value.trim()) {
@@ -162,27 +160,6 @@ export function canAddToView(entry: ContentEntry): boolean {
 // ============================================
 // UI 헬퍼 함수
 // ============================================
-
-/**
- * 엔트리 완성도 계산 (0-100%)
- * Page 사용 가능 기준으로 계산
- */
-export function getCompletionPercentage(entry: ContentEntry): number {
-    const type = entry.type as EntryType;
-    const requiredFields = getRequiredFields(type, 'view');
-
-    if (requiredFields.length === 0) return 100;
-
-    let filledCount = 0;
-    for (const field of requiredFields) {
-        const value = (entry as unknown as Record<string, unknown>)[field.key];
-        if (validateFieldValue(value, field)) {
-            filledCount++;
-        }
-    }
-
-    return Math.round((filledCount / requiredFields.length) * 100);
-}
 
 /**
  * 누락된 필드 목록과 라벨 반환

@@ -46,6 +46,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
     const base = {
         id: dbEntry.id,
         position: dbEntry.position,
+        displayOrder: dbEntry.display_order,
         isVisible: dbEntry.is_visible,
     };
 
@@ -145,6 +146,7 @@ export function mapEntryToDatabase(
                 return {
                     type: 'event',
                     position,
+                    display_order: entry.displayOrder,
                     is_visible: entry.isVisible,
                     data: {
                         event_id: eventEntry.eventId,
@@ -157,6 +159,7 @@ export function mapEntryToDatabase(
             return {
                 type: 'event',
                 position,
+                display_order: entry.displayOrder,
                 is_visible: entry.isVisible,
                 data: {
                     title: eventEntry.title,
@@ -182,6 +185,7 @@ export function mapEntryToDatabase(
                 return {
                     type: 'mixset',
                     position,
+                    display_order: entry.displayOrder,
                     is_visible: entry.isVisible,
                     data: {
                         mixset_id: mixsetEntry.mixsetId,
@@ -193,6 +197,7 @@ export function mapEntryToDatabase(
             return {
                 type: 'mixset',
                 position,
+                display_order: entry.displayOrder,
                 is_visible: entry.isVisible,
                 data: {
                     title: mixsetEntry.title,
@@ -212,6 +217,7 @@ export function mapEntryToDatabase(
             return {
                 type: 'link',
                 position,
+                display_order: entry.displayOrder,
                 is_visible: entry.isVisible,
                 data: {
                     title: linkEntry.title,
@@ -252,6 +258,7 @@ export function mapEventToEntry(dbEvent: DBEvent): EventEntry {
         id: uuidv4(),
         type: 'event',
         position: 0,
+        displayOrder: null, // Page에 미표시
         isVisible: true,
         eventId: dbEvent.id,
         title: dbEvent.title || '',
@@ -334,6 +341,7 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntr
                 id,
                 type: 'event',
                 position: 0,
+                displayOrder: null, // Page에 미표시
                 isVisible: true,
                 title: '',
                 date: new Date().toISOString().split('T')[0],
@@ -349,6 +357,7 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntr
                 id,
                 type: 'mixset',
                 position: 0,
+                displayOrder: null, // Page에 미표시
                 isVisible: true,
                 title: '',
                 tracklist: [],
@@ -364,6 +373,7 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntr
                 id,
                 type: 'link',
                 position: 0,
+                displayOrder: null, // Page에 미표시
                 isVisible: true,
                 title: '',
                 url: '',

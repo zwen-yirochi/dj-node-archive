@@ -1,16 +1,10 @@
 // app/dashboard/EditorClient.tsx
 'use client';
 
-import { createEmptyEntry, mapEventToEntry } from '@/lib/mappers';
-import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
-import { useUIStore } from '@/stores/uiStore';
+import { initializeContentEntryStore, useContentEntryStore } from '@/stores/contentEntryStore';
 import { useUserStore } from '@/stores/userStore';
 import type { ContentEntry, User } from '@/types';
-import type { DBEventWithVenue } from '@/types/database';
-import type { DisplayEntry } from '@/types/domain';
-import { useEffect, useState } from 'react';
-import { AddComponentModal } from './components/AddComponentModal';
+import { useEffect } from 'react';
 import ContentPanel from './components/ContentPanel';
 import PreviewPanel from './components/PreviewPanel';
 import TreeSidebar from './components/TreeSidebar';
@@ -18,7 +12,6 @@ import TreeSidebar from './components/TreeSidebar';
 interface EditorClientProps {
     initialUser: User;
     initialEntries: ContentEntry[];
-    initialDisplayEntries?: DisplayEntry[];
     pageId: string;
     username: string;
 }
@@ -26,71 +19,27 @@ interface EditorClientProps {
 export default function EditorClient({
     initialUser,
     initialEntries,
-    initialDisplayEntries = [],
     pageId,
     username,
 }: EditorClientProps) {
-    // User Store
-    const setUser = useUserStore((state) => state.setUser);
+    // Store 상태 직접 확인 (hook 사용 안 함)
+    const currentPageId = useContentEntryStore.getState().pageId;
+
+    // pageId가 없거나 다르면 초기화
+    if (currentPageId !== pageId) {
+        useUserStore.setState({ user: initialUser });
+        initializeContentEntryStore({ entries: initialEntries, pageId });
+    }
 
     // Content Entry Store
-    const setEntries = useContentEntryStore((state) => state.setEntries);
-    const setPageId = useContentEntryStore((state) => state.setPageId);
-    const createEntry = useContentEntryStore((state) => state.createEntry);
-    const finishCreating = useContentEntryStore((state) => state.finishCreating);
     const deleteEntryFromStore = useContentEntryStore((state) => state.deleteEntry);
+    const triggerPreviewRefresh = useContentEntryStore((state) => state.triggerPreviewRefresh);
 
-    // Display Entry Store
-    const setDisplayEntries = useDisplayEntryStore((state) => state.setDisplayEntries);
-    const triggerPreviewRefresh = useDisplayEntryStore((state) => state.triggerPreviewRefresh);
-
-    // UI Store
-    const selectEntry = useUIStore((state) => state.selectEntry);
-    const startCreating = useUIStore((state) => state.startCreating);
-
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [_addingType, setAddingType] = useState<'event' | 'mixset' | 'link'>('event');
-
-    // Zustand 초기화
+    // props 변경 시 업데이트
     useEffect(() => {
-        setUser(initialUser);
-        setEntries(initialEntries);
-        setDisplayEntries(initialDisplayEntries);
-        setPageId(pageId);
-    }, [
-        initialUser,
-        initialEntries,
-        initialDisplayEntries,
-        pageId,
-        setUser,
-        setEntries,
-        setDisplayEntries,
-        setPageId,
-    ]);
-
-    // 엔트리 추가 핸들러
-    const handleAddEntry = async (
-        type: 'event' | 'mixset' | 'link',
-        eventData?: DBEventWithVenue
-    ) => {
-        setIsAddModalOpen(false);
-
-        if (eventData) {
-            // 이벤트 데이터가 있으면 변환하여 바로 저장 (이미 완성된 데이터)
-            const newEntry = mapEventToEntry(eventData);
-            await createEntry(newEntry);
-            // 완성된 데이터이므로 바로 생성 완료 처리 + 미리보기 트리거
-            finishCreating(newEntry.id);
-            triggerPreviewRefresh();
-            selectEntry(newEntry.id);
-        } else {
-            // 빈 엔트리 생성 후 즉시 DB에 저장 → 생성 모드 진입
-            // createEntry는 newlyCreatedIds에 자동 추가
-            const newEntry = createEmptyEntry(type);
-            await createEntry(newEntry);
-            startCreating(newEntry.id);
-        }
-    };
+        useUserStore.setState({ user: initialUser });
+        initializeContentEntryStore({ entries: initialEntries, pageId });
+    }, [initialUser, initialEntries, pageId]);
 
     // 엔트리 삭제 핸들러
     const handleDeleteEntry = async (id: string) => {
@@ -98,21 +47,11 @@ export default function EditorClient({
         if (triggeredPreview) triggerPreviewRefresh();
     };
 
-    // Add 버튼 클릭 핸들러
-    const handleOpenAddModal = (type: 'event' | 'mixset' | 'link') => {
-        setAddingType(type);
-        setIsAddModalOpen(true);
-    };
-
     return (
         <div className="flex h-screen overflow-hidden">
             {/* TreeSidebar - 왼쪽 */}
             <div className="p-3">
-                <TreeSidebar
-                    onAddEntry={handleOpenAddModal}
-                    onDeleteEntry={handleDeleteEntry}
-                    username={username}
-                />
+                <TreeSidebar onDeleteEntry={handleDeleteEntry} username={username} />
             </div>
 
             {/* Main Content Area */}
@@ -127,13 +66,6 @@ export default function EditorClient({
                     <PreviewPanel />
                 </aside>
             </div>
-
-            {/* Add Component Modal */}
-            <AddComponentModal
-                open={isAddModalOpen}
-                onOpenChange={setIsAddModalOpen}
-                onAddComponent={handleAddEntry}
-            />
         </div>
     );
 }

@@ -3,7 +3,6 @@
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/lib/validators';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { ContentEntry } from '@/types';
 import {
@@ -40,21 +39,17 @@ import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
 
 interface TreeSidebarProps {
-    onAddEntry: (type: 'event' | 'mixset' | 'link') => void;
     onDeleteEntry?: (id: string) => void;
     username: string;
 }
 
-export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: TreeSidebarProps) {
+export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProps) {
     // Content Entry Store
     const entries = useContentEntryStore((state) => state.entries);
     const pageId = useContentEntryStore((state) => state.pageId);
     const reorderSectionItems = useContentEntryStore((state) => state.reorderSectionItems);
-
-    // Display Entry Store
-    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
-    const addToView = useDisplayEntryStore((state) => state.addToDisplay);
-    const reorderView = useDisplayEntryStore((state) => state.reorderDisplay);
+    const addToDisplay = useContentEntryStore((state) => state.addToDisplay);
+    const reorderDisplayEntries = useContentEntryStore((state) => state.reorderDisplayEntries);
 
     // UI Store
     const activePanel = useUIStore((state) => state.activePanel);
@@ -65,10 +60,19 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
     // Page 섹션 접힘 상태
     const isPageCollapsed = sidebarSections.page.collapsed;
 
-    // useMemo로 필터링하여 무한 루프 방지
-    const events = useMemo(() => entries.filter((e) => e.type === 'event'), [entries]);
-    const mixsets = useMemo(() => entries.filter((e) => e.type === 'mixset'), [entries]);
-    const links = useMemo(() => entries.filter((e) => e.type === 'link'), [entries]);
+    // useMemo로 필터링 + position 순 정렬
+    const events = useMemo(
+        () => entries.filter((e) => e.type === 'event').sort((a, b) => a.position - b.position),
+        [entries]
+    );
+    const mixsets = useMemo(
+        () => entries.filter((e) => e.type === 'mixset').sort((a, b) => a.position - b.position),
+        [entries]
+    );
+    const links = useMemo(
+        () => entries.filter((e) => e.type === 'link').sort((a, b) => a.position - b.position),
+        [entries]
+    );
 
     const [activeItem, setActiveItem] = useState<{
         entry: ContentEntry;
@@ -117,8 +121,8 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
         const activeData = active.data.current;
         const overData = over.data.current;
 
-        // View 드롭존에 드롭한 경우
-        if (over.id === 'view-drop-zone' && activeData?.type === 'entry' && pageId) {
+        // View 드롭존에 드롭한 경우 - is_visible = true로 설정
+        if (over.id === 'view-drop-zone' && activeData?.type === 'entry') {
             const entry = activeData.entry as ContentEntry;
             // 유효성 검사: 필수 필드가 채워진 엔트리만 View에 추가 가능
             if (!canAddToView(entry)) {
@@ -126,17 +130,26 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
                 console.warn('엔트리를 완성해야 Page에 추가할 수 있습니다.');
                 return;
             }
-            addToView(pageId, entry.id);
+            // entries.is_visible = true로 설정
+            addToDisplay(entry.id);
             return;
         }
 
-        // View 섹션 내에서 순서 변경
-        if (activeData?.type === 'display-entry') {
-            if (overData?.type === 'display-entry') {
-                const overIndex = displayEntries.findIndex((item) => item.id === over.id);
-                if (overIndex !== -1) {
-                    reorderView(active.id as string, overIndex);
-                }
+        // View 섹션 내에서 순서 변경 (display-entry 타입)
+        if (activeData?.type === 'display-entry' && overData?.type === 'display-entry') {
+            const activeEntry = activeData.entry as ContentEntry;
+
+            // 현재 displayOrder가 숫자인 엔트리들 정렬
+            const displayedEntries = entries
+                .filter((e) => typeof e.displayOrder === 'number')
+                .sort((a, b) => a.displayOrder! - b.displayOrder!);
+
+            // over 엔트리의 인덱스 찾기 (view- 접두사 제거)
+            const overId = String(over.id).replace('view-', '');
+            const newIndex = displayedEntries.findIndex((e) => e.id === overId);
+
+            if (newIndex !== -1 && active.id !== over.id) {
+                reorderDisplayEntries(activeEntry.id, newIndex);
             }
             return;
         }
@@ -267,7 +280,7 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
                         title="Events"
                         icon={<Calendar className="h-4 w-4" />}
                         count={events.length}
-                        onAdd={() => onAddEntry('event')}
+                        entryType="event"
                     >
                         <SortableContext
                             items={events.map((e) => e.id)}
@@ -291,7 +304,7 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
                         title="Mixsets"
                         icon={<Headphones className="h-4 w-4" />}
                         count={mixsets.length}
-                        onAdd={() => onAddEntry('mixset')}
+                        entryType="mixset"
                     >
                         <SortableContext
                             items={mixsets.map((e) => e.id)}
@@ -315,7 +328,7 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
                         title="Links"
                         icon={<LinkIcon className="h-4 w-4" />}
                         count={links.length}
-                        onAdd={() => onAddEntry('link')}
+                        entryType="link"
                     >
                         <SortableContext
                             items={links.map((e) => e.id)}
