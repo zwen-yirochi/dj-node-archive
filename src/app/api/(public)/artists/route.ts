@@ -15,20 +15,18 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { name, instagram, ra_url } = body;
+        const { name, slug, instagram, soundcloud } = body;
 
         if (!name || typeof name !== 'string' || name.trim().length === 0) {
             return NextResponse.json({ error: '아티스트 이름이 필요합니다' }, { status: 400 });
         }
 
-        const result = await createArtist(
-            {
-                name: name.trim(),
-                instagram: instagram?.trim(),
-                ra_url: ra_url?.trim(),
-            },
-            user.id
-        );
+        const result = await createArtist({
+            name: name.trim(),
+            slug: slug,
+            instagram: instagram?.trim(),
+            soundcloud: soundcloud?.trim(),
+        });
 
         if (!result.success) {
             return NextResponse.json({ error: result.error }, { status: 500 });

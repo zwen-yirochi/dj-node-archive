@@ -62,7 +62,7 @@ export async function POST(request: Request) {
             instagram: instagram?.trim() || undefined,
             website: website?.trim() || undefined,
             google_maps_url: google_maps_url?.trim() || undefined,
-            created_by: user.id,
+            claimed_by: user.id,
         });
 
         if (!isSuccess(result)) {

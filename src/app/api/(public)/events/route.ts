@@ -1,34 +1,36 @@
 // app/api/events/route.ts
-import { createEvent, findEventsByUserId } from '@/lib/db/queries/event.queries';
-import { isSuccess } from '@/types/result';
 import {
-    withAuth,
-    withOptionalAuth,
+    internalErrorResponse,
     successResponse,
     validationErrorResponse,
-    internalErrorResponse,
+    withAuth,
+    withOptionalAuth,
 } from '@/lib/api';
+import { createEvent, findEventsByUserId } from '@/lib/db/queries/event.queries';
+import { isSuccess } from '@/types/result';
 
 // POST /api/events - 이벤트 생성
-export const POST = withAuth(async (request, { user }) => {
+export const POST = withAuth(async (request) => {
     const body = await request.json();
-    const { venue_ref_id, title, date, data } = body;
+    const { title, slug, date, venue, lineup, data, is_public, created_by } = body;
 
     // 필수 필드 검증
-    if (!venue_ref_id) {
+    if (!venue) {
         return validationErrorResponse('베뉴');
     }
 
     if (!date) {
         return validationErrorResponse('날짜');
     }
-
     const result = await createEvent({
-        user_id: user.id,
-        venue_ref_id,
         title: title?.trim() || undefined,
+        slug,
         date,
+        venue,
+        lineup,
         data: data || {},
+        is_public,
+        created_by,
     });
 
     if (!isSuccess(result)) {
