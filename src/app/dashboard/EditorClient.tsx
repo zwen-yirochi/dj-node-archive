@@ -1,7 +1,7 @@
 // app/dashboard/EditorClient.tsx
 'use client';
 
-import { createEmptyEntry, eventToEntry } from '@/lib/transformers';
+import { createEmptyEntry, mapEventToEntry } from '@/lib/mappers';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
 import type { DisplayEntry } from '@/stores/displayEntryStore';
 import { useDisplayEntryStore } from '@/stores/displayEntryStore';
@@ -77,7 +77,7 @@ export default function EditorClient({
 
         if (eventData) {
             // 이벤트 데이터가 있으면 변환하여 바로 저장 (이미 완성된 데이터)
-            const newEntry = eventToEntry(eventData);
+            const newEntry = mapEventToEntry(eventData);
             await createEntry(newEntry);
             // 완성된 데이터이므로 바로 생성 완료 처리 + 미리보기 트리거
             finishCreating(newEntry.id);

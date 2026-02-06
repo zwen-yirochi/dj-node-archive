@@ -7,7 +7,7 @@ import {
     deleteEntry,
     updateEntryPositions,
 } from '@/lib/db/queries/entry.queries';
-import { mapEntryToDatabase } from '@/lib/mappers/user.mapper';
+import { mapEntryToDatabase } from '@/lib/mappers';
 import { isSuccess } from '@/types/result';
 import type { ContentEntry } from '@/types/domain';
 import {

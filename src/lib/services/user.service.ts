@@ -5,7 +5,7 @@ import {
     type DBDisplayEntry,
 } from '@/lib/db/queries/display-entry.queries';
 import { findUserWithPages, findUserWithPagesById } from '@/lib/db/queries/user.queries';
-import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers/user.mapper';
+import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers';
 import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry, Page, User } from '@/types/domain';
 import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
 import { cache } from 'react';
