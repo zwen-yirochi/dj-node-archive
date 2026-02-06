@@ -67,6 +67,12 @@ export const getUser = cache(async (username: string): Promise<Result<User>> => 
     return success(mapUserToDomain(result.data));
 });
 
+// Helper: pages가 배열 또는 단일 객체일 수 있음
+function getFirstPage<T>(pages: T[] | T | null | undefined): T | undefined {
+    if (!pages) return undefined;
+    return Array.isArray(pages) ? pages[0] : pages;
+}
+
 // React cache로 감싸서 요청당 한 번만 실행
 export const getUserPage = cache(async (username: string): Promise<Result<PageWithEntries>> => {
     const result = await findUserWithPages(username);
@@ -76,11 +82,12 @@ export const getUserPage = cache(async (username: string): Promise<Result<PageWi
     }
 
     const dbData = result.data;
-    if (!dbData.pages?.[0]) {
+    const dbPage = getFirstPage(dbData.pages);
+
+    if (!dbPage) {
         return failure(createNotFoundError(`'${username}'의 페이지를 찾을 수 없습니다.`, 'page'));
     }
 
-    const dbPage = dbData.pages[0];
     const entries = (dbPage.entries || [])
         .sort((a, b) => a.position - b.position)
         .map(mapEntryToDomain);
@@ -106,7 +113,7 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
 
     const dbData = result.data;
     const user = mapUserToDomain(dbData);
-    const page = dbData.pages?.[0];
+    const page = getFirstPage(dbData.pages);
 
     if (!page) {
         return success({
@@ -162,7 +169,8 @@ export const getEditorDataByAuthUserId = cache(
 
         const dbData = result.data;
         const user = mapUserToDomain(dbData);
-        const page = dbData.pages?.[0];
+
+        const page = getFirstPage(dbData.pages);
 
         if (!page) {
             return success({
@@ -208,7 +216,7 @@ export const getPublicPageData = cache(
 
         const dbData = result.data;
         const user = mapUserToDomain(dbData);
-        const page = dbData.pages?.[0];
+        const page = getFirstPage(dbData.pages);
 
         if (!page) {
             return success({
