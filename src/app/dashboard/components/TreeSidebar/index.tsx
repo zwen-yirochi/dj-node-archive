@@ -40,12 +40,11 @@ import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
 
 interface TreeSidebarProps {
-    onAddEntry: (type: 'event' | 'mixset' | 'link') => void;
     onDeleteEntry?: (id: string) => void;
     username: string;
 }
 
-export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: TreeSidebarProps) {
+export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProps) {
     // Content Entry Store
     const entries = useContentEntryStore((state) => state.entries);
     const pageId = useContentEntryStore((state) => state.pageId);
@@ -267,7 +266,7 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
                         title="Events"
                         icon={<Calendar className="h-4 w-4" />}
                         count={events.length}
-                        onAdd={() => onAddEntry('event')}
+                        entryType="event"
                     >
                         <SortableContext
                             items={events.map((e) => e.id)}
@@ -291,7 +290,7 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
                         title="Mixsets"
                         icon={<Headphones className="h-4 w-4" />}
                         count={mixsets.length}
-                        onAdd={() => onAddEntry('mixset')}
+                        entryType="mixset"
                     >
                         <SortableContext
                             items={mixsets.map((e) => e.id)}
@@ -315,7 +314,7 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
                         title="Links"
                         icon={<LinkIcon className="h-4 w-4" />}
                         count={links.length}
-                        onAdd={() => onAddEntry('link')}
+                        entryType="link"
                     >
                         <SortableContext
                             items={links.map((e) => e.id)}

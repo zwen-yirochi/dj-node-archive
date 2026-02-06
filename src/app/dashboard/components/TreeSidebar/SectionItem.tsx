@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { type SectionKey, useUIStore } from '@/stores/uiStore';
+import { type EntryType, type SectionKey, useUIStore } from '@/stores/uiStore';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -10,7 +10,7 @@ interface SectionItemProps {
     title: string;
     icon?: ReactNode;
     count?: number;
-    onAdd?: () => void;
+    entryType?: EntryType; // 생성 패널에서 사용할 타입
     children: ReactNode;
 }
 
@@ -19,11 +19,12 @@ export default function SectionItem({
     title,
     icon,
     count,
-    onAdd,
+    entryType,
     children,
 }: SectionItemProps) {
     const sidebarSections = useUIStore((state) => state.sidebarSections);
     const toggleSection = useUIStore((state) => state.toggleSection);
+    const openCreatePanel = useUIStore((state) => state.openCreatePanel);
 
     const isCollapsed = sidebarSections[section].collapsed;
 
@@ -59,11 +60,11 @@ export default function SectionItem({
                 )}
 
                 {/* Add Button */}
-                {onAdd && (
+                {entryType && (
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
-                            onAdd();
+                            openCreatePanel(entryType);
                         }}
                         className="rounded p-1 opacity-0 transition-opacity hover:bg-dashboard-bg-active group-hover:opacity-100"
                     >
