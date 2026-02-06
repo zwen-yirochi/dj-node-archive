@@ -1,6 +1,6 @@
 'use client';
 
-import { COMPONENT_TYPE_CONFIG } from '@/constants/entries/entryConfig';
+import { COMPONENT_TYPE_CONFIG } from '@/app/dashboard/entries/entryConfig';
 import { cn } from '@/lib/utils';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
 import { useDisplayEntryStore } from '@/stores/displayEntryStore';
