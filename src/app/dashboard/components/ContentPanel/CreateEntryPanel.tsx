@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import OptionSelector from '@/components/ui/OptionSelector';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
@@ -15,7 +16,8 @@ import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { type EntryType, useUIStore } from '@/stores/uiStore';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import OptionSelector from '../../../../components/ui/OptionSelector';
+import CreateEventForm from './CreateEventForm';
+import EventImportSearch from './EventImportSearch';
 
 interface CreateEntryPanelProps {
     type: EntryType;
@@ -85,8 +87,9 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
         }
     };
 
-    // Event: Import 옵션 선택 시 (추후 검색 UI 구현)
+    // Event 모드 판단
     const isEventImportMode = type === 'event' && eventOption === 'import';
+    const isEventCreateMode = type === 'event' && eventOption === 'create';
 
     return (
         <div className="flex h-full flex-col bg-dashboard-bg-card">
@@ -102,6 +105,17 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
                         New {config.label}
                     </h2>
                 </div>
+                {/* Cancel button in header for Event */}
+                {type === 'event' && (
+                    <Button
+                        onClick={handleCancel}
+                        variant="ghost"
+                        size="sm"
+                        className="text-dashboard-text-secondary hover:bg-dashboard-bg-muted hover:text-dashboard-text"
+                    >
+                        Cancel
+                    </Button>
+                )}
             </div>
 
             {/* Content */}
@@ -119,8 +133,14 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
                         </div>
                     )}
 
-                    {/* Title Input (Create mode only) */}
-                    {!isEventImportMode && (
+                    {/* Event: Create New Form */}
+                    {isEventCreateMode && <CreateEventForm />}
+
+                    {/* Event Import: Search */}
+                    {isEventImportMode && <EventImportSearch />}
+
+                    {/* Non-Event: Simple Title Input */}
+                    {type !== 'event' && (
                         <div className="space-y-2">
                             <Label htmlFor="title" className="text-dashboard-text-secondary">
                                 Title
@@ -131,46 +151,34 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
                                 onChange={(e) => setTitle(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 placeholder={config.titlePlaceholder}
-                                autoFocus={type !== 'event'}
+                                autoFocus
                                 className="border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-1 focus:ring-dashboard-border-hover"
                             />
-                        </div>
-                    )}
-
-                    {/* Event Import: Search UI placeholder */}
-                    {isEventImportMode && (
-                        <div className="space-y-2">
-                            <Label className="text-dashboard-text-secondary">Search</Label>
-                            <Input
-                                placeholder="Search events..."
-                                className="border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-1 focus:ring-dashboard-border-hover"
-                            />
-                            <p className="text-xs text-dashboard-text-muted">
-                                Event import feature coming soon
-                            </p>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Footer */}
-            <div className="flex items-center justify-end gap-3 border-t border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
-                <Button
-                    onClick={handleCancel}
-                    variant="ghost"
-                    className="text-dashboard-text-secondary hover:bg-dashboard-bg-muted hover:text-dashboard-text"
-                >
-                    Cancel
-                </Button>
-                <Button
-                    onClick={handleCreate}
-                    disabled={isEventImportMode || !title.trim() || isSaving}
-                    className="bg-dashboard-text text-white hover:bg-dashboard-text/90"
-                >
-                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create
-                </Button>
-            </div>
+            {/* Footer - Non-Event only */}
+            {type !== 'event' && (
+                <div className="flex items-center justify-end gap-3 border-t border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
+                    <Button
+                        onClick={handleCancel}
+                        variant="ghost"
+                        className="text-dashboard-text-secondary hover:bg-dashboard-bg-muted hover:text-dashboard-text"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleCreate}
+                        disabled={!title.trim() || isSaving}
+                        className="bg-dashboard-text text-white hover:bg-dashboard-text/90"
+                    >
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Create
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
