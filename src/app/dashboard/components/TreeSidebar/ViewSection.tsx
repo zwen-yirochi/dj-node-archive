@@ -21,7 +21,7 @@ export default function ViewSection({
     // Display Entry Store
     const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
     const toggleVisibility = useDisplayEntryStore((state) => state.toggleVisibility);
-    const removeFromView = useDisplayEntryStore((state) => state.removeFromView);
+    const removeFromView = useDisplayEntryStore((state) => state.removeFromDisplay);
 
     // Content Entry Store
     const entries = useContentEntryStore((state) => state.entries);

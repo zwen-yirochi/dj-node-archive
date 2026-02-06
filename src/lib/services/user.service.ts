@@ -5,16 +5,8 @@ import {
     type DBDisplayEntry,
 } from '@/lib/db/queries/display-entry.queries';
 import { findUserWithPages, findUserWithPagesById } from '@/lib/db/queries/user.queries';
-import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers/user.mapper';
-import type { Theme } from '@/types';
-import type {
-    ContentEntry,
-    EventComponent,
-    LinkComponent,
-    MixsetComponent,
-    Page,
-    User,
-} from '@/types/domain';
+import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers';
+import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry, User } from '@/types/domain';
 import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
 import { cache } from 'react';
 
@@ -26,12 +18,23 @@ export interface DisplayEntry {
     isVisible: boolean;
 }
 
+// 페이지와 엔트리를 포함한 도메인 타입
+export interface PageWithEntries {
+    id: string;
+    userId: string;
+    slug: string;
+    title?: string;
+    bio?: string;
+    avatarUrl?: string;
+    themeColor?: string;
+    entries: ContentEntry[];
+}
+
 export interface EditorData {
     user: User;
-    components: ContentEntry[];
+    contentEntries: ContentEntry[];
     pageId: string | null;
     displayEntries: DisplayEntry[];
-    theme: Theme | null;
 }
 
 // DB 타입을 도메인 타입으로 변환
@@ -45,9 +48,9 @@ function mapDisplayEntryToDomain(dbItem: DBDisplayEntry): DisplayEntry {
 }
 
 export interface ComponentsByType {
-    events: EventComponent[];
-    mixsets: MixsetComponent[];
-    links: LinkComponent[];
+    events: EventEntry[];
+    mixsets: MixsetEntry[];
+    links: LinkEntry[];
 }
 
 export const getUser = cache(async (username: string): Promise<Result<User>> => {
@@ -61,7 +64,7 @@ export const getUser = cache(async (username: string): Promise<Result<User>> => 
 });
 
 // React cache로 감싸서 요청당 한 번만 실행
-export const getUserPage = cache(async (username: string): Promise<Result<Page>> => {
+export const getUserPage = cache(async (username: string): Promise<Result<PageWithEntries>> => {
     const result = await findUserWithPages(username);
 
     if (!isSuccess(result)) {
@@ -82,6 +85,10 @@ export const getUserPage = cache(async (username: string): Promise<Result<Page>>
         id: dbPage.id,
         userId: dbData.id,
         slug: dbPage.slug,
+        title: dbPage.title ?? undefined,
+        bio: dbPage.bio ?? undefined,
+        avatarUrl: dbPage.avatar_url ?? undefined,
+        themeColor: dbPage.theme_color ?? undefined,
         entries,
     });
 });
@@ -100,14 +107,13 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
     if (!page) {
         return success({
             user,
-            components: [],
+            contentEntries: [],
             pageId: null,
             displayEntries: [],
-            theme: null,
         });
     }
 
-    const components = (page.entries || [])
+    const contentEntries = (page.entries || [])
         .sort((a, b) => a.position - b.position)
         .map(mapEntryToDomain);
 
@@ -117,15 +123,11 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
         ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
         : [];
 
-    // Theme 매핑
-    const theme = (page.theme as unknown as Theme) ?? null;
-
     return success({
         user,
-        components,
+        contentEntries,
         pageId: page.id,
         displayEntries,
-        theme,
     });
 });
 
@@ -139,9 +141,9 @@ export async function getComponentsByType(username: string): Promise<Result<Comp
 
     const page = result.data;
     return success({
-        events: page.entries.filter((c): c is EventComponent => c.type === 'event'),
-        mixsets: page.entries.filter((c): c is MixsetComponent => c.type === 'mixset'),
-        links: page.entries.filter((c): c is LinkComponent => c.type === 'link'),
+        events: page.entries.filter((c): c is EventEntry => c.type === 'event'),
+        mixsets: page.entries.filter((c): c is MixsetEntry => c.type === 'mixset'),
+        links: page.entries.filter((c): c is LinkEntry => c.type === 'link'),
     });
 }
 
@@ -160,14 +162,13 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
     if (!page) {
         return success({
             user,
-            components: [],
+            contentEntries: [],
             pageId: null,
             displayEntries: [],
-            theme: null,
         });
     }
 
-    const components = (page.entries || [])
+    const contentEntries = (page.entries || [])
         .sort((a, b) => a.position - b.position)
         .map(mapEntryToDomain);
 
@@ -177,15 +178,11 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
         ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
         : [];
 
-    // Theme 매핑
-    const theme = (page.theme as unknown as Theme) ?? null;
-
     return success({
         user,
-        components,
+        contentEntries,
         pageId: page.id,
         displayEntries,
-        theme,
     });
 });
 

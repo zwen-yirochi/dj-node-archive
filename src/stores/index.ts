@@ -16,11 +16,10 @@ export {
     getSelectedEntry,
     useContentEntryStore,
 } from './contentEntryStore';
-export { useDisplayEntryStore, type DisplayEntry } from './displayEntryStore';
+export { useDisplayEntryStore } from './displayEntryStore';
 export {
     useUIStore,
     type ActivePanel,
-    type EditMode,
     type SectionKey,
     type SidebarSections,
     type SidebarSectionState,

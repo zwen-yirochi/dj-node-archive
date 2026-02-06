@@ -1,124 +1,191 @@
-// ==============================================
-// types/domain.ts - 핵심 도메인 타입 (단일 소스)
-// ==============================================
+// types/domain.ts - UI/프론트엔드용 도메인 타입
+// camelCase, 화면 표시에 최적화
 
-// ----------------------------------------------
-// Utility Types
-// ----------------------------------------------
-/** ISO 8601 형식의 날짜 문자열 (e.g., "2024-01-15T09:00:00.000Z") */
-export type ISODateString = string;
-
-// ----------------------------------------------
-// User
-// ----------------------------------------------
+// User & Page
 export interface User {
     id: string;
     username: string;
     displayName: string;
     avatarUrl: string;
-    bio: string;
+    bio?: string;
+    instagram?: string;
+    soundcloud?: string;
 }
 
-// ----------------------------------------------
-// Theme
-// ----------------------------------------------
-export type AccentColor = 'pink' | 'cyan' | 'purple';
-export type BackgroundStyle = 'gradient' | 'solid' | 'image';
-
-export interface Theme {
-    accentColor: AccentColor;
-    backgroundStyle: BackgroundStyle;
-    backgroundImage?: string;
-}
-
-export interface ThemePreset {
-    id: string;
-    name: string;
-    accentColor: AccentColor;
-    backgroundColor: string;
-    previewGradient: string;
-}
-
-export const THEME_PRESETS: ThemePreset[] = [
-    {
-        id: 'neon-pink',
-        name: 'Neon Pink',
-        accentColor: 'pink',
-        backgroundColor: '#0a0a0b',
-        previewGradient: 'linear-gradient(135deg, #ff2d92 0%, #a855f7 100%)',
-    },
-    {
-        id: 'cyber-cyan',
-        name: 'Cyber Cyan',
-        accentColor: 'cyan',
-        backgroundColor: '#0a0a0b',
-        previewGradient: 'linear-gradient(135deg, #00f0ff 0%, #a855f7 100%)',
-    },
-    {
-        id: 'purple-haze',
-        name: 'Purple Haze',
-        accentColor: 'purple',
-        backgroundColor: '#0a0a0b',
-        previewGradient: 'linear-gradient(135deg, #a855f7 0%, #ff2d92 100%)',
-    },
-];
-
-// ----------------------------------------------
-// Components (Discriminated Union)
-// ----------------------------------------------
-export interface EventComponent {
-    id: string;
-    type: 'event';
-    title: string;
-    date: ISODateString;
-    venue: string;
-    posterUrl: string;
-    lineup: string[];
-    description: string;
-    links?: { title: string; url: string }[];
-    // 원본 이벤트 연결 (이벤트 import 시)
-    eventId?: string;
-    venueId?: string;
-}
-
-export interface MixsetComponent {
-    id: string;
-    type: 'mixset';
-    title: string;
-    coverUrl: string;
-    audioUrl: string;
-    soundcloudEmbedUrl?: string;
-    tracklist: { track: string; artist: string; time: string }[];
-    description: string;
-    releaseDate: string;
-    genre: string;
-}
-
-export interface LinkComponent {
-    id: string;
-    type: 'link';
-    title: string;
-    url: string;
-    icon: string;
-}
-
-export type ContentEntry = EventComponent | MixsetComponent | LinkComponent;
-export type ContentEntryType = ContentEntry['type'];
-
-// Page
 export interface Page {
     id: string;
     userId: string;
     slug: string;
-    entries: ContentEntry[];
+    title?: string;
+    bio?: string;
+    avatarUrl?: string;
+    themeColor?: string;
 }
 
-// Backlink
+// ============================================
+// Entry Types (Discriminated Union)
+// ============================================
+
+/** Event Entry - 참조형/자체형 통합 */
+export interface EventEntry {
+    id: string;
+    type: 'event';
+    position: number;
+    isVisible: boolean;
+
+    // 표시용 데이터
+    title: string;
+    date: string;
+    venue: { id?: string; name: string };
+    lineup: { id?: string; name: string }[];
+    posterUrl: string;
+    description?: string;
+    links?: { title: string; url: string }[];
+
+    // 참조 정보 (events 테이블 참조 시)
+    eventId?: string;
+}
+
+/** Mixset Entry */
+export interface MixsetEntry {
+    id: string;
+    type: 'mixset';
+    position: number;
+    isVisible: boolean;
+
+    // 표시용 데이터
+    title: string;
+    coverUrl?: string;
+    audioUrl?: string;
+    soundcloudUrl?: string;
+    mixcloudUrl?: string;
+    tracklist: { track: string; artist: string; time: string }[];
+    description?: string;
+    durationMinutes?: number;
+
+    // 참조 정보 (mixsets 테이블 참조 시)
+    mixsetId?: string;
+}
+
+/** Link Entry */
+export interface LinkEntry {
+    id: string;
+    type: 'link';
+    position: number;
+    isVisible: boolean;
+
+    title: string;
+    url: string;
+    icon?: string;
+}
+
+/** Entry 유니온 */
+export type ContentEntry = EventEntry | MixsetEntry | LinkEntry;
+export type ContentEntryType = ContentEntry['type'];
+
+export interface DisplayEntry {
+    id: string;
+    entryId: string;
+    order: number;
+    isVisible: boolean;
+}
+
+// ============================================
+// Venue & Artist (UI용)
+// ============================================
+export interface Venue {
+    id: string;
+    name: string;
+    slug: string;
+    city?: string;
+    country?: string;
+    address?: string;
+    googleMapsUrl?: string;
+    instagram?: string;
+    website?: string;
+    claimedBy?: string;
+}
+
+export interface Artist {
+    id: string;
+    name: string;
+    slug: string;
+    bio?: string;
+    instagram?: string;
+    soundcloud?: string;
+    spotify?: string;
+    claimedBy?: string;
+}
+
+// ============================================
+// Event & Mixset (상세 페이지용)
+// ============================================
+export interface Event {
+    id: string;
+    title: string;
+    slug: string;
+    date: string;
+    venue: { id?: string; name: string };
+    lineup: { id?: string; name: string }[];
+    posterUrl?: string;
+    description?: string;
+    links?: { title: string; url: string }[];
+    isPublic: boolean;
+    createdBy: string;
+}
+
+export interface Mixset {
+    id: string;
+    title: string;
+    slug: string;
+    date?: string;
+    durationMinutes?: number;
+    tracklist: { track: string; artist: string; time: string }[];
+    audioUrl?: string;
+    coverUrl?: string;
+    soundcloudUrl?: string;
+    mixcloudUrl?: string;
+    createdBy: string;
+}
+
+// ============================================
+// Backlink (그래프뷰용)
+// ============================================
 export interface Backlink {
     id: string;
-    componentTitle: string;
-    componentType: 'event' | 'mixset';
+    entryTitle: string;
+    entryType: 'event' | 'mixset';
     mentionerUsername: string;
     mentionerDisplayName: string;
-    mentionerAvatarUrl: string;
+    mentionerAvatarUrl?: string;
 }
+
+// Type Guards
+export function isEventEntry(entry: ContentEntry): entry is EventEntry {
+    return entry.type === 'event';
+}
+
+export function isMixsetEntry(entry: ContentEntry): entry is MixsetEntry {
+    return entry.type === 'mixset';
+}
+
+export function isLinkEntry(entry: ContentEntry): entry is LinkEntry {
+    return entry.type === 'link';
+}
+
+// ============================================
+// Legacy Aliases (호환성)
+// ============================================
+/** @deprecated Use EventEntry */
+export type EventComponent = EventEntry;
+/** @deprecated Use MixsetEntry */
+export type MixsetComponent = MixsetEntry;
+/** @deprecated Use LinkEntry */
+export type LinkComponent = LinkEntry;
+
+/** @deprecated Use isEventEntry */
+export const isEventComponent = isEventEntry;
+/** @deprecated Use isMixsetEntry */
+export const isMixsetComponent = isMixsetEntry;
+/** @deprecated Use isLinkEntry */
+export const isLinkComponent = isLinkEntry;

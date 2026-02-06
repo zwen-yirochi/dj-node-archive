@@ -1,10 +1,10 @@
 'use client';
 
-import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
+import { COMPONENT_TYPE_CONFIG } from '@/constants/entries/entryConfig';
 import { cn } from '@/lib/utils';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
 import { useDisplayEntryStore } from '@/stores/displayEntryStore';
+import { useUIStore } from '@/stores/uiStore';
 import type { ContentEntry } from '@/types';
 import {
     closestCenter,
@@ -124,9 +124,9 @@ function SortableItem({
 export default function PageListView() {
     // Display Entry Store
     const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
-    const reorderView = useDisplayEntryStore((state) => state.reorderView);
+    const reorderView = useDisplayEntryStore((state) => state.reorderDisplay);
     const toggleVisibility = useDisplayEntryStore((state) => state.toggleVisibility);
-    const removeFromView = useDisplayEntryStore((state) => state.removeFromView);
+    const removeFromView = useDisplayEntryStore((state) => state.removeFromDisplay);
 
     // Content Entry Store
     const entries = useContentEntryStore((state) => state.entries);

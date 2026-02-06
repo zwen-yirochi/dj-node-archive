@@ -1,12 +1,12 @@
 // components/EventCard.tsx
-import type { EventComponent } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import type { EventEntry } from '@/types';
 import { Calendar, MapPin, Users } from 'lucide-react';
 import Image from 'next/image';
 
 interface EventCardProps {
-    event: EventComponent;
+    event: EventEntry;
 }
 
 export default function EventCard({ event }: EventCardProps) {
@@ -58,7 +58,7 @@ export default function EventCard({ event }: EventCardProps) {
                         >
                             <MapPin className="mr-1 h-2.5 w-2.5 sm:h-3 sm:w-3" />
                             <span className="max-w-[100px] truncate sm:max-w-none">
-                                {event.venue}
+                                {event.venue.name}
                             </span>
                         </Badge>
                     </div>
@@ -74,7 +74,7 @@ export default function EventCard({ event }: EventCardProps) {
                                         variant="secondary"
                                         className="cursor-pointer bg-stone-500/10 text-[10px] text-primary transition-colors hover:bg-stone-600/20 sm:text-xs md:text-sm"
                                     >
-                                        {artist}
+                                        {artist.name}
                                     </Badge>
                                 ))}
                             </div>

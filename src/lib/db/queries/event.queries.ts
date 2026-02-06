@@ -1,7 +1,7 @@
 // lib/db/queries/event.queries.ts
 // 서버 전용 - 이벤트 관련 DB 쿼리
 import { createClient } from '@/lib/supabase/server';
-import type { DBEvent, DBEventWithVenue } from '@/types/database';
+import type { Event, EventVenue, EventPerformer, EventData } from '@/types/database';
 import {
     type Result,
     success,
@@ -16,46 +16,45 @@ import {
 // ============================================
 
 export interface CreateEventInput {
-    user_id: string;
-    venue_ref_id: string;
-    title?: string;
+    title: string;
+    slug: string;
     date: string;
-    data?: {
-        poster_url?: string;
-        notes?: string;
-        set_recording_url?: string;
-        lineup_text?: string;
-    };
+    venue: EventVenue;
+    lineup?: EventPerformer[];
+    data?: EventData;
+    is_public?: boolean;
+    created_by: string;
 }
 
 export interface UpdateEventInput {
-    venue_ref_id?: string;
     title?: string;
+    slug?: string;
     date?: string;
-    data?: {
-        poster_url?: string;
-        notes?: string;
-        set_recording_url?: string;
-        lineup_text?: string;
-    };
+    venue?: EventVenue;
+    lineup?: EventPerformer[];
+    data?: EventData;
+    is_public?: boolean;
 }
 
 // ============================================
 // Create
 // ============================================
 
-export async function createEvent(input: CreateEventInput): Promise<Result<DBEvent>> {
+export async function createEvent(input: CreateEventInput): Promise<Result<Event>> {
     try {
         const supabase = await createClient();
 
         const { data, error } = await supabase
             .from('events')
             .insert({
-                user_id: input.user_id,
-                venue_ref_id: input.venue_ref_id,
                 title: input.title,
+                slug: input.slug,
                 date: input.date,
+                venue: input.venue,
+                lineup: input.lineup || [],
                 data: input.data || {},
+                is_public: input.is_public ?? false,
+                created_by: input.created_by,
             })
             .select()
             .single();
@@ -76,7 +75,7 @@ export async function createEvent(input: CreateEventInput): Promise<Result<DBEve
 // Read
 // ============================================
 
-export async function findEventById(eventId: string): Promise<Result<DBEvent>> {
+export async function findEventById(eventId: string): Promise<Result<Event>> {
     try {
         const supabase = await createClient();
 
@@ -101,36 +100,25 @@ export async function findEventById(eventId: string): Promise<Result<DBEvent>> {
     }
 }
 
-export async function findEventWithVenueById(eventId: string): Promise<Result<DBEventWithVenue>> {
+export async function findEventBySlug(slug: string): Promise<Result<Event>> {
     try {
         const supabase = await createClient();
 
-        const { data, error } = await supabase
-            .from('events')
-            .select(
-                `
-                *,
-                venue:venue_references(*)
-            `
-            )
-            .eq('id', eventId)
-            .single();
+        const { data, error } = await supabase.from('events').select('*').eq('slug', slug).single();
 
         if (error) {
             if (error.code === 'PGRST116') {
-                return failure(createNotFoundError('이벤트를 찾을 수 없습니다.', 'event'));
+                return failure(
+                    createNotFoundError(`이벤트 '${slug}'를 찾을 수 없습니다.`, 'event')
+                );
             }
-            return failure(createDatabaseError(error.message, 'findEventWithVenueById', error));
+            return failure(createDatabaseError(error.message, 'findEventBySlug', error));
         }
 
-        return success(data as DBEventWithVenue);
+        return success(data);
     } catch (err) {
         return failure(
-            createDatabaseError(
-                '이벤트 조회 중 오류가 발생했습니다.',
-                'findEventWithVenueById',
-                err
-            )
+            createDatabaseError('이벤트 조회 중 오류가 발생했습니다.', 'findEventBySlug', err)
         );
     }
 }
@@ -138,19 +126,14 @@ export async function findEventWithVenueById(eventId: string): Promise<Result<DB
 export async function findEventsByUserId(
     userId: string,
     limit: number = 50
-): Promise<Result<DBEventWithVenue[]>> {
+): Promise<Result<Event[]>> {
     try {
         const supabase = await createClient();
 
         const { data, error } = await supabase
             .from('events')
-            .select(
-                `
-                *,
-                venue:venue_references(*)
-            `
-            )
-            .eq('user_id', userId)
+            .select('*')
+            .eq('created_by', userId)
             .order('date', { ascending: false })
             .limit(limit);
 
@@ -158,7 +141,7 @@ export async function findEventsByUserId(
             return failure(createDatabaseError(error.message, 'findEventsByUserId', error));
         }
 
-        return success((data as DBEventWithVenue[]) || []);
+        return success(data || []);
     } catch (err) {
         return failure(
             createDatabaseError(
@@ -170,22 +153,47 @@ export async function findEventsByUserId(
     }
 }
 
-export async function findEventsByVenueId(
-    venueId: string,
-    limit: number = 50
-): Promise<Result<DBEventWithVenue[]>> {
+export async function findPublicEvents(limit: number = 50): Promise<Result<Event[]>> {
     try {
         const supabase = await createClient();
 
         const { data, error } = await supabase
             .from('events')
-            .select(
-                `
-                *,
-                venue:venue_references(*)
-            `
+            .select('*')
+            .eq('is_public', true)
+            .order('date', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'findPublicEvents', error));
+        }
+
+        return success(data || []);
+    } catch (err) {
+        return failure(
+            createDatabaseError(
+                '공개 이벤트 목록 조회 중 오류가 발생했습니다.',
+                'findPublicEvents',
+                err
             )
-            .eq('venue_ref_id', venueId)
+        );
+    }
+}
+
+/**
+ * venue_id로 이벤트 검색 (JSONB 내부 검색)
+ */
+export async function findEventsByVenueId(
+    venueId: string,
+    limit: number = 50
+): Promise<Result<Event[]>> {
+    try {
+        const supabase = await createClient();
+
+        const { data, error } = await supabase
+            .from('events')
+            .select('*')
+            .eq('venue->venue_id', venueId)
             .order('date', { ascending: false })
             .limit(limit);
 
@@ -193,12 +201,45 @@ export async function findEventsByVenueId(
             return failure(createDatabaseError(error.message, 'findEventsByVenueId', error));
         }
 
-        return success((data as DBEventWithVenue[]) || []);
+        return success(data || []);
     } catch (err) {
         return failure(
             createDatabaseError(
                 '베뉴 이벤트 목록 조회 중 오류가 발생했습니다.',
                 'findEventsByVenueId',
+                err
+            )
+        );
+    }
+}
+
+/**
+ * artist_id로 이벤트 검색 (lineup JSONB 배열 검색)
+ */
+export async function findEventsByArtistId(
+    artistId: string,
+    limit: number = 50
+): Promise<Result<Event[]>> {
+    try {
+        const supabase = await createClient();
+
+        const { data, error } = await supabase
+            .from('events')
+            .select('*')
+            .contains('lineup', [{ artist_id: artistId }])
+            .order('date', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'findEventsByArtistId', error));
+        }
+
+        return success(data || []);
+    } catch (err) {
+        return failure(
+            createDatabaseError(
+                '아티스트 이벤트 목록 조회 중 오류가 발생했습니다.',
+                'findEventsByArtistId',
                 err
             )
         );
@@ -213,14 +254,14 @@ export async function updateEvent(
     eventId: string,
     userId: string,
     input: UpdateEventInput
-): Promise<Result<DBEvent>> {
+): Promise<Result<Event>> {
     try {
         const supabase = await createClient();
 
         // 먼저 이벤트 소유자 확인
         const { data: existing, error: findError } = await supabase
             .from('events')
-            .select('user_id')
+            .select('created_by')
             .eq('id', eventId)
             .single();
 
@@ -231,7 +272,7 @@ export async function updateEvent(
             return failure(createDatabaseError(findError.message, 'updateEvent', findError));
         }
 
-        if (existing.user_id !== userId) {
+        if (existing.created_by !== userId) {
             return failure(createForbiddenError('이벤트를 수정할 권한이 없습니다.'));
         }
 
@@ -239,10 +280,13 @@ export async function updateEvent(
             updated_at: new Date().toISOString(),
         };
 
-        if (input.venue_ref_id !== undefined) updateData.venue_ref_id = input.venue_ref_id;
         if (input.title !== undefined) updateData.title = input.title;
+        if (input.slug !== undefined) updateData.slug = input.slug;
         if (input.date !== undefined) updateData.date = input.date;
+        if (input.venue !== undefined) updateData.venue = input.venue;
+        if (input.lineup !== undefined) updateData.lineup = input.lineup;
         if (input.data !== undefined) updateData.data = input.data;
+        if (input.is_public !== undefined) updateData.is_public = input.is_public;
 
         const { data, error } = await supabase
             .from('events')
@@ -274,7 +318,7 @@ export async function deleteEvent(eventId: string, userId: string): Promise<Resu
         // 먼저 이벤트 소유자 확인
         const { data: existing, error: findError } = await supabase
             .from('events')
-            .select('user_id')
+            .select('created_by')
             .eq('id', eventId)
             .single();
 
@@ -285,12 +329,16 @@ export async function deleteEvent(eventId: string, userId: string): Promise<Resu
             return failure(createDatabaseError(findError.message, 'deleteEvent', findError));
         }
 
-        if (existing.user_id !== userId) {
+        if (existing.created_by !== userId) {
             return failure(createForbiddenError('이벤트를 삭제할 권한이 없습니다.'));
         }
 
-        // 관련 event_performers 먼저 삭제
-        await supabase.from('event_performers').delete().eq('event_id', eventId);
+        // 관련 mentions 삭제
+        await supabase
+            .from('mentions')
+            .delete()
+            .eq('source_type', 'event')
+            .eq('source_id', eventId);
 
         const { error } = await supabase.from('events').delete().eq('id', eventId);
 

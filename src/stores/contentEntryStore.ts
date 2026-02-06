@@ -2,46 +2,28 @@
  * contentEntryStore.ts - 콘텐츠 엔트리 상태 관리
  *
  * 콘텐츠 엔트리 데이터를 관리합니다.
- * previewVersion은 DisplayEntryStore로 이동됨.
  */
 
 import { shouldTriggerPreview } from '@/lib/previewTrigger';
-import { canAddToView } from '@/lib/validators';
-import type { ContentEntry, Theme } from '@/types';
+import { canAddToView } from '@/lib/validators'; // >??
+import type { ContentEntry } from '@/types';
 import { create } from 'zustand';
 
-// ============================================
-// Content Entry Store Interface
-// ============================================
 interface ContentEntryStore {
     entries: ContentEntry[];
     pageId: string | null;
-    theme: Theme | null;
-
-    // 새로 생성된 엔트리 ID 추적 (isCreating 파생용)
     newlyCreatedIds: Set<string>;
 
-    // Setters
     setEntries: (entries: ContentEntry[]) => void;
     setPageId: (pageId: string) => void;
-    setTheme: (theme: Theme) => void;
-
-    // 엔트리 관련 유틸리티
     getEntryById: (id: string) => ContentEntry | undefined;
     isNewlyCreated: (id: string) => boolean;
 
-    // 엔트리 CRUD 액션 (분리됨)
-    /** 새 엔트리 생성 - DB 저장 후 ID 반환, 미리보기 트리거 안 함 */
+    // 엔트리 CRUD 액션
     createEntry: (entry: ContentEntry) => Promise<string>;
-    /** 기존 엔트리 수정 - 미리보기 트리거 여부 반환 */
     updateEntry: (entry: ContentEntry) => Promise<{ triggeredPreview: boolean }>;
-    /** 엔트리 삭제 - 미리보기 트리거 여부 반환 */
     deleteEntry: (id: string) => Promise<{ triggeredPreview: boolean }>;
-
-    // 생성 완료 처리 (newlyCreatedIds에서 제거)
     finishCreating: (id: string) => void;
-
-    // 섹션 내 순서 변경 (미리보기 트리거 안함)
     reorderSectionItems: (
         type: 'event' | 'mixset' | 'link',
         entryId: string,
@@ -49,18 +31,13 @@ interface ContentEntryStore {
     ) => Promise<void>;
 }
 
-// ============================================
-// Content Entry Store Implementation
-// ============================================
 export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
     entries: [],
     pageId: null,
-    theme: null,
     newlyCreatedIds: new Set<string>(),
 
     setEntries: (entries) => set({ entries }),
     setPageId: (pageId) => set({ pageId }),
-    setTheme: (theme) => set({ theme }),
 
     getEntryById: (id) => {
         return get().entries.find((e) => e.id === id);
@@ -73,7 +50,7 @@ export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
     /**
      * 새 엔트리 생성
      * - DB에 POST
-     * - newlyCreatedIds에 추가 (isCreating 파생용)
+     * - newlyCreatedIds에 추가
      * - 미리보기 트리거 안 함 (생성 중에는 불완전한 상태)
      */
     createEntry: async (entry) => {
@@ -213,7 +190,6 @@ export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
     /**
      * 생성 완료 처리
      * - newlyCreatedIds에서 제거
-     * - UIStore의 isCreating 대신 이 상태로 파생
      */
     finishCreating: (id) => {
         const { newlyCreatedIds } = get();

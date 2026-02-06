@@ -1,13 +1,13 @@
 'use client';
 
 import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
-import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
+import { COMPONENT_TYPE_CONFIG } from '@/constants/entries/entryConfig';
 import { cn } from '@/lib/utils';
 import { canAddToView, getMissingFieldLabels, getTreeItemStatus } from '@/lib/validators';
-import { useUIStore } from '@/stores/uiStore';
 import { useDisplayEntryStore } from '@/stores/displayEntryStore';
+import { useUIStore } from '@/stores/uiStore';
 import type { ContentEntry } from '@/types';
-import type { TreeItemStatus } from '@/types/componentFields';
+import type { TreeItemStatus } from '@/types/entryFields';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';

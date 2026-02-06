@@ -1,80 +1,274 @@
 // types/database.ts
+// DB 테이블과 1:1 대응 (snake_case)
+
+type ISODateString = string;
+
+// ============================================
+// User & Page
+// ============================================
 export interface User {
     id: string;
+    auth_user_id: string;
     username: string;
     email?: string;
     display_name?: string;
-    avatar_url?: string;
+    avatar_url: string;
     bio?: string;
-    created_at: string;
-    updated_at: string;
+    instagram?: string;
+    soundcloud?: string;
+    created_at: ISODateString;
+    updated_at: ISODateString;
 }
 
 export interface Page {
     id: string;
     user_id: string;
     slug: string;
-    template_type?: string;
-    theme?: Record<string, unknown>;
-    is_public?: boolean;
-    created_at: string;
-    updated_at: string;
+    title?: string;
+    bio?: string;
+    avatar_url?: string;
+    theme_color?: string;
+    created_at: ISODateString;
+    updated_at: ISODateString;
 }
 
-export type EntryType = 'event' | 'mixset' | 'link' | 'text' | 'image';
+// ============================================
+// Entry Data Types (entries.data JSONB)
+// ============================================
 
-export interface LinkData {
+/** type='link' */
+export interface LinkEntryData {
     title: string;
     url: string;
     icon?: string;
 }
 
-export interface TextData {
-    content: string;
+/** type='event' 참조형 - events 테이블 참조 */
+export interface EventReferenceData {
+    event_id: string;
+    custom_title?: string;
 }
 
-export interface ImageData {
-    url: string;
-    alt?: string;
-}
-
-export interface EventData {
+/** type='event' 자체형 - 프라이빗 이벤트 */
+export interface EventSelfData {
     title: string;
     date: string;
-    venue: string;
-    posterUrl: string;
-    description: string;
-    lineup: string[];
+    venue: { venue_id?: string; name: string };
+    lineup?: { artist_id?: string; name: string }[];
+    poster_url?: string;
+    description?: string;
+    links?: { title: string; url: string }[];
 }
 
-export interface MixsetData {
+/** type='mixset' 참조형 - mixsets 테이블 참조 */
+export interface MixsetReferenceData {
+    mixset_id: string;
+}
+
+/** type='mixset' 자체형 - 프라이빗 믹스셋 */
+export interface MixsetSelfData {
     title: string;
-    releaseDate: string;
-    genre: string;
-    coverUrl: string;
-    description: string;
+    tracklist?: Track[];
+    cover_url?: string;
+    audio_url?: string;
+    soundcloud_url?: string;
+    mixcloud_url?: string;
+    description?: string;
+    duration_minutes?: number;
 }
 
-export type EntryDataType = EventData | MixsetData | LinkData | TextData | ImageData;
+export type MixsetEntryData = MixsetReferenceData | MixsetSelfData;
 
+export type EntryType = 'link' | 'event' | 'mixset';
+export type EntryData = LinkEntryData | EventReferenceData | EventSelfData | MixsetEntryData;
+
+// ============================================
+// Entry
+// ============================================
 export interface Entry {
     id: string;
     page_id: string;
     type: EntryType;
     position: number;
-    data: EntryDataType;
-    created_at: string;
-    updated_at: string;
+    is_visible: boolean;
+    data: EntryData;
+    created_at: ISODateString;
+    updated_at: ISODateString;
 }
 
+// ============================================
+// Venue
+// ============================================
+export interface Venue {
+    id: string;
+    name: string;
+    slug: string;
+    city?: string;
+    country?: string;
+    address?: string;
+    google_maps_url?: string;
+    instagram?: string;
+    website?: string;
+    claimed_by?: string;
+    created_at: ISODateString;
+    updated_at: ISODateString;
+}
+
+// ============================================
+// Artist
+// ============================================
+export interface Artist {
+    id: string;
+    name: string;
+    slug: string;
+    bio?: string;
+    instagram?: string;
+    soundcloud?: string;
+    spotify?: string;
+    claimed_by?: string;
+    created_at: ISODateString;
+    updated_at: ISODateString;
+}
+
+// ============================================
+// Event JSONB Types
+// ============================================
+export interface EventVenue {
+    venue_id?: string;
+    name: string;
+}
+
+export interface EventPerformer {
+    artist_id?: string;
+    name: string;
+}
+
+export interface EventLink {
+    title: string;
+    url: string;
+}
+
+export interface EventData {
+    poster_url?: string;
+    description?: string;
+    links?: EventLink[];
+}
+
+// ============================================
+// Event
+// ============================================
+export interface Event {
+    id: string;
+    title: string;
+    slug: string;
+    date: string;
+    venue: EventVenue;
+    lineup: EventPerformer[];
+    data: EventData;
+    is_public: boolean;
+    created_by: string;
+    created_at: ISODateString;
+    updated_at: ISODateString;
+}
+
+// ============================================
+// Mixset
+// ============================================
+export interface Track {
+    track: string;
+    artist: string;
+    time: string;
+}
+
+export interface Mixset {
+    id: string;
+    title: string;
+    slug: string;
+    date?: string;
+    duration_minutes?: number;
+    tracklist: Track[];
+    audio_url?: string;
+    cover_url?: string;
+    soundcloud_url?: string;
+    mixcloud_url?: string;
+    created_by: string;
+    created_at: ISODateString;
+    updated_at: ISODateString;
+}
+
+// ============================================
+// Mention (백링크)
+// ============================================
+export type MentionSourceType = 'event' | 'entry' | 'page';
+export type MentionTargetType = 'venue' | 'artist' | 'event' | 'user';
+export type MentionContext = 'venue' | 'lineup' | 'description_mention' | 'event_reference';
+
+export interface Mention {
+    id: string;
+    source_type: MentionSourceType;
+    source_id: string;
+    target_type: MentionTargetType;
+    target_id: string;
+    context: MentionContext;
+    created_at: ISODateString;
+}
+
+// ============================================
+// Composed Types
+// ============================================
 export interface PageWithEntries extends Page {
     entries: Entry[];
+}
+
+export interface UserWithPage extends User {
+    page: Page;
 }
 
 export interface UserWithPages extends User {
     pages: PageWithEntries[];
 }
 
+export interface EventWithRelations extends Event {
+    venue_detail?: Venue;
+    performers?: Artist[];
+}
+
+// ============================================
+// Type Guards
+// ============================================
+export function isEventReference(data: EntryData): data is EventReferenceData {
+    return 'event_id' in data;
+}
+
+export function isEventSelf(data: EntryData): data is EventSelfData {
+    return 'title' in data && 'date' in data && 'venue' in data && !('event_id' in data);
+}
+
+export function isLinkEntry(data: EntryData): data is LinkEntryData {
+    return 'url' in data && !('event_id' in data) && !('mixset_id' in data);
+}
+
+export function isMixsetReference(data: EntryData): data is MixsetReferenceData {
+    return 'mixset_id' in data;
+}
+
+export function isMixsetSelf(data: EntryData): data is MixsetSelfData {
+    return (
+        'title' in data &&
+        'tracklist' in data &&
+        !('event_id' in data) &&
+        !('mixset_id' in data) &&
+        !('url' in data)
+    );
+}
+
+export function isMixsetEntry(data: EntryData): data is MixsetEntryData {
+    return isMixsetReference(data) || isMixsetSelf(data);
+}
+
+// ============================================
+// Legacy Aliases (호환성)
+// ============================================
 export type DBUser = User;
 export type DBPage = Page;
 export type DBEntry = Entry;
@@ -82,87 +276,15 @@ export type DBEntryType = EntryType;
 export type DBPageWithEntries = PageWithEntries;
 export type DBUserWithPages = UserWithPages;
 
-// ============================================
-// Venue Types
-// ============================================
-export interface VenueReference {
-    id: string;
-    name: string;
-    slug: string;
-    city?: string;
-    country?: string;
-    address?: string;
-    instagram?: string;
-    website?: string;
-    google_maps_url?: string;
-    linked_page_id?: string;
-    linked_at?: string;
-    created_by?: string;
-    created_at: string;
-    updated_at: string;
-}
+export type VenueReference = Venue;
+export type DBVenueReference = Venue;
+export type DBVenueSearchResult = Venue & { event_count: number };
 
-export interface VenueSearchResult extends VenueReference {
-    event_count: number;
-}
-
-export type DBVenueReference = VenueReference;
-export type DBVenueSearchResult = VenueSearchResult;
-
-// ============================================
-// Artist Reference Types
-// ============================================
-export interface ArtistReference {
-    id: string;
-    name: string;
-    instagram?: string;
-    ra_url?: string;
-    claimed_by?: string;
-    created_by?: string;
-    created_at: string;
-}
-
-export type DBArtistReference = ArtistReference;
-
-// ============================================
-// Event Types
-// ============================================
-export interface Event {
-    id: string;
-    user_id: string;
-    venue_ref_id: string;
-    title?: string;
-    date: string;
-    data?: {
-        poster_url?: string;
-        notes?: string;
-        set_recording_url?: string;
-        lineup_text?: string;
-        imported_from?: string;
-    };
-    created_at: string;
-    updated_at: string;
-}
-
-export interface EventWithVenue extends Event {
-    venue: VenueReference;
-}
+export type ArtistReference = Artist;
+export type DBArtistReference = Artist;
 
 export type DBEvent = Event;
-export type DBEventWithVenue = EventWithVenue;
+export type DBEventWithVenue = EventWithRelations;
 
-// ============================================
-// Event Performer Types
-// ============================================
 export type PerformanceType = 'dj_set' | 'live' | 'b2b';
-
-export interface EventPerformer {
-    id: string;
-    event_id: string;
-    user_id?: string;
-    artist_ref_id?: string;
-    performance_type: PerformanceType;
-    created_at: string;
-}
-
 export type DBEventPerformer = EventPerformer;

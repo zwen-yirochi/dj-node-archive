@@ -1,6 +1,5 @@
 'use client';
 
-import { CreateEventModal } from '@/components/event/CreateEventModal';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -289,12 +288,6 @@ export function AddComponentModal({ open, onOpenChange, onAddComponent }: AddCom
                     </div>
                 </DialogContent>
             </Dialog>
-
-            <CreateEventModal
-                open={isCreateEventOpen}
-                onOpenChange={setIsCreateEventOpen}
-                onCreated={handleEventCreated}
-            />
         </>
     );
 }

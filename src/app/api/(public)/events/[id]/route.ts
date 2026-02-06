@@ -1,13 +1,13 @@
 // app/api/events/[id]/route.ts
-import { findEventWithVenueById, updateEvent, deleteEvent } from '@/lib/db/queries/event.queries';
-import { isSuccess } from '@/types/result';
 import {
-    withAuth,
-    successResponse,
     forbiddenResponse,
-    notFoundResponse,
     internalErrorResponse,
+    notFoundResponse,
+    successResponse,
+    withAuth,
 } from '@/lib/api';
+import { deleteEvent, findEventById, updateEvent } from '@/lib/db/queries/event.queries';
+import { isSuccess } from '@/types/result';
 import { NextResponse } from 'next/server';
 
 interface RouteParams {
@@ -19,7 +19,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     try {
         const { id } = await params;
 
-        const result = await findEventWithVenueById(id);
+        const result = await findEventById(id);
 
         if (!isSuccess(result)) {
             return result.error.code === 'NOT_FOUND'
@@ -54,11 +54,11 @@ export const PATCH = withAuth<{ id: string }>(async (request, { user, params }) 
     const { id } = params;
 
     const body = await request.json();
-    const { venue_ref_id, title, date, data } = body;
+    const { venue, title, date, data } = body;
 
     // updateEvent 내부에서 소유권 검증
     const result = await updateEvent(id, user.id, {
-        venue_ref_id,
+        venue,
         title: title?.trim(),
         date,
         data,

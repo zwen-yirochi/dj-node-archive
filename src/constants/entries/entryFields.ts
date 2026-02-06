@@ -7,7 +7,7 @@
  * - false: 선택 사항
  */
 
-import type { FieldConfig } from '@/types/componentFields';
+import type { FieldConfig } from '@/types/entryFields';
 
 // ============================================
 // Event (Show) 컴포넌트 필드 설정

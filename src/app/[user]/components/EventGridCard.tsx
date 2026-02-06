@@ -1,11 +1,11 @@
 'use client';
 
-import type { EventComponent } from '@/types';
+import type { EventEntry } from '@/types';
 import Image from 'next/image';
 import { useState } from 'react';
 
 interface EventGridCardProps {
-    event: EventComponent;
+    event: EventEntry;
 }
 
 export default function EventGridCard({ event }: EventGridCardProps) {
@@ -85,7 +85,7 @@ export default function EventGridCard({ event }: EventGridCardProps) {
                                         d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                                     />
                                 </svg>
-                                <span className="line-clamp-1">{event.venue}</span>
+                                <span className="line-clamp-1">{event.venue.name}</span>
                             </div>
 
                             <p className="mb-3 line-clamp-2 text-sm text-gray-500">
@@ -99,7 +99,7 @@ export default function EventGridCard({ event }: EventGridCardProps) {
                                         key={i}
                                         className="cursor-pointer rounded bg-cyan-500/10 px-2 py-1 text-xs text-cyan-400 transition-colors hover:bg-cyan-500/20"
                                     >
-                                        {artist}
+                                        {artist.name}
                                     </span>
                                 ))}
                                 {event.lineup.length > 3 && (
@@ -168,7 +168,7 @@ export default function EventGridCard({ event }: EventGridCardProps) {
                                             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                                         />
                                     </svg>
-                                    {event.venue}
+                                    {event.venue.name}
                                 </div>
                             </div>
 
@@ -203,7 +203,7 @@ export default function EventGridCard({ event }: EventGridCardProps) {
                                             key={i}
                                             className="rounded bg-cyan-500/10 px-2 py-1 text-xs text-cyan-400 transition-colors hover:bg-cyan-500/20"
                                         >
-                                            {artist}
+                                            {artist.name}
                                         </span>
                                     ))}
                                 </div>

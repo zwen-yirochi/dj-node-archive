@@ -1,12 +1,12 @@
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { findEventsByVenueId } from '@/lib/db/queries/event.queries';
+import { findVenueBySlug } from '@/lib/db/queries/venue.queries';
+import { isSuccess } from '@/types/result';
+import { ArrowLeft, ArrowRight, Calendar, Globe, Instagram, MapPin } from 'lucide-react';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ArrowRight, MapPin, Instagram, Globe, Calendar } from 'lucide-react';
-import { findVenueBySlug } from '@/lib/db/queries/venue.queries';
-import { findEventsByVenueId } from '@/lib/db/queries/event.queries';
-import { isSuccess } from '@/types/result';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -159,9 +159,9 @@ export default async function VenuePage({ params }: PageProps) {
                                                 <div className="text-sm text-muted-foreground">
                                                     {formatDate(event.date)}
                                                 </div>
-                                                {event.data?.lineup_text && (
+                                                {event.lineup && (
                                                     <div className="mt-1 truncate text-xs text-muted-foreground">
-                                                        {event.data.lineup_text}
+                                                        {String(event.lineup)}
                                                     </div>
                                                 )}
                                             </div>

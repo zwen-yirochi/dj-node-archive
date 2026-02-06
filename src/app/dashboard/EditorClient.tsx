@@ -1,14 +1,14 @@
 // app/dashboard/EditorClient.tsx
 'use client';
 
-import { createEmptyEntry, eventToEntry } from '@/lib/transformers';
+import { createEmptyEntry, mapEventToEntry } from '@/lib/mappers';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import type { DisplayEntry } from '@/stores/displayEntryStore';
+import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useUserStore } from '@/stores/userStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
-import type { ContentEntry, Theme, User } from '@/types';
+import type { ContentEntry, User } from '@/types';
 import type { DBEventWithVenue } from '@/types/database';
+import type { DisplayEntry } from '@/types/domain';
 import { useEffect, useState } from 'react';
 import { AddComponentModal } from './components/AddComponentModal';
 import ContentPanel from './components/ContentPanel';
@@ -17,18 +17,16 @@ import TreeSidebar from './components/TreeSidebar';
 
 interface EditorClientProps {
     initialUser: User;
-    initialComponents: ContentEntry[];
+    initialEntries: ContentEntry[];
     initialDisplayEntries?: DisplayEntry[];
-    initialTheme?: Theme | null;
     pageId: string;
     username: string;
 }
 
 export default function EditorClient({
     initialUser,
-    initialComponents,
+    initialEntries,
     initialDisplayEntries = [],
-    initialTheme = null,
     pageId,
     username,
 }: EditorClientProps) {
@@ -38,7 +36,6 @@ export default function EditorClient({
     // Content Entry Store
     const setEntries = useContentEntryStore((state) => state.setEntries);
     const setPageId = useContentEntryStore((state) => state.setPageId);
-    const setTheme = useContentEntryStore((state) => state.setTheme);
     const createEntry = useContentEntryStore((state) => state.createEntry);
     const finishCreating = useContentEntryStore((state) => state.finishCreating);
     const deleteEntryFromStore = useContentEntryStore((state) => state.deleteEntry);
@@ -57,23 +54,18 @@ export default function EditorClient({
     // Zustand 초기화
     useEffect(() => {
         setUser(initialUser);
-        setEntries(initialComponents);
+        setEntries(initialEntries);
         setDisplayEntries(initialDisplayEntries);
         setPageId(pageId);
-        if (initialTheme) {
-            setTheme(initialTheme);
-        }
     }, [
         initialUser,
-        initialComponents,
+        initialEntries,
         initialDisplayEntries,
-        initialTheme,
         pageId,
         setUser,
         setEntries,
         setDisplayEntries,
         setPageId,
-        setTheme,
     ]);
 
     // 엔트리 추가 핸들러
@@ -85,7 +77,7 @@ export default function EditorClient({
 
         if (eventData) {
             // 이벤트 데이터가 있으면 변환하여 바로 저장 (이미 완성된 데이터)
-            const newEntry = eventToEntry(eventData);
+            const newEntry = mapEventToEntry(eventData);
             await createEntry(newEntry);
             // 완성된 데이터이므로 바로 생성 완료 처리 + 미리보기 트리거
             finishCreating(newEntry.id);

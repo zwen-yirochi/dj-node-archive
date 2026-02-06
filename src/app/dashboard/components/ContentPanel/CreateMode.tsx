@@ -3,12 +3,9 @@
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { canCreate } from '@/lib/validators';
-import { type ContentEntry, isEventComponent, isLinkComponent, isMixsetComponent } from '@/types';
+import { type ContentEntry } from '@/types';
 import { Calendar, Headphones, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import LinkEditor from './LinkEditor';
-import MixsetEditor from './MixsetEditor';
-import ShowEditor from './ShowEditor';
 
 interface CreateModeProps {
     component: ContentEntry;
@@ -87,19 +84,6 @@ export default function CreateMode({ component, onSave, onCancel }: CreateModePr
                     </div>
                     <h2 className="text-xl font-semibold text-dashboard-text">{getEntryTitle()}</h2>
                 </div>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-                {isEventComponent(localEntry) && (
-                    <ShowEditor component={localEntry} onUpdate={updateLocal} />
-                )}
-                {isMixsetComponent(localEntry) && (
-                    <MixsetEditor component={localEntry} onUpdate={updateLocal} />
-                )}
-                {isLinkComponent(localEntry) && (
-                    <LinkEditor component={localEntry} onUpdate={updateLocal} />
-                )}
             </div>
 
             {/* Footer - 추가 버튼 */}
