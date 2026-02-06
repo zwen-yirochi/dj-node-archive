@@ -4,7 +4,7 @@ import {
     ENTRY_TYPE_CONFIG,
     EVENT_CREATE_OPTIONS,
     type EventCreateOption,
-} from '@/app/dashboard/entries/entry';
+} from '@/app/dashboard/constants/entry';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -152,6 +152,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
                                 onKeyDown={handleKeyDown}
                                 placeholder={config.titlePlaceholder}
                                 autoFocus
+                                autoComplete="off"
                                 className="border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-1 focus:ring-dashboard-border-hover"
                             />
                         </div>

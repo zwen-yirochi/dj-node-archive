@@ -1,6 +1,6 @@
 'use client';
 
-import { COMPONENT_TYPE_CONFIG } from '@/app/dashboard/entries/entryConfig';
+import { COMPONENT_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
 import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 import { cn } from '@/lib/utils';
 import { canAddToView, getMissingFieldLabels, getTreeItemStatus } from '@/lib/validators';

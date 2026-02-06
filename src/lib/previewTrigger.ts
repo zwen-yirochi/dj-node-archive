@@ -5,7 +5,7 @@
  * 미리보기 새로고침을 트리거하도록 중앙 관리합니다.
  */
 
-import { COMPONENT_FIELDS, type EntryType } from '@/app/dashboard/entries/entryFields';
+import { COMPONENT_FIELDS, type EntryType } from '@/app/dashboard/constants/entryFields';
 import type { ContentEntry } from '@/types';
 
 /**

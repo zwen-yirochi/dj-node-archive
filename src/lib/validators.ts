@@ -1,4 +1,4 @@
-import { COMPONENT_FIELDS, type EntryType } from '@/app/dashboard/entries/entryFields';
+import { COMPONENT_FIELDS, type EntryType } from '@/app/dashboard/constants/entryFields';
 import type { ContentEntry } from '@/types';
 import type { FieldConfig, TreeItemStatus, ValidationResult } from '@/types/entryFields';
 
