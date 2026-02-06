@@ -86,6 +86,3 @@ export const useUIStore = create<UIStore>((set, get) => ({
             },
         })),
 }));
-
-/** @deprecated EditMode is no longer used - inline editing doesn't need separate modes */
-export type EditMode = 'view' | 'edit';

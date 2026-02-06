@@ -6,7 +6,7 @@ import {
 } from '@/lib/db/queries/display-entry.queries';
 import { findUserWithPages, findUserWithPagesById } from '@/lib/db/queries/user.queries';
 import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers';
-import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry, Page, User } from '@/types/domain';
+import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry, User } from '@/types/domain';
 import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
 import { cache } from 'react';
 
@@ -18,9 +18,21 @@ export interface DisplayEntry {
     isVisible: boolean;
 }
 
+// 페이지와 엔트리를 포함한 도메인 타입
+export interface PageWithEntries {
+    id: string;
+    userId: string;
+    slug: string;
+    title?: string;
+    bio?: string;
+    avatarUrl?: string;
+    themeColor?: string;
+    entries: ContentEntry[];
+}
+
 export interface EditorData {
     user: User;
-    components: ContentEntry[];
+    contentEntries: ContentEntry[];
     pageId: string | null;
     displayEntries: DisplayEntry[];
 }
@@ -52,7 +64,7 @@ export const getUser = cache(async (username: string): Promise<Result<User>> => 
 });
 
 // React cache로 감싸서 요청당 한 번만 실행
-export const getUserPage = cache(async (username: string): Promise<Result<Page>> => {
+export const getUserPage = cache(async (username: string): Promise<Result<PageWithEntries>> => {
     const result = await findUserWithPages(username);
 
     if (!isSuccess(result)) {
@@ -73,6 +85,10 @@ export const getUserPage = cache(async (username: string): Promise<Result<Page>>
         id: dbPage.id,
         userId: dbData.id,
         slug: dbPage.slug,
+        title: dbPage.title ?? undefined,
+        bio: dbPage.bio ?? undefined,
+        avatarUrl: dbPage.avatar_url ?? undefined,
+        themeColor: dbPage.theme_color ?? undefined,
         entries,
     });
 });
@@ -91,14 +107,13 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
     if (!page) {
         return success({
             user,
-            components: [],
+            contentEntries: [],
             pageId: null,
             displayEntries: [],
-            theme: null,
         });
     }
 
-    const components = (page.entries || [])
+    const contentEntries = (page.entries || [])
         .sort((a, b) => a.position - b.position)
         .map(mapEntryToDomain);
 
@@ -110,7 +125,7 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
 
     return success({
         user,
-        components,
+        contentEntries,
         pageId: page.id,
         displayEntries,
     });
@@ -147,14 +162,13 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
     if (!page) {
         return success({
             user,
-            components: [],
+            contentEntries: [],
             pageId: null,
             displayEntries: [],
-            theme: null,
         });
     }
 
-    const components = (page.entries || [])
+    const contentEntries = (page.entries || [])
         .sort((a, b) => a.position - b.position)
         .map(mapEntryToDomain);
 
@@ -166,7 +180,7 @@ export const getEditorDataByUserId = cache(async (userId: string): Promise<Resul
 
     return success({
         user,
-        components,
+        contentEntries,
         pageId: page.id,
         displayEntries,
     });

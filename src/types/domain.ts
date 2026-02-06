@@ -6,7 +6,7 @@ export interface User {
     id: string;
     username: string;
     displayName: string;
-    avatarUrl?: string;
+    avatarUrl: string;
     bio?: string;
     instagram?: string;
     soundcloud?: string;

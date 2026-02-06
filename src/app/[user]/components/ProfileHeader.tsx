@@ -1,17 +1,19 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ProfileHeaderProps {
+    id: string;
     username: string;
     displayName: string;
-    bio: string;
     avatarUrl: string;
+    bio?: string;
 }
 
 export default function ProfileHeader({
+    id,
     username,
     displayName,
-    bio,
     avatarUrl,
+    bio,
 }: ProfileHeaderProps) {
     const getInitials = (name: string) => {
         return name

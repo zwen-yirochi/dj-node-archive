@@ -11,7 +11,7 @@ import {
 
 /**
  * 링크 컴포넌트 아이콘 매핑
- * LinkEditor, ViewMode에서 사용
+ * LinkEditor에서 사용
  */
 export const LINK_ICON_COMPONENTS: Record<string, React.ComponentType<{ className?: string }>> = {
     soundcloud: Music,
@@ -26,7 +26,7 @@ export const LINK_ICON_COMPONENTS: Record<string, React.ComponentType<{ classNam
 
 /**
  * 컴포넌트 타입별 설정
- * TreeItem, PageListView, ViewMode에서 사용
+ * TreeItem, PageListView에서 사용
  */
 export const COMPONENT_TYPE_CONFIG = {
     event: {

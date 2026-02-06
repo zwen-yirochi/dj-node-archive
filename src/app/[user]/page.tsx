@@ -1,5 +1,5 @@
 import { getPublicPageData } from '@/lib/services/user.service';
-import type { EventComponent, MixsetComponent } from '@/types/domain';
+import type { EventEntry, MixsetEntry } from '@/types/domain';
 import { notFound } from 'next/navigation';
 import EventsSection from './components/EventsSection';
 import GridView from './components/GridView';
@@ -27,8 +27,8 @@ export default async function Page({ params, searchParams }: PageProps) {
     const { user: userData, components } = result.data;
 
     // 컴포넌트를 타입별로 분류
-    const events = components.filter((c): c is EventComponent => c.type === 'event');
-    const mixsets = components.filter((c): c is MixsetComponent => c.type === 'mixset');
+    const events = components.filter((c): c is EventEntry => c.type === 'event');
+    const mixsets = components.filter((c): c is MixsetEntry => c.type === 'mixset');
 
     return (
         <div className="text-primay min-h-screen bg-stone-200 font-bokeh text-shadow-def">

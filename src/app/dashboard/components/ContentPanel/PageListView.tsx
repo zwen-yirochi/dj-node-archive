@@ -124,9 +124,9 @@ function SortableItem({
 export default function PageListView() {
     // Display Entry Store
     const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
-    const reorderView = useDisplayEntryStore((state) => state.reorderView);
+    const reorderView = useDisplayEntryStore((state) => state.reorderDisplay);
     const toggleVisibility = useDisplayEntryStore((state) => state.toggleVisibility);
-    const removeFromView = useDisplayEntryStore((state) => state.removeFromView);
+    const removeFromView = useDisplayEntryStore((state) => state.removeFromDisplay);
 
     // Content Entry Store
     const entries = useContentEntryStore((state) => state.entries);

@@ -3,12 +3,12 @@
 
 import { createEmptyEntry, mapEventToEntry } from '@/lib/mappers';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import type { DisplayEntry } from '@/stores/displayEntryStore';
 import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useUserStore } from '@/stores/userStore';
 import type { ContentEntry, User } from '@/types';
 import type { DBEventWithVenue } from '@/types/database';
+import type { DisplayEntry } from '@/types/domain';
 import { useEffect, useState } from 'react';
 import { AddComponentModal } from './components/AddComponentModal';
 import ContentPanel from './components/ContentPanel';
@@ -17,7 +17,7 @@ import TreeSidebar from './components/TreeSidebar';
 
 interface EditorClientProps {
     initialUser: User;
-    initialComponents: ContentEntry[];
+    initialEntries: ContentEntry[];
     initialDisplayEntries?: DisplayEntry[];
     pageId: string;
     username: string;
@@ -25,7 +25,7 @@ interface EditorClientProps {
 
 export default function EditorClient({
     initialUser,
-    initialComponents,
+    initialEntries,
     initialDisplayEntries = [],
     pageId,
     username,
@@ -54,12 +54,12 @@ export default function EditorClient({
     // Zustand 초기화
     useEffect(() => {
         setUser(initialUser);
-        setEntries(initialComponents);
+        setEntries(initialEntries);
         setDisplayEntries(initialDisplayEntries);
         setPageId(pageId);
     }, [
         initialUser,
-        initialComponents,
+        initialEntries,
         initialDisplayEntries,
         pageId,
         setUser,

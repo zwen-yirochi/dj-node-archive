@@ -12,7 +12,7 @@ export interface User {
     username: string;
     email?: string;
     display_name?: string;
-    avatar_url?: string;
+    avatar_url: string;
     bio?: string;
     instagram?: string;
     soundcloud?: string;

@@ -1,11 +1,11 @@
 'use client';
 
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
 import { useDisplayEntryStore } from '@/stores/displayEntryStore';
+import { useUIStore } from '@/stores/uiStore';
 import { useMemo } from 'react';
 import BioDesignPanel from './BioDesignPanel';
-import CreateMode from './EditMode/CreateMode';
+import CreateMode from './CreateMode';
 import EmptyState from './EmptyState';
 import InlineEditMode from './InlineEditMode';
 import PageListView from './PageListView';

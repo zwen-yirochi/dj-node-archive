@@ -3,8 +3,8 @@
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/lib/validators';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
 import { useDisplayEntryStore } from '@/stores/displayEntryStore';
+import { useUIStore } from '@/stores/uiStore';
 import type { ContentEntry } from '@/types';
 import {
     closestCenter,
@@ -53,8 +53,8 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
 
     // Display Entry Store
     const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
-    const addToView = useDisplayEntryStore((state) => state.addToView);
-    const reorderView = useDisplayEntryStore((state) => state.reorderView);
+    const addToView = useDisplayEntryStore((state) => state.addToDisplay);
+    const reorderView = useDisplayEntryStore((state) => state.reorderDisplay);
 
     // UI Store
     const activePanel = useUIStore((state) => state.activePanel);
@@ -63,7 +63,7 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
     const toggleSection = useUIStore((state) => state.toggleSection);
 
     // Page 섹션 접힘 상태
-    const isPageCollapsed = sidebarSections.view.collapsed;
+    const isPageCollapsed = sidebarSections.page.collapsed;
 
     // useMemo로 필터링하여 무한 루프 방지
     const events = useMemo(() => entries.filter((e) => e.type === 'event'), [entries]);
@@ -176,7 +176,7 @@ export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: Tre
 
     const handlePageToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
-        toggleSection('view');
+        toggleSection('page');
     };
 
     return (

@@ -1,5 +1,5 @@
 // lib/mappers.ts - DB ↔ Domain 변환 함수 통합
-import type { Entry, Event as DBEvent, User as DBUser, Venue as DBVenue } from '@/types/database';
+import type { Event as DBEvent, User as DBUser, Venue as DBVenue, Entry } from '@/types/database';
 import type {
     ContentEntry,
     Event,
