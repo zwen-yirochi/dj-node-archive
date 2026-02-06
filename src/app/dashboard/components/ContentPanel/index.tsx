@@ -5,7 +5,7 @@ import { useDisplayEntryStore } from '@/stores/displayEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useMemo } from 'react';
 import BioDesignPanel from './BioDesignPanel';
-import CreateMode from './CreateMode';
+import CreateEntryPanel from './CreateEntryPanel';
 import EmptyState from './EmptyState';
 import InlineEditMode from './InlineEditMode';
 import PageListView from './PageListView';
@@ -14,7 +14,7 @@ export default function ContentPanel() {
     // UI Store
     const selectedEntryId = useUIStore((state) => state.selectedEntryId);
     const activePanel = useUIStore((state) => state.activePanel);
-    const isCreating = useUIStore((state) => state.isCreating);
+    const createPanelType = useUIStore((state) => state.createPanelType);
     const selectEntry = useUIStore((state) => state.selectEntry);
     const finishCreatingUI = useUIStore((state) => state.finishCreating);
 
@@ -51,6 +51,15 @@ export default function ContentPanel() {
         );
     }
 
+    // 생성 패널 모드 (새로운 방식)
+    if (createPanelType) {
+        return (
+            <div className="h-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
+                <CreateEntryPanel type={createPanelType} />
+            </div>
+        );
+    }
+
     // 선택된 엔트리가 없으면 EmptyState
     if (!selectedEntry) {
         return (
@@ -82,30 +91,6 @@ export default function ContentPanel() {
         finishCreatingUI();
         finishCreatingEntry(selectedEntry.id);
     };
-
-    // 생성 모드 (새 엔트리) - 별도 유지
-    if (isCreating) {
-        return (
-            <div className="h-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
-                <CreateMode
-                    component={selectedEntry}
-                    onSave={async (entry) => {
-                        const { triggeredPreview } = await updateEntry(entry);
-                        if (triggeredPreview) {
-                            triggerPreviewRefresh();
-                        }
-                        handleFinishCreating();
-                    }}
-                    onCancel={async () => {
-                        // 생성 취소 시 엔트리 삭제 (미리보기 트리거 없음 - 아직 불완전한 상태)
-                        await deleteEntry(selectedEntry.id);
-                        handleFinishCreating();
-                        selectEntry(null);
-                    }}
-                />
-            </div>
-        );
-    }
 
     // 인라인 편집 모드 (View + Edit 통합)
     return (
