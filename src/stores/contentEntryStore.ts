@@ -4,10 +4,18 @@
  * 콘텐츠 엔트리 데이터를 관리합니다.
  */
 
+import { apiFetch } from '@/lib/api/fetch-utils';
 import { shouldTriggerPreview } from '@/lib/previewTrigger';
-import { canAddToView } from '@/lib/validators'; // >??
-import type { ContentEntry } from '@/types';
+import { canAddToView } from '@/lib/validators';
+import { isDisplayed, type ContentEntry, type Result } from '@/types';
 import { create } from 'zustand';
+
+type PublishOption = 'publish' | 'private';
+type UpdateResult = {
+    success: boolean;
+    triggeredPreview: boolean;
+    error?: string;
+};
 
 interface ContentEntryStore {
     entries: ContentEntry[];
@@ -15,76 +23,78 @@ interface ContentEntryStore {
     newlyCreatedIds: Set<string>;
     previewVersion: number; // Display 변경 시 증가
 
+    // Setters
     setEntries: (entries: ContentEntry[]) => void;
     setPageId: (pageId: string) => void;
-    getEntryById: (id: string) => ContentEntry | undefined;
-    isNewlyCreated: (id: string) => boolean;
-    triggerPreviewRefresh: () => void;
+    setDisplayedEntries: (entries: ContentEntry[]) => void;
 
-    // 엔트리 CRUD 액션
-    createEntry: (entry: ContentEntry, publishOption?: 'publish' | 'private') => Promise<string>;
-    updateEntry: (entry: ContentEntry) => Promise<{ triggeredPreview: boolean }>;
-    deleteEntry: (id: string) => Promise<{ triggeredPreview: boolean }>;
+    // Getters
+    getEntryById: (id: string) => ContentEntry | undefined;
+    getDisplayedEntries: () => ContentEntry[];
+    getVisibleOnPageEntries: () => ContentEntry[];
+    isNewlyCreated: (id: string) => boolean;
+
+    // Actions
+    triggerPreviewRefresh: () => void;
+    createEntry: (entry: ContentEntry, publishOption?: PublishOption) => Promise<Result<string>>;
+    updateEntry: (entry: ContentEntry) => Promise<UpdateResult>;
+    deleteEntry: (id: string) => Promise<UpdateResult>;
     finishCreating: (id: string) => void;
+
+    // Reordering
     reorderSectionItems: (
-        type: 'event' | 'mixset' | 'link',
+        type: ContentEntry['type'],
         entryId: string,
         newPosition: number
     ) => Promise<void>;
+    reorderDisplayEntries: (entryId: string, newIndex: number) => Promise<void>;
 
-    // Display 관련 액션 (displayOrder 기반)
-    addToDisplay: (entryId: string) => Promise<void>; // displayOrder 설정
-    removeFromDisplay: (entryId: string) => Promise<void>; // displayOrder = null
-    reorderDisplayEntries: (entryId: string, newIndex: number) => Promise<void>; // Page 내 순서 변경
-    toggleVisibility: (entryId: string) => Promise<void>; // isVisible 토글 (임시 숨김)
-
-    // Setter
-    setDisplayedEntries: (entries: ContentEntry[]) => void; // 초기 displayed entries 설정
-
-    // Getter
-    getDisplayedEntries: () => ContentEntry[]; // displayOrder !== null
-    getVisibleOnPageEntries: () => ContentEntry[]; // displayOrder !== null && isVisible
+    // Display Management
+    addToDisplay: (entryId: string) => Promise<void>;
+    removeFromDisplay: (entryId: string) => Promise<void>;
+    toggleVisibility: (entryId: string) => Promise<void>;
 }
 
 // Store instance for imperative access
-const contentEntryStore = create<ContentEntryStore>((set, get) => ({
+export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
     entries: [],
     pageId: null,
     newlyCreatedIds: new Set<string>(),
     previewVersion: 0,
 
+    // Setters
     setEntries: (entries) => set({ entries }),
     setPageId: (pageId) => set({ pageId }),
 
     setDisplayedEntries: (displayedEntries) => {
-        // displayedEntries를 기존 entries에 병합 (id 기준으로 업데이트)
-        set((state) => {
-            const updatedEntries = state.entries.map((entry) => {
+        set((state) => ({
+            entries: state.entries.map((entry) => {
                 const displayed = displayedEntries.find((d) => d.id === entry.id);
-                return displayed ? displayed : entry;
-            });
-            return { entries: updatedEntries };
-        });
+                return displayed ?? entry;
+            }),
+        }));
     },
 
-    getEntryById: (id) => {
-        return get().entries.find((e) => e.id === id);
-    },
+    // Getters
+    getEntryById: (id) => get().entries.find((e) => e.id === id),
 
-    isNewlyCreated: (id) => {
-        return get().newlyCreatedIds.has(id);
-    },
+    getDisplayedEntries: () =>
+        get()
+            .entries.filter((e) => typeof e.displayOrder === 'number')
+            .sort((a, b) => a.displayOrder! - b.displayOrder!),
 
-    triggerPreviewRefresh: () => {
-        set((state) => ({ previewVersion: state.previewVersion + 1 }));
-    },
+    getVisibleOnPageEntries: () =>
+        get()
+            .entries.filter((e) => typeof e.displayOrder === 'number' && e.isVisible)
+            .sort((a, b) => a.displayOrder! - b.displayOrder!),
 
-    /**
-     * 새 엔트리 생성
-     * - DB에 POST
-     * - newlyCreatedIds에 추가
-     * - 미리보기 트리거 안 함 (생성 중에는 불완전한 상태)
-     */
+    isNewlyCreated: (id) => get().newlyCreatedIds.has(id),
+
+    triggerPreviewRefresh: () => set((state) => ({ previewVersion: state.previewVersion + 1 })),
+
+    // ============================================
+    // Create Entry
+    // ============================================
     createEntry: async (entry, publishOption = 'private') => {
         const { entries, pageId, newlyCreatedIds } = get();
 
@@ -94,44 +104,37 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
             throw new Error('Page ID is not set. Please refresh the page.');
         }
 
+        // 롤백용 이전 상태 저장
+        const previousState = { entries, newlyCreatedIds };
+
         // 낙관적 업데이트: 엔트리 추가 + newlyCreatedIds에 등록
-        const updatedEntries = [...entries, entry];
         const updatedNewlyCreatedIds = new Set(newlyCreatedIds);
         updatedNewlyCreatedIds.add(entry.id);
 
         set({
-            entries: updatedEntries,
+            entries: [...entries, entry],
             newlyCreatedIds: updatedNewlyCreatedIds,
         });
 
-        try {
-            const response = await fetch('/api/entries', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pageId, entry, publishOption }),
-            });
+        const result = await apiFetch<{ id: string }>('/api/entries', {
+            method: 'POST',
+            body: { pageId, entry, publishOption },
+        });
 
-            if (!response.ok) {
-                // 롤백
-                set({ entries, newlyCreatedIds });
-                console.error('엔트리 생성 실패');
-                throw new Error('엔트리 생성 실패');
-            }
-
-            return entry.id;
-        } catch (error) {
+        if (!result.success) {
             // 롤백
-            set({ entries, newlyCreatedIds });
-            console.error('엔트리 생성 오류:', error);
-            throw error;
+            set(previousState);
+            return { success: false, error: result.error };
         }
+
+        return { success: true, data: entry.id };
     },
 
     /**
      * 기존 엔트리 수정
      * - DB에 PATCH
      * - 필드 레벨로 미리보기 트리거 여부 결정
-     * @returns { triggeredPreview: boolean } - 호출부에서 DisplayEntryStore 트리거 결정용
+     * @returns { success, triggeredPreview } - 호출부에서 DisplayEntryStore 트리거 결정용
      */
     updateEntry: async (entry) => {
         const { entries } = get();
@@ -139,7 +142,7 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
 
         if (existingIndex === -1) {
             console.error('수정할 엔트리를 찾을 수 없음:', entry.id);
-            return { triggeredPreview: false };
+            return { success: false, triggeredPreview: false };
         }
 
         const previousEntry = entries[existingIndex];
@@ -151,44 +154,34 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
         // 낙관적 업데이트
         set({ entries: updatedEntries });
 
-        try {
-            const response = await fetch(`/api/entries/${entry.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ entry }),
-            });
+        const result = await apiFetch(`/api/entries/${entry.id}`, {
+            method: 'PATCH',
+            body: { entry },
+        });
 
-            if (!response.ok) {
-                // 롤백
-                set({
-                    entries: entries.map((e) => (e.id === entry.id ? previousEntry : e)),
-                });
-                console.error('엔트리 수정 실패');
-                return { triggeredPreview: false };
-            }
-
-            return { triggeredPreview };
-        } catch (error) {
+        if (!result.success) {
             // 롤백
             set({
                 entries: entries.map((e) => (e.id === entry.id ? previousEntry : e)),
             });
-            console.error('엔트리 수정 오류:', error);
-            return { triggeredPreview: false };
+            console.error('엔트리 수정 실패');
+            return { success: false, triggeredPreview: false };
         }
+
+        return { success: true, triggeredPreview };
     },
 
     /**
      * 엔트리 삭제
      * - 완성된 엔트리였다면 미리보기 트리거
-     * @returns { triggeredPreview: boolean }
+     * @returns { success, triggeredPreview }
      */
     deleteEntry: async (id) => {
         const { entries, newlyCreatedIds } = get();
         const deletedEntry = entries.find((e) => e.id === id);
 
         if (!deletedEntry) {
-            return { triggeredPreview: false };
+            return { success: false, triggeredPreview: false };
         }
 
         // 삭제된 엔트리가 완성된 상태였다면 미리보기 새로고침 필요
@@ -204,25 +197,18 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
             newlyCreatedIds: updatedNewlyCreatedIds,
         });
 
-        try {
-            const response = await fetch(`/api/entries/${id}`, {
-                method: 'DELETE',
-            });
+        const result = await apiFetch(`/api/entries/${id}`, {
+            method: 'DELETE',
+        });
 
-            if (!response.ok) {
-                // 롤백
-                set({ entries, newlyCreatedIds });
-                console.error('엔트리 삭제 실패');
-                return { triggeredPreview: false };
-            }
-
-            return { triggeredPreview };
-        } catch (error) {
+        if (!result.success) {
             // 롤백
             set({ entries, newlyCreatedIds });
-            console.error('엔트리 삭제 오류:', error);
-            return { triggeredPreview: false };
+            console.error('엔트리 삭제 실패');
+            return { success: false, triggeredPreview: false };
         }
+
+        return { success: true, triggeredPreview };
     },
 
     /**
@@ -272,25 +258,19 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
 
         set({ entries: updatedEntries });
 
-        try {
-            const updates = reorderedSection.map((entry, index) => ({
-                id: entry.id,
-                position: index,
-            }));
+        const updates = reorderedSection.map((entry, index) => ({
+            id: entry.id,
+            position: index,
+        }));
 
-            const response = await fetch('/api/entries/reorder', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ updates }),
-            });
+        const result = await apiFetch('/api/entries/reorder', {
+            method: 'PATCH',
+            body: { updates },
+        });
 
-            if (!response.ok) {
-                set({ entries: previousEntries });
-                console.error('엔트리 순서 변경 실패');
-            }
-        } catch (error) {
+        if (!result.success) {
             set({ entries: previousEntries });
-            console.error('엔트리 순서 변경 오류:', error);
+            console.error('엔트리 순서 변경 실패');
         }
     },
 
@@ -302,8 +282,7 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
         const previousEntries = entries;
         const targetEntry = entries.find((e) => e.id === entryId);
 
-        // 이미 Page에 있으면 무시 (displayOrder가 숫자인 경우)
-        if (!targetEntry || typeof targetEntry.displayOrder === 'number') return;
+        if (!targetEntry || isDisplayed(targetEntry)) return;
 
         // 현재 displayed 엔트리 중 최대 displayOrder 계산
         const displayedOrders = entries
@@ -320,20 +299,14 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
             previewVersion: state.previewVersion + 1,
         }));
 
-        try {
-            const response = await fetch(`/api/entries/${entryId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ displayOrder: newDisplayOrder, isVisible: true }),
-            });
+        const result = await apiFetch(`/api/entries/${entryId}`, {
+            method: 'PATCH',
+            body: { displayOrder: newDisplayOrder, isVisible: true },
+        });
 
-            if (!response.ok) {
-                set({ entries: previousEntries });
-                console.error('Display 추가 실패');
-            }
-        } catch (error) {
+        if (!result.success) {
             set({ entries: previousEntries });
-            console.error('Display 추가 오류:', error);
+            console.error('Display 추가 실패');
         }
     },
 
@@ -354,21 +327,14 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
             previewVersion: state.previewVersion + 1,
         }));
 
-        try {
-            const response = await fetch(`/api/entries/${entryId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ displayOrder: null }),
-            });
+        const result = await apiFetch(`/api/entries/${entryId}`, {
+            method: 'PATCH',
+            body: { displayOrder: null },
+        });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Display 제거 실패:', response.status, errorText);
-                set({ entries: previousEntries });
-            }
-        } catch (error) {
+        if (!result.success) {
             set({ entries: previousEntries });
-            console.error('Display 제거 오류:', error);
+            console.error('Display 제거 실패:', result.error);
         }
     },
 
@@ -409,20 +375,14 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
             previewVersion: state.previewVersion + 1,
         }));
 
-        try {
-            const response = await fetch('/api/entries/reorder-display', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ updates }),
-            });
+        const result = await apiFetch('/api/entries/reorder-display', {
+            method: 'PATCH',
+            body: { updates },
+        });
 
-            if (!response.ok) {
-                set({ entries: previousEntries });
-                console.error('Display 순서 변경 실패');
-            }
-        } catch (error) {
+        if (!result.success) {
             set({ entries: previousEntries });
-            console.error('Display 순서 변경 오류:', error);
+            console.error('Display 순서 변경 실패');
         }
     },
 
@@ -443,44 +403,17 @@ const contentEntryStore = create<ContentEntryStore>((set, get) => ({
             previewVersion: state.previewVersion + 1,
         }));
 
-        try {
-            const response = await fetch(`/api/entries/${entryId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ isVisible: !targetEntry.isVisible }),
-            });
+        const result = await apiFetch(`/api/entries/${entryId}`, {
+            method: 'PATCH',
+            body: { isVisible: !targetEntry.isVisible },
+        });
 
-            if (!response.ok) {
-                set({ entries: previousEntries });
-                console.error('Visibility 변경 실패');
-            }
-        } catch (error) {
+        if (!result.success) {
             set({ entries: previousEntries });
-            console.error('Visibility 변경 오류:', error);
+            console.error('Visibility 변경 실패');
         }
     },
-
-    /**
-     * Page에 표시된 엔트리 목록 (displayOrder가 숫자인 경우만)
-     */
-    getDisplayedEntries: () => {
-        return get()
-            .entries.filter((e) => typeof e.displayOrder === 'number')
-            .sort((a, b) => a.displayOrder! - b.displayOrder!);
-    },
-
-    /**
-     * 공개 페이지에 실제로 보이는 엔트리 (displayOrder가 숫자 && isVisible)
-     */
-    getVisibleOnPageEntries: () => {
-        return get()
-            .entries.filter((e) => typeof e.displayOrder === 'number' && e.isVisible)
-            .sort((a, b) => a.displayOrder! - b.displayOrder!);
-    },
 }));
-
-// Hook export (기존 사용처와 호환)
-export const useContentEntryStore = contentEntryStore;
 
 // Imperative access for initialization
 export const initializeContentEntryStore = (data: {
@@ -488,7 +421,7 @@ export const initializeContentEntryStore = (data: {
     displayedEntries?: ContentEntry[];
     pageId: string;
 }) => {
-    const { setEntries, setPageId, setDisplayedEntries } = contentEntryStore.getState();
+    const { setEntries, setPageId, setDisplayedEntries } = useContentEntryStore.getState();
 
     setEntries(data.entries);
     setPageId(data.pageId);
@@ -510,13 +443,3 @@ export const getSelectedEntry = (entries: ContentEntry[], selectedEntryId: strin
     if (!selectedEntryId) return null;
     return entries.find((e) => e.id === selectedEntryId) ?? null;
 };
-
-// ============================================
-// Deprecated Aliases (호환성 유지)
-// ============================================
-
-/** @deprecated Use getEntriesByType instead */
-export const getComponentsByType = getEntriesByType;
-
-/** @deprecated Use getSelectedEntry instead */
-export const getSelectedComponent = getSelectedEntry;
