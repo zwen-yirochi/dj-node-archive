@@ -1,6 +1,5 @@
 import { Calendar, Headphones, Link as LinkIcon } from 'lucide-react';
 import type { EntryType } from '@/stores/uiStore';
-import type { RegisterOptions } from 'react-hook-form';
 
 // ============================================
 // Entry Type Config
@@ -64,17 +63,8 @@ export const EVENT_CREATE_OPTIONS: EventOptionConfig[] = [
 ];
 
 // ============================================
-// Event Form Types
+// Publish Options
 // ============================================
-
-export interface EventFormData {
-    title: string;
-    posterUrl: string;
-    date: string;
-    venue: { id?: string; name: string };
-    lineup: { id?: string; name: string }[];
-    description: string;
-}
 
 export type PublishOption = 'publish' | 'private';
 
@@ -96,18 +86,3 @@ export const PUBLISH_OPTIONS: PublishOptionConfig[] = [
         description: 'Only visible to you. Requires title and poster.',
     },
 ];
-
-// ============================================
-// Validation Rules
-// ============================================
-
-export const EVENT_VALIDATION_RULES = {
-    title: {
-        required: 'Title is required',
-        minLength: { value: 2, message: 'Title must be at least 2 characters' },
-        maxLength: { value: 100, message: 'Title must be 100 characters or less' },
-    },
-    posterUrl: {
-        required: 'Poster image is required',
-    },
-} satisfies Record<string, RegisterOptions<EventFormData>>;

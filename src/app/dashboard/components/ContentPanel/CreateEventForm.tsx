@@ -1,11 +1,6 @@
 'use client';
 
-import {
-    EVENT_VALIDATION_RULES,
-    PUBLISH_OPTIONS,
-    type EventFormData,
-    type PublishOption,
-} from '@/app/dashboard/constants/entry';
+import { PUBLISH_OPTIONS, type PublishOption } from '@/app/dashboard/constants/entry';
 import { searchArtists, searchVenues } from '@/app/dashboard/services/search';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,9 +20,11 @@ import TagSearchInput from '@/components/ui/TagSearchInput';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
+import { draftEventSchema, publishEventSchema } from '@/lib/validations/entry.schemas';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
-import type { EventEntry } from '@/types/domain';
+import type { CreateEventData, EventEntry } from '@/types/domain';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -37,7 +34,8 @@ const inputClassName =
     'border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-dashboard-border-hover focus:ring-1';
 
 export default function CreateEventForm() {
-    const form = useForm<EventFormData>({
+    const form = useForm<CreateEventData>({
+        resolver: zodResolver(draftEventSchema),
         mode: 'onTouched',
         defaultValues: {
             title: '',
@@ -80,19 +78,17 @@ export default function CreateEventForm() {
     // 필수 필드 검증
     const hasRequiredFields = title?.trim() && posterUrl?.trim();
 
-    // 모든 필드 검증 (Publishing용)
-    const hasAllFields =
-        hasRequiredFields &&
-        date &&
-        venue?.name?.trim() &&
-        lineup?.length > 0 &&
-        description?.trim();
+    // 모든 필드 검증 (Publishing용) - Zod 스키마로 검증
+    const canPublish = publishEventSchema.safeParse({
+        title,
+        posterUrl,
+        date,
+        venue,
+        lineup,
+        description,
+    }).success;
 
-    // 생성 버튼 활성화 조건
     const canCreate = hasRequiredFields;
-
-    // Publishing 옵션 활성화 조건
-    const canPublish = hasAllFields;
 
     // 취소 핸들러
     const handleCancel = () => {
@@ -100,17 +96,19 @@ export default function CreateEventForm() {
         closeCreatePanel();
     };
 
-    const onSubmit = async (data: EventFormData) => {
-        // 기존 서버 에러 클리어
+    const onSubmit = async (data: CreateEventData) => {
         clearErrors('root');
 
-        if (publishOption === 'publish' && !canPublish) {
-            toast({
-                variant: 'destructive',
-                title: 'All fields required',
-                description: 'Publishing requires all fields to be filled.',
-            });
-            return;
+        if (publishOption === 'publish') {
+            const publishResult = publishEventSchema.safeParse(data);
+            if (!publishResult.success) {
+                toast({
+                    variant: 'destructive',
+                    title: 'All fields required',
+                    description: 'Publishing requires all fields to be filled.',
+                });
+                return;
+            }
         }
 
         try {
@@ -120,7 +118,7 @@ export default function CreateEventForm() {
             newEntry.date = data.date || new Date().toISOString().split('T')[0];
             newEntry.venue = data.venue;
             newEntry.lineup = data.lineup;
-            newEntry.description = data.description.trim();
+            newEntry.description = data.description?.trim() || '';
 
             await createEntry(newEntry, publishOption);
             finishCreatingEntry(newEntry.id);
@@ -167,7 +165,6 @@ export default function CreateEventForm() {
                 <FormField
                     control={control}
                     name="title"
-                    rules={EVENT_VALIDATION_RULES.title}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel className="text-dashboard-text-secondary">
@@ -191,7 +188,6 @@ export default function CreateEventForm() {
                 <FormField
                     control={control}
                     name="posterUrl"
-                    rules={EVENT_VALIDATION_RULES.posterUrl}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel className="text-dashboard-text-secondary">
