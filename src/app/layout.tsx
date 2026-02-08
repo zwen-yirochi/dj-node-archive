@@ -1,5 +1,6 @@
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono, Inter } from 'next/font/google';
 import './globals.css';
@@ -44,7 +45,10 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}
             >
-                <ErrorBoundary>{children}</ErrorBoundary>
+                <ErrorBoundary>
+                    {children}
+                    <SpeedInsights debug={process.env.NODE_ENV === 'development'} />
+                </ErrorBoundary>
                 <Toaster />
             </body>
         </html>

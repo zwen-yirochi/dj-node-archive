@@ -1,30 +1,38 @@
 // lib/api/handlers/entry.handlers.ts
 // ContentEntry API 핸들러
+import type { AuthContext } from '@/lib/api';
+import {
+    forbiddenResponse,
+    internalErrorResponse,
+    notFoundResponse,
+    successResponse,
+    verifyEntriesOwnership,
+    verifyEntryOwnership,
+    verifyPageOwnership,
+    zodValidationErrorResponse,
+} from '@/lib/api';
 import {
     createEntry,
-    getMaxPosition,
-    getMaxDisplayOrder,
-    updateEntry,
     deleteEntry,
-    updateEntryPositions,
+    getMaxDisplayOrder,
+    getMaxPosition,
     updateDisplayOrders,
+    updateEntry,
+    updateEntryPositions,
 } from '@/lib/db/queries/entry.queries';
 import { createEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
 import { findUserByAuthId } from '@/lib/db/queries/user.queries';
 import { mapEntryToDatabase } from '@/lib/mappers';
-import { isSuccess } from '@/types/result';
-import type { ContentEntry, EventEntry } from '@/types/domain';
 import {
-    verifyPageOwnership,
-    verifyEntryOwnership,
-    verifyEntriesOwnership,
-    successResponse,
-    forbiddenResponse,
-    notFoundResponse,
-    validationErrorResponse,
-    internalErrorResponse,
-} from '@/lib/api';
-import type { AuthContext } from '@/lib/api';
+    createEntryRequestSchema,
+    publishEventSchema,
+    reorderDisplayEntriesRequestSchema,
+    reorderEntriesRequestSchema,
+    updateEntryRequestSchema,
+} from '@/lib/validations/entry.schemas';
+import type { ContentEntry, EventEntry } from '@/types/domain';
+import { isSuccess } from '@/types/result';
+import { ZodError } from 'zod';
 
 /**
  * POST /api/entries (또는 /api/components)
@@ -39,15 +47,13 @@ import type { AuthContext } from '@/lib/api';
  */
 export async function handleCreateEntry(request: Request, { user }: AuthContext) {
     const body = await request.json();
-    const { pageId, entry, publishOption } = body as {
-        pageId: string;
-        entry: ContentEntry;
-        publishOption?: 'publish' | 'private';
-    };
+    const parsed = createEntryRequestSchema.safeParse(body);
 
-    if (!pageId || !entry) {
-        return validationErrorResponse('pageId와 entry');
+    if (!parsed.success) {
+        return zodValidationErrorResponse(parsed.error);
     }
+
+    const { pageId, entry, publishOption } = parsed.data;
 
     // 페이지 소유권 검증
     const ownership = await verifyPageOwnership(pageId, user.id);
@@ -66,7 +72,13 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
 
     // Publish 옵션이고 event 타입인 경우: events 테이블에 먼저 생성
     if (publishOption === 'publish' && entry.type === 'event') {
-        const eventEntry = entry as EventEntry;
+        const eventEntry = entry as unknown as EventEntry;
+
+        // publish 시 이벤트 데이터 검증
+        const eventParsed = publishEventSchema.safeParse(eventEntry);
+        if (!eventParsed.success) {
+            return zodValidationErrorResponse(eventParsed.error);
+        }
 
         // user.id는 auth.users.id이므로 users.id로 변환 필요
         const userResult = await findUserByAuthId(user.id);
@@ -97,7 +109,7 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
         referenceId = eventResult.data.id;
     }
 
-    const dbEntry = mapEntryToDatabase(entry, newPosition);
+    const dbEntry = mapEntryToDatabase(entry as unknown as ContentEntry, newPosition);
 
     // Option B: 둘 다 유지 - entries.data에 전체 데이터, reference_id는 플래그
     const result = await createEntry(entry.id, {
@@ -133,11 +145,13 @@ export async function handleUpdateEntry(request: Request, { user }: AuthContext,
     }
 
     const body = await request.json();
-    const { entry, isVisible, displayOrder } = body as {
-        entry?: ContentEntry;
-        isVisible?: boolean;
-        displayOrder?: number | null;
-    };
+    const parsed = updateEntryRequestSchema.safeParse(body);
+
+    if (!parsed.success) {
+        return zodValidationErrorResponse(parsed.error);
+    }
+
+    const { entry, isVisible, displayOrder } = parsed.data;
 
     // Case 1: displayOrder 및/또는 isVisible만 변경
     if (displayOrder !== undefined || typeof isVisible === 'boolean') {
@@ -163,11 +177,19 @@ export async function handleUpdateEntry(request: Request, { user }: AuthContext,
 
     // Case 2: 전체 엔트리 수정
     if (!entry) {
-        return validationErrorResponse('entry, isVisible, 또는 displayOrder');
+        return zodValidationErrorResponse(
+            new ZodError([
+                {
+                    code: 'custom',
+                    path: ['entry'],
+                    message: 'entry, isVisible, 또는 displayOrder가 필요합니다',
+                },
+            ])
+        );
     }
 
     // position은 유지하면서 type과 data만 업데이트
-    const dbEntry = mapEntryToDatabase(entry, 0);
+    const dbEntry = mapEntryToDatabase(entry as unknown as ContentEntry, 0);
 
     const result = await updateEntry(id, {
         type: dbEntry.type,
@@ -203,22 +225,19 @@ export async function handleDeleteEntry({ user }: AuthContext, id: string) {
     return successResponse(null);
 }
 
-interface ReorderItem {
-    id: string;
-    position: number;
-}
-
 /**
- * PATCH /api/entries/reorder (또는 /api/components/reorder)
+ * PATCH /api/entries/reorder
  * Entry 순서 변경 (Components 섹션 내)
  */
 export async function handleReorderEntries(request: Request, { user }: AuthContext) {
     const body = await request.json();
-    const { updates } = body as { updates: ReorderItem[] };
+    const parsed = reorderEntriesRequestSchema.safeParse(body);
 
-    if (!updates || !Array.isArray(updates) || updates.length === 0) {
-        return validationErrorResponse('updates 배열');
+    if (!parsed.success) {
+        return zodValidationErrorResponse(parsed.error);
     }
+
+    const { updates } = parsed.data;
 
     // 모든 엔트리의 소유권 일괄 검증
     const entryIds = updates.map((u) => u.id);
@@ -236,22 +255,19 @@ export async function handleReorderEntries(request: Request, { user }: AuthConte
     return successResponse(null);
 }
 
-interface DisplayOrderItem {
-    id: string;
-    displayOrder: number | null;
-}
-
 /**
  * PATCH /api/entries/reorder-display
  * Page 내 Entry 순서 변경 (display_order)
  */
 export async function handleReorderDisplayEntries(request: Request, { user }: AuthContext) {
     const body = await request.json();
-    const { updates } = body as { updates: DisplayOrderItem[] };
+    const parsed = reorderDisplayEntriesRequestSchema.safeParse(body);
 
-    if (!updates || !Array.isArray(updates) || updates.length === 0) {
-        return validationErrorResponse('updates 배열');
+    if (!parsed.success) {
+        return zodValidationErrorResponse(parsed.error);
     }
+
+    const { updates } = parsed.data;
 
     // 모든 엔트리의 소유권 일괄 검증
     const entryIds = updates.map((u) => u.id);
@@ -280,7 +296,15 @@ export async function handleGetMaxDisplayOrder(request: Request, { user }: AuthC
     const pageId = searchParams.get('pageId');
 
     if (!pageId) {
-        return validationErrorResponse('pageId');
+        return zodValidationErrorResponse(
+            new ZodError([
+                {
+                    code: 'custom',
+                    path: ['pageId'],
+                    message: 'pageId가 필요합니다',
+                },
+            ])
+        );
     }
 
     // 페이지 소유권 검증

@@ -1,4 +1,4 @@
-// types/domain.ts - UI/프론트엔드용 도메인 타입
+// types/domain.ts
 // camelCase, 화면 표시에 최적화
 
 // User & Page
@@ -25,6 +25,10 @@ export interface Page {
 // ============================================
 // Entry Types (Discriminated Union)
 // ============================================
+export type VenueReference = { id?: string; name: string };
+export type ArtistReference = { id?: string; name: string };
+export type ExternalLink = { title: string; url: string };
+export type TracklistItem = { track: string; artist: string; time: string };
 
 /**
  * Entry 공통 필드
@@ -37,23 +41,24 @@ interface EntryBase {
     position: number;
     displayOrder: number | null; // null = Page에 미표시
     isVisible: boolean; // displayOrder가 있을 때만 의미 있음
+    createdAt: string;
+    updatedAt: string;
 }
 
 /** Event Entry - 참조형/자체형 통합 */
 export interface EventEntry extends EntryBase {
     type: 'event';
-
-    // 표시용 데이터
     title: string;
     date: string;
-    venue: { id?: string; name: string };
-    lineup: { id?: string; name: string }[];
+    venue: VenueReference;
+    lineup: ArtistReference[];
     posterUrl: string;
     description?: string;
-    links?: { title: string; url: string }[];
+    links?: ExternalLink[];
+}
 
-    // 참조 정보 (events 테이블 참조 시)
-    eventId?: string;
+export interface PublicEventEntry extends EventEntry {
+    eventId: string;
 }
 
 /** Mixset Entry */
@@ -84,18 +89,8 @@ export interface LinkEntry extends EntryBase {
 }
 
 /** Entry 유니온 */
-export type ContentEntry = EventEntry | MixsetEntry | LinkEntry;
+export type ContentEntry = EventEntry | PublicEventEntry | MixsetEntry | LinkEntry;
 export type ContentEntryType = ContentEntry['type'];
-
-/** Entry가 Page에 표시되는지 여부 (displayOrder가 숫자면 표시) */
-export function isDisplayed(entry: ContentEntry): boolean {
-    return typeof entry.displayOrder === 'number';
-}
-
-/** Entry가 공개 페이지에 실제로 보이는지 (displayOrder가 숫자이고 isVisible이면 보임) */
-export function isVisibleOnPage(entry: ContentEntry): boolean {
-    return typeof entry.displayOrder === 'number' && entry.isVisible;
-}
 
 // ============================================
 // Venue & Artist (UI용)
@@ -167,9 +162,15 @@ export interface Backlink {
     mentionerAvatarUrl?: string;
 }
 
+// ============================================
 // Type Guards
+// ============================================
 export function isEventEntry(entry: ContentEntry): entry is EventEntry {
     return entry.type === 'event';
+}
+
+export function isPublicEventEntry(entry: EventEntry): entry is PublicEventEntry {
+    return 'eventId' in entry && entry.eventId !== undefined;
 }
 
 export function isMixsetEntry(entry: ContentEntry): entry is MixsetEntry {
@@ -181,12 +182,30 @@ export function isLinkEntry(entry: ContentEntry): entry is LinkEntry {
 }
 
 // ============================================
+// Helper Functions
+// ============================================
+
+export function isDisplayed(entry: ContentEntry): boolean {
+    return typeof entry.displayOrder === 'number';
+}
+
+export function isVisibleOnPage(entry: ContentEntry): boolean {
+    return typeof entry.displayOrder === 'number' && entry.isVisible;
+}
+
+// ============================================
+// Form/API Data Types
+// ============================================
+export type CreateEventData = Pick<
+    EventEntry,
+    'title' | 'date' | 'venue' | 'lineup' | 'posterUrl' | 'description' | 'links'
+>;
+
+export type UpdateEventData = Partial<CreateEventData>;
+
+// ============================================
 // Legacy Aliases (호환성)
 // ============================================
-/** @deprecated Use EventEntry */
-export type EventComponent = EventEntry;
-/** @deprecated Use MixsetEntry */
-export type MixsetComponent = MixsetEntry;
 /** @deprecated Use LinkEntry */
 export type LinkComponent = LinkEntry;
 

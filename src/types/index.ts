@@ -5,37 +5,38 @@
 // ============================================
 export type {
     Artist,
+    ArtistReference,
     Backlink,
     // Entries
     ContentEntry,
     ContentEntryType,
+    // Form/API data types
+    CreateEventData,
     Event,
     EventEntry,
+    ExternalLink,
     LinkEntry,
     Mixset,
     MixsetEntry,
     Page,
+    PublicEventEntry,
+    TracklistItem,
+    UpdateEventData,
     // User & Page
     User,
     // Entities
     Venue,
+    VenueReference,
 } from './domain';
 
 // Type guards
-export { isEventEntry, isLinkEntry, isMixsetEntry } from './domain';
+export { isEventEntry, isLinkEntry, isMixsetEntry, isPublicEventEntry } from './domain';
 
 // Helper functions for display state
 export { isDisplayed, isVisibleOnPage } from './domain';
 
 // Legacy aliases (호환성)
-export {
-    isEventComponent,
-    isLinkComponent,
-    isMixsetComponent,
-    type EventComponent,
-    type LinkComponent,
-    type MixsetComponent,
-} from './domain';
+export { isEventComponent, isLinkComponent, isMixsetComponent, type LinkComponent } from './domain';
 
 // ============================================
 // UI types (에디터, 폰트, 아이콘 등)

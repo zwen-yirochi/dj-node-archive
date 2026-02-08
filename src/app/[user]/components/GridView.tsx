@@ -1,15 +1,15 @@
 'use client';
 // components/UnifiedGridView.tsx
-import type { EventComponent, MixsetComponent } from '@/types';
+import type { EventEntry, MixsetEntry } from '@/types';
 import Masonry from 'react-masonry-css';
 import EventGridCard from './EventGridCard';
 
 interface GridViewProps {
-    events: EventComponent[];
-    mixsets: MixsetComponent[];
+    events: EventEntry[];
+    mixsets: MixsetEntry[];
 }
 
-type UnifiedItem = { type: 'event'; data: EventComponent; date: string };
+type UnifiedItem = { type: 'event'; data: EventEntry; date: string };
 
 export default function GridView({ events, mixsets }: GridViewProps) {
     // 데이터 준비 (동일)

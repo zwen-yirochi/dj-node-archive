@@ -7,14 +7,7 @@
  * - useContentEntryStore: 콘텐츠 엔트리 데이터, visibility 관리, 미리보기 트리거
  */
 
-export {
-    // Deprecated aliases
-    getComponentsByType,
-    getEntriesByType,
-    getSelectedComponent,
-    getSelectedEntry,
-    useContentEntryStore,
-} from './contentEntryStore';
+export { getEntriesByType, getSelectedEntry, useContentEntryStore } from './contentEntryStore';
 export {
     useUIStore,
     type ActivePanel,

@@ -4,27 +4,36 @@ import { syncUserFromAuth } from '@/lib/api/handlers/auth.handlers';
 import { getEditorDataByAuthUserId } from '@/lib/services/user.service';
 import { isSuccess } from '@/types/result';
 import { notFound, redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import EditorClient from './EditorClient';
+import DashboardSkeleton from './components/DashboardSkeleton';
 
 export const metadata = {
     title: 'Editor - Dashboard',
     description: 'Edit your profile and components',
 };
 
-export default async function DashboardPage() {
-    const authUser = await getUser();
+export default function DashboardPage() {
+    return (
+        <Suspense fallback={<DashboardSkeleton />}>
+            <DashboardContent />
+        </Suspense>
+    );
+}
 
+async function DashboardContent() {
+    const startTime = Date.now();
+
+    const authUser = await getUser();
     if (!authUser) {
         redirect('/login');
     }
 
     let result = await getEditorDataByAuthUserId(authUser.id);
 
-    // 사용자가 없으면 동기화 시도
     if (!result.success && result.error.code === 'NOT_FOUND') {
         const syncResult = await syncUserFromAuth(authUser);
         if (isSuccess(syncResult)) {
-            // 동기화 성공 후 다시 조회
             result = await getEditorDataByAuthUserId(authUser.id);
         }
     }
@@ -34,6 +43,12 @@ export default async function DashboardPage() {
             notFound();
         }
         throw new Error(result.error.message);
+    }
+
+    // ⏱️ 개발 중: 스켈레톤 최소 표시 시간 보장
+    const elapsed = Date.now() - startTime;
+    if (elapsed < 500) {
+        await new Promise((resolve) => setTimeout(resolve, 500 - elapsed));
     }
 
     const { user, contentEntries, pageId } = result.data;

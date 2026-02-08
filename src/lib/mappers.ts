@@ -1,13 +1,15 @@
 // lib/mappers.ts - DB ↔ Domain 변환 함수 통합
 import type { Event as DBEvent, User as DBUser, Venue as DBVenue, Entry } from '@/types/database';
-import type {
-    ContentEntry,
-    Event,
-    EventEntry,
-    LinkEntry,
-    MixsetEntry,
-    User,
-    Venue,
+import {
+    isPublicEventEntry,
+    type ContentEntry,
+    type Event,
+    type EventEntry,
+    type LinkEntry,
+    type MixsetEntry,
+    type PublicEventEntry,
+    type User,
+    type Venue,
 } from '@/types/domain';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -48,6 +50,8 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
         position: dbEntry.position,
         displayOrder: dbEntry.display_order,
         isVisible: dbEntry.is_visible,
+        createdAt: dbEntry.created_at,
+        updatedAt: dbEntry.updated_at,
     };
 
     switch (dbEntry.type) {
@@ -65,7 +69,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                     venue: { name: '' },
                     lineup: [],
                     posterUrl: '',
-                } as EventEntry;
+                } as PublicEventEntry;
             }
 
             // 자체형 (프라이빗 이벤트)
@@ -142,7 +146,7 @@ export function mapEntryToDatabase(
             const eventEntry = entry as EventEntry;
 
             // 참조형
-            if (eventEntry.eventId) {
+            if (isPublicEventEntry(eventEntry)) {
                 return {
                     type: 'event',
                     position,
@@ -260,7 +264,6 @@ export function mapEventToEntry(dbEvent: DBEvent): EventEntry {
         position: 0,
         displayOrder: null, // Page에 미표시
         isVisible: true,
-        eventId: dbEvent.id,
         title: dbEvent.title || '',
         date: dbEvent.date,
         venue: dbEvent.venue.venue_id
@@ -272,6 +275,8 @@ export function mapEventToEntry(dbEvent: DBEvent): EventEntry {
         posterUrl: dbEvent.data?.poster_url || '',
         description: dbEvent.data?.description,
         links: dbEvent.data?.links,
+        createdAt: dbEvent.created_at,
+        updatedAt: dbEvent.updated_at,
     };
 }
 
@@ -350,6 +355,8 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntr
                 posterUrl: '',
                 description: '',
                 links: [],
+                createdAt: '',
+                updatedAt: '',
             } as EventEntry;
 
         case 'mixset':
@@ -366,6 +373,8 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntr
                 soundcloudUrl: '',
                 mixcloudUrl: '',
                 description: '',
+                createdAt: '',
+                updatedAt: '',
             } as MixsetEntry;
 
         case 'link':

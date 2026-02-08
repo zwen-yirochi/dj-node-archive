@@ -1,13 +1,13 @@
 // app/api/user/[username]/page/route.ts
-import { getEditorData, getComponentsByType } from '@/lib/services/user.service';
-import { isSuccess, failure, success, createNotFoundError } from '@/types/result';
-import type { EventComponent, MixsetComponent, User } from '@/types/domain';
+import { getComponentsByType, getEditorData } from '@/lib/services/user.service';
+import type { EventEntry, MixsetEntry, User } from '@/types/domain';
+import { isSuccess, success } from '@/types/result';
 import { NextResponse } from 'next/server';
 
 interface PageData {
     user: User;
-    events: EventComponent[];
-    mixsets: MixsetComponent[];
+    events: EventEntry[];
+    mixsets: MixsetEntry[];
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ username: string }> }) {
