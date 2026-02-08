@@ -1,3 +1,4 @@
+// stores/contentEntryStore.ts
 /**
  * contentEntryStore.ts - 콘텐츠 엔트리 상태 관리
  *
@@ -22,6 +23,9 @@ interface ContentEntryStore {
     pageId: string | null;
     newlyCreatedIds: Set<string>;
     previewVersion: number; // Display 변경 시 증가
+
+    // 초기화 메서드 추가
+    initialize: (data: { entries: ContentEntry[]; pageId: string }) => void;
 
     // Setters
     setEntries: (entries: ContentEntry[]) => void;
@@ -61,6 +65,16 @@ export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
     pageId: null,
     newlyCreatedIds: new Set<string>(),
     previewVersion: 0,
+
+    // 초기화 메서드 (Store 내부)
+    initialize: (data) => {
+        set({
+            entries: data.entries,
+            pageId: data.pageId,
+            previewVersion: 0,
+            newlyCreatedIds: new Set<string>(),
+        });
+    },
 
     // Setters
     setEntries: (entries) => set({ entries }),
@@ -416,20 +430,14 @@ export const useContentEntryStore = create<ContentEntryStore>((set, get) => ({
 }));
 
 // Imperative access for initialization
-export const initializeContentEntryStore = (data: {
+export const initializeContentEntryStore = ({
+    entries,
+    pageId,
+}: {
     entries: ContentEntry[];
-    displayedEntries?: ContentEntry[];
     pageId: string;
 }) => {
-    const { setEntries, setPageId, setDisplayedEntries } = useContentEntryStore.getState();
-
-    setEntries(data.entries);
-    setPageId(data.pageId);
-
-    // displayedEntries가 별도로 제공되면 병합
-    if (data.displayedEntries) {
-        setDisplayedEntries(data.displayedEntries);
-    }
+    useContentEntryStore.getState().initialize({ entries, pageId });
 };
 
 // ============================================
