@@ -1,4 +1,4 @@
-// types/domain.ts - UI/프론트엔드용 도메인 타입
+// types/domain.ts
 // camelCase, 화면 표시에 최적화
 
 // User & Page

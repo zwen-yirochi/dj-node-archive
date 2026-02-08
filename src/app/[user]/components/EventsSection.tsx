@@ -1,10 +1,10 @@
-import type { EventComponent } from '@/types';
+import type { EventEntry } from '@/types';
 import { Calendar } from 'lucide-react';
 import EventCard from './EventCard';
 import SectionHeader from './SectionHeader';
 
 interface EventsSectionProps {
-    events: EventComponent[];
+    events: EventEntry[];
 }
 
 export default function EventsSection({ events }: EventsSectionProps) {
