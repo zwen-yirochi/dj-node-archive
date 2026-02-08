@@ -1,38 +1,38 @@
 // lib/api/handlers/entry.handlers.ts
 // ContentEntry API 핸들러
+import type { AuthContext } from '@/lib/api';
+import {
+    forbiddenResponse,
+    internalErrorResponse,
+    notFoundResponse,
+    successResponse,
+    verifyEntriesOwnership,
+    verifyEntryOwnership,
+    verifyPageOwnership,
+    zodValidationErrorResponse,
+} from '@/lib/api';
 import {
     createEntry,
-    getMaxPosition,
-    getMaxDisplayOrder,
-    updateEntry,
     deleteEntry,
-    updateEntryPositions,
+    getMaxDisplayOrder,
+    getMaxPosition,
     updateDisplayOrders,
+    updateEntry,
+    updateEntryPositions,
 } from '@/lib/db/queries/entry.queries';
 import { createEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
 import { findUserByAuthId } from '@/lib/db/queries/user.queries';
 import { mapEntryToDatabase } from '@/lib/mappers';
 import {
     createEntryRequestSchema,
-    updateEntryRequestSchema,
-    reorderEntriesRequestSchema,
-    reorderDisplayEntriesRequestSchema,
     publishEventSchema,
+    reorderDisplayEntriesRequestSchema,
+    reorderEntriesRequestSchema,
+    updateEntryRequestSchema,
 } from '@/lib/validations/entry.schemas';
-import { ZodError } from 'zod';
-import { isSuccess } from '@/types/result';
 import type { ContentEntry, EventEntry } from '@/types/domain';
-import {
-    verifyPageOwnership,
-    verifyEntryOwnership,
-    verifyEntriesOwnership,
-    successResponse,
-    forbiddenResponse,
-    notFoundResponse,
-    internalErrorResponse,
-    zodValidationErrorResponse,
-} from '@/lib/api';
-import type { AuthContext } from '@/lib/api';
+import { isSuccess } from '@/types/result';
+import { ZodError } from 'zod';
 
 /**
  * POST /api/entries (또는 /api/components)
@@ -226,7 +226,7 @@ export async function handleDeleteEntry({ user }: AuthContext, id: string) {
 }
 
 /**
- * PATCH /api/entries/reorder (또는 /api/components/reorder)
+ * PATCH /api/entries/reorder
  * Entry 순서 변경 (Components 섹션 내)
  */
 export async function handleReorderEntries(request: Request, { user }: AuthContext) {
