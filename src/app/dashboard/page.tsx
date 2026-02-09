@@ -3,7 +3,7 @@ import { getUser } from '@/app/actions/auth';
 import { syncUserFromAuth } from '@/lib/api/handlers/auth.handlers';
 import { getEditorDataByAuthUserId } from '@/lib/services/user.service';
 import { isSuccess } from '@/types/result';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import ContentPanel from './components/ContentPanel';
 import PreviewPanel from './components/PreviewPanel';
 import StoreInitializer from './components/StoreInitializer';
@@ -17,16 +17,13 @@ export const metadata = {
 export default async function DashboardPage() {
     // 데이터 페칭
     const authUser = await getUser();
-    if (!authUser) {
-        redirect('/login');
-    }
 
-    let result = await getEditorDataByAuthUserId(authUser.id);
+    let result = await getEditorDataByAuthUserId(authUser!.id);
 
     if (!result.success && result.error.code === 'NOT_FOUND') {
-        const syncResult = await syncUserFromAuth(authUser);
+        const syncResult = await syncUserFromAuth(authUser!);
         if (isSuccess(syncResult)) {
-            result = await getEditorDataByAuthUserId(authUser.id);
+            result = await getEditorDataByAuthUserId(authUser!.id);
         }
     }
 
@@ -42,28 +39,24 @@ export default async function DashboardPage() {
     // UI 렌더링
     return (
         <>
-            <StoreInitializer pageId={pageId as string} />
+            <StoreInitializer user={user} pageId={pageId as string} entries={contentEntries} />
 
             <div className="flex h-screen overflow-hidden">
                 {/* TreeSidebar */}
                 <div className="p-3">
-                    <TreeSidebar
-                        entries={contentEntries}
-                        username={user.username}
-                        pageId={pageId as string}
-                    />
+                    <TreeSidebar />
                 </div>
 
                 {/* Main Content */}
                 <div className="flex flex-1 gap-6 overflow-hidden p-3 pl-2">
                     {/* ContentPanel */}
                     <div className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-dashboard-bg-card shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
-                        <ContentPanel entries={contentEntries} pageId={pageId as string} />
+                        <ContentPanel />
                     </div>
 
                     {/* PreviewPanel */}
                     <aside className="w-[400px] shrink-0 overflow-hidden">
-                        <PreviewPanel user={user} />
+                        <PreviewPanel />
                     </aside>
                 </div>
             </div>
