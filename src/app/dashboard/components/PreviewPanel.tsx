@@ -16,7 +16,7 @@ export default function PreviewPanel() {
     const containerRef = useRef<HTMLDivElement>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    // Intersection Observer - 화면에 보일 때만 로드
+    // Intersection Observer
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
@@ -24,7 +24,10 @@ export default function PreviewPanel() {
                     setIsVisible(true);
                 }
             },
-            { threshold: 0.1 }
+            {
+                threshold: 0.01,
+                rootMargin: '0px',
+            }
         );
 
         if (containerRef.current) {
@@ -34,11 +37,21 @@ export default function PreviewPanel() {
         return () => observer.disconnect();
     }, []);
 
-    // iframe postMessage로 새로고침 (더 빠름)
+    // Fallback: 1초 후 강제 visible
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (!isVisible) {
+                setIsVisible(true);
+            }
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [isVisible]);
+
+    // iframe 새로고침
     const refreshPreview = useCallback(() => {
         if (iframeRef.current?.contentWindow && isVisible) {
             setIsLoading(true);
-            // iframe 내부에서 새로고침
             iframeRef.current.contentWindow.location.reload();
         }
     }, [isVisible]);
@@ -131,7 +144,7 @@ export default function PreviewPanel() {
                             </div>
                         )}
 
-                        {/* iframe - 화면에 보일 때만 로드 */}
+                        {/* iframe */}
                         <div
                             style={{
                                 width: `${deviceWidth}px`,
@@ -147,12 +160,10 @@ export default function PreviewPanel() {
                                     className="h-full w-full border-0"
                                     title="페이지 미리보기"
                                     onLoad={handleIframeLoad}
-                                    // 성능 개선
-                                    loading="lazy"
                                 />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center bg-neutral-50">
-                                    <p className="text-xs text-neutral-400">미리보기 준비 중...</p>
+                                    <p className="text-xs text-neutral-400">미리보기 로딩 중...</p>
                                 </div>
                             )}
                         </div>
