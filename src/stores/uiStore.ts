@@ -16,19 +16,6 @@ export type SectionKey = keyof SidebarSections;
 export type ActivePanel = 'entry' | 'bio' | 'page';
 export type EntryType = 'event' | 'mixset' | 'link';
 
-const initialState = {
-    selectedEntryId: null,
-    activePanel: 'page' as ActivePanel,
-    isCreating: false,
-    sidebarSections: {
-        page: { collapsed: false },
-        events: { collapsed: false },
-        mixsets: { collapsed: false },
-        links: { collapsed: false },
-    } as SidebarSections,
-    createPanelType: null as EntryType | null,
-};
-
 interface UIStore {
     selectedEntryId: string | null;
     activePanel: ActivePanel;
@@ -117,5 +104,17 @@ export const useUIStore = create<UIStore>((set, get) => ({
                 [section]: { collapsed },
             },
         })),
-    reset: () => set(initialState),
+    reset: () =>
+        set({
+            selectedEntryId: null,
+            activePanel: 'page',
+            isCreating: false,
+            sidebarSections: {
+                page: { collapsed: false },
+                events: { collapsed: false },
+                mixsets: { collapsed: false },
+                links: { collapsed: false },
+            },
+            createPanelType: null,
+        }),
 }));
