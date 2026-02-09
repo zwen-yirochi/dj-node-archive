@@ -4,32 +4,52 @@ import { useContentEntryStore } from '@/stores/contentEntryStore';
 import { useUserStore } from '@/stores/userStore';
 import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function PreviewPanel() {
     const user = useUserStore((state) => state.user);
-    // previewVersion만 구독 - 조건부 새로고침
-    // Display 변경, 완성된 엔트리 변경, 삭제 시에만 증가
     const previewVersion = useContentEntryStore((state) => state.previewVersion);
     const [copied, setCopied] = useState(false);
-
-    // 깜빡임 방지를 위한 이중 버퍼링 상태
-    const [displayedVersion, setDisplayedVersion] = useState(previewVersion);
+    const [isVisible, setIsVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const pendingVersionRef = useRef(previewVersion);
 
-    // previewVersion이 변경되면 로딩 시작
+    const containerRef = useRef<HTMLDivElement>(null);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+
+    // Intersection Observer - 화면에 보일 때만 로드
     useEffect(() => {
-        if (previewVersion !== displayedVersion) {
-            pendingVersionRef.current = previewVersion;
-            setIsLoading(true);
-        }
-    }, [previewVersion, displayedVersion]);
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                }
+            },
+            { threshold: 0.1 }
+        );
 
-    // iframe 로드 완료 시 호출
+        if (containerRef.current) {
+            observer.observe(containerRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, []);
+
+    // iframe postMessage로 새로고침 (더 빠름)
+    const refreshPreview = useCallback(() => {
+        if (iframeRef.current?.contentWindow && isVisible) {
+            setIsLoading(true);
+            // iframe 내부에서 새로고침
+            iframeRef.current.contentWindow.location.reload();
+        }
+    }, [isVisible]);
+
+    useEffect(() => {
+        if (previewVersion > 0 && isVisible) {
+            refreshPreview();
+        }
+    }, [previewVersion, isVisible, refreshPreview]);
+
     const handleIframeLoad = useCallback(() => {
-        // 로딩 중인 버전이 현재 대기 중인 버전과 같으면 표시
-        setDisplayedVersion(pendingVersionRef.current);
         setIsLoading(false);
     }, []);
 
@@ -54,7 +74,6 @@ export default function PreviewPanel() {
         }
     };
 
-    // 0.7배 스케일
     const scale = 0.7;
     const deviceWidth = 390;
     const deviceHeight = 844;
@@ -62,7 +81,7 @@ export default function PreviewPanel() {
     const scaledHeight = deviceHeight * scale;
 
     return (
-        <div className="mr-6 flex h-full flex-col items-center py-4">
+        <div ref={containerRef} className="mr-6 flex h-full flex-col items-center py-4">
             {/* 링크 + 복사 버튼 */}
             <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
                 <Link
@@ -79,20 +98,15 @@ export default function PreviewPanel() {
                     className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                     {copied ? (
-                        <>
-                            <Check className="h-3.5 w-3.5 text-green-500" />
-                        </>
+                        <Check className="h-3.5 w-3.5 text-green-500" />
                     ) : (
-                        <>
-                            <Copy className="h-3.5 w-3.5" />
-                        </>
+                        <Copy className="h-3.5 w-3.5" />
                     )}
                 </button>
             </div>
 
-            {/* iPhone 프레임 (0.7배 스케일) */}
+            {/* iPhone 프레임 */}
             <div className="relative flex flex-1 items-start justify-center">
-                {/* 아이폰 외부 프레임 */}
                 <div
                     className="relative rounded-[35px] bg-stone-900 p-2 shadow-2xl"
                     style={{
@@ -117,7 +131,7 @@ export default function PreviewPanel() {
                             </div>
                         )}
 
-                        {/* iframe을 transform으로 스케일링 */}
+                        {/* iframe - 화면에 보일 때만 로드 */}
                         <div
                             style={{
                                 width: `${deviceWidth}px`,
@@ -126,23 +140,20 @@ export default function PreviewPanel() {
                                 transformOrigin: 'top left',
                             }}
                         >
-                            {/* 현재 표시 중인 iframe (안정적으로 보이는 버전) */}
-                            <iframe
-                                key={displayedVersion}
-                                src={`/${user.username}?preview=true`}
-                                className="h-full w-full border-0"
-                                title="페이지 미리보기"
-                            />
-
-                            {/* 새 버전 로딩 중인 숨겨진 iframe */}
-                            {isLoading && previewVersion !== displayedVersion && (
+                            {isVisible ? (
                                 <iframe
-                                    key={previewVersion}
-                                    src={`/${user.username}?preview=true&v=${previewVersion}`}
-                                    className="absolute left-0 top-0 h-full w-full border-0 opacity-0"
-                                    title="페이지 미리보기 (로딩 중)"
+                                    ref={iframeRef}
+                                    src={`/${user.username}?preview=true`}
+                                    className="h-full w-full border-0"
+                                    title="페이지 미리보기"
                                     onLoad={handleIframeLoad}
+                                    // 성능 개선
+                                    loading="lazy"
                                 />
+                            ) : (
+                                <div className="flex h-full w-full items-center justify-center bg-neutral-50">
+                                    <p className="text-xs text-neutral-400">미리보기 준비 중...</p>
+                                </div>
                             )}
                         </div>
                     </div>
