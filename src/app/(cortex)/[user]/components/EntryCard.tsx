@@ -34,24 +34,33 @@ function getImageUrl(entry: ContentEntry): string | undefined {
     return undefined;
 }
 
-function getDetail(entry: ContentEntry): string {
+function DetailText({ entry }: { entry: ContentEntry }) {
     switch (entry.type) {
         case 'event': {
             const e = entry as EventEntry;
-            if (!e.venue?.name) return formatDate(e.date);
+            if (!e.venue?.name) return <>{formatDate(e.date)}</>;
             const vcode = e.venue.id ? `VN-${e.venue.id.slice(0, 4).toUpperCase()}` : 'VN-0000';
-            return `@ ${e.venue.name} [${vcode}]`;
+            return (
+                <>
+                    @{' '}
+                    <span className="border-b border-dotted border-cortex-accent-blue text-cortex-accent-blue">
+                        {e.venue.name} [{vcode}]
+                    </span>
+                </>
+            );
         }
         case 'mixset': {
             const m = entry as MixsetEntry;
-            return m.durationMinutes ? `${m.durationMinutes}MIN` : formatDate(entry.createdAt);
+            return (
+                <>{m.durationMinutes ? `${m.durationMinutes}MIN` : formatDate(entry.createdAt)}</>
+            );
         }
         case 'link': {
             const l = entry as LinkEntry;
             try {
-                return new URL(l.url).hostname;
+                return <>{new URL(l.url).hostname}</>;
             } catch {
-                return 'LINK';
+                return <>LINK</>;
             }
         }
     }
@@ -103,7 +112,7 @@ export default function EntryCard({ entry, index }: Props) {
                         {typeLabel}
                     </span>
                     <span className="text-xs tracking-[0.3px] text-cortex-ink-light">
-                        {getDetail(entry)}
+                        <DetailText entry={entry} />
                     </span>
                 </div>
                 {/* Mobile: 날짜 */}
