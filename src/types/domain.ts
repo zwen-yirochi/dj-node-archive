@@ -106,6 +106,8 @@ export interface Venue {
     instagram?: string;
     website?: string;
     claimedBy?: string;
+    source?: string;
+    externalSources?: { raUrl?: string; raVenueId?: string };
 }
 
 export interface Artist {
@@ -134,6 +136,7 @@ export interface Event {
     links?: { title: string; url: string }[];
     isPublic: boolean;
     createdBy: string;
+    source?: string;
 }
 
 export interface Mixset {

@@ -101,6 +101,11 @@ export interface Entry {
 // ============================================
 // Venue
 // ============================================
+export interface VenueExternalSources {
+    ra_url?: string;
+    ra_venue_id?: string;
+}
+
 export interface Venue {
     id: string;
     name: string;
@@ -112,6 +117,8 @@ export interface Venue {
     instagram?: string;
     website?: string;
     claimed_by?: string;
+    source: string;
+    external_sources: VenueExternalSources;
     created_at: ISODateString;
     updated_at: ISODateString;
 }
@@ -169,6 +176,7 @@ export interface Event {
     data: EventData;
     is_public: boolean;
     created_by: string;
+    source: string;
     created_at: ISODateString;
     updated_at: ISODateString;
 }
