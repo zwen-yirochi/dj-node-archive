@@ -2,18 +2,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono, Inter } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
-
-const geistSans = Geist({
-    variable: '--font-geist-sans',
-    subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-    variable: '--font-geist-mono',
-    subsets: ['latin'],
-});
 
 // Dashboard UI용 메이저 폰트 - 다양한 웨이트 지원
 const inter = Inter({
@@ -21,6 +11,7 @@ const inter = Inter({
     subsets: ['latin'],
     weight: ['400', '500', '600', '700'],
     display: 'swap',
+    preload: true,
 });
 
 export const metadata: Metadata = {
@@ -42,9 +33,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body
-                className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}
-            >
+            <body className={`${inter.variable} antialiased`}>
                 <ErrorBoundary>
                     {children}
                     <SpeedInsights debug={process.env.NODE_ENV === 'development'} />

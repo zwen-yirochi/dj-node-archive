@@ -1,9 +1,11 @@
+// app/dashboard/components/TreeSidebar/index.tsx
 'use client';
 
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/lib/validators';
 import { useContentEntryStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useUserStore } from '@/stores/userStore';
 import type { ContentEntry } from '@/types';
 import {
     closestCenter,
@@ -38,39 +40,53 @@ import SectionItem from './SectionItem';
 import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
 
-interface TreeSidebarProps {
-    onDeleteEntry?: (id: string) => void;
-    username: string;
-}
+export default function TreeSidebar() {
+    // Store에서 데이터 읽기
+    const entries = useContentEntryStore((state) => state?.entries ?? []);
+    const user = useUserStore((state) => state?.user);
 
-export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProps) {
-    // Content Entry Store
-    const entries = useContentEntryStore((state) => state.entries);
-    const pageId = useContentEntryStore((state) => state.pageId);
-    const reorderSectionItems = useContentEntryStore((state) => state.reorderSectionItems);
-    const addToDisplay = useContentEntryStore((state) => state.addToDisplay);
-    const reorderDisplayEntries = useContentEntryStore((state) => state.reorderDisplayEntries);
+    // Store 액션
+    const deleteEntry = useContentEntryStore((state) => state?.deleteEntry);
+    const reorderSectionItems = useContentEntryStore((state) => state?.reorderSectionItems);
+    const addToDisplay = useContentEntryStore((state) => state?.addToDisplay);
+    const reorderDisplayEntries = useContentEntryStore((state) => state?.reorderDisplayEntries);
+    const triggerPreviewRefresh = useContentEntryStore((state) => state?.triggerPreviewRefresh);
 
     // UI Store
-    const activePanel = useUIStore((state) => state.activePanel);
-    const setActivePanel = useUIStore((state) => state.setActivePanel);
-    const sidebarSections = useUIStore((state) => state.sidebarSections);
-    const toggleSection = useUIStore((state) => state.toggleSection);
+    const activePanel = useUIStore((state) => state?.activePanel ?? 'page');
+    const setActivePanel = useUIStore((state) => state?.setActivePanel);
+    const sidebarSections = useUIStore(
+        (state) =>
+            state?.sidebarSections ?? {
+                page: { collapsed: false },
+                events: { collapsed: false },
+                mixsets: { collapsed: false },
+                links: { collapsed: false },
+            }
+    );
+    const toggleSection = useUIStore((state) => state?.toggleSection);
 
-    // Page 섹션 접힘 상태
-    const isPageCollapsed = sidebarSections.page.collapsed;
-
-    // useMemo로 필터링 + position 순 정렬
+    // 필터링 & 정렬
     const events = useMemo(
         () => entries.filter((e) => e.type === 'event').sort((a, b) => a.position - b.position),
         [entries]
     );
+
     const mixsets = useMemo(
         () => entries.filter((e) => e.type === 'mixset').sort((a, b) => a.position - b.position),
         [entries]
     );
+
     const links = useMemo(
         () => entries.filter((e) => e.type === 'link').sort((a, b) => a.position - b.position),
+        [entries]
+    );
+
+    const displayedEntries = useMemo(
+        () =>
+            entries
+                .filter((e) => typeof e.displayOrder === 'number')
+                .sort((a, b) => a.displayOrder! - b.displayOrder!),
         [entries]
     );
 
@@ -111,7 +127,7 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
         setIsDraggingOverView(over?.id === 'view-drop-zone');
     };
 
-    const handleDragEnd = (event: DragEndEvent) => {
+    const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveItem(null);
         setIsDraggingOverView(false);
@@ -121,40 +137,34 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
         const activeData = active.data.current;
         const overData = over.data.current;
 
-        // View 드롭존에 드롭한 경우 - is_visible = true로 설정
+        // View 드롭존에 드롭
         if (over.id === 'view-drop-zone' && activeData?.type === 'entry') {
             const entry = activeData.entry as ContentEntry;
-            // 유효성 검사: 필수 필드가 채워진 엔트리만 View에 추가 가능
+
             if (!canAddToView(entry)) {
-                // TODO: Toast로 사용자에게 알림
                 console.warn('엔트리를 완성해야 Page에 추가할 수 있습니다.');
                 return;
             }
-            // entries.is_visible = true로 설정
-            addToDisplay(entry.id);
-            return;
-        }
 
-        // View 섹션 내에서 순서 변경 (display-entry 타입)
-        if (activeData?.type === 'display-entry' && overData?.type === 'display-entry') {
-            const activeEntry = activeData.entry as ContentEntry;
-
-            // 현재 displayOrder가 숫자인 엔트리들 정렬
-            const displayedEntries = entries
-                .filter((e) => typeof e.displayOrder === 'number')
-                .sort((a, b) => a.displayOrder! - b.displayOrder!);
-
-            // over 엔트리의 인덱스 찾기 (view- 접두사 제거)
-            const overId = String(over.id).replace('view-', '');
-            const newIndex = displayedEntries.findIndex((e) => e.id === overId);
-
-            if (newIndex !== -1 && active.id !== over.id) {
-                reorderDisplayEntries(activeEntry.id, newIndex);
+            if (addToDisplay) {
+                await addToDisplay(entry.id);
             }
             return;
         }
 
-        // 섹션 내 엔트리 순서 변경
+        // View 섹션 내 순서 변경
+        if (activeData?.type === 'display-entry' && overData?.type === 'display-entry') {
+            const activeEntry = activeData.entry as ContentEntry;
+            const overId = String(over.id).replace('view-', '');
+            const newIndex = displayedEntries.findIndex((e) => e.id === overId);
+
+            if (newIndex !== -1 && active.id !== over.id && reorderDisplayEntries) {
+                await reorderDisplayEntries(activeEntry.id, newIndex);
+            }
+            return;
+        }
+
+        // 섹션 내 순서 변경
         if (activeData?.type === 'entry' && overData?.type === 'entry') {
             const activeEntry = activeData.entry as ContentEntry;
             const overEntry = overData.entry as ContentEntry;
@@ -172,25 +182,41 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
                 }
 
                 const overIndex = sectionEntries.findIndex((e) => e.id === over.id);
-                if (overIndex !== -1) {
-                    reorderSectionItems(sectionType, activeEntry.id, overIndex);
+                if (overIndex !== -1 && reorderSectionItems) {
+                    await reorderSectionItems(sectionType, activeEntry.id, overIndex);
                 }
             }
         }
     };
 
-    const handleDelete = (entryId: string) => {
-        onDeleteEntry?.(entryId);
+    const handleDelete = async (id: string) => {
+        if (!deleteEntry || !triggerPreviewRefresh) return;
+
+        const { triggeredPreview } = await deleteEntry(id);
+        if (triggeredPreview) {
+            triggerPreviewRefresh();
+        }
     };
 
+    const isPageCollapsed = sidebarSections?.page?.collapsed ?? false;
+
     const handlePageClick = () => {
-        setActivePanel('page');
+        if (setActivePanel) {
+            setActivePanel('page');
+        }
     };
 
     const handlePageToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
-        toggleSection('page');
+        if (toggleSection) {
+            toggleSection('page');
+        }
     };
+
+    // 로딩 상태
+    if (!user || entries.length === 0) {
+        return <TreeSidebarSkeleton />;
+    }
 
     return (
         <DndContext
@@ -215,7 +241,7 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
                 <div className="flex-1 overflow-y-auto px-3 pb-3">
                     {/* Bio Design */}
                     <button
-                        onClick={() => setActivePanel('bio')}
+                        onClick={() => setActivePanel?.('bio')}
                         className={cn(
                             'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
                             activePanel === 'bio'
@@ -227,7 +253,7 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
                         <span className="flex-1 text-sm font-medium">Bio design</span>
                     </button>
 
-                    {/* Page - 클릭하면 패널 전환, 화살표 클릭하면 접기/펼치기 */}
+                    {/* Page */}
                     <div
                         onClick={handlePageClick}
                         className={cn(
@@ -239,12 +265,6 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
                     >
                         <FileText className="h-4 w-4 text-dashboard-text-muted" />
                         <span className="flex-1 text-sm font-medium">Page</span>
-                        {/* {visibleCount > 0 && (
-                            <span className="rounded bg-dashboard-bg-active px-1.5 py-0.5 text-[10px] font-medium text-dashboard-text-muted">
-                                {visibleCount}
-                            </span>
-                        )} */}
-                        {/* 접기/펼치기 화살표 */}
                         <button
                             onClick={handlePageToggle}
                             className="flex h-4 w-4 items-center justify-center text-dashboard-text-placeholder hover:text-dashboard-text-muted"
@@ -257,9 +277,10 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
                         </button>
                     </div>
 
-                    {/* Page ViewSection - 항상 렌더링 (드롭 가능), 접힘 상태에 따라 표시 */}
+                    {/* View Section */}
                     <div className="mb-3 ml-3">
                         <ViewSection
+                            entries={displayedEntries}
                             isDraggingOver={isDraggingOverView}
                             isCollapsed={isPageCollapsed}
                             onDeleteEntry={handleDelete}
@@ -269,12 +290,12 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
                     {/* Divider */}
                     <div className="my-3 border-t border-dashboard-border" />
 
-                    {/* Sub Level: Components */}
+                    {/* Components */}
                     <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-dashboard-text-placeholder">
                         Components
                     </p>
 
-                    {/* Events Section */}
+                    {/* Events */}
                     <SectionItem
                         section="events"
                         title="Events"
@@ -298,7 +319,7 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
                         </SortableContext>
                     </SectionItem>
 
-                    {/* Mixsets Section */}
+                    {/* Mixsets */}
                     <SectionItem
                         section="mixsets"
                         title="Mixsets"
@@ -322,7 +343,7 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
                         </SortableContext>
                     </SectionItem>
 
-                    {/* Links Section */}
+                    {/* Links */}
                     <SectionItem
                         section="links"
                         title="Links"
@@ -347,14 +368,14 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
                     </SectionItem>
                 </div>
 
-                {/* Account Section - 하단 */}
-                <AccountSection username={username} />
+                {/* Account Section */}
+                <AccountSection username={user.username} />
             </aside>
 
             {/* Drag Overlay */}
             <DragOverlay>
                 {activeItem && (
-                    <div className="rounded-lg border border-dashboard-border bg-dashboard-bg-card px-3 py-2 shadow-lg">
+                    <div className="rounded-lg border border-dashboard-border bg-dashboard-bg-card px-3 py-1 pl-8 shadow-lg">
                         <span className="text-sm text-dashboard-text">
                             {activeItem.entry.title || '제목 없음'}
                         </span>
@@ -362,5 +383,21 @@ export default function TreeSidebar({ onDeleteEntry, username }: TreeSidebarProp
                 )}
             </DragOverlay>
         </DndContext>
+    );
+}
+
+// Skeleton 컴포넌트
+function TreeSidebarSkeleton() {
+    return (
+        <aside className="flex h-full w-64 flex-col rounded-2xl bg-dashboard-bg-surface p-4 shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
+            <div className="animate-pulse space-y-4">
+                <div className="h-6 w-20 rounded bg-gray-200" />
+                <div className="space-y-2">
+                    <div className="h-8 rounded bg-gray-200" />
+                    <div className="h-8 rounded bg-gray-200" />
+                    <div className="h-8 rounded bg-gray-200" />
+                </div>
+            </div>
+        </aside>
     );
 }

@@ -34,6 +34,7 @@ interface UIStore {
 
     toggleSection: (section: SectionKey) => void;
     setSectionCollapsed: (section: SectionKey, collapsed: boolean) => void;
+    reset: () => void;
 }
 
 const initialSidebarSections: SidebarSections = {
@@ -103,4 +104,17 @@ export const useUIStore = create<UIStore>((set, get) => ({
                 [section]: { collapsed },
             },
         })),
+    reset: () =>
+        set({
+            selectedEntryId: null,
+            activePanel: 'page',
+            isCreating: false,
+            sidebarSections: {
+                page: { collapsed: false },
+                events: { collapsed: false },
+                mixsets: { collapsed: false },
+                links: { collapsed: false },
+            },
+            createPanelType: null,
+        }),
 }));

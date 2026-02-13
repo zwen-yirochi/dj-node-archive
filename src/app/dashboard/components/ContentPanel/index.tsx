@@ -2,12 +2,78 @@
 
 import { useContentEntryStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
+import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
-import BioDesignPanel from './BioDesignPanel';
-import CreateEntryPanel from './CreateEntryPanel';
 import EmptyState from './EmptyState';
-import InlineEditMode from './InlineEditMode';
-import PageListView from './PageListView';
+import PageListView from './PageListView'; // 디폴트 뷰는 static import
+
+// 동적 import with 스켈레톤
+const BioDesignPanel = dynamic(() => import('./BioDesignPanel'), {
+    loading: () => <PanelSkeleton />,
+});
+
+const CreateEntryPanel = dynamic(() => import('./CreateEntryPanel'), {
+    loading: () => <PanelSkeleton />,
+});
+
+const InlineEditMode = dynamic(() => import('./InlineEditMode'), {
+    loading: () => <EditorSkeleton />,
+});
+
+// 스켈레톤 컴포넌트들
+function PanelSkeleton() {
+    return (
+        <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-[#0A0A0A] p-6">
+            <div className="animate-pulse space-y-4">
+                {/* 헤더 */}
+                <div className="h-8 w-48 rounded-lg bg-white/5" />
+
+                {/* 컨텐츠 영역 */}
+                <div className="mt-8 space-y-3">
+                    <div className="h-4 w-full rounded bg-white/5" />
+                    <div className="h-4 w-5/6 rounded bg-white/5" />
+                    <div className="h-4 w-4/6 rounded bg-white/5" />
+                </div>
+
+                {/* 카드들 */}
+                <div className="mt-8 grid gap-4">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-24 rounded-xl bg-white/5" />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function EditorSkeleton() {
+    return (
+        <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-[#0A0A0A]">
+            <div className="flex h-full animate-pulse flex-col">
+                {/* 툴바 */}
+                <div className="border-b border-white/10 p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="h-9 w-24 rounded-lg bg-white/5" />
+                        <div className="h-9 w-24 rounded-lg bg-white/5" />
+                        <div className="flex-1" />
+                        <div className="h-9 w-20 rounded-lg bg-white/5" />
+                    </div>
+                </div>
+
+                {/* 에디터 영역 */}
+                <div className="flex-1 space-y-4 p-6">
+                    <div className="h-10 w-3/4 rounded-lg bg-white/5" />
+                    <div className="space-y-2">
+                        <div className="h-4 w-full rounded bg-white/5" />
+                        <div className="h-4 w-full rounded bg-white/5" />
+                        <div className="h-4 w-2/3 rounded bg-white/5" />
+                    </div>
+                    <div className="mt-6 h-32 w-full rounded-xl bg-white/5" />
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function ContentPanel() {
     // UI Store
@@ -39,7 +105,7 @@ export default function ContentPanel() {
         );
     }
 
-    // Page 패널 모드
+    // Page 패널 모드 (디폴트 뷰 - static import)
     if (activePanel === 'page') {
         return (
             <div className="h-full overflow-hidden rounded-2xl">
@@ -48,7 +114,7 @@ export default function ContentPanel() {
         );
     }
 
-    // 생성 패널 모드 (새로운 방식)
+    // 생성 패널 모드
     if (createPanelType) {
         return (
             <div className="h-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
@@ -66,7 +132,7 @@ export default function ContentPanel() {
         );
     }
 
-    // 엔트리 저장 핸들러 (미리보기 트리거 처리)
+    // 엔트리 저장 핸들러
     const handleSave = async (entry: typeof selectedEntry) => {
         const { triggeredPreview } = await updateEntry(entry);
         if (triggeredPreview) {
@@ -74,7 +140,7 @@ export default function ContentPanel() {
         }
     };
 
-    // 엔트리 삭제 핸들러 (미리보기 트리거 처리)
+    // 엔트리 삭제 핸들러
     const handleDelete = async () => {
         const { triggeredPreview } = await deleteEntry(selectedEntry.id);
         if (triggeredPreview) {
@@ -83,13 +149,7 @@ export default function ContentPanel() {
         selectEntry(null);
     };
 
-    // 생성 완료 핸들러 (UIStore + ContentEntryStore 동기화)
-    const handleFinishCreating = () => {
-        finishCreatingUI();
-        finishCreatingEntry(selectedEntry.id);
-    };
-
-    // 인라인 편집 모드 (View + Edit 통합)
+    // 인라인 편집 모드
     return (
         <div className="h-full overflow-hidden rounded-2xl border border-white/10">
             <InlineEditMode component={selectedEntry} onSave={handleSave} onDelete={handleDelete} />

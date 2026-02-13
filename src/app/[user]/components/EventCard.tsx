@@ -7,9 +7,10 @@ import Image from 'next/image';
 
 interface EventCardProps {
     event: EventEntry;
+    priority?: boolean;
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, priority = false }: EventCardProps) {
     return (
         <Card className="overflow-hidden border-gray-400 bg-stone-300/50 backdrop-blur-sm transition-all hover:border-gray-700">
             <div className="flex flex-row">
@@ -19,8 +20,10 @@ export default function EventCard({ event }: EventCardProps) {
                         src={event.posterUrl}
                         alt={event.title}
                         fill
+                        loading={priority ? 'eager' : 'lazy'}
+                        quality={75}
                         className="object-cover"
-                        unoptimized
+                        sizes="(max-width: 640px) 128px, (max-width: 768px) 160px, (max-width: 1024px) 192px, 224px"
                     />
                 </div>
 

@@ -1,45 +1,38 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { useContentEntryStore } from '@/stores/contentEntryStore';
+import { ContentEntry } from '@/types';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useMemo } from 'react';
 import TreeItem from './TreeItem';
 
 interface ViewSectionProps {
+    entries: ContentEntry[];
     isDraggingOver?: boolean;
     isCollapsed?: boolean;
     onDeleteEntry?: (id: string) => void;
+    removeFromDisplay?: (id: string) => void;
 }
 
 export default function ViewSection({
+    entries,
     isDraggingOver = false,
     isCollapsed = false,
+    onDeleteEntry,
+    removeFromDisplay,
 }: ViewSectionProps) {
-    // Content Entry Store - is_visible 기반으로 직접 필터링
-    const entries = useContentEntryStore((state) => state.entries);
-    const toggleVisibility = useContentEntryStore((state) => state.toggleVisibility);
-    const removeFromDisplay = useContentEntryStore((state) => state.removeFromDisplay);
-
     const { setNodeRef, isOver } = useDroppable({
         id: 'view-drop-zone',
     });
 
-    // displayOrder가 숫자인 엔트리만 displayOrder 순으로 정렬 (Page에 표시된 엔트리)
-    // null과 undefined 모두 제외
-    const displayedEntries = useMemo(
-        () =>
-            entries
-                .filter((e) => typeof e.displayOrder === 'number')
-                .sort((a, b) => a.displayOrder! - b.displayOrder!),
-        [entries]
-    );
+    const displayedEntries = entries
+        .filter((e) => typeof e.displayOrder === 'number')
+        .sort((a, b) => a.displayOrder! - b.displayOrder!);
 
     const showDropIndicator = isDraggingOver || isOver;
 
     const handleRemoveFromView = (entryId: string) => {
-        removeFromDisplay(entryId);
+        if (removeFromDisplay) removeFromDisplay(entryId);
     };
 
     // 드래그 중이면 접힌 상태라도 표시
@@ -75,7 +68,6 @@ export default function ViewSection({
                                 entry={entry}
                                 isInViewSection
                                 isVisible={entry.isVisible}
-                                onToggleVisibility={() => toggleVisibility(entry.id)}
                                 onDelete={() => handleRemoveFromView(entry.id)}
                             />
                         ))}

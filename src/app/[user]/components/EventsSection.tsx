@@ -18,8 +18,8 @@ export default function EventsSection({ events }: EventsSectionProps) {
                 />
 
                 <div className="space-y-4 sm:space-y-6">
-                    {events.map((event) => (
-                        <EventCard key={event.id} event={event} />
+                    {events.map((event, index) => (
+                        <EventCard key={event.id} event={event} priority={index === 0} />
                     ))}
                 </div>
             </div>

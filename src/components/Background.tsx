@@ -1,4 +1,5 @@
 // components/Background.tsx
+import Image from 'next/image';
 
 interface BackgroundProps {
     src: string;
@@ -7,6 +8,7 @@ interface BackgroundProps {
     overlay?: string | null;
     blur?: number;
     children?: React.ReactNode;
+    priority?: boolean; // ← 추가
 }
 
 export default function Background({
@@ -16,16 +18,18 @@ export default function Background({
     overlay = null,
     blur = 0,
     children,
+    priority = false, // ← LCP 이미지인 경우 true
 }: BackgroundProps) {
     return (
         <div className="relative min-h-0 flex-1 overflow-hidden">
-            {/* 이미지 레이어 */}
-            <img
+            {/* Next.js Image로 변경 */}
+            <Image
                 src={src}
                 alt=""
-                loading="lazy"
-                decoding="async"
-                className="absolute inset-0 h-full w-full"
+                fill // ← absolute + inset-0 대체
+                priority={priority} // ← LCP 이미지 우선 로드
+                quality={85} // ← 품질 조정
+                sizes="100vw" // ← 뷰포트 전체
                 style={{
                     objectFit: size,
                     objectPosition: position,
@@ -33,10 +37,8 @@ export default function Background({
                 }}
             />
 
-            {/* 오버레이 레이어 */}
-            {overlay && <div className="absolute inset-0" style={{ background: overlay }} />}
+            {overlay && <div className="absolute inset-0 z-[1]" style={{ background: overlay }} />}
 
-            {/* 콘텐츠 레이어 */}
             <div className="relative z-10 h-full w-full overflow-y-auto">{children}</div>
         </div>
     );
