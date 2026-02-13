@@ -1,5 +1,14 @@
 // lib/mappers.ts - DB ↔ Domain 변환 함수 통합
-import type { Event as DBEvent, User as DBUser, Venue as DBVenue, Entry } from '@/types/database';
+import type {
+    Event as DBEvent,
+    User as DBUser,
+    Venue as DBVenue,
+    Entry,
+    EventVenue,
+    EventData,
+    VenueExternalSources,
+} from '@/types/database';
+import type { RAEventListingItem, RAVenueInfo } from '@/types/ra';
 import {
     isPublicEventEntry,
     type ContentEntry,
@@ -296,6 +305,7 @@ export function mapEventToDatabase(
         },
         is_public: event.isPublic,
         created_by: createdBy,
+        source: event.source ?? 'manual',
     };
 }
 
@@ -315,6 +325,13 @@ export function mapVenueToDomain(dbVenue: DBVenue): Venue {
         instagram: dbVenue.instagram,
         website: dbVenue.website,
         claimedBy: dbVenue.claimed_by,
+        source: dbVenue.source,
+        externalSources: dbVenue.external_sources
+            ? {
+                  raUrl: dbVenue.external_sources.ra_url,
+                  raVenueId: dbVenue.external_sources.ra_venue_id,
+              }
+            : undefined,
     };
 }
 
@@ -384,6 +401,124 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntr
                 icon: 'globe',
             } as LinkEntry;
     }
+}
+
+// ============================================
+// RA Import Mappers
+// ============================================
+
+/**
+ * slug 생성 유틸리티
+ */
+function generateSlug(text: string): string {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9가-힣\s]+/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/^-|-$/g, '');
+}
+
+/**
+ * 베뉴 slug 생성 (name 기반)
+ * @example "Berghain" → "berghain-abc123"
+ */
+export function generateVenueSlug(name: string): string {
+    return `${generateSlug(name)}-${Date.now().toString(36)}`;
+}
+
+/**
+ * 이벤트 slug 생성 (title + date 기반)
+ * mappers 내부 전용 — event.queries.ts의 generateEventSlug와 동일한 로직
+ */
+function generateImportEventSlug(title: string, date: string): string {
+    const dateStr = date.split('T')[0];
+    return `${generateSlug(title)}-${dateStr}-${Date.now().toString(36)}`;
+}
+
+// -- Input types (서버 전용 모듈 import 방지용 인라인 정의) --
+
+export interface CreateImportedVenueInput {
+    name: string;
+    slug: string;
+    city?: string;
+    country?: string;
+    address?: string;
+    source: string;
+    external_sources: VenueExternalSources;
+}
+
+export interface CreateImportedEventInput {
+    title: string;
+    slug: string;
+    date: string;
+    venue: EventVenue;
+    lineup: { artist_id?: string; name: string }[];
+    data: EventData;
+    is_public: boolean;
+    created_by: string;
+    source: string;
+}
+
+/**
+ * RA 베뉴 정보 → DB 입력 데이터
+ */
+export function mapRAVenueToDbInput(raVenue: RAVenueInfo, raUrl: string): CreateImportedVenueInput {
+    return {
+        name: raVenue.name,
+        slug: generateVenueSlug(raVenue.name),
+        city: raVenue.area?.name ?? undefined,
+        country: raVenue.area?.country?.name ?? undefined,
+        address: raVenue.address ?? undefined,
+        source: 'ra_import',
+        external_sources: {
+            ra_url: raUrl,
+            ra_venue_id: raVenue.id,
+        },
+    };
+}
+
+/**
+ * RA 이벤트 → DB 입력 데이터
+ */
+export function mapRAEventToDbInput(
+    raEvent: RAEventListingItem,
+    venueId: string,
+    venueName: string,
+    createdBy: string
+): CreateImportedEventInput {
+    const artistDetails = raEvent.artists.map((a) => ({
+        name: a.name,
+        ra_url: a.urlSafeName ? `https://ra.co/dj/${a.urlSafeName}` : null,
+    }));
+    const lineupText = raEvent.artists.map((a) => a.name).join(', ');
+
+    const venue: EventVenue = { venue_id: venueId, name: venueName };
+    const lineup = raEvent.artists.map((a) => ({ name: a.name }));
+
+    const data: EventData = {
+        description: lineupText ? `Lineup: ${lineupText}` : undefined,
+    };
+
+    // RA 메타데이터를 data에 추가
+    const extendedData = {
+        ...data,
+        ra_event_url: raEvent.contentUrl ? `https://ra.co${raEvent.contentUrl}` : undefined,
+        ra_event_id: raEvent.id,
+        lineup_text: lineupText,
+        artist_details: artistDetails,
+    };
+
+    return {
+        title: raEvent.title || 'Untitled Event',
+        slug: generateImportEventSlug(raEvent.title || 'event', raEvent.date),
+        date: raEvent.date,
+        venue,
+        lineup,
+        data: extendedData as EventData,
+        is_public: true,
+        created_by: createdBy,
+        source: 'ra_import',
+    };
 }
 
 // ============================================
