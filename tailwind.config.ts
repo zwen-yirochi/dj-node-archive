@@ -62,6 +62,19 @@ const config: Config = {
                     inverse: '#ffffff',
                     muted: '#d1d5db',
                 },
+                // CORTEX Design System
+                cortex: {
+                    bg: 'rgb(226, 230, 231)',
+                    'bg-tint': 'rgb(218, 222, 224)',
+                    'bg-dark': 'rgb(208, 212, 214)',
+                    ink: '#1a1a1e',
+                    'ink-mid': '#4a4a52',
+                    'ink-light': '#7a7a86',
+                    'ink-ghost': '#a0a0ac',
+                    'ink-faint': '#c0c0c8',
+                    'accent-red': '#c0392b',
+                    'accent-blue': '#2255aa',
+                },
                 // Dashboard Design System - Light Theme
                 dashboard: {
                     // Backgrounds
@@ -101,9 +114,33 @@ const config: Config = {
                 stripe: ['var(--font-stripe)', 'sans-serif'],
                 nyangi: ['var(--font-nyangi)', 'sans-serif'],
                 bokeh: ['var(--font-bokeh)', 'sans-serif'],
+                // CORTEX monospace
+                'mono-main': ["'JetBrains Mono'", 'monospace'],
+                'mono-alt': ["'Space Mono'", 'monospace'],
                 // 기본 시스템
                 sans: ['var(--font-geist-sans)', 'sans-serif'],
                 mono: ['var(--font-geist-mono)', 'monospace'],
+            },
+            letterSpacing: {
+                'cortex-tight': '-1px',
+                'cortex-label': '2.5px',
+                'cortex-meta': '1.5px',
+                'cortex-system': '1px',
+                'cortex-btn': '2px',
+            },
+            fontSize: {
+                'cortex-system': ['8px', { lineHeight: '1.4' }],
+                'cortex-label': ['9px', { lineHeight: '1.4' }],
+                'cortex-meta-val': ['11px', { lineHeight: '1.6' }],
+                'cortex-body': ['12px', { lineHeight: '1.75' }],
+                'cortex-item': ['13px', { lineHeight: '1.4' }],
+            },
+            maxWidth: {
+                cortex: '1080px',
+            },
+            spacing: {
+                'cortex-gutter': '32px',
+                'cortex-gap': '40px',
             },
             borderRadius: {
                 lg: 'var(--radius)',
