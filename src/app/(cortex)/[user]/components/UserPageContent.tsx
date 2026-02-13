@@ -17,6 +17,11 @@ interface Props {
     entries: ContentEntry[];
 }
 
+function venueCode(id?: string): string {
+    if (!id) return 'VN-0000';
+    return `VN-${id.slice(0, 4).toUpperCase()}`;
+}
+
 function formatEventDate(dateStr: string): string {
     try {
         const d = new Date(dateStr);
@@ -243,7 +248,11 @@ export default function UserPageContent({ user, entries }: Props) {
                                             </h3>
                                             {event.venue?.name && (
                                                 <div className="mt-1 text-xs text-cortex-ink-light">
-                                                    @ {event.venue.name}
+                                                    @{' '}
+                                                    <span className="border-b border-dotted border-cortex-accent-blue text-cortex-accent-blue">
+                                                        {event.venue.name} [
+                                                        {venueCode(event.venue.id)}]
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
@@ -273,7 +282,7 @@ export default function UserPageContent({ user, entries }: Props) {
                                         date: formatEventDate(event.date),
                                         title: event.title,
                                         venue: event.venue?.name
-                                            ? `${event.venue.name}`
+                                            ? `${event.venue.name} [${venueCode(event.venue.id)}]`
                                             : 'UNKNOWN VENUE',
                                         link:
                                             isEventEntry(event) && isPublicEventEntry(event)

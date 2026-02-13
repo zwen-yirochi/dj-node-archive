@@ -38,7 +38,9 @@ function getDetail(entry: ContentEntry): string {
     switch (entry.type) {
         case 'event': {
             const e = entry as EventEntry;
-            return e.venue?.name ? `@ ${e.venue.name}` : formatDate(e.date);
+            if (!e.venue?.name) return formatDate(e.date);
+            const vcode = e.venue.id ? `VN-${e.venue.id.slice(0, 4).toUpperCase()}` : 'VN-0000';
+            return `@ ${e.venue.name} [${vcode}]`;
         }
         case 'mixset': {
             const m = entry as MixsetEntry;
