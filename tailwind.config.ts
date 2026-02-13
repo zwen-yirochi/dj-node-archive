@@ -116,6 +116,41 @@ const config: Config = {
             backfaceVisibility: {
                 hidden: 'hidden',
             },
+            keyframes: {
+                'fade-in': {
+                    from: { opacity: '0' },
+                    to: { opacity: '1' },
+                },
+                'fade-in-up': {
+                    from: { opacity: '0', transform: 'translateY(16px)' },
+                    to: { opacity: '1', transform: 'translateY(0)' },
+                },
+                'accent-pulse': {
+                    '0%, 100%': { opacity: '0.6' },
+                    '50%': { opacity: '1' },
+                },
+                'draw-line': {
+                    from: { transform: 'scaleX(0)' },
+                    to: { transform: 'scaleX(1)' },
+                },
+                'dot-appear': {
+                    from: { opacity: '0', transform: 'scale(0)' },
+                    to: { opacity: '1', transform: 'scale(1)' },
+                },
+                'slide-down': {
+                    from: { opacity: '0', transform: 'translateY(-8px)' },
+                    to: { opacity: '1', transform: 'translateY(0)' },
+                },
+            },
+            animation: {
+                'fade-in': 'fade-in 0.8s ease-out',
+                'fade-in-up': 'fade-in-up 0.5s ease-out both',
+                'accent-pulse': 'accent-pulse 3s ease-in-out infinite',
+                'draw-line': 'draw-line 0.8s ease-out both',
+                'dot-appear': 'dot-appear 0.3s ease-out both',
+                'slide-down': 'slide-down 0.6s ease-out both',
+                'fade-in-slow': 'fade-in 1s ease-out 0.5s both',
+            },
             textShadow: {
                 xs: '0px 0px 2px color-mix(in srgb, currentColor 40%, transparent)',
                 sm: '0px 0px 3px color-mix(in srgb, currentColor 50%, transparent)',

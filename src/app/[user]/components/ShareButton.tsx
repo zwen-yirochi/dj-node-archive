@@ -1,46 +1,6 @@
 'use client';
 
-import styled from '@emotion/styled';
-import { keyframes } from '@emotion/react';
 import { useCallback, useState } from 'react';
-
-const pulse = keyframes`
-    0% { transform: scale(1); }
-    50% { transform: scale(0.95); }
-    100% { transform: scale(1); }
-`;
-
-const Button = styled.button`
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: transparent;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 2px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #6b6b6b;
-    transition: all 0.2s ease;
-
-    &:hover {
-        border-color: rgba(0, 0, 0, 0.25);
-        color: #1a1a1a;
-    }
-
-    &:active {
-        animation: ${pulse} 0.2s ease;
-    }
-`;
-
-const Copied = styled.span`
-    font-size: 10px;
-    color: #999;
-    letter-spacing: 0.06em;
-`;
 
 const ShareIcon = () => (
     <svg
@@ -71,13 +31,17 @@ export default function ShareButton() {
     }, []);
 
     if (copied) {
-        return <Copied>COPIED</Copied>;
+        return <span className="text-[10px] tracking-[0.06em] text-[#999]">COPIED</span>;
     }
 
     return (
-        <Button onClick={handleShare} type="button">
+        <button
+            className="border-black/12 font-inherit flex cursor-pointer items-center gap-1.5 rounded-sm border bg-transparent px-3 py-1.5 text-[10px] uppercase tracking-[0.08em] text-[#6b6b6b] transition-all hover:border-black/25 hover:text-[#1a1a1a] active:scale-95"
+            onClick={handleShare}
+            type="button"
+        >
             <ShareIcon />
             SHARE
-        </Button>
+        </button>
     );
 }
