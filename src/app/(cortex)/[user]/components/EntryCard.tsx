@@ -77,11 +77,7 @@ export default function EntryCard({ entry, index }: Props) {
             {/* Thumbnail — 모바일에서도 표시 */}
             <div className="h-[60px] w-[48px] flex-shrink-0 overflow-hidden border border-cortex-ink-faint bg-cortex-bg-dark md:h-[72px] md:w-[56px]">
                 {imageUrl ? (
-                    <img
-                        src={imageUrl}
-                        alt=""
-                        className="h-full w-full object-cover contrast-[1.1] grayscale-[70%]"
-                    />
+                    <img src={imageUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
                     <div className="flex h-full w-full items-center justify-center text-[8px] uppercase tracking-cortex-system text-cortex-ink-ghost">
                         {typeLabel}

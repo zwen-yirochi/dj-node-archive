@@ -15,21 +15,13 @@ export default function ShareButton() {
         }
     }, []);
 
-    if (copied) {
-        return (
-            <span className="text-cortex-label uppercase tracking-cortex-system text-cortex-ink-ghost">
-                // COPIED
-            </span>
-        );
-    }
-
     return (
         <button
-            className="cursor-pointer border border-cortex-ink-faint bg-transparent px-3 py-1.5 font-mono-main text-[10px] uppercase tracking-cortex-btn text-cortex-ink-light hover:border-cortex-ink-light hover:text-cortex-ink"
+            className="inline-flex h-[28px] w-[72px] cursor-pointer items-center justify-center border border-cortex-ink-faint bg-transparent font-mono-main text-[10px] uppercase tracking-cortex-btn text-cortex-ink-light hover:border-cortex-ink-light hover:text-cortex-ink"
             onClick={handleShare}
             type="button"
         >
-            SHARE
+            {copied ? 'COPIED' : 'SHARE'}
         </button>
     );
 }

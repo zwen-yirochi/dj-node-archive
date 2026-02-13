@@ -41,7 +41,7 @@ export default function UserPageContent({ user, entries }: Props) {
                             <img
                                 src={user.avatarUrl}
                                 alt={user.displayName}
-                                className="h-full w-full object-cover contrast-[1.05] grayscale-[60%]"
+                                className="h-full w-full object-cover"
                             />
                         </div>
                     )}
