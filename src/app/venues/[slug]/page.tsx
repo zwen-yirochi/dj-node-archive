@@ -3,7 +3,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { findEventsByVenueId } from '@/lib/db/queries/event.queries';
 import { findVenueBySlug } from '@/lib/db/queries/venue.queries';
 import { isSuccess } from '@/types/result';
-import { ArrowLeft, ArrowRight, Calendar, Globe, Instagram, MapPin } from 'lucide-react';
+import {
+    ArrowLeft,
+    ArrowRight,
+    Calendar,
+    ExternalLink,
+    Globe,
+    Instagram,
+    MapPin,
+    Music,
+} from 'lucide-react';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -40,7 +49,7 @@ export default async function VenuePage({ params }: PageProps) {
     }
 
     const venue = venueResult.data;
-    const eventsResult = await findEventsByVenueId(venue.id, 50);
+    const eventsResult = await findEventsByVenueId(venue.id, 500);
     const events = isSuccess(eventsResult) ? eventsResult.data : [];
 
     return (
@@ -81,7 +90,15 @@ export default async function VenuePage({ params }: PageProps) {
             {/* Venue Info */}
             <main className="container mx-auto px-4 pb-12">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold tracking-tight">{venue.name}</h1>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-3xl font-bold tracking-tight">{venue.name}</h1>
+                        {venue.source === 'ra_import' && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                                <Music className="h-3 w-3" />
+                                Source: RA
+                            </span>
+                        )}
+                    </div>
 
                     {/* Location */}
                     {(venue.city || venue.address) && (
@@ -129,6 +146,17 @@ export default async function VenuePage({ params }: PageProps) {
                                 Google Maps
                             </a>
                         )}
+                        {venue.external_sources?.ra_url && (
+                            <a
+                                href={venue.external_sources.ra_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-sm hover:bg-secondary/80"
+                            >
+                                <ExternalLink className="h-4 w-4" />
+                                Resident Advisor
+                            </a>
+                        )}
                     </div>
                 </div>
 
@@ -145,30 +173,35 @@ export default async function VenuePage({ params }: PageProps) {
 
                     {events.length > 0 ? (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {events.map((event) => (
-                                <Card key={event.id} className="overflow-hidden">
-                                    <CardContent className="p-4">
-                                        <div className="flex items-start gap-3">
-                                            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                                                <Calendar className="h-5 w-5 text-primary" />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="font-medium">
-                                                    {event.title || formatDate(event.date)}
-                                                </div>
-                                                <div className="text-sm text-muted-foreground">
-                                                    {formatDate(event.date)}
-                                                </div>
-                                                {event.lineup && (
-                                                    <div className="mt-1 truncate text-xs text-muted-foreground">
-                                                        {String(event.lineup)}
+                            {events.map((event) => {
+                                const lineupText = getLineupText(event);
+                                return (
+                                    <Link key={event.id} href={`/event/${event.id}`}>
+                                        <Card className="overflow-hidden transition-colors hover:bg-muted/50">
+                                            <CardContent className="p-4">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                                                        <Calendar className="h-5 w-5 text-primary" />
                                                     </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="font-medium">
+                                                            {event.title || formatDate(event.date)}
+                                                        </div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            {formatDate(event.date)}
+                                                        </div>
+                                                        {lineupText && (
+                                                            <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                                                                {lineupText}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </Link>
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="rounded-lg border border-dashed p-8 text-center">
@@ -196,4 +229,23 @@ function formatDate(dateString: string): string {
         month: 'long',
         day: 'numeric',
     });
+}
+
+/** Import된 이벤트의 data.lineup_text 또는 lineup 배열에서 텍스트 추출 */
+function getLineupText(event: { lineup: unknown; data: unknown }): string {
+    // 1. Import된 이벤트: data.lineup_text 우선 사용 (더 풍부한 정보)
+    const data = event.data as Record<string, unknown> | null;
+    if (data?.lineup_text && typeof data.lineup_text === 'string') {
+        return data.lineup_text;
+    }
+
+    // 2. lineup JSONB 배열에서 name 추출
+    if (Array.isArray(event.lineup) && event.lineup.length > 0) {
+        return event.lineup
+            .map((a: { name?: string }) => a.name)
+            .filter(Boolean)
+            .join(', ');
+    }
+
+    return '';
 }
