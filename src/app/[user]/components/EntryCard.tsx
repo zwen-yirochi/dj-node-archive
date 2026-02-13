@@ -1,4 +1,6 @@
 import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry } from '@/types/domain';
+import { isEventEntry, isPublicEventEntry } from '@/types/domain';
+import Link from 'next/link';
 
 interface Props {
     entry: ContentEntry;
@@ -75,8 +77,10 @@ const accentColor: Record<string, string> = {
 
 export default function EntryCard({ entry, index }: Props) {
     const imageUrl = getImageUrl(entry);
+    const href =
+        isEventEntry(entry) && isPublicEventEntry(entry) ? `/event/${entry.eventId}` : null;
 
-    return (
+    const card = (
         <article
             className="hover:bg-black/2 grid animate-fade-in-up grid-cols-[3px_60px_1fr_auto] gap-x-3 border-b border-black/5 py-1.5 transition-colors"
             style={{ animationDelay: `${0.1 + index * 0.08}s` }}
@@ -102,4 +106,14 @@ export default function EntryCard({ entry, index }: Props) {
             </div>
         </article>
     );
+
+    if (href) {
+        return (
+            <Link href={href} className="block no-underline">
+                {card}
+            </Link>
+        );
+    }
+
+    return card;
 }
