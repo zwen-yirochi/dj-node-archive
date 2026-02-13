@@ -9,7 +9,6 @@ import { MetaTable } from '@/components/cortex/MetaTable';
 import { Timeline } from '@/components/cortex/Timeline';
 import { AsciiDivider } from '@/components/cortex/AsciiDivider';
 import { Footer } from '@/components/cortex/Footer';
-import { TagCluster } from '@/components/cortex/TagCluster';
 import EntryCard from './EntryCard';
 import ShareButton from './ShareButton';
 
@@ -89,16 +88,27 @@ export default function UserPageContent({ user, entries }: Props) {
                             </p>
                         )}
 
-                        {/* Tags — NULL placeholder */}
-                        <TagCluster
-                            tags={[
+                        {/* Tags (static — no onClick) */}
+                        <div className="my-3.5 flex flex-wrap gap-1.5">
+                            {[
                                 { label: 'DJ', active: true },
                                 ...(eventEntries.length > 0 ? [{ label: 'Events' }] : []),
                                 ...(otherEntries.some((e) => e.type === 'mixset')
                                     ? [{ label: 'Mixset' }]
                                     : []),
-                            ]}
-                        />
+                            ].map((tag) => (
+                                <span
+                                    key={tag.label}
+                                    className={`border px-2.5 py-1 text-cortex-label uppercase tracking-cortex-system ${
+                                        tag.active
+                                            ? 'border-cortex-ink bg-cortex-ink text-cortex-bg'
+                                            : 'border-cortex-ink-faint text-cortex-ink-mid'
+                                    }`}
+                                >
+                                    {tag.label}
+                                </span>
+                            ))}
+                        </div>
 
                         {/* Social links */}
                         {(user.instagram || user.soundcloud) && (
