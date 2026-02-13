@@ -57,36 +57,31 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
     switch (dbEntry.type) {
         case 'event': {
             const data = dbEntry.data as unknown as Record<string, unknown>;
+            const refId = ('event_id' in data ? data.event_id : dbEntry.reference_id) as
+                | string
+                | null;
 
-            // 참조형 (event_id가 있는 경우)
-            if ('event_id' in data) {
-                return {
-                    ...base,
-                    type: 'event',
-                    eventId: data.event_id as string,
-                    title: (data.custom_title as string) || '',
-                    date: '',
-                    venue: { name: '' },
-                    lineup: [],
-                    posterUrl: '',
-                } as PublicEventEntry;
-            }
-
-            // 자체형 (프라이빗 이벤트)
             const venue = data.venue as { venue_id?: string; name: string } | undefined;
             const lineup = data.lineup as { artist_id?: string; name: string }[] | undefined;
 
-            return {
+            const eventEntry: EventEntry = {
                 ...base,
                 type: 'event',
-                title: (data.title as string) || '',
+                title: (data.custom_title as string) || (data.title as string) || '',
                 date: (data.date as string) || '',
                 venue: venue ? { id: venue.venue_id, name: venue.name } : { name: '' },
                 lineup: lineup?.map((p) => ({ id: p.artist_id, name: p.name })) || [],
                 posterUrl: (data.poster_url as string) || '',
                 description: data.description as string | undefined,
                 links: data.links as { title: string; url: string }[] | undefined,
-            } as EventEntry;
+            };
+
+            // 참조형 (reference_id 또는 data.event_id가 있는 경우)
+            if (refId) {
+                return { ...eventEntry, eventId: refId } as PublicEventEntry;
+            }
+
+            return eventEntry;
         }
 
         case 'mixset': {
@@ -140,7 +135,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
 export function mapEntryToDatabase(
     entry: ContentEntry,
     position: number
-): Omit<Entry, 'id' | 'created_at' | 'updated_at' | 'page_id'> {
+): Omit<Entry, 'id' | 'created_at' | 'updated_at' | 'page_id' | 'reference_id'> {
     switch (entry.type) {
         case 'event': {
             const eventEntry = entry as EventEntry;

@@ -52,6 +52,7 @@ export async function findUserWithPages(username: string): Promise<Result<UserWi
                         position,
                         display_order,
                         is_visible,
+                        reference_id,
                         data,
                         created_at,
                         updated_at
@@ -115,6 +116,7 @@ export async function findUserWithPagesById(userId: string): Promise<Result<User
                         position,
                         display_order,
                         is_visible,
+                        reference_id,
                         data,
                         created_at,
                         updated_at
@@ -158,6 +160,7 @@ export async function findUserWithPagesByAuthId(
                         position,
                         display_order,
                         is_visible,
+                        reference_id,
                         data,
                         created_at,
                         updated_at

@@ -186,10 +186,10 @@ export const getPublicPageData = cache(
             });
         }
 
-        // is_visible = true인 엔트리만 position 순으로 반환
+        // is_visible = true이고 display_order가 있는 엔트리만 display_order 순으로 반환
         const components = (page.entries || [])
-            .filter((entry) => entry.is_visible)
-            .sort((a, b) => a.position - b.position)
+            .filter((entry) => entry.is_visible && entry.display_order !== null)
+            .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
             .map(mapEntryToDomain);
 
         return success({

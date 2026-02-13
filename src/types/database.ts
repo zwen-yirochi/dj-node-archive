@@ -92,6 +92,7 @@ export interface Entry {
     position: number;
     display_order: number | null; // null = Page에 미표시
     is_visible: boolean; // display_order가 있을 때 일시적 숨김 여부
+    reference_id: string | null; // events/mixsets 테이블 참조 ID
     data: EntryData;
     created_at: ISODateString;
     updated_at: ISODateString;
