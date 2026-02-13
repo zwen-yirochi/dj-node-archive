@@ -1,9 +1,16 @@
 // app/dashboard/components/TreeSidebar/index.tsx
 'use client';
 
+import {
+    useAddToDisplay,
+    useDeleteEntry,
+    useEditorData,
+    useReorderDisplayEntries,
+    useReorderEntries,
+} from '@/hooks/use-entries';
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/lib/validators';
-import { useContentEntryStore } from '@/stores/contentEntryStore';
+import { useDashboardUIStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useUserStore } from '@/stores/userStore';
 import type { ContentEntry } from '@/types';
@@ -41,16 +48,21 @@ import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
 
 export default function TreeSidebar() {
-    // Store에서 데이터 읽기
-    const entries = useContentEntryStore((state) => state?.entries ?? []);
+    // TanStack Query
+    const { data } = useEditorData();
+    const entries = data?.contentEntries ?? [];
+
+    // User Store
     const user = useUserStore((state) => state?.user);
 
-    // Store 액션
-    const deleteEntry = useContentEntryStore((state) => state?.deleteEntry);
-    const reorderSectionItems = useContentEntryStore((state) => state?.reorderSectionItems);
-    const addToDisplay = useContentEntryStore((state) => state?.addToDisplay);
-    const reorderDisplayEntries = useContentEntryStore((state) => state?.reorderDisplayEntries);
-    const triggerPreviewRefresh = useContentEntryStore((state) => state?.triggerPreviewRefresh);
+    // TanStack Query Mutations
+    const deleteEntryMutation = useDeleteEntry();
+    const reorderEntriesMutation = useReorderEntries();
+    const addToDisplayMutation = useAddToDisplay();
+    const reorderDisplayMutation = useReorderDisplayEntries();
+
+    // Dashboard UI Store
+    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
 
     // UI Store
     const activePanel = useUIStore((state) => state?.activePanel ?? 'page');
@@ -146,9 +158,8 @@ export default function TreeSidebar() {
                 return;
             }
 
-            if (addToDisplay) {
-                await addToDisplay(entry.id);
-            }
+            addToDisplayMutation.mutate(entry.id);
+            triggerPreviewRefresh();
             return;
         }
 
@@ -158,8 +169,9 @@ export default function TreeSidebar() {
             const overId = String(over.id).replace('view-', '');
             const newIndex = displayedEntries.findIndex((e) => e.id === overId);
 
-            if (newIndex !== -1 && active.id !== over.id && reorderDisplayEntries) {
-                await reorderDisplayEntries(activeEntry.id, newIndex);
+            if (newIndex !== -1 && active.id !== over.id) {
+                reorderDisplayMutation.mutate({ entryId: activeEntry.id, newIndex });
+                triggerPreviewRefresh();
             }
             return;
         }
@@ -182,18 +194,22 @@ export default function TreeSidebar() {
                 }
 
                 const overIndex = sectionEntries.findIndex((e) => e.id === over.id);
-                if (overIndex !== -1 && reorderSectionItems) {
-                    await reorderSectionItems(sectionType, activeEntry.id, overIndex);
+                if (overIndex !== -1) {
+                    reorderEntriesMutation.mutate({
+                        type: sectionType,
+                        entryId: activeEntry.id,
+                        newPosition: overIndex,
+                    });
                 }
             }
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!deleteEntry || !triggerPreviewRefresh) return;
-
-        const { triggeredPreview } = await deleteEntry(id);
-        if (triggeredPreview) {
+        const entry = entries.find((e) => e.id === id);
+        const shouldRefresh = entry ? canAddToView(entry) : false;
+        await deleteEntryMutation.mutateAsync(id);
+        if (shouldRefresh) {
             triggerPreviewRefresh();
         }
     };

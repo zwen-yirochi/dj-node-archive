@@ -9,9 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import OptionSelector from '@/components/ui/OptionSelector';
+import { useCreateEntry, useEditorData } from '@/hooks/use-entries';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
-import { useContentEntryStore } from '@/stores/contentEntryStore';
+import { useDashboardUIStore } from '@/stores/contentEntryStore';
 import { type EntryType, useUIStore } from '@/stores/uiStore';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
@@ -27,10 +28,14 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [eventOption, setEventOption] = useState<EventCreateOption>('create');
 
+    // TanStack Query
+    const { data } = useEditorData();
+    const createEntryMutation = useCreateEntry();
+
     // Stores
-    const createEntry = useContentEntryStore((state) => state.createEntry);
-    const finishCreatingEntry = useContentEntryStore((state) => state.finishCreating);
-    const triggerPreviewRefresh = useContentEntryStore((state) => state.triggerPreviewRefresh);
+    const addNewlyCreated = useDashboardUIStore((state) => state.addNewlyCreated);
+    const finishCreatingEntry = useDashboardUIStore((state) => state.finishCreating);
+    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
     const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
     const selectEntry = useUIStore((state) => state.selectEntry);
 
@@ -47,12 +52,25 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
             return;
         }
 
+        if (!data?.pageId) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Page ID is not set. Please refresh the page.',
+            });
+            return;
+        }
+
         setIsSaving(true);
         try {
             const newEntry = createEmptyEntry(type);
             newEntry.title = title.trim();
 
-            await createEntry(newEntry);
+            addNewlyCreated(newEntry.id);
+            await createEntryMutation.mutateAsync({
+                pageId: data.pageId,
+                entry: newEntry,
+            });
             finishCreatingEntry(newEntry.id);
             triggerPreviewRefresh();
             closeCreatePanel();

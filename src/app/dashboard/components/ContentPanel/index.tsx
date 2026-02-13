@@ -1,6 +1,9 @@
 'use client';
 
-import { useContentEntryStore } from '@/stores/contentEntryStore';
+import { useEditorData, useDeleteEntry, useUpdateEntry } from '@/hooks/use-entries';
+import { shouldTriggerPreview } from '@/lib/previewTrigger';
+import { canAddToView } from '@/lib/validators';
+import { useDashboardUIStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
@@ -81,14 +84,15 @@ export default function ContentPanel() {
     const activePanel = useUIStore((state) => state.activePanel);
     const createPanelType = useUIStore((state) => state.createPanelType);
     const selectEntry = useUIStore((state) => state.selectEntry);
-    const finishCreatingUI = useUIStore((state) => state.finishCreating);
 
-    // Content Entry Store
-    const entries = useContentEntryStore((state) => state.entries);
-    const updateEntry = useContentEntryStore((state) => state.updateEntry);
-    const deleteEntry = useContentEntryStore((state) => state.deleteEntry);
-    const finishCreatingEntry = useContentEntryStore((state) => state.finishCreating);
-    const triggerPreviewRefresh = useContentEntryStore((state) => state.triggerPreviewRefresh);
+    // TanStack Query
+    const { data } = useEditorData();
+    const entries = data?.contentEntries ?? [];
+    const updateEntryMutation = useUpdateEntry();
+    const deleteEntryMutation = useDeleteEntry();
+
+    // Dashboard UI Store
+    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
 
     // useMemo로 선택된 엔트리 찾기
     const selectedEntry = useMemo(() => {
@@ -134,16 +138,18 @@ export default function ContentPanel() {
 
     // 엔트리 저장 핸들러
     const handleSave = async (entry: typeof selectedEntry) => {
-        const { triggeredPreview } = await updateEntry(entry);
-        if (triggeredPreview) {
+        const previousEntry = entries.find((e) => e.id === entry.id);
+        await updateEntryMutation.mutateAsync({ entry });
+        if (previousEntry && shouldTriggerPreview(previousEntry, entry)) {
             triggerPreviewRefresh();
         }
     };
 
     // 엔트리 삭제 핸들러
     const handleDelete = async () => {
-        const { triggeredPreview } = await deleteEntry(selectedEntry.id);
-        if (triggeredPreview) {
+        const shouldRefresh = canAddToView(selectedEntry);
+        await deleteEntryMutation.mutateAsync(selectedEntry.id);
+        if (shouldRefresh) {
             triggerPreviewRefresh();
         }
         selectEntry(null);

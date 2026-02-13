@@ -1,8 +1,14 @@
 'use client';
 
 import { COMPONENT_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
+import {
+    useEditorData,
+    useReorderDisplayEntries,
+    useRemoveFromDisplay,
+    useToggleVisibility,
+} from '@/hooks/use-entries';
 import { cn } from '@/lib/utils';
-import { useContentEntryStore } from '@/stores/contentEntryStore';
+import { useDashboardUIStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { ContentEntry } from '@/types';
 import {
@@ -121,11 +127,15 @@ function SortableItem({
 }
 
 export default function PageListView() {
-    // Content Entry Store - displayOrder로 필터링
-    const entries = useContentEntryStore((state) => state.entries);
-    const toggleVisibility = useContentEntryStore((state) => state.toggleVisibility);
-    const removeFromDisplay = useContentEntryStore((state) => state.removeFromDisplay);
-    const reorderDisplayEntries = useContentEntryStore((state) => state.reorderDisplayEntries);
+    // TanStack Query
+    const { data } = useEditorData();
+    const entries = data?.contentEntries ?? [];
+    const toggleVisibilityMutation = useToggleVisibility();
+    const removeFromDisplayMutation = useRemoveFromDisplay();
+    const reorderDisplayMutation = useReorderDisplayEntries();
+
+    // Dashboard UI Store
+    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
 
     // UI Store
     const selectEntry = useUIStore((state) => state.selectEntry);
@@ -166,8 +176,19 @@ export default function PageListView() {
         // Page 내 순서 변경 (displayOrder 업데이트)
         const newIndex = displayedEntries.findIndex((e) => e.id === over.id);
         if (newIndex !== -1) {
-            reorderDisplayEntries(active.id as string, newIndex);
+            reorderDisplayMutation.mutate({ entryId: active.id as string, newIndex });
+            triggerPreviewRefresh();
         }
+    };
+
+    const handleToggleVisibility = (entryId: string) => {
+        toggleVisibilityMutation.mutate(entryId);
+        triggerPreviewRefresh();
+    };
+
+    const handleRemoveFromDisplay = (entryId: string) => {
+        removeFromDisplayMutation.mutate(entryId);
+        triggerPreviewRefresh();
     };
 
     const activeEntry = activeId ? displayedEntries.find((e) => e.id === activeId) : null;
@@ -223,8 +244,8 @@ export default function PageListView() {
                                         id={entry.id}
                                         entry={entry}
                                         isVisible={entry.isVisible}
-                                        onToggleVisibility={() => toggleVisibility(entry.id)}
-                                        onRemove={() => removeFromDisplay(entry.id)}
+                                        onToggleVisibility={() => handleToggleVisibility(entry.id)}
+                                        onRemove={() => handleRemoveFromDisplay(entry.id)}
                                         onSelect={() => selectEntry(entry.id)}
                                     />
                                 ))}

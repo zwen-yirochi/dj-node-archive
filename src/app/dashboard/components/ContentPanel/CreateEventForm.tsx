@@ -18,10 +18,11 @@ import OptionSelector from '@/components/ui/OptionSelector';
 import SearchableInput from '@/components/ui/SearchableInput';
 import TagSearchInput from '@/components/ui/TagSearchInput';
 import { Textarea } from '@/components/ui/textarea';
+import { useCreateEntry, useEditorData } from '@/hooks/use-entries';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
 import { draftEventSchema, publishEventSchema } from '@/lib/validations/entry.schemas';
-import { useContentEntryStore } from '@/stores/contentEntryStore';
+import { useDashboardUIStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { CreateEventData, EventEntry } from '@/types/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -59,9 +60,12 @@ export default function CreateEventForm() {
 
     const [publishOption, setPublishOption] = useState<PublishOption>('private');
 
+    // TanStack Query
+    const { data } = useEditorData();
+    const createEntryMutation = useCreateEntry();
+
     // Stores
-    const createEntry = useContentEntryStore((state) => state.createEntry);
-    const finishCreatingEntry = useContentEntryStore((state) => state.finishCreating);
+    const finishCreatingEntry = useDashboardUIStore((state) => state.finishCreating);
     const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
     const selectEntry = useUIStore((state) => state.selectEntry);
 
@@ -96,11 +100,16 @@ export default function CreateEventForm() {
         closeCreatePanel();
     };
 
-    const onSubmit = async (data: CreateEventData) => {
+    const onSubmit = async (formData: CreateEventData) => {
         clearErrors('root');
 
+        if (!data?.pageId) {
+            setError('root', { type: 'server', message: 'Page ID is not set. Please refresh.' });
+            return;
+        }
+
         if (publishOption === 'publish') {
-            const publishResult = publishEventSchema.safeParse(data);
+            const publishResult = publishEventSchema.safeParse(formData);
             if (!publishResult.success) {
                 toast({
                     variant: 'destructive',
@@ -113,14 +122,18 @@ export default function CreateEventForm() {
 
         try {
             const newEntry = createEmptyEntry('event') as EventEntry;
-            newEntry.title = data.title.trim();
-            newEntry.posterUrl = data.posterUrl.trim();
-            newEntry.date = data.date || new Date().toISOString().split('T')[0];
-            newEntry.venue = data.venue;
-            newEntry.lineup = data.lineup;
-            newEntry.description = data.description?.trim() || '';
+            newEntry.title = formData.title.trim();
+            newEntry.posterUrl = formData.posterUrl.trim();
+            newEntry.date = formData.date || new Date().toISOString().split('T')[0];
+            newEntry.venue = formData.venue;
+            newEntry.lineup = formData.lineup;
+            newEntry.description = formData.description?.trim() || '';
 
-            await createEntry(newEntry, publishOption);
+            await createEntryMutation.mutateAsync({
+                pageId: data.pageId,
+                entry: newEntry,
+                publishOption,
+            });
             finishCreatingEntry(newEntry.id);
             closeCreatePanel();
             selectEntry(newEntry.id);

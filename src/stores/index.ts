@@ -4,10 +4,12 @@
  * 각 store의 역할:
  * - useUserStore: 사용자 정보
  * - useUIStore: UI 상태 (선택, 사이드바 등)
- * - useContentEntryStore: 콘텐츠 엔트리 데이터, visibility 관리, 미리보기 트리거
+ * - useDashboardUIStore: 대시보드 UI 상태 (미리보기 트리거, 생성 상태)
+ *
+ * 서버 상태(entries CRUD)는 TanStack Query (hooks/use-entries.ts)로 이관됨
  */
 
-export { getEntriesByType, getSelectedEntry, useContentEntryStore } from './contentEntryStore';
+export { useDashboardUIStore, useContentEntryStore } from './contentEntryStore';
 export {
     useUIStore,
     type ActivePanel,

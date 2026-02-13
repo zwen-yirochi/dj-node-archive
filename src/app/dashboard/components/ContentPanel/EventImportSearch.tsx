@@ -2,9 +2,10 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useCreateEntry, useEditorData } from '@/hooks/use-entries';
 import { toast } from '@/hooks/use-toast';
 import { mapEventToEntry } from '@/lib/mappers';
-import { useContentEntryStore } from '@/stores/contentEntryStore';
+import { useDashboardUIStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { DBEventWithVenue } from '@/types/database';
 import { Calendar, Loader2, MapPin, Search } from 'lucide-react';
@@ -24,10 +25,13 @@ export default function EventImportSearch() {
     const [isSearching, setIsSearching] = useState(false);
     const [isImporting, setIsImporting] = useState<string | null>(null);
 
+    // TanStack Query
+    const { data } = useEditorData();
+    const createEntryMutation = useCreateEntry();
+
     // Stores
-    const createEntry = useContentEntryStore((state) => state.createEntry);
-    const finishCreatingEntry = useContentEntryStore((state) => state.finishCreating);
-    const triggerPreviewRefresh = useContentEntryStore((state) => state.triggerPreviewRefresh);
+    const finishCreatingEntry = useDashboardUIStore((state) => state.finishCreating);
+    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
     const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
     const selectEntry = useUIStore((state) => state.selectEntry);
 
@@ -59,6 +63,15 @@ export default function EventImportSearch() {
     };
 
     const handleImport = async (event: EventSearchResult) => {
+        if (!data?.pageId) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Page ID is not set. Please refresh the page.',
+            });
+            return;
+        }
+
         setIsImporting(event.id);
         try {
             // 이벤트 상세 정보 가져오기
@@ -70,7 +83,10 @@ export default function EventImportSearch() {
             // Entry로 변환
             const newEntry = mapEventToEntry(eventData);
 
-            await createEntry(newEntry);
+            await createEntryMutation.mutateAsync({
+                pageId: data.pageId,
+                entry: newEntry,
+            });
             finishCreatingEntry(newEntry.id);
             triggerPreviewRefresh();
             closeCreatePanel();

@@ -34,12 +34,12 @@ export default async function DashboardPage() {
         throw new Error(result.error.message);
     }
 
-    const { user, contentEntries, pageId } = result.data;
+    const initialData = result.data;
 
     // UI 렌더링
     return (
         <>
-            <StoreInitializer user={user} pageId={pageId as string} entries={contentEntries} />
+            <StoreInitializer initialData={initialData} />
 
             <div className="flex h-screen overflow-hidden">
                 {/* TreeSidebar */}
