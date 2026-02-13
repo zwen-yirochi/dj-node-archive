@@ -201,74 +201,89 @@ export default function UserPageContent({ user, entries }: Props) {
             {/* ── Event History ── */}
             {eventEntries.length > 0 && (
                 <>
-                    <AsciiDivider text="EVENT HISTORY" />
-
-                    {/* Recent events — card grid */}
-                    {recentEvents.length > 0 && (
-                        <div className="my-5 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                            {recentEvents.map((event) => {
-                                const href = isPublicEventEntry(event)
-                                    ? `/event/${event.eventId}`
-                                    : null;
-                                const card = (
-                                    <div className="border border-cortex-ink-faint p-4">
-                                        {event.posterUrl && (
-                                            <div className="mb-3 aspect-[4/3] w-full overflow-hidden border border-cortex-ink-faint bg-cortex-bg-dark">
-                                                <img
-                                                    src={event.posterUrl}
-                                                    alt={event.title}
-                                                    className="h-full w-full object-cover"
-                                                />
-                                            </div>
-                                        )}
-                                        <div className="text-cortex-label uppercase tracking-cortex-meta text-cortex-ink-light">
-                                            {formatEventDate(event.date)}
-                                        </div>
-                                        <h3 className="mt-1 text-sm font-semibold uppercase leading-snug">
-                                            {event.title}
-                                        </h3>
-                                        {event.venue?.name && (
-                                            <div className="mt-1 text-xs text-cortex-ink-light">
-                                                @ {event.venue.name}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-
-                                if (href) {
-                                    return (
-                                        <Link
-                                            key={event.id}
-                                            href={href}
-                                            className="block no-underline hover:opacity-80"
-                                        >
-                                            {card}
-                                        </Link>
-                                    );
-                                }
-                                return <div key={event.id}>{card}</div>;
-                            })}
+                    {/* Mobile: 리스트 뷰 */}
+                    <section className="my-5 md:hidden">
+                        <SectionLabel right={`${eventEntries.length} EVENTS`}>
+                            Event History
+                        </SectionLabel>
+                        <div className="my-3">
+                            {eventEntries.map((entry, i) => (
+                                <EntryCard key={entry.id} entry={entry} index={i} />
+                            ))}
                         </div>
-                    )}
+                    </section>
 
-                    {/* Remaining events — timeline */}
-                    {timelineEvents.length > 0 && (
-                        <section className="my-5">
-                            <Timeline
-                                entries={timelineEvents.map((event) => ({
-                                    date: formatEventDate(event.date),
-                                    title: event.title,
-                                    venue: event.venue?.name
-                                        ? `${event.venue.name}`
-                                        : 'UNKNOWN VENUE',
-                                    link:
-                                        isEventEntry(event) && isPublicEventEntry(event)
-                                            ? `/event/${event.eventId}`
-                                            : undefined,
-                                }))}
-                            />
-                        </section>
-                    )}
+                    {/* Desktop: 카드 그리드 + 타임라인 */}
+                    <div className="hidden md:block">
+                        <AsciiDivider text="EVENT HISTORY" />
+
+                        {/* Recent events — card grid */}
+                        {recentEvents.length > 0 && (
+                            <div className="my-5 grid grid-cols-3 gap-4">
+                                {recentEvents.map((event) => {
+                                    const href = isPublicEventEntry(event)
+                                        ? `/event/${event.eventId}`
+                                        : null;
+                                    const card = (
+                                        <div className="border border-cortex-ink-faint p-4">
+                                            {event.posterUrl && (
+                                                <div className="mb-3 aspect-[4/3] w-full overflow-hidden border border-cortex-ink-faint bg-cortex-bg-dark">
+                                                    <img
+                                                        src={event.posterUrl}
+                                                        alt={event.title}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="text-cortex-label uppercase tracking-cortex-meta text-cortex-ink-light">
+                                                {formatEventDate(event.date)}
+                                            </div>
+                                            <h3 className="mt-1 text-sm font-semibold uppercase leading-snug">
+                                                {event.title}
+                                            </h3>
+                                            {event.venue?.name && (
+                                                <div className="mt-1 text-xs text-cortex-ink-light">
+                                                    @ {event.venue.name}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+
+                                    if (href) {
+                                        return (
+                                            <Link
+                                                key={event.id}
+                                                href={href}
+                                                className="block no-underline hover:opacity-80"
+                                            >
+                                                {card}
+                                            </Link>
+                                        );
+                                    }
+                                    return <div key={event.id}>{card}</div>;
+                                })}
+                            </div>
+                        )}
+
+                        {/* Remaining events — timeline */}
+                        {timelineEvents.length > 0 && (
+                            <section className="my-5">
+                                <Timeline
+                                    entries={timelineEvents.map((event) => ({
+                                        date: formatEventDate(event.date),
+                                        title: event.title,
+                                        venue: event.venue?.name
+                                            ? `${event.venue.name}`
+                                            : 'UNKNOWN VENUE',
+                                        link:
+                                            isEventEntry(event) && isPublicEventEntry(event)
+                                                ? `/event/${event.eventId}`
+                                                : undefined,
+                                    }))}
+                                />
+                            </section>
+                        )}
+                    </div>
                 </>
             )}
 
