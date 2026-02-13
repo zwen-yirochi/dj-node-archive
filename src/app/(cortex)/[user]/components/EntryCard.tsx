@@ -73,48 +73,47 @@ export default function EntryCard({ entry, index }: Props) {
     const imageUrl = getImageUrl(entry);
 
     const card = (
-        <div className="flex gap-3 border-b border-dotted border-cortex-ink-faint py-3 last:border-b-0">
-            {/* Thumbnail — 모바일에서도 표시 */}
-            <div className="h-[60px] w-[48px] flex-shrink-0 overflow-hidden border border-cortex-ink-faint bg-cortex-bg-dark md:h-[72px] md:w-[56px]">
+        <div className="flex gap-4 border-b border-dotted border-cortex-ink-faint py-4 last:border-b-0">
+            {/* Thumbnail */}
+            <div className="h-[80px] w-[64px] flex-shrink-0 overflow-hidden border border-cortex-ink-faint bg-cortex-bg-dark md:h-[90px] md:w-[70px]">
                 {imageUrl ? (
                     <img src={imageUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[8px] uppercase tracking-cortex-system text-cortex-ink-ghost">
+                    <div className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-cortex-system text-cortex-ink-ghost">
                         {typeLabel}
                     </div>
                 )}
             </div>
 
             {/* Content */}
-            <div className="flex min-w-0 flex-1 flex-col justify-center">
-                {/* Mobile: 타이틀 + 메타 세로 스택 */}
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
                 <div className="flex items-start justify-between gap-2">
-                    <span className="min-w-0 flex-1 truncate text-cortex-body font-medium">
+                    <span className="min-w-0 flex-1 text-sm font-medium leading-snug">
                         {getTitle(entry)}
                     </span>
-                    {/* Desktop only: 날짜 */}
-                    <span className="hidden whitespace-nowrap text-cortex-system tracking-cortex-system text-cortex-ink-ghost md:inline">
+                    {/* Desktop: 날짜 */}
+                    <span className="hidden whitespace-nowrap text-cortex-label tracking-cortex-system text-cortex-ink-ghost md:inline">
                         {getDateValue(entry)}
                     </span>
                 </div>
-                <div className="mt-0.5 flex items-center gap-2">
-                    <span className="border border-cortex-ink-faint px-[4px] py-px text-[7px] uppercase tracking-cortex-system text-cortex-ink-light">
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="border border-cortex-ink-faint px-1 py-px text-[8px] uppercase tracking-cortex-system text-cortex-ink-light">
                         {typeLabel}
                     </span>
-                    <span className="text-cortex-label tracking-[0.5px] text-cortex-ink-light">
+                    <span className="text-xs tracking-[0.3px] text-cortex-ink-light">
                         {getDetail(entry)}
                     </span>
-                    {/* Mobile only: 날짜 */}
-                    <span className="text-cortex-system tracking-cortex-system text-cortex-ink-ghost md:hidden">
-                        {getDateValue(entry)}
-                    </span>
                 </div>
+                {/* Mobile: 날짜 */}
+                <span className="text-cortex-label tracking-cortex-system text-cortex-ink-ghost md:hidden">
+                    {getDateValue(entry)}
+                </span>
             </div>
 
             {/* Arrow */}
             {href && (
                 <div className="flex items-center">
-                    <span className="text-cortex-meta-val text-cortex-ink-ghost">&rarr;</span>
+                    <span className="text-sm text-cortex-ink-ghost">&rarr;</span>
                 </div>
             )}
         </div>

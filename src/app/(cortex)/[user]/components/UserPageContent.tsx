@@ -2,7 +2,6 @@ import type { ContentEntry, User } from '@/types/domain';
 import { TopNav } from '@/components/cortex/TopNav';
 import { PathBar } from '@/components/cortex/PathBar';
 import { SectionLabel } from '@/components/cortex/SectionLabel';
-import { AsciiDivider } from '@/components/cortex/AsciiDivider';
 import { Footer } from '@/components/cortex/Footer';
 import EntryCard from './EntryCard';
 import ShareButton from './ShareButton';
@@ -97,10 +96,8 @@ export default function UserPageContent({ user, entries }: Props) {
                 </div>
             </section>
 
-            <AsciiDivider text="ARCHIVE" />
-
             {/* ── Entries ── */}
-            <section>
+            <section className="mt-2">
                 <SectionLabel right={`${entries.length} ENTRIES`}>Archive Index</SectionLabel>
                 {entries.length > 0 ? (
                     <div className="my-3">
