@@ -193,7 +193,7 @@ export async function findEventsByVenueId(
         const { data, error } = await supabase
             .from('events')
             .select('*')
-            .eq('venue->venue_id', venueId)
+            .eq('venue->>venue_id', venueId)
             .order('date', { ascending: false })
             .limit(limit);
 

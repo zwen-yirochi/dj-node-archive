@@ -133,6 +133,8 @@ export interface CreateVenueInput {
     website?: string;
     google_maps_url?: string;
     claimed_by?: string;
+    source?: string;
+    external_sources?: Record<string, string>;
 }
 
 /**
