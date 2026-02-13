@@ -28,6 +28,12 @@ function getTitle(entry: ContentEntry): string {
     return (entry as LinkEntry).title;
 }
 
+function getImageUrl(entry: ContentEntry): string | undefined {
+    if (entry.type === 'event') return (entry as EventEntry).posterUrl;
+    if (entry.type === 'mixset') return (entry as MixsetEntry).coverUrl;
+    return undefined;
+}
+
 function getDetail(entry: ContentEntry): string {
     switch (entry.type) {
         case 'event': {
@@ -49,9 +55,10 @@ function getDetail(entry: ContentEntry): string {
     }
 }
 
-function getTypeLabel(type: string): 'EVT' | 'VEN' | 'ART' {
+function getTypeLabel(type: string): string {
     if (type === 'event') return 'EVT';
-    return 'ART'; // mixset and link use ART as closest match
+    if (type === 'mixset') return 'MIX';
+    return 'LNK';
 }
 
 function getDateValue(entry: ContentEntry): string {
@@ -63,31 +70,63 @@ export default function EntryCard({ entry, index }: Props) {
     const href =
         isEventEntry(entry) && isPublicEventEntry(entry) ? `/event/${entry.eventId}` : null;
     const typeLabel = getTypeLabel(entry.type);
+    const imageUrl = getImageUrl(entry);
 
     const card = (
-        <div className="flex items-center gap-3 border-b border-dotted border-cortex-ink-faint py-2.5 last:border-b-0">
-            <span className="min-w-[24px] text-cortex-label text-cortex-ink-ghost">
-                {String(index + 1).padStart(2, '0')}
-            </span>
-            <span className="min-w-[32px] border border-cortex-ink-faint px-[5px] py-0.5 text-center text-[7px] uppercase tracking-cortex-system text-cortex-ink-light">
-                {typeLabel}
-            </span>
-            <span className="min-w-0 flex-1 truncate text-cortex-body font-medium">
-                {getTitle(entry)}
-            </span>
-            <span className="text-cortex-label tracking-[0.5px] text-cortex-ink-light">
-                {getDetail(entry)}
-            </span>
-            <span className="whitespace-nowrap text-cortex-system tracking-cortex-system text-cortex-ink-ghost">
-                {getDateValue(entry)}
-            </span>
-            {href && <span className="text-cortex-meta-val text-cortex-ink-ghost">&rarr;</span>}
+        <div className="flex gap-3 border-b border-dotted border-cortex-ink-faint py-3 last:border-b-0">
+            {/* Thumbnail — 모바일에서도 표시 */}
+            <div className="h-[60px] w-[48px] flex-shrink-0 overflow-hidden border border-cortex-ink-faint bg-cortex-bg-dark md:h-[72px] md:w-[56px]">
+                {imageUrl ? (
+                    <img
+                        src={imageUrl}
+                        alt=""
+                        className="h-full w-full object-cover contrast-[1.1] grayscale-[70%]"
+                    />
+                ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[8px] uppercase tracking-cortex-system text-cortex-ink-ghost">
+                        {typeLabel}
+                    </div>
+                )}
+            </div>
+
+            {/* Content */}
+            <div className="flex min-w-0 flex-1 flex-col justify-center">
+                {/* Mobile: 타이틀 + 메타 세로 스택 */}
+                <div className="flex items-start justify-between gap-2">
+                    <span className="min-w-0 flex-1 truncate text-cortex-body font-medium">
+                        {getTitle(entry)}
+                    </span>
+                    {/* Desktop only: 날짜 */}
+                    <span className="hidden whitespace-nowrap text-cortex-system tracking-cortex-system text-cortex-ink-ghost md:inline">
+                        {getDateValue(entry)}
+                    </span>
+                </div>
+                <div className="mt-0.5 flex items-center gap-2">
+                    <span className="border border-cortex-ink-faint px-[4px] py-px text-[7px] uppercase tracking-cortex-system text-cortex-ink-light">
+                        {typeLabel}
+                    </span>
+                    <span className="text-cortex-label tracking-[0.5px] text-cortex-ink-light">
+                        {getDetail(entry)}
+                    </span>
+                    {/* Mobile only: 날짜 */}
+                    <span className="text-cortex-system tracking-cortex-system text-cortex-ink-ghost md:hidden">
+                        {getDateValue(entry)}
+                    </span>
+                </div>
+            </div>
+
+            {/* Arrow */}
+            {href && (
+                <div className="flex items-center">
+                    <span className="text-cortex-meta-val text-cortex-ink-ghost">&rarr;</span>
+                </div>
+            )}
         </div>
     );
 
     if (href) {
         return (
-            <Link href={href} className="group block no-underline hover:underline">
+            <Link href={href} className="group block no-underline">
                 {card}
             </Link>
         );

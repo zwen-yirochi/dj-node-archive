@@ -24,16 +24,18 @@ export default async function DiscoverPage() {
         : [];
 
     return (
-        <div className="mx-auto max-w-cortex px-cortex-gutter">
+        <div className="mx-auto max-w-cortex px-4 md:px-cortex-gutter">
             <TopNav
-                logo="CTX:"
+                logo="DNA:"
                 links={[
                     { label: 'Archive', href: '/' },
                     { label: 'Discovery', href: '/discover', active: true },
                 ]}
             />
 
-            <PathBar path="root / discover" meta={`${initialVenues.length} nodes indexed`} />
+            <div className="hidden md:block">
+                <PathBar path="root / discover" meta={`${initialVenues.length} nodes indexed`} />
+            </div>
 
             <section className="pb-4 pt-8">
                 <h1 className="mb-1.5 font-mono-alt text-[28px] font-bold uppercase leading-none tracking-cortex-tight md:text-[36px]">
@@ -63,10 +65,10 @@ export default async function DiscoverPage() {
             </section>
 
             <Footer
-                meta={['PROTOCOL: CTX-ARCHIVE // MODULE: DISCOVERY']}
+                meta={['DJ-NODE-ARCHIVE // MODULE: DISCOVERY']}
                 bottom={{
-                    left: 'CORTEX ARCHIVE // 2025',
-                    right: 'SECTOR-9 // KR',
+                    left: 'DJ NODE ARCHIVE // 2025',
+                    right: 'KR',
                 }}
             />
         </div>
