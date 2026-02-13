@@ -30,7 +30,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Calendar, Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 
 interface SortableItemProps {
     id: string;
@@ -140,6 +140,7 @@ export default function PageListView() {
     // UI Store
     const selectEntry = useUIStore((state) => state.selectEntry);
 
+    const dndId = useId();
     const [activeId, setActiveId] = useState<string | null>(null);
 
     // displayOrder가 숫자인 엔트리만 displayOrder 순으로 정렬 (Page에 표시된 엔트리)
@@ -228,6 +229,7 @@ export default function PageListView() {
                     </div>
                 ) : (
                     <DndContext
+                        id={dndId}
                         sensors={sensors}
                         collisionDetection={closestCenter}
                         onDragStart={handleDragStart}

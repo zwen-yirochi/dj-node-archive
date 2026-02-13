@@ -41,7 +41,7 @@ import {
     Palette,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import AccountSection from './AccountSection';
 import SectionItem from './SectionItem';
 import TreeItem from './TreeItem';
@@ -101,6 +101,8 @@ export default function TreeSidebar() {
                 .sort((a, b) => a.displayOrder! - b.displayOrder!),
         [entries]
     );
+
+    const dndId = useId();
 
     const [activeItem, setActiveItem] = useState<{
         entry: ContentEntry;
@@ -236,6 +238,7 @@ export default function TreeSidebar() {
 
     return (
         <DndContext
+            id={dndId}
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
