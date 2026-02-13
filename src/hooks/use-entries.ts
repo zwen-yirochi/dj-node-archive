@@ -6,7 +6,6 @@
  * UI 상태(previewVersion, newlyCreatedIds)는 useDashboardUIStore에서 관리합니다.
  */
 
-import { apiFetch } from '@/lib/api/fetch-utils';
 import { shouldTriggerPreview } from '@/lib/previewTrigger';
 import { canAddToView } from '@/lib/validators';
 import type { EditorData } from '@/lib/services/user.service';
@@ -28,9 +27,10 @@ export const entryKeys = {
 // ============================================
 
 async function fetchEditorData(): Promise<EditorData> {
-    const result = await apiFetch<EditorData>('/api/editor/data', { method: 'GET' });
-    if (!result.success) throw new Error(result.error.message);
-    return result.data;
+    const res = await fetch('/api/editor/data');
+    if (!res.ok) throw new Error(`Failed to fetch editor data: ${res.status}`);
+    const json = await res.json();
+    return json.data;
 }
 
 async function createEntryAPI(params: {
@@ -38,12 +38,14 @@ async function createEntryAPI(params: {
     entry: ContentEntry;
     publishOption: string;
 }): Promise<{ id: string }> {
-    const result = await apiFetch<{ id: string }>('/api/entries', {
+    const res = await fetch('/api/entries', {
         method: 'POST',
-        body: params,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
     });
-    if (!result.success) throw new Error(result.error.message);
-    return result.data;
+    if (!res.ok) throw new Error(`Failed to create entry: ${res.status}`);
+    const json = await res.json();
+    return json.data;
 }
 
 async function updateEntryAPI(params: {
@@ -53,32 +55,35 @@ async function updateEntryAPI(params: {
     isVisible?: boolean;
 }): Promise<void> {
     const { id, ...body } = params;
-    const result = await apiFetch(`/api/entries/${id}`, {
+    const res = await fetch(`/api/entries/${id}`, {
         method: 'PATCH',
-        body,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
     });
-    if (!result.success) throw new Error(result.error.message);
+    if (!res.ok) throw new Error(`Failed to update entry: ${res.status}`);
 }
 
 async function deleteEntryAPI(id: string): Promise<void> {
-    const result = await apiFetch(`/api/entries/${id}`, { method: 'DELETE' });
-    if (!result.success) throw new Error(result.error.message);
+    const res = await fetch(`/api/entries/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`Failed to delete entry: ${res.status}`);
 }
 
 async function reorderEntriesAPI(updates: { id: string; position: number }[]): Promise<void> {
-    const result = await apiFetch('/api/entries/reorder', {
+    const res = await fetch('/api/entries/reorder', {
         method: 'PATCH',
-        body: { updates },
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates }),
     });
-    if (!result.success) throw new Error(result.error.message);
+    if (!res.ok) throw new Error(`Failed to reorder entries: ${res.status}`);
 }
 
 async function reorderDisplayAPI(updates: { id: string; displayOrder: number }[]): Promise<void> {
-    const result = await apiFetch('/api/entries/reorder-display', {
+    const res = await fetch('/api/entries/reorder-display', {
         method: 'PATCH',
-        body: { updates },
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates }),
     });
-    if (!result.success) throw new Error(result.error.message);
+    if (!res.ok) throw new Error(`Failed to reorder display: ${res.status}`);
 }
 
 // ============================================
@@ -90,6 +95,7 @@ export function useEditorData(initialData?: EditorData) {
         queryKey: entryKeys.all,
         queryFn: fetchEditorData,
         initialData,
+        initialDataUpdatedAt: initialData ? Date.now() : undefined,
         staleTime: 5 * 60 * 1000,
     });
 }
