@@ -1,6 +1,6 @@
 // hooks/use-graph.ts
 // TanStack Query hooks for graph data fetching
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import type { LocalGraphData } from '@/types/graph';
 
 export const graphKeys = {
@@ -21,5 +21,6 @@ export function useGraphExplore(nodeId: string | null, depth: number = 2) {
         queryFn: () => fetchGraphExplore(nodeId!, depth),
         enabled: !!nodeId,
         staleTime: 60 * 1000,
+        placeholderData: keepPreviousData,
     });
 }
