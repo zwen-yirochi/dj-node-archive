@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation';
 import { TopNav } from '@/components/dna/TopNav';
 import { PathBar } from '@/components/dna/PathBar';
 import { SectionLabel } from '@/components/dna/SectionLabel';
+import { NodeLabel } from '@/components/dna/NodeLabel';
 import { MetaTable } from '@/components/dna/MetaTable';
 import { AsciiDivider } from '@/components/dna/AsciiDivider';
 import { AsciiBox } from '@/components/dna/AsciiBox';
@@ -99,11 +100,7 @@ export default async function EventPage({ params }: PageProps) {
 
             {/* ── Event Header ── */}
             <section className="pb-6">
-                <div className="dna-text-node hidden items-center gap-2.5 md:flex">
-                    <span>Event Node</span>
-                    <span className="dna-border-relation h-0 flex-1 border-t" />
-                    <span>{formatDate(event.date)}</span>
-                </div>
+                <NodeLabel right={formatDate(event.date)}>Event Node</NodeLabel>
 
                 <h1 className="dna-heading-page md:mt-2">{event.title}</h1>
 

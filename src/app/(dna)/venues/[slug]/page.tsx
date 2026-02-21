@@ -1,20 +1,22 @@
-import { findEventsByVenueId } from '@/lib/db/queries/event.queries';
-import { findVenueBySlug } from '@/lib/db/queries/venue.queries';
-import { isSuccess } from '@/types/result';
-import type { Venue, Event as DBEvent, EventPerformer } from '@/types/database';
-import { Metadata } from 'next';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { TopNav } from '@/components/dna/TopNav';
+import { AsciiBox } from '@/components/dna/AsciiBox';
+import { AsciiDivider } from '@/components/dna/AsciiDivider';
+import { Button } from '@/components/dna/Button';
+import { ExternalLinks } from '@/components/dna/ExternalLinks';
+import { Footer } from '@/components/dna/Footer';
+import { MetaTable } from '@/components/dna/MetaTable';
+import { NodeLabel } from '@/components/dna/NodeLabel';
 import { PathBar } from '@/components/dna/PathBar';
 import { SectionLabel } from '@/components/dna/SectionLabel';
 import { StatsRow } from '@/components/dna/StatsRow';
-import { MetaTable } from '@/components/dna/MetaTable';
-import { AsciiBox } from '@/components/dna/AsciiBox';
+import { TopNav } from '@/components/dna/TopNav';
+import { findEventsByVenueId } from '@/lib/db/queries/event.queries';
+import { findVenueBySlug } from '@/lib/db/queries/venue.queries';
+import type { Event as DBEvent, EventPerformer, Venue } from '@/types/database';
+import { isSuccess } from '@/types/result';
+import { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import VenueTimeline from './VenueTimeline';
-import { AsciiDivider } from '@/components/dna/AsciiDivider';
-import { Footer } from '@/components/dna/Footer';
-import { Button } from '@/components/dna/Button';
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -139,11 +141,7 @@ export default async function VenuePage({ params }: PageProps) {
 
             {/* ── Venue Header ── */}
             <section className="pb-6 pt-6 md:pt-8">
-                <div className="dna-text-node hidden items-center gap-2.5 md:flex">
-                    <span>Venue Node</span>
-                    <span className="dna-border-relation h-0 flex-1 border-t" />
-                    <span>{vcode}</span>
-                </div>
+                <NodeLabel right={vcode}>Venue Node</NodeLabel>
 
                 <h1 className="dna-heading-page md:mt-2">{venue.name}</h1>
 
@@ -170,24 +168,7 @@ export default async function VenuePage({ params }: PageProps) {
                 )}
 
                 {/* Links */}
-                {links.length > 0 && (
-                    <div className="mt-3 flex flex-wrap items-center gap-4 md:gap-5">
-                        <span className="dna-border-relation border-b pb-0.5 text-dna-label uppercase tracking-dna-btn text-dna-ink-light">
-                            Links
-                        </span>
-                        {links.map((link) => (
-                            <a
-                                key={link.label}
-                                href={link.href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="dna-border-relation dna-text-link border-b pb-px hover:border-dna-ink hover:text-dna-ink"
-                            >
-                                {link.label}
-                            </a>
-                        ))}
-                    </div>
-                )}
+                <ExternalLinks links={links} />
             </section>
 
             {/* ── Stats ── */}

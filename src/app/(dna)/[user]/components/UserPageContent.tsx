@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { TopNav } from '@/components/dna/TopNav';
 import { PathBar } from '@/components/dna/PathBar';
 import { SectionLabel } from '@/components/dna/SectionLabel';
+import { NodeLabel } from '@/components/dna/NodeLabel';
+import { ExternalLinks } from '@/components/dna/ExternalLinks';
 import { StatsRow } from '@/components/dna/StatsRow';
 import { MetaTable } from '@/components/dna/MetaTable';
 import { Timeline } from '@/components/dna/Timeline';
@@ -77,10 +79,7 @@ export default function UserPageContent({ user, entries }: Props) {
                     )}
 
                     <div className="flex-1">
-                        <div className="dna-text-node hidden items-center gap-2.5 md:flex">
-                            <span>Artist Node</span>
-                            <span className="dna-border-relation h-0 flex-1 border-t" />
-                        </div>
+                        <NodeLabel>Artist Node</NodeLabel>
                         <h1 className="dna-heading-page md:mt-2">{user.displayName}</h1>
                         <div className="mt-1 text-dna-meta-val tracking-dna-detail text-dna-ink-light">
                             @{user.username}
@@ -114,33 +113,27 @@ export default function UserPageContent({ user, entries }: Props) {
                         </div>
 
                         {/* Social links */}
-                        {(user.instagram || user.soundcloud) && (
-                            <div className="mt-2 flex flex-wrap items-center justify-center gap-4 md:justify-start md:gap-5">
-                                <span className="dna-border-relation border-b pb-0.5 text-dna-label uppercase tracking-dna-btn text-dna-ink-light">
-                                    Links
-                                </span>
-                                {user.instagram && (
-                                    <a
-                                        href={`https://instagram.com/${user.instagram.replace('@', '')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="dna-border-relation dna-text-link border-b pb-px hover:border-dna-ink hover:text-dna-ink"
-                                    >
-                                        Instagram
-                                    </a>
-                                )}
-                                {user.soundcloud && (
-                                    <a
-                                        href={`https://soundcloud.com/${user.soundcloud}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="dna-border-relation dna-text-link border-b pb-px hover:border-dna-ink hover:text-dna-ink"
-                                    >
-                                        SoundCloud
-                                    </a>
-                                )}
-                            </div>
-                        )}
+                        <ExternalLinks
+                            links={[
+                                ...(user.instagram
+                                    ? [
+                                          {
+                                              label: 'Instagram',
+                                              href: `https://instagram.com/${user.instagram.replace('@', '')}`,
+                                          },
+                                      ]
+                                    : []),
+                                ...(user.soundcloud
+                                    ? [
+                                          {
+                                              label: 'SoundCloud',
+                                              href: `https://soundcloud.com/${user.soundcloud}`,
+                                          },
+                                      ]
+                                    : []),
+                            ]}
+                            className="mt-2 justify-center md:justify-start"
+                        />
 
                         <div className="mt-3 md:mt-4">
                             <ShareButton />

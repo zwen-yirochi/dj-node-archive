@@ -17,6 +17,8 @@ export { FreqGraph } from './FreqGraph';
 export { TopNav } from './TopNav';
 export { Footer } from './Footer';
 export { SectionLabel } from './SectionLabel';
+export { NodeLabel } from './NodeLabel';
+export { ExternalLinks } from './ExternalLinks';
 
 // ── Input (인터랙션) ──
 export { Button as DnaButton } from './Button';
