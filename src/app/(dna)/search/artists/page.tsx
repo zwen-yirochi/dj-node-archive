@@ -30,12 +30,12 @@ function ArtistSearchContent() {
                 <h1 className="mb-1.5 font-mono-alt text-[28px] font-bold uppercase leading-none tracking-dna-tight md:text-[36px]">
                     Artists
                 </h1>
-                <p className="dna-text-body">아티스트 검색</p>
+                <p className="dna-text-body">Search for artists</p>
             </section>
 
             <InputField
                 label="Search Artists"
-                placeholder="아티스트 이름 검색..."
+                placeholder="Search by artist name..."
                 value={query}
                 onChange={(v) => {
                     setQuery(v);

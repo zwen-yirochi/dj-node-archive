@@ -30,12 +30,12 @@ function EventSearchContent() {
                 <h1 className="mb-1.5 font-mono-alt text-[28px] font-bold uppercase leading-none tracking-dna-tight md:text-[36px]">
                     Events
                 </h1>
-                <p className="dna-text-body">이벤트 검색</p>
+                <p className="dna-text-body">Search for events</p>
             </section>
 
             <InputField
                 label="Search Events"
-                placeholder="이벤트 제목, 아티스트 검색..."
+                placeholder="Search by event title or artist..."
                 value={query}
                 onChange={(v) => {
                     setQuery(v);

@@ -30,12 +30,12 @@ function VenueSearchContent() {
                 <h1 className="mb-1.5 font-mono-alt text-[28px] font-bold uppercase leading-none tracking-dna-tight md:text-[36px]">
                     Venues
                 </h1>
-                <p className="dna-text-body">베뉴 검색</p>
+                <p className="dna-text-body">Search for venues</p>
             </section>
 
             <InputField
                 label="Search Venues"
-                placeholder="베뉴 이름, 도시 검색..."
+                placeholder="Search by venue name or city..."
                 value={query}
                 onChange={(v) => {
                     setQuery(v);
