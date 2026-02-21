@@ -159,15 +159,16 @@ export default function GraphCanvas({ data, centerId, onRecenter }: GraphCanvasP
         const baseSlowDown = 1 + Math.log(graph.order);
         const decayRate = isFirstRender ? 0.99 : 0.95; // transitions settle faster
 
+        const g = graph; // capture non-null for closure
         function tick() {
             if (iteration >= totalFrames) return;
             const alpha = Math.pow(decayRate, iteration);
-            forceAtlas2.assign(graph, {
+            forceAtlas2.assign(g, {
                 iterations: 1,
                 settings: {
                     ...FA2_SETTINGS,
                     slowDown: baseSlowDown / alpha,
-                    barnesHutOptimize: graph.order > 200,
+                    barnesHutOptimize: g.order > 200,
                 },
             });
             iteration++;
