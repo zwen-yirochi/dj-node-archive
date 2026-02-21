@@ -9,7 +9,7 @@ import { MetaTable } from '@/components/dna/MetaTable';
 import { Timeline } from '@/components/dna/Timeline';
 import { AsciiDivider } from '@/components/dna/AsciiDivider';
 import { Footer } from '@/components/dna/Footer';
-import EntryCard from './EntryCard';
+import { EntryCard } from '@/components/dna/EntryCard';
 import ShareButton from './ShareButton';
 
 interface Props {

@@ -2,9 +2,10 @@ import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry } from '@/types/d
 import { isEventEntry, isPublicEventEntry } from '@/types/domain';
 import Link from 'next/link';
 
-interface Props {
+interface EntryCardProps {
     entry: ContentEntry;
     index: number;
+    className?: string;
 }
 
 function formatDate(dateStr: string): string {
@@ -77,7 +78,7 @@ function getDateValue(entry: ContentEntry): string {
     return formatDate(entry.createdAt);
 }
 
-export default function EntryCard({ entry, index }: Props) {
+export function EntryCard({ entry, index }: EntryCardProps) {
     const href =
         isEventEntry(entry) && isPublicEventEntry(entry) ? `/event/${entry.eventId}` : null;
     const typeLabel = getTypeLabel(entry.type);
