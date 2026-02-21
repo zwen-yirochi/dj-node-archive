@@ -17,7 +17,7 @@ export default function ShareButton() {
 
     return (
         <button
-            className="inline-flex h-[28px] w-[72px] cursor-pointer items-center justify-center border border-dna-ink-faint bg-transparent font-mono-main text-[10px] uppercase tracking-dna-btn text-dna-ink-light hover:border-dna-ink-light hover:text-dna-ink"
+            className="inline-flex h-[28px] w-[72px] cursor-pointer items-center justify-center border border-dna-ink-faint bg-transparent font-mono-main text-dna-ui uppercase tracking-dna-btn text-dna-ink-light hover:border-dna-ink-light hover:text-dna-ink"
             onClick={handleShare}
             type="button"
         >

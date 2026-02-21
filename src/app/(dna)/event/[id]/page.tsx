@@ -109,7 +109,7 @@ export default async function EventPage({ params }: PageProps) {
 
                 <h1 className="dna-heading-page md:mt-2">{event.title}</h1>
 
-                <div className="mt-2 text-dna-meta-val tracking-[0.5px] text-dna-ink-light">
+                <div className="mt-2 text-dna-meta-val tracking-dna-detail text-dna-ink-light">
                     <span className="md:hidden">{formatDate(event.date)}</span>
                     {event.venue?.name && (
                         <span className="mt-1 block md:mt-0 md:inline">
@@ -174,7 +174,7 @@ export default async function EventPage({ params }: PageProps) {
                                     <span className="min-w-[24px] text-dna-label text-dna-ink-ghost">
                                         {String(i + 1).padStart(2, '0')}
                                     </span>
-                                    <span className="min-w-[32px] border border-dna-ink-faint px-[5px] py-0.5 text-center text-[7px] uppercase tracking-dna-system text-dna-ink-light">
+                                    <span className="min-w-[32px] border border-dna-ink-faint px-[5px] py-0.5 text-center text-dna-system uppercase tracking-dna-system text-dna-ink-light">
                                         ART
                                     </span>
                                     <span className="flex-1 text-dna-body font-medium uppercase">

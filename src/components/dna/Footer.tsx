@@ -21,7 +21,7 @@ export function Footer({ meta, ascii, bottom, className }: FooterProps) {
                 </div>
 
                 {ascii && (
-                    <div className="whitespace-pre text-right text-[10px] leading-[1.3] text-dna-ink-ghost">
+                    <div className="whitespace-pre text-right text-dna-ui leading-[1.3] text-dna-ink-ghost">
                         {ascii}
                     </div>
                 )}

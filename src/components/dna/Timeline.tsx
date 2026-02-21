@@ -35,7 +35,7 @@ export function Timeline({ entries, className }: TimelineProps) {
                         {entry.date}
                     </div>
                     <div className="my-0.5 text-dna-item font-semibold">{entry.title}</div>
-                    <div className="text-[10px] text-dna-ink-light">
+                    <div className="text-dna-ui text-dna-ink-light">
                         @{' '}
                         {entry.link ? (
                             <Link

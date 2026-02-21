@@ -23,7 +23,7 @@ export function Button({
     return (
         <button
             className={cn(
-                'inline-flex cursor-pointer items-center justify-center gap-2 border bg-transparent px-7 py-[11px] font-mono-main text-[10px] font-medium uppercase tracking-dna-btn no-underline',
+                'inline-flex cursor-pointer items-center justify-center gap-2 border bg-transparent px-7 py-[11px] font-mono-main text-dna-ui font-medium uppercase tracking-dna-btn no-underline',
                 variants[variant],
                 full && 'w-full',
                 className

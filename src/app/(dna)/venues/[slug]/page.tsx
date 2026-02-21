@@ -147,12 +147,12 @@ export default async function VenuePage({ params }: PageProps) {
 
                 <h1 className="dna-heading-page md:mt-2">{venue.name}</h1>
 
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-dna-meta-val tracking-[0.5px] text-dna-ink-light">
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-dna-meta-val tracking-dna-detail text-dna-ink-light">
                     <span>{vcode}</span>
                     {venue.source === 'ra_import' && (
                         <>
                             <span className="text-dna-ink-ghost">/</span>
-                            <span className="border border-dna-ink-faint px-1.5 py-px text-[8px] uppercase tracking-dna-system">
+                            <span className="border border-dna-ink-faint px-1.5 py-px text-dna-system uppercase tracking-dna-system">
                                 Source: RA
                             </span>
                         </>

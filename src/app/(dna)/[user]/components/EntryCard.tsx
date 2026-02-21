@@ -90,7 +90,7 @@ export default function EntryCard({ entry, index }: Props) {
                 {imageUrl ? (
                     <img src={imageUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-dna-system text-dna-ink-ghost">
+                    <div className="flex h-full w-full items-center justify-center text-dna-label uppercase tracking-dna-system text-dna-ink-ghost">
                         {typeLabel}
                     </div>
                 )}
@@ -108,10 +108,10 @@ export default function EntryCard({ entry, index }: Props) {
                     </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="border border-dna-ink-faint px-1 py-px text-[8px] uppercase tracking-dna-system text-dna-ink-light">
+                    <span className="border border-dna-ink-faint px-1 py-px text-dna-system uppercase tracking-dna-system text-dna-ink-light">
                         {typeLabel}
                     </span>
-                    <span className="text-xs tracking-[0.3px] text-dna-ink-light">
+                    <span className="text-xs tracking-dna-input text-dna-ink-light">
                         <DetailText entry={entry} />
                     </span>
                 </div>

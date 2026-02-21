@@ -82,7 +82,7 @@ export default function UserPageContent({ user, entries }: Props) {
                             <span className="h-0 flex-1 border-t border-dotted border-dna-ink-ghost" />
                         </div>
                         <h1 className="dna-heading-page md:mt-2">{user.displayName}</h1>
-                        <div className="mt-1 text-dna-meta-val tracking-[0.5px] text-dna-ink-light">
+                        <div className="mt-1 text-dna-meta-val tracking-dna-detail text-dna-ink-light">
                             @{user.username}
                         </div>
                         {user.bio && (

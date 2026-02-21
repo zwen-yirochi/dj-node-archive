@@ -26,7 +26,7 @@ export function TopNav({ logo = 'CTX:', links, version, className }: TopNavProps
                 {logo}
             </div>
 
-            <div className="hidden gap-7 text-[10px] uppercase tracking-dna-meta text-dna-ink-mid md:flex">
+            <div className="hidden gap-7 text-dna-ui uppercase tracking-dna-meta text-dna-ink-mid md:flex">
                 {links.map((link) => (
                     <Link
                         key={link.href}
@@ -42,7 +42,7 @@ export function TopNav({ logo = 'CTX:', links, version, className }: TopNavProps
             </div>
 
             {version && (
-                <div className="text-[9px] uppercase tracking-dna-system text-dna-ink-ghost">
+                <div className="text-dna-label uppercase tracking-dna-system text-dna-ink-ghost">
                     {version}
                 </div>
             )}

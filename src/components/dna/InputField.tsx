@@ -22,7 +22,7 @@ export function InputField({
     onChange,
 }: InputFieldProps) {
     const inputClasses =
-        'w-full py-[9px] px-3 font-mono-main text-dna-body text-dna-ink bg-white/40 border border-dna-ink-faint outline-none tracking-[0.3px] placeholder:text-dna-ink-ghost focus:border-dna-ink-mid focus:bg-white/60';
+        'w-full py-[9px] px-3 font-mono-main text-dna-body text-dna-ink bg-white/40 border border-dna-ink-faint outline-none tracking-dna-input placeholder:text-dna-ink-ghost focus:border-dna-ink-mid focus:bg-white/60';
 
     return (
         <div className={cn('mb-3.5', className)}>
