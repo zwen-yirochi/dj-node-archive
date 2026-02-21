@@ -118,6 +118,8 @@ const config: Config = {
                 // DNA monospace
                 'mono-main': ["'JetBrains Mono'", 'monospace'],
                 'mono-alt': ["'Space Mono'", 'monospace'],
+                // DNA pixel
+                dotso: ['var(--font-dotso)', 'monospace'],
                 // 기본 시스템
                 sans: ['var(--font-geist-sans)', 'sans-serif'],
                 mono: ['var(--font-geist-mono)', 'monospace'],
