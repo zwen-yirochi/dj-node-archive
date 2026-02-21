@@ -20,18 +20,21 @@ function buildGraph(data: LocalGraphData, centerId: string): Graph {
         const degree = data.edges.filter(
             (e) => e.source_id === node.id || e.target_id === node.id
         ).length;
-        const size = Math.max(3, Math.log2(degree + 1) * 4);
+        const size = Math.max(4, Math.log2(degree + 1) * 3);
         const color = NODE_COLORS[node.type as NodeType] || NODE_COLORS.entry;
+        const isCenter = node.id === centerId;
+
+        // Center at origin, others in a small circle around it
+        // → repulsion creates the "big bang" expanding effect
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 0.5 + Math.random() * 0.5;
 
         graph.addNode(node.id, {
             label: node.label,
-            size,
-            color,
-            x: Math.random() * 100,
-            y: Math.random() * 100,
-            type: node.id === centerId ? 'bordered' : 'circle',
-            borderColor: '#ffffff',
-            borderSize: node.id === centerId ? 2 : 0,
+            size: isCenter ? size * 1.6 : size,
+            color: isCenter ? '#1a1a1e' : color, // dna-ink for center
+            x: isCenter ? 0 : Math.cos(angle) * radius,
+            y: isCenter ? 0 : Math.sin(angle) * radius,
         });
     }
 
@@ -41,8 +44,7 @@ function buildGraph(data: LocalGraphData, centerId: string): Graph {
 
         graph.addEdge(edge.source_id, edge.target_id, {
             size: Math.max(0.5, edge.weight / 5),
-            color: `rgba(150, 150, 150, ${0.05 + (edge.weight / 10) * 0.3})`,
-            context: edge.context,
+            color: `rgba(26, 26, 30, ${0.15 + (edge.weight / 10) * 0.35})`, // dna-ink based
         });
     }
 
@@ -53,6 +55,7 @@ export default function GraphCanvas({ data, centerId, onRecenter }: GraphCanvasP
     const containerRef = useRef<HTMLDivElement>(null);
     const sigmaRef = useRef<Sigma | null>(null);
     const graphRef = useRef<Graph | null>(null);
+    const animFrameRef = useRef<number>(0);
     const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
     const handleDoubleClick = useCallback(
@@ -64,73 +67,93 @@ export default function GraphCanvas({ data, centerId, onRecenter }: GraphCanvasP
         [centerId, onRecenter]
     );
 
-    // Build and render graph
     useEffect(() => {
         if (!containerRef.current || data.nodes.length === 0) return;
 
-        // Clean up previous instance
         if (sigmaRef.current) {
             sigmaRef.current.kill();
             sigmaRef.current = null;
+        }
+        if (animFrameRef.current) {
+            cancelAnimationFrame(animFrameRef.current);
         }
 
         const graph = buildGraph(data, centerId);
         graphRef.current = graph;
 
-        // Run ForceAtlas2 layout synchronously
-        forceAtlas2.assign(graph, {
-            iterations: 60,
-            settings: {
-                gravity: 1,
-                scalingRatio: 2,
-                barnesHutOptimize: true,
-                barnesHutTheta: 0.5,
-                strongGravityMode: false,
-                adjustSizes: true,
-            },
-        });
-
         const sigma = new Sigma(graph, containerRef.current, {
             renderLabels: true,
-            labelSize: 12,
-            labelColor: { color: '#e5e7eb' },
-            labelRenderedSizeThreshold: 6,
+            labelSize: 11,
+            labelColor: { color: '#1a1a1e' }, // dna-ink
+            labelFont: "'JetBrains Mono', monospace",
+            labelRenderedSizeThreshold: 5,
             defaultNodeType: 'circle',
             defaultEdgeType: 'line',
-            stagePadding: 30,
+            stagePadding: 40,
+            doubleClickZoomingDuration: 0,
         });
 
         sigmaRef.current = sigma;
 
-        // Double-click to re-center
-        sigma.on('doubleClickNode', ({ node }) => {
-            handleDoubleClick(node);
-        });
+        // Obsidian-like physics:
+        //   High repulsion (scalingRatio 8) → nodes push apart aggressively
+        //   Weak gravity (0.05) → doesn't crush inward
+        //   strongGravityMode → prevents disconnected components from drifting away
+        //   linLogMode false → linear spring attraction (Hooke's law feel)
+        //   Alpha decay → exponential cooldown like d3-force (~300 ticks)
+        let iteration = 0;
+        const totalFrames = 300;
+        const baseSlowDown = 1 + Math.log(graph.order);
 
-        // Hover interactions
-        sigma.on('enterNode', ({ node }) => {
-            setHoveredNode(node);
-        });
+        function tick() {
+            if (iteration >= totalFrames) return;
 
-        sigma.on('leaveNode', () => {
-            setHoveredNode(null);
-        });
+            // Exponential alpha decay (d3-force style)
+            // alpha starts at 1.0, decays toward 0
+            const alpha = Math.pow(0.99, iteration); // ~0.95 at 5, ~0.74 at 30, ~0.37 at 100, ~0.05 at 300
 
-        // Center camera on center node
-        const centerNodePos = graph.getNodeAttributes(centerId);
-        if (centerNodePos) {
-            sigma
-                .getCamera()
-                .animate({ x: centerNodePos.x, y: centerNodePos.y, ratio: 0.5 }, { duration: 300 });
+            forceAtlas2.assign(graph, {
+                iterations: 1,
+                settings: {
+                    scalingRatio: 15,
+                    gravity: 0.05,
+                    strongGravityMode: true,
+                    linLogMode: false,
+                    edgeWeightInfluence: 1,
+                    outboundAttractionDistribution: false,
+                    adjustSizes: false,
+                    // slowDown increases as alpha decays → natural settling
+                    slowDown: baseSlowDown / alpha,
+                    barnesHutOptimize: graph.order > 200,
+                    barnesHutTheta: 0.5,
+                },
+            });
+
+            iteration++;
+            animFrameRef.current = requestAnimationFrame(tick);
         }
 
+        animFrameRef.current = requestAnimationFrame(tick);
+
+        // Interactions
+        sigma.on('doubleClickNode', (e) => {
+            e.preventSigmaDefault();
+            handleDoubleClick(e.node);
+        });
+        sigma.on('doubleClickStage', (e) => {
+            e.preventSigmaDefault();
+        });
+        sigma.on('enterNode', ({ node }) => setHoveredNode(node));
+        sigma.on('leaveNode', () => setHoveredNode(null));
+
         return () => {
+            cancelAnimationFrame(animFrameRef.current);
             sigma.kill();
             sigmaRef.current = null;
         };
     }, [data, centerId, handleDoubleClick]);
 
-    // Hover highlight effect via node reducer
+    // Hover highlight
     useEffect(() => {
         const sigma = sigmaRef.current;
         const graph = graphRef.current;
@@ -138,31 +161,32 @@ export default function GraphCanvas({ data, centerId, onRecenter }: GraphCanvasP
 
         sigma.setSetting('nodeReducer', (node, attrs) => {
             if (!hoveredNode) return attrs;
-
             const isNeighbor = node === hoveredNode || graph.areNeighbors(node, hoveredNode);
-
-            return {
-                ...attrs,
-                color: isNeighbor ? attrs.color : `${attrs.color}33`,
-                label: isNeighbor ? attrs.label : '',
-            };
+            if (isNeighbor) {
+                return { ...attrs, highlighted: true };
+            }
+            return attrs;
         });
 
         sigma.setSetting('edgeReducer', (edge, attrs) => {
             if (!hoveredNode) return attrs;
-
             const src = graph.source(edge);
             const tgt = graph.target(edge);
             const isConnected = src === hoveredNode || tgt === hoveredNode;
-
-            return {
-                ...attrs,
-                color: isConnected ? 'rgba(150, 150, 150, 0.5)' : 'rgba(150, 150, 150, 0.02)',
-            };
+            if (isConnected) {
+                return { ...attrs, color: 'rgba(74, 74, 82, 0.15)' };
+            }
+            return attrs;
         });
 
         sigma.refresh();
     }, [hoveredNode]);
 
-    return <div ref={containerRef} className="h-full w-full" style={{ background: '#0a0a0a' }} />;
+    return (
+        <div
+            ref={containerRef}
+            className="h-full w-full"
+            style={{ background: 'rgb(218, 222, 224)' }}
+        />
+    );
 }

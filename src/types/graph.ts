@@ -26,10 +26,10 @@ export interface LocalGraphData {
 }
 
 export const NODE_COLORS: Record<NodeType, string> = {
-    event: '#f59e0b',
-    venue: '#3b82f6',
-    artist: '#ec4899',
-    entry: '#6b7280',
+    event: '#4a4a52', // dna-ink-mid
+    venue: '#505868', // muted steel blue
+    artist: '#6b4a4a', // muted dusty red
+    entry: '#a0a0ac', // dna-ink-ghost
 };
 
 export const WEIGHT_MAP: Record<string, number> = {

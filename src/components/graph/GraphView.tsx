@@ -20,24 +20,30 @@ function GraphViewInner({ centerId, centerType, className }: GraphViewProps) {
 
     if (isLoading) {
         return (
-            <div className={`flex items-center justify-center bg-[#0a0a0a] ${className || ''}`}>
-                <div className="text-sm text-zinc-500">Loading graph...</div>
+            <div className={`flex items-center justify-center bg-dna-bg-tint ${className || ''}`}>
+                <div className="font-mono-main text-dna-ui uppercase tracking-dna-system text-dna-ink-ghost">
+                    // loading graph...
+                </div>
             </div>
         );
     }
 
     if (error || !data) {
         return (
-            <div className={`flex items-center justify-center bg-[#0a0a0a] ${className || ''}`}>
-                <div className="text-sm text-zinc-500">Failed to load graph</div>
+            <div className={`flex items-center justify-center bg-dna-bg-tint ${className || ''}`}>
+                <div className="font-mono-main text-dna-ui uppercase tracking-dna-system text-dna-ink-ghost">
+                    // err: graph load failed
+                </div>
             </div>
         );
     }
 
     if (data.nodes.length === 0) {
         return (
-            <div className={`flex items-center justify-center bg-[#0a0a0a] ${className || ''}`}>
-                <div className="text-sm text-zinc-500">No connections found</div>
+            <div className={`flex items-center justify-center bg-dna-bg-tint ${className || ''}`}>
+                <div className="font-mono-main text-dna-ui uppercase tracking-dna-system text-dna-ink-ghost">
+                    // no connections
+                </div>
             </div>
         );
     }
