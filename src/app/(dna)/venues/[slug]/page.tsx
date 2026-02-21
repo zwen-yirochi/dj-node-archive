@@ -139,9 +139,9 @@ export default async function VenuePage({ params }: PageProps) {
 
             {/* ── Venue Header ── */}
             <section className="pb-6 pt-6 md:pt-8">
-                <div className="hidden items-center gap-2.5 text-dna-label uppercase tracking-dna-label text-dna-ink-light md:flex">
+                <div className="dna-text-node hidden items-center gap-2.5 md:flex">
                     <span>Venue Node</span>
-                    <span className="h-0 flex-1 border-t border-dotted border-dna-ink-ghost" />
+                    <span className="dna-border-relation h-0 flex-1 border-t" />
                     <span>{vcode}</span>
                 </div>
 
@@ -161,7 +161,7 @@ export default async function VenuePage({ params }: PageProps) {
 
                 {/* Location */}
                 {(venue.city || venue.address) && (
-                    <div className="mt-3 text-dna-body text-dna-ink-mid">
+                    <div className="dna-text-body mt-3">
                         * {venue.address && <span>{venue.address}</span>}
                         {venue.address && venue.city && ', '}
                         {venue.city && <span>{venue.city}</span>}
@@ -172,7 +172,7 @@ export default async function VenuePage({ params }: PageProps) {
                 {/* Links */}
                 {links.length > 0 && (
                     <div className="mt-3 flex flex-wrap items-center gap-4 md:gap-5">
-                        <span className="border-b border-dotted border-dna-ink-ghost pb-0.5 text-dna-label uppercase tracking-dna-btn text-dna-ink-light">
+                        <span className="dna-border-relation border-b pb-0.5 text-dna-label uppercase tracking-dna-btn text-dna-ink-light">
                             Links
                         </span>
                         {links.map((link) => (
@@ -181,7 +181,7 @@ export default async function VenuePage({ params }: PageProps) {
                                 href={link.href}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="border-b border-dotted border-dna-ink-ghost pb-px text-dna-meta-val font-medium uppercase tracking-dna-system text-dna-ink-mid no-underline hover:border-dna-ink hover:text-dna-ink"
+                                className="dna-border-relation dna-text-link border-b pb-px hover:border-dna-ink hover:text-dna-ink"
                             >
                                 {link.label}
                             </a>
@@ -280,9 +280,7 @@ export default async function VenuePage({ params }: PageProps) {
                 <section className="my-5">
                     <SectionLabel right="0 EVENTS">Event History</SectionLabel>
                     <AsciiBox>
-                        <p className="text-center text-dna-body text-dna-ink-mid">
-                            // NO EVENTS RECORDED
-                        </p>
+                        <p className="dna-text-body text-center">// NO EVENTS RECORDED</p>
                         <div className="mt-3 text-center">
                             <Link href="/login">
                                 <Button>첫 번째 이벤트 등록하기</Button>

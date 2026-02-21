@@ -77,16 +77,16 @@ export default function UserPageContent({ user, entries }: Props) {
                     )}
 
                     <div className="flex-1">
-                        <div className="hidden items-center gap-2.5 text-dna-label uppercase tracking-dna-label text-dna-ink-light md:flex">
+                        <div className="dna-text-node hidden items-center gap-2.5 md:flex">
                             <span>Artist Node</span>
-                            <span className="h-0 flex-1 border-t border-dotted border-dna-ink-ghost" />
+                            <span className="dna-border-relation h-0 flex-1 border-t" />
                         </div>
                         <h1 className="dna-heading-page md:mt-2">{user.displayName}</h1>
                         <div className="mt-1 text-dna-meta-val tracking-dna-detail text-dna-ink-light">
                             @{user.username}
                         </div>
                         {user.bio && (
-                            <p className="mt-3 text-dna-body text-dna-ink-mid md:mt-4 md:max-w-[520px]">
+                            <p className="dna-text-body mt-3 md:mt-4 md:max-w-[520px]">
                                 {user.bio}
                             </p>
                         )}
@@ -116,7 +116,7 @@ export default function UserPageContent({ user, entries }: Props) {
                         {/* Social links */}
                         {(user.instagram || user.soundcloud) && (
                             <div className="mt-2 flex flex-wrap items-center justify-center gap-4 md:justify-start md:gap-5">
-                                <span className="border-b border-dotted border-dna-ink-ghost pb-0.5 text-dna-label uppercase tracking-dna-btn text-dna-ink-light">
+                                <span className="dna-border-relation border-b pb-0.5 text-dna-label uppercase tracking-dna-btn text-dna-ink-light">
                                     Links
                                 </span>
                                 {user.instagram && (
@@ -124,7 +124,7 @@ export default function UserPageContent({ user, entries }: Props) {
                                         href={`https://instagram.com/${user.instagram.replace('@', '')}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="border-b border-dotted border-dna-ink-ghost pb-px text-dna-meta-val font-medium uppercase tracking-dna-system text-dna-ink-mid no-underline hover:border-dna-ink hover:text-dna-ink"
+                                        className="dna-border-relation dna-text-link border-b pb-px hover:border-dna-ink hover:text-dna-ink"
                                     >
                                         Instagram
                                     </a>
@@ -134,7 +134,7 @@ export default function UserPageContent({ user, entries }: Props) {
                                         href={`https://soundcloud.com/${user.soundcloud}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="border-b border-dotted border-dna-ink-ghost pb-px text-dna-meta-val font-medium uppercase tracking-dna-system text-dna-ink-mid no-underline hover:border-dna-ink hover:text-dna-ink"
+                                        className="dna-border-relation dna-text-link border-b pb-px hover:border-dna-ink hover:text-dna-ink"
                                     >
                                         SoundCloud
                                     </a>
@@ -238,7 +238,7 @@ export default function UserPageContent({ user, entries }: Props) {
                                                     />
                                                 </div>
                                             )}
-                                            <div className="text-dna-label uppercase tracking-dna-meta text-dna-ink-light">
+                                            <div className="dna-text-meta">
                                                 {formatEventDate(event.date)}
                                             </div>
                                             <h3 className="mt-1 text-sm font-semibold uppercase leading-snug">

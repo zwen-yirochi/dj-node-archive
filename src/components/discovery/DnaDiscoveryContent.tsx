@@ -85,9 +85,7 @@ export function DnaDiscoveryContent({ initialVenues = [] }: DnaDiscoveryContentP
             <SectionLabel right={`${filteredVenues.length} NODES`}>Venue Index</SectionLabel>
 
             {isLoading ? (
-                <div className="py-12 text-center text-dna-label uppercase tracking-dna-system text-dna-ink-ghost">
-                    // SCANNING...
-                </div>
+                <div className="dna-text-system py-12 text-center">// SCANNING...</div>
             ) : filteredVenues.length > 0 ? (
                 <div className="my-3">
                     {filteredVenues.map((venue, i) => (

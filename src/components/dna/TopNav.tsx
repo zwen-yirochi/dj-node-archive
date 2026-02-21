@@ -18,7 +18,7 @@ export function TopNav({ logo = 'CTX:', links, version, className }: TopNavProps
     return (
         <nav
             className={cn(
-                'flex items-center justify-between border-b border-dashed border-dna-ink-ghost py-5',
+                'dna-border-structure flex items-center justify-between border-b py-5',
                 className
             )}
         >
@@ -32,7 +32,7 @@ export function TopNav({ logo = 'CTX:', links, version, className }: TopNavProps
                         key={link.href}
                         href={link.href}
                         className={cn(
-                            'border-b border-dotted border-dna-ink-ghost pb-0.5 hover:border-dna-ink hover:text-dna-ink',
+                            'dna-border-relation border-b pb-0.5 hover:border-dna-ink hover:text-dna-ink',
                             link.active && 'border-solid border-dna-ink text-dna-ink'
                         )}
                     >
@@ -41,11 +41,7 @@ export function TopNav({ logo = 'CTX:', links, version, className }: TopNavProps
                 ))}
             </div>
 
-            {version && (
-                <div className="text-dna-label uppercase tracking-dna-system text-dna-ink-ghost">
-                    {version}
-                </div>
-            )}
+            {version && <div className="dna-text-system">{version}</div>}
         </nav>
     );
 }

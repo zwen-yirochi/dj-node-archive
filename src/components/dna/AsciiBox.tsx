@@ -13,9 +13,7 @@ export function AsciiBox({ children, className }: AsciiBoxProps) {
                     '/- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\\'
                 }
             </div>
-            <div className="border-l border-r border-dashed border-dna-ink-ghost px-7 py-5">
-                {children}
-            </div>
+            <div className="dna-border-structure border-l border-r px-7 py-5">{children}</div>
             <div className="select-none overflow-hidden whitespace-pre text-dna-meta-val leading-none text-dna-ink-ghost">
                 {
                     '\\- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -/'

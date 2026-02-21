@@ -92,18 +92,16 @@ export default async function EventPage({ params }: PageProps) {
                     </div>
                 ) : (
                     <div className="mx-auto flex aspect-[3/4] w-full items-center justify-center border border-dna-ink-faint bg-dna-bg-dark md:max-w-[480px]">
-                        <span className="text-dna-label uppercase tracking-dna-system text-dna-ink-ghost">
-                            // NO POSTER
-                        </span>
+                        <span className="dna-text-system">// NO POSTER</span>
                     </div>
                 )}
             </section>
 
             {/* ── Event Header ── */}
             <section className="pb-6">
-                <div className="hidden items-center gap-2.5 text-dna-label uppercase tracking-dna-label text-dna-ink-light md:flex">
+                <div className="dna-text-node hidden items-center gap-2.5 md:flex">
                     <span>Event Node</span>
-                    <span className="h-0 flex-1 border-t border-dotted border-dna-ink-ghost" />
+                    <span className="dna-border-relation h-0 flex-1 border-t" />
                     <span>{formatDate(event.date)}</span>
                 </div>
 
@@ -169,7 +167,7 @@ export default async function EventPage({ params }: PageProps) {
                             {event.lineup.map((artist, i) => (
                                 <div
                                     key={i}
-                                    className="flex items-center gap-3 border-b border-dotted border-dna-ink-faint py-2.5 last:border-b-0"
+                                    className="dna-border-row flex items-center gap-3 border-b py-2.5 last:border-b-0"
                                 >
                                     <span className="min-w-[24px] text-dna-label text-dna-ink-ghost">
                                         {String(i + 1).padStart(2, '0')}
@@ -193,7 +191,7 @@ export default async function EventPage({ params }: PageProps) {
                     <AsciiDivider text="DESCRIPTION" />
                     <section className="my-5">
                         <SectionLabel>Description</SectionLabel>
-                        <p className="my-3 whitespace-pre-wrap text-dna-body leading-relaxed text-dna-ink-mid">
+                        <p className="dna-text-body my-3 whitespace-pre-wrap leading-relaxed">
                             {event.description}
                         </p>
                     </section>

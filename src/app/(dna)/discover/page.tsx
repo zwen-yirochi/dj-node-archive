@@ -41,7 +41,7 @@ export default async function DiscoverPage() {
                 <h1 className="mb-1.5 font-mono-alt text-[28px] font-bold uppercase leading-none tracking-dna-tight md:text-[36px]">
                     Discovery
                 </h1>
-                <p className="text-dna-body text-dna-ink-mid">한국의 클럽과 베뉴를 탐색하세요</p>
+                <p className="dna-text-body">한국의 클럽과 베뉴를 탐색하세요</p>
             </section>
 
             <DnaDiscoveryContent initialVenues={initialVenues} />
@@ -49,10 +49,8 @@ export default async function DiscoverPage() {
             <AsciiDivider />
 
             <section className="py-8 text-center">
-                <p className="text-dna-label uppercase tracking-dna-label text-dna-ink-light">
-                    DJ인가요?
-                </p>
-                <p className="mt-1 text-dna-body text-dna-ink-mid">
+                <p className="dna-text-node">DJ인가요?</p>
+                <p className="dna-text-body mt-1">
                     나만의 DJ 아카이브 페이지를 만들고 공연 기록을 관리하세요
                 </p>
                 <div className="mt-4">

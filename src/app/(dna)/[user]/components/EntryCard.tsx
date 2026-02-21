@@ -84,13 +84,13 @@ export default function EntryCard({ entry, index }: Props) {
     const imageUrl = getImageUrl(entry);
 
     const card = (
-        <div className="flex gap-4 border-b border-dotted border-dna-ink-faint py-4 last:border-b-0">
+        <div className="dna-border-row flex gap-4 border-b py-4 last:border-b-0">
             {/* Thumbnail */}
             <div className="h-[80px] w-[64px] flex-shrink-0 overflow-hidden border border-dna-ink-faint bg-dna-bg-dark md:h-[90px] md:w-[70px]">
                 {imageUrl ? (
                     <img src={imageUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
-                    <div className="flex h-full w-full items-center justify-center text-dna-label uppercase tracking-dna-system text-dna-ink-ghost">
+                    <div className="dna-text-system flex h-full w-full items-center justify-center">
                         {typeLabel}
                     </div>
                 )}

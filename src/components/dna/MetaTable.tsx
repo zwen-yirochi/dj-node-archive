@@ -18,11 +18,11 @@ export function MetaTable({ items, className }: MetaTableProps) {
                     <tr
                         key={i}
                         className={cn(
-                            'border-b border-dotted border-dna-ink-faint',
+                            'dna-border-row border-b',
                             i === items.length - 1 && 'border-b-0'
                         )}
                     >
-                        <td className="w-[140px] py-[7px] pt-[9px] align-top text-dna-label uppercase tracking-dna-meta text-dna-ink-light">
+                        <td className="dna-text-meta w-[140px] py-[7px] pt-[9px] align-top">
                             {item.key}
                         </td>
                         <td className="py-[7px] align-top text-dna-meta-val text-dna-ink">

@@ -17,7 +17,7 @@ export function NodeItem({ index, type, name, detail, href, className }: NodeIte
         <Link
             href={href}
             className={cn(
-                'group flex cursor-pointer items-center gap-3 border-b border-dotted border-dna-ink-faint py-2.5 last:border-b-0',
+                'dna-border-row group flex cursor-pointer items-center gap-3 border-b py-2.5 last:border-b-0',
                 className
             )}
         >

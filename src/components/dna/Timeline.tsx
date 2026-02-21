@@ -17,7 +17,7 @@ export function Timeline({ entries, className }: TimelineProps) {
     return (
         <div className={cn('relative my-3 pl-6', className)}>
             {/* Vertical dashed line */}
-            <div className="absolute bottom-1 left-1 top-1 w-0 border-l border-dashed border-dna-ink-ghost" />
+            <div className="dna-border-structure absolute bottom-1 left-1 top-1 w-0 border-l" />
 
             {entries.map((entry, i) => (
                 <div key={i} className="relative py-2 pb-4">
@@ -31,9 +31,7 @@ export function Timeline({ entries, className }: TimelineProps) {
                         {i === 0 ? '*' : '+'}
                     </span>
 
-                    <div className="text-dna-label uppercase tracking-dna-meta text-dna-ink-light">
-                        {entry.date}
-                    </div>
+                    <div className="dna-text-meta">{entry.date}</div>
                     <div className="my-0.5 text-dna-item font-semibold">{entry.title}</div>
                     <div className="text-dna-ui text-dna-ink-light">
                         @{' '}

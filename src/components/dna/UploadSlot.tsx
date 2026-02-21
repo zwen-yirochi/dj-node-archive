@@ -30,12 +30,10 @@ export function UploadSlot({
                     };
                     input.click();
                 }}
-                className="flex aspect-[16/10] w-full cursor-pointer flex-col items-center justify-center gap-1.5 border border-dashed border-dna-ink-ghost bg-white/20 hover:border-dna-ink-mid hover:bg-white/40"
+                className="dna-border-structure flex aspect-[16/10] w-full cursor-pointer flex-col items-center justify-center gap-1.5 border bg-white/20 hover:border-dna-ink-mid hover:bg-white/40"
             >
                 <div className="font-mono-main text-xl text-dna-ink-ghost">[+]</div>
-                <div className="text-dna-label uppercase tracking-dna-meta text-dna-ink-light">
-                    {label}
-                </div>
+                <div className="dna-text-meta">{label}</div>
                 <div className="text-dna-system text-dna-ink-ghost">{sublabel}</div>
             </div>
             {hint && <div className="mt-1 text-dna-label text-dna-ink-ghost">{hint}</div>}

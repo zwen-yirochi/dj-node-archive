@@ -9,7 +9,7 @@ interface FooterProps {
 
 export function Footer({ meta, ascii, bottom, className }: FooterProps) {
     return (
-        <footer className={cn('mt-5 border-t border-dashed border-dna-ink-ghost py-7', className)}>
+        <footer className={cn('dna-border-structure mt-5 border-t py-7', className)}>
             <div className="flex items-start justify-between">
                 <div className="text-dna-system leading-[2] tracking-dna-system text-dna-ink-ghost">
                     {meta.map((line, i) => (
@@ -27,7 +27,7 @@ export function Footer({ meta, ascii, bottom, className }: FooterProps) {
                 )}
             </div>
 
-            <div className="mt-4 flex justify-between border-t border-dotted border-dna-ink-faint pt-3 text-dna-system uppercase tracking-dna-meta text-dna-ink-ghost">
+            <div className="dna-border-row mt-4 flex justify-between border-t pt-3 text-dna-system uppercase tracking-dna-meta text-dna-ink-ghost">
                 <span>{bottom.left}</span>
                 {bottom.center && <span>{bottom.center}</span>}
                 <span>{bottom.right}</span>
