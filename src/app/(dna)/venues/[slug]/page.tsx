@@ -2,21 +2,20 @@ import { AsciiBox } from '@/components/dna/AsciiBox';
 import { AsciiDivider } from '@/components/dna/AsciiDivider';
 import { Button } from '@/components/dna/Button';
 import { ExternalLinks } from '@/components/dna/ExternalLinks';
-import { Footer } from '@/components/dna/Footer';
+import { DnaPageShell } from '@/components/dna/DnaPageShell';
 import { MetaTable } from '@/components/dna/MetaTable';
 import { NodeLabel } from '@/components/dna/NodeLabel';
-import { PathBar } from '@/components/dna/PathBar';
 import { SectionLabel } from '@/components/dna/SectionLabel';
 import { StatsRow } from '@/components/dna/StatsRow';
-import { TopNav } from '@/components/dna/TopNav';
 import { findEventsByVenueId } from '@/lib/db/queries/event.queries';
+import { formatEventDate, venueCode } from '@/lib/formatters';
 import { findVenueBySlug } from '@/lib/db/queries/venue.queries';
 import type { Event as DBEvent, EventPerformer, Venue } from '@/types/database';
 import { isSuccess } from '@/types/result';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import VenueTimeline from './VenueTimeline';
+import PaginatedTimeline from '@/components/dna/PaginatedTimeline';
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -38,23 +37,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export const revalidate = 300;
-
-function venueCode(id: string): string {
-    return `VN-${id.slice(0, 4).toUpperCase()}`;
-}
-
-function formatEventDate(dateStr: string): string {
-    try {
-        const d = new Date(dateStr);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        const day = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-        return `${yyyy}.${mm}.${dd} // ${day}`;
-    } catch {
-        return dateStr;
-    }
-}
 
 function getLineupText(event: { lineup: unknown; data: unknown }): string {
     const data = event.data as Record<string, unknown> | null;
@@ -123,22 +105,14 @@ export default async function VenuePage({ params }: PageProps) {
     }
 
     return (
-        <div className="mx-auto max-w-dna px-4 md:px-dna-gutter">
-            <TopNav
-                logo="DNA:"
-                links={[
-                    { label: 'Archive', href: '/' },
-                    { label: 'Discovery', href: '/discover' },
-                ]}
-            />
-
-            <div className="hidden md:block">
-                <PathBar
-                    path={`root / discover / venues / ${venue.name.toLowerCase()}`}
-                    meta={`node: ${vcode} // type: venue`}
-                />
-            </div>
-
+        <DnaPageShell
+            pathBar={{
+                path: `root / discover / venues / ${venue.name.toLowerCase()}`,
+                meta: `node: ${vcode} // type: venue`,
+            }}
+            footerMeta={[`DJ-NODE-ARCHIVE // VENUE: ${venue.name.toUpperCase()} [${vcode}]`]}
+            footerRight={venue.country || 'KR'}
+        >
             {/* ── Venue Header ── */}
             <section className="pb-6 pt-6 md:pt-8">
                 <NodeLabel right={vcode}>Venue Node</NodeLabel>
@@ -224,7 +198,7 @@ export default async function VenuePage({ params }: PageProps) {
                         <SectionLabel right={`${upcomingEvents.length} UPCOMING`}>
                             Upcoming Events
                         </SectionLabel>
-                        <VenueTimeline
+                        <PaginatedTimeline
                             entries={upcomingEvents.map((event) => {
                                 const lineup = getLineupText(event);
                                 return {
@@ -245,7 +219,7 @@ export default async function VenuePage({ params }: PageProps) {
             {pastEvents.length > 0 ? (
                 <section className="my-5">
                     <SectionLabel right={`${pastEvents.length} EVENTS`}>Event History</SectionLabel>
-                    <VenueTimeline
+                    <PaginatedTimeline
                         entries={pastEvents.map((event) => {
                             const lineup = getLineupText(event);
                             return {
@@ -270,15 +244,6 @@ export default async function VenuePage({ params }: PageProps) {
                     </AsciiBox>
                 </section>
             )}
-
-            {/* ── Footer ── */}
-            <Footer
-                meta={[`DJ-NODE-ARCHIVE // VENUE: ${venue.name.toUpperCase()} [${vcode}]`]}
-                bottom={{
-                    left: 'DJ NODE ARCHIVE // 2025',
-                    right: venue.country || 'KR',
-                }}
-            />
-        </div>
+        </DnaPageShell>
     );
 }

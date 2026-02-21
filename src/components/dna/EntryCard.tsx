@@ -1,26 +1,14 @@
 import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry } from '@/types/domain';
 import { isEventEntry, isPublicEventEntry } from '@/types/domain';
+import { formatDateCompact, venueCode } from '@/lib/formatters';
+import { TypeBadge } from './TypeBadge';
+import { VenueLink } from './VenueLink';
 import Link from 'next/link';
 
 interface EntryCardProps {
     entry: ContentEntry;
     index: number;
     className?: string;
-}
-
-function formatDate(dateStr: string): string {
-    try {
-        const d = new Date(dateStr);
-        return d
-            .toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-                year: '2-digit',
-            })
-            .toUpperCase();
-    } catch {
-        return dateStr;
-    }
 }
 
 function getTitle(entry: ContentEntry): string {
@@ -39,21 +27,21 @@ function DetailText({ entry }: { entry: ContentEntry }) {
     switch (entry.type) {
         case 'event': {
             const e = entry as EventEntry;
-            if (!e.venue?.name) return <>{formatDate(e.date)}</>;
-            const vcode = e.venue.id ? `VN-${e.venue.id.slice(0, 4).toUpperCase()}` : 'VN-0000';
+            if (!e.venue?.name) return <>{formatDateCompact(e.date)}</>;
             return (
                 <>
-                    @{' '}
-                    <span className="border-b border-dotted border-dna-accent-blue text-dna-accent-blue">
-                        {e.venue.name} [{vcode}]
-                    </span>
+                    @ <VenueLink name={e.venue.name} venueId={e.venue.id} />
                 </>
             );
         }
         case 'mixset': {
             const m = entry as MixsetEntry;
             return (
-                <>{m.durationMinutes ? `${m.durationMinutes}MIN` : formatDate(entry.createdAt)}</>
+                <>
+                    {m.durationMinutes
+                        ? `${m.durationMinutes}MIN`
+                        : formatDateCompact(entry.createdAt)}
+                </>
             );
         }
         case 'link': {
@@ -74,8 +62,8 @@ function getTypeLabel(type: string): string {
 }
 
 function getDateValue(entry: ContentEntry): string {
-    if (entry.type === 'event') return formatDate((entry as EventEntry).date);
-    return formatDate(entry.createdAt);
+    if (entry.type === 'event') return formatDateCompact((entry as EventEntry).date);
+    return formatDateCompact(entry.createdAt);
 }
 
 export function EntryCard({ entry, index }: EntryCardProps) {
@@ -109,9 +97,7 @@ export function EntryCard({ entry, index }: EntryCardProps) {
                     </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="border border-dna-ink-faint px-1 py-px text-dna-system uppercase tracking-dna-system text-dna-ink-light">
-                        {typeLabel}
-                    </span>
+                    <TypeBadge type={typeLabel as 'EVT' | 'MIX' | 'LNK'} className="px-1 py-px" />
                     <span className="text-xs tracking-dna-input text-dna-ink-light">
                         <DetailText entry={entry} />
                     </span>

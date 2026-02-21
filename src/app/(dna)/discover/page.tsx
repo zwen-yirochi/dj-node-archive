@@ -1,10 +1,8 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { getAllVenues } from '@/lib/db/queries/venue.queries';
-import { DnaDiscoveryContent } from '@/components/discovery/DnaDiscoveryContent';
-import { TopNav } from '@/components/dna/TopNav';
-import { PathBar } from '@/components/dna/PathBar';
-import { Footer } from '@/components/dna/Footer';
+import { DnaDiscoveryContent } from './DnaDiscoveryContent';
+import { DnaPageShell } from '@/components/dna/DnaPageShell';
 import { Button } from '@/components/dna/Button';
 import { AsciiDivider } from '@/components/dna/AsciiDivider';
 import type { DBVenueSearchResult } from '@/types/database';
@@ -24,19 +22,11 @@ export default async function DiscoverPage() {
         : [];
 
     return (
-        <div className="mx-auto max-w-dna px-4 md:px-dna-gutter">
-            <TopNav
-                logo="DNA:"
-                links={[
-                    { label: 'Archive', href: '/' },
-                    { label: 'Discovery', href: '/discover', active: true },
-                ]}
-            />
-
-            <div className="hidden md:block">
-                <PathBar path="root / discover" meta={`${initialVenues.length} nodes indexed`} />
-            </div>
-
+        <DnaPageShell
+            activeLink="discover"
+            pathBar={{ path: 'root / discover', meta: `${initialVenues.length} nodes indexed` }}
+            footerMeta={['DJ-NODE-ARCHIVE // MODULE: DISCOVERY']}
+        >
             <section className="pb-4 pt-8">
                 <h1 className="mb-1.5 font-mono-alt text-[28px] font-bold uppercase leading-none tracking-dna-tight md:text-[36px]">
                     Discovery
@@ -59,14 +49,6 @@ export default async function DiscoverPage() {
                     </Link>
                 </div>
             </section>
-
-            <Footer
-                meta={['DJ-NODE-ARCHIVE // MODULE: DISCOVERY']}
-                bottom={{
-                    left: 'DJ NODE ARCHIVE // 2025',
-                    right: 'KR',
-                }}
-            />
-        </div>
+        </DnaPageShell>
     );
 }

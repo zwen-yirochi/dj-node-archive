@@ -1,18 +1,20 @@
 import { findEventById } from '@/lib/db/queries/event.queries';
+import { formatEventDate, venueCode } from '@/lib/formatters';
 import { mapEventToDomain } from '@/lib/mappers';
 import { isSuccess } from '@/types/result';
 import type { Event } from '@/types/domain';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { TopNav } from '@/components/dna/TopNav';
-import { PathBar } from '@/components/dna/PathBar';
+import { DnaPageShell } from '@/components/dna/DnaPageShell';
 import { SectionLabel } from '@/components/dna/SectionLabel';
 import { NodeLabel } from '@/components/dna/NodeLabel';
 import { MetaTable } from '@/components/dna/MetaTable';
 import { AsciiDivider } from '@/components/dna/AsciiDivider';
 import { AsciiBox } from '@/components/dna/AsciiBox';
-import { Footer } from '@/components/dna/Footer';
+import { ImageFrame } from '@/components/dna/ImageFrame';
+import { TypeBadge } from '@/components/dna/TypeBadge';
+import { VenueLink } from '@/components/dna/VenueLink';
 
 interface PageProps {
     params: Promise<{ id: string }>;
@@ -29,29 +31,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const event = mapEventToDomain(result.data);
     return {
         title: `${event.title} - DJ Node Archive`,
-        description: `${event.title} @ ${event.venue?.name || 'Unknown Venue'} — ${formatDate(event.date)}`,
+        description: `${event.title} @ ${event.venue?.name || 'Unknown Venue'} — ${formatEventDate(event.date)}`,
     };
 }
 
 export const revalidate = 300;
-
-function venueCode(id?: string): string {
-    if (!id) return 'VN-0000';
-    return `VN-${id.slice(0, 4).toUpperCase()}`;
-}
-
-function formatDate(dateStr: string): string {
-    try {
-        const d = new Date(dateStr);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        const day = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-        return `${yyyy}.${mm}.${dd} // ${day}`;
-    } catch {
-        return dateStr;
-    }
-}
 
 export default async function EventPage({ params }: PageProps) {
     const { id } = await params;
@@ -65,30 +49,22 @@ export default async function EventPage({ params }: PageProps) {
     const vcode = venueCode(event.venue?.id);
 
     return (
-        <div className="mx-auto max-w-dna px-4 md:px-dna-gutter">
-            <TopNav
-                logo="DNA:"
-                links={[
-                    { label: 'Archive', href: '/' },
-                    { label: 'Discovery', href: '/discover' },
-                ]}
-            />
-
-            <div className="hidden md:block">
-                <PathBar
-                    path={`root / events / ${event.title.toLowerCase()}`}
-                    meta={`type: event // ${formatDate(event.date)}`}
-                />
-            </div>
-
+        <DnaPageShell
+            pathBar={{
+                path: `root / events / ${event.title.toLowerCase()}`,
+                meta: `type: event // ${formatEventDate(event.date)}`,
+            }}
+            footerMeta={[`DJ-NODE-ARCHIVE // EVENT: ${event.title.toUpperCase()}`]}
+        >
             {/* ── Poster ── */}
             <section className="pb-4 pt-6 md:pt-8">
                 {event.posterUrl ? (
-                    <div className="mx-auto w-full overflow-hidden border border-dna-ink-faint md:max-w-[480px]">
-                        <img
+                    <div className="mx-auto w-full md:max-w-[480px]">
+                        <ImageFrame
                             src={event.posterUrl}
                             alt={event.title}
-                            className="block w-full object-cover"
+                            className="aspect-[3/4]"
+                            priority
                         />
                     </div>
                 ) : (
@@ -100,18 +76,15 @@ export default async function EventPage({ params }: PageProps) {
 
             {/* ── Event Header ── */}
             <section className="pb-6">
-                <NodeLabel right={formatDate(event.date)}>Event Node</NodeLabel>
+                <NodeLabel right={formatEventDate(event.date)}>Event Node</NodeLabel>
 
                 <h1 className="dna-heading-page md:mt-2">{event.title}</h1>
 
                 <div className="mt-2 text-dna-meta-val tracking-dna-detail text-dna-ink-light">
-                    <span className="md:hidden">{formatDate(event.date)}</span>
+                    <span className="md:hidden">{formatEventDate(event.date)}</span>
                     {event.venue?.name && (
                         <span className="mt-1 block md:mt-0 md:inline">
-                            @{' '}
-                            <span className="border-b border-dotted border-dna-accent-blue text-dna-accent-blue">
-                                {event.venue.name} [{vcode}]
-                            </span>
+                            @ <VenueLink name={event.venue.name} venueId={event.venue.id} />
                         </span>
                     )}
                 </div>
@@ -124,7 +97,7 @@ export default async function EventPage({ params }: PageProps) {
                     <MetaTable
                         items={[
                             { key: 'Title', value: event.title },
-                            { key: 'Date', value: formatDate(event.date) },
+                            { key: 'Date', value: formatEventDate(event.date) },
                             { key: 'Venue', value: event.venue?.name || 'NULL' },
                             { key: 'Venue Code', value: vcode },
                             { key: 'Lineup', value: String(event.lineup.length) + ' artists' },
@@ -169,9 +142,7 @@ export default async function EventPage({ params }: PageProps) {
                                     <span className="min-w-[24px] text-dna-label text-dna-ink-ghost">
                                         {String(i + 1).padStart(2, '0')}
                                     </span>
-                                    <span className="min-w-[32px] border border-dna-ink-faint px-[5px] py-0.5 text-center text-dna-system uppercase tracking-dna-system text-dna-ink-light">
-                                        ART
-                                    </span>
+                                    <TypeBadge type="ART" />
                                     <span className="flex-1 text-dna-body font-medium uppercase">
                                         {artist.name}
                                     </span>
@@ -220,15 +191,6 @@ export default async function EventPage({ params }: PageProps) {
                     </section>
                 </>
             )}
-
-            {/* ── Footer ── */}
-            <Footer
-                meta={[`DJ-NODE-ARCHIVE // EVENT: ${event.title.toUpperCase()}`]}
-                bottom={{
-                    left: 'DJ NODE ARCHIVE // 2025',
-                    right: 'KR',
-                }}
-            />
-        </div>
+        </DnaPageShell>
     );
 }

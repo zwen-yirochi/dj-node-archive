@@ -1,3 +1,8 @@
+// ── Primitive (재사용 단위) ──
+export { TypeBadge } from './TypeBadge';
+export { VenueLink } from './VenueLink';
+export { default as ShareButton } from './ShareButton';
+
 // ── Texture (Layer 2: DNA다움을 만드는 미학적 컴포넌트) ──
 export { AsciiDivider } from './AsciiDivider';
 export { AsciiBox } from './AsciiBox';
@@ -8,12 +13,14 @@ export { PathBar } from './PathBar';
 export { MetaTable } from './MetaTable';
 export { StatsRow } from './StatsRow';
 export { Timeline } from './Timeline';
+export { default as PaginatedTimeline } from './PaginatedTimeline';
 export { NodeItem } from './NodeItem';
 export { EntryCard } from './EntryCard';
 export { TagCluster } from './TagCluster';
 export { FreqGraph } from './FreqGraph';
 
 // ── Chrome (페이지 프레임) ──
+export { DnaPageShell } from './DnaPageShell';
 export { TopNav } from './TopNav';
 export { Footer } from './Footer';
 export { SectionLabel } from './SectionLabel';

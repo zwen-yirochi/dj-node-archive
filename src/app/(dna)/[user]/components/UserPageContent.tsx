@@ -1,8 +1,8 @@
 import type { ContentEntry, EventEntry, User } from '@/types/domain';
 import { isEventEntry, isPublicEventEntry } from '@/types/domain';
+import { formatEventDate, venueCode } from '@/lib/formatters';
 import Link from 'next/link';
-import { TopNav } from '@/components/dna/TopNav';
-import { PathBar } from '@/components/dna/PathBar';
+import { DnaPageShell } from '@/components/dna/DnaPageShell';
 import { SectionLabel } from '@/components/dna/SectionLabel';
 import { NodeLabel } from '@/components/dna/NodeLabel';
 import { ExternalLinks } from '@/components/dna/ExternalLinks';
@@ -10,31 +10,14 @@ import { StatsRow } from '@/components/dna/StatsRow';
 import { MetaTable } from '@/components/dna/MetaTable';
 import { Timeline } from '@/components/dna/Timeline';
 import { AsciiDivider } from '@/components/dna/AsciiDivider';
-import { Footer } from '@/components/dna/Footer';
 import { EntryCard } from '@/components/dna/EntryCard';
-import ShareButton from './ShareButton';
+import { ImageFrame } from '@/components/dna/ImageFrame';
+import { VenueLink } from '@/components/dna/VenueLink';
+import ShareButton from '@/components/dna/ShareButton';
 
 interface Props {
     user: User;
     entries: ContentEntry[];
-}
-
-function venueCode(id?: string): string {
-    if (!id) return 'VN-0000';
-    return `VN-${id.slice(0, 4).toUpperCase()}`;
-}
-
-function formatEventDate(dateStr: string): string {
-    try {
-        const d = new Date(dateStr);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        const day = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-        return `${yyyy}.${mm}.${dd} // ${day}`;
-    } catch {
-        return dateStr;
-    }
 }
 
 export default function UserPageContent({ user, entries }: Props) {
@@ -49,22 +32,13 @@ export default function UserPageContent({ user, entries }: Props) {
     const uniqueVenues = new Set(eventEntries.map((e) => e.venue?.name).filter(Boolean));
 
     return (
-        <div className="mx-auto max-w-dna px-4 md:px-dna-gutter">
-            <TopNav
-                logo="DNA:"
-                links={[
-                    { label: 'Archive', href: '/' },
-                    { label: 'Discovery', href: '/discover' },
-                ]}
-            />
-
-            <div className="hidden md:block">
-                <PathBar
-                    path={`root / nodes / ${user.username}`}
-                    meta="node type: artist // status: active"
-                />
-            </div>
-
+        <DnaPageShell
+            pathBar={{
+                path: `root / nodes / ${user.username}`,
+                meta: 'node type: artist // status: active',
+            }}
+            footerMeta={[`DJ-NODE-ARCHIVE // NODE: ${user.username.toUpperCase()}`]}
+        >
             {/* ── Profile Header ── */}
             <section className="pb-6 pt-6 md:pt-8">
                 <div className="flex flex-col items-center text-center md:flex-row md:items-start md:text-left">
@@ -223,13 +197,11 @@ export default function UserPageContent({ user, entries }: Props) {
                                     const card = (
                                         <div className="border border-dna-ink-faint p-4">
                                             {event.posterUrl && (
-                                                <div className="mb-3 aspect-[4/3] w-full overflow-hidden border border-dna-ink-faint bg-dna-bg-dark">
-                                                    <img
-                                                        src={event.posterUrl}
-                                                        alt={event.title}
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                </div>
+                                                <ImageFrame
+                                                    src={event.posterUrl}
+                                                    alt={event.title}
+                                                    className="mb-3 aspect-[4/3]"
+                                                />
                                             )}
                                             <div className="dna-text-meta">
                                                 {formatEventDate(event.date)}
@@ -240,10 +212,10 @@ export default function UserPageContent({ user, entries }: Props) {
                                             {event.venue?.name && (
                                                 <div className="mt-1 text-xs text-dna-ink-light">
                                                     @{' '}
-                                                    <span className="border-b border-dotted border-dna-accent-blue text-dna-accent-blue">
-                                                        {event.venue.name} [
-                                                        {venueCode(event.venue.id)}]
-                                                    </span>
+                                                    <VenueLink
+                                                        name={event.venue.name}
+                                                        venueId={event.venue.id}
+                                                    />
                                                 </div>
                                             )}
                                         </div>
@@ -300,15 +272,6 @@ export default function UserPageContent({ user, entries }: Props) {
                     </div>
                 </section>
             )}
-
-            {/* ── Footer ── */}
-            <Footer
-                meta={[`DJ-NODE-ARCHIVE // NODE: ${user.username.toUpperCase()}`]}
-                bottom={{
-                    left: 'DJ NODE ARCHIVE // 2025',
-                    right: 'KR',
-                }}
-            />
-        </div>
+        </DnaPageShell>
     );
 }

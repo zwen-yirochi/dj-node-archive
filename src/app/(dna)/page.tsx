@@ -1,21 +1,12 @@
 import Link from 'next/link';
-import { TopNav } from '@/components/dna/TopNav';
+import { DnaPageShell } from '@/components/dna/DnaPageShell';
 import { AsciiDivider } from '@/components/dna/AsciiDivider';
 import { AsciiBox } from '@/components/dna/AsciiBox';
 import { Button } from '@/components/dna/Button';
-import { Footer } from '@/components/dna/Footer';
 
 export default function LandingPage() {
     return (
-        <div className="mx-auto max-w-dna px-4 md:px-dna-gutter">
-            <TopNav
-                logo="DNA:"
-                links={[
-                    { label: 'Archive', href: '/' },
-                    { label: 'Discovery', href: '/discover' },
-                ]}
-            />
-
+        <DnaPageShell footerMeta={['DJ-NODE-ARCHIVE // MODULE: LANDING']}>
             {/* ── Hero ── */}
             <section className="py-16 text-center md:py-24">
                 <h1 className="dna-heading-hero">DJ Node Archive</h1>
@@ -93,15 +84,6 @@ export default function LandingPage() {
                     </Link>
                 </div>
             </section>
-
-            {/* ── Footer ── */}
-            <Footer
-                meta={['DJ-NODE-ARCHIVE // MODULE: LANDING']}
-                bottom={{
-                    left: 'DJ NODE ARCHIVE // 2025',
-                    right: 'KR',
-                }}
-            />
-        </div>
+        </DnaPageShell>
     );
 }

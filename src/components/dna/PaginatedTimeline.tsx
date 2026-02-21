@@ -13,7 +13,7 @@ interface TimelineEntry {
 /** Number of events loaded per page (initial + each "more" click) */
 const PAGE_SIZE = 5;
 
-export default function VenueTimeline({ entries }: { entries: TimelineEntry[] }) {
+export default function PaginatedTimeline({ entries }: { entries: TimelineEntry[] }) {
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
     const visible = entries.slice(0, visibleCount);
     const remaining = entries.length - visibleCount;
