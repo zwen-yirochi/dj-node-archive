@@ -5,6 +5,8 @@ import { InputField } from '@/components/dna/InputField';
 import { TagCluster } from '@/components/dna/TagCluster';
 import { NodeItem } from '@/components/dna/NodeItem';
 import { SectionLabel } from '@/components/dna/SectionLabel';
+import { SearchResults } from './SearchResults';
+import QueryProvider from '@/components/providers/QueryProvider';
 import type { DBVenueSearchResult } from '@/types/database';
 
 const CITIES = ['All', 'Seoul', 'Busan', 'Daegu', 'Gwangju', 'Other'];
@@ -19,13 +21,12 @@ export function DnaDiscoveryContent({ initialVenues = [] }: DnaDiscoveryContentP
     const [selectedCity, setSelectedCity] = useState('All');
     const [isLoading, setIsLoading] = useState(false);
 
-    const fetchVenues = useCallback(async (query: string = '') => {
+    const isUnifiedSearch = searchQuery.trim().length >= 2;
+
+    const fetchVenues = useCallback(async () => {
         setIsLoading(true);
         try {
-            const url = query
-                ? `/api/venues/search?q=${encodeURIComponent(query)}&limit=50`
-                : '/api/venues?limit=50';
-            const res = await fetch(url);
+            const res = await fetch('/api/venues?limit=50');
             const json = await res.json();
 
             const data = (json.data || []).map((v: DBVenueSearchResult) => ({
@@ -47,13 +48,6 @@ export function DnaDiscoveryContent({ initialVenues = [] }: DnaDiscoveryContentP
         }
     }, [initialVenues.length, fetchVenues]);
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchVenues(searchQuery);
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [searchQuery, fetchVenues]);
-
     const filteredVenues = venues.filter((venue) => {
         if (selectedCity === 'All') return true;
         if (selectedCity === 'Other') {
@@ -63,47 +57,63 @@ export function DnaDiscoveryContent({ initialVenues = [] }: DnaDiscoveryContentP
     });
 
     return (
-        <div>
-            {/* Search */}
-            <InputField
-                label="Search Nodes"
-                placeholder="베뉴 검색..."
-                value={searchQuery}
-                onChange={setSearchQuery}
-            />
+        <QueryProvider>
+            <div>
+                {/* Search */}
+                <InputField
+                    label="Search Nodes"
+                    placeholder="아티스트, 베뉴, 이벤트 검색..."
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                />
 
-            {/* City Filter */}
-            <TagCluster
-                tags={CITIES.map((city) => ({
-                    label: city,
-                    active: selectedCity === city,
-                }))}
-                onTagClick={(label) => setSelectedCity(label)}
-            />
-
-            {/* Results */}
-            <SectionLabel right={`${filteredVenues.length} NODES`}>Venue Index</SectionLabel>
-
-            {isLoading ? (
-                <div className="dna-text-system py-12 text-center">// SCANNING...</div>
-            ) : filteredVenues.length > 0 ? (
-                <div className="my-3">
-                    {filteredVenues.map((venue, i) => (
-                        <NodeItem
-                            key={venue.id}
-                            index={i + 1}
-                            type="VEN"
-                            name={venue.name}
-                            detail={[venue.city, venue.country].filter(Boolean).join(', ') || '—'}
-                            href={`/venues/${venue.slug}`}
+                {isUnifiedSearch ? (
+                    /* 통합 검색 결과 */
+                    <SearchResults query={searchQuery} />
+                ) : (
+                    /* 기본 베뉴 목록 */
+                    <>
+                        {/* City Filter */}
+                        <TagCluster
+                            tags={CITIES.map((city) => ({
+                                label: city,
+                                active: selectedCity === city,
+                            }))}
+                            onTagClick={(label) => setSelectedCity(label)}
                         />
-                    ))}
-                </div>
-            ) : (
-                <div className="py-12 text-center text-dna-body text-dna-ink-light">
-                    // NO NODES FOUND — 다른 검색어나 필터를 시도해보세요
-                </div>
-            )}
-        </div>
+
+                        {/* Results */}
+                        <SectionLabel right={`${filteredVenues.length} NODES`}>
+                            Venue Index
+                        </SectionLabel>
+
+                        {isLoading ? (
+                            <div className="dna-text-system py-12 text-center">// SCANNING...</div>
+                        ) : filteredVenues.length > 0 ? (
+                            <div className="my-3">
+                                {filteredVenues.map((venue, i) => (
+                                    <NodeItem
+                                        key={venue.id}
+                                        index={i + 1}
+                                        type="VEN"
+                                        name={venue.name}
+                                        detail={
+                                            [venue.city, venue.country]
+                                                .filter(Boolean)
+                                                .join(', ') || '—'
+                                        }
+                                        href={`/venues/${venue.slug}`}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="py-12 text-center text-dna-body text-dna-ink-light">
+                                // NO NODES FOUND — 다른 검색어나 필터를 시도해보세요
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+        </QueryProvider>
     );
 }
