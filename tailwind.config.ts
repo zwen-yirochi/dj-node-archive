@@ -62,8 +62,8 @@ const config: Config = {
                     inverse: '#ffffff',
                     muted: '#d1d5db',
                 },
-                // CORTEX Design System
-                cortex: {
+                // DNA Design System
+                dna: {
                     bg: 'rgb(226, 230, 231)',
                     'bg-tint': 'rgb(218, 222, 224)',
                     'bg-dark': 'rgb(208, 212, 214)',
@@ -114,7 +114,7 @@ const config: Config = {
                 stripe: ['var(--font-stripe)', 'sans-serif'],
                 nyangi: ['var(--font-nyangi)', 'sans-serif'],
                 bokeh: ['var(--font-bokeh)', 'sans-serif'],
-                // CORTEX monospace
+                // DNA monospace
                 'mono-main': ["'JetBrains Mono'", 'monospace'],
                 'mono-alt': ["'Space Mono'", 'monospace'],
                 // 기본 시스템
@@ -122,25 +122,25 @@ const config: Config = {
                 mono: ['var(--font-geist-mono)', 'monospace'],
             },
             letterSpacing: {
-                'cortex-tight': '-1px',
-                'cortex-label': '2.5px',
-                'cortex-meta': '1.5px',
-                'cortex-system': '1px',
-                'cortex-btn': '2px',
+                'dna-tight': '-1px',
+                'dna-label': '2.5px',
+                'dna-meta': '1.5px',
+                'dna-system': '1px',
+                'dna-btn': '2px',
             },
             fontSize: {
-                'cortex-system': ['8px', { lineHeight: '1.4' }],
-                'cortex-label': ['9px', { lineHeight: '1.4' }],
-                'cortex-meta-val': ['11px', { lineHeight: '1.6' }],
-                'cortex-body': ['12px', { lineHeight: '1.75' }],
-                'cortex-item': ['13px', { lineHeight: '1.4' }],
+                'dna-system': ['8px', { lineHeight: '1.4' }],
+                'dna-label': ['9px', { lineHeight: '1.4' }],
+                'dna-meta-val': ['11px', { lineHeight: '1.6' }],
+                'dna-body': ['12px', { lineHeight: '1.75' }],
+                'dna-item': ['13px', { lineHeight: '1.4' }],
             },
             maxWidth: {
-                cortex: '1080px',
+                dna: '1080px',
             },
             spacing: {
-                'cortex-gutter': '32px',
-                'cortex-gap': '40px',
+                'dna-gutter': '32px',
+                'dna-gap': '40px',
             },
             borderRadius: {
                 lg: 'var(--radius)',

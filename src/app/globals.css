@@ -85,3 +85,21 @@
     @apply bg-background text-foreground;
 	}
 }
+
+/* ─── DNA Typography ─── */
+@layer components {
+  /* 랜딩 히어로 전용 — 32px → 56px */
+  .dna-heading-hero {
+    @apply font-mono-alt text-[32px] font-bold uppercase leading-none tracking-dna-tight md:text-[56px];
+  }
+
+  /* 페이지 제목 (유저/이벤트/베뉴) — 24px → 40px */
+  .dna-heading-page {
+    @apply font-mono-alt text-[24px] font-bold uppercase leading-none tracking-dna-tight md:text-[40px];
+  }
+
+  /* 섹션 제목 — 20px → 28px */
+  .dna-heading-section {
+    @apply font-mono-alt text-[20px] font-bold uppercase tracking-dna-tight md:text-[28px];
+  }
+}
