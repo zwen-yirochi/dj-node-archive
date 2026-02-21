@@ -3,6 +3,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 
 // Dashboard UI용 메이저 폰트 - 다양한 웨이트 지원
@@ -12,6 +13,13 @@ const inter = Inter({
     weight: ['400', '500', '600', '700'],
     display: 'swap',
     preload: true,
+});
+
+// DNA 픽셀 폰트
+const dotso = localFont({
+    src: './fonts/5x5dotso.ttf',
+    variable: '--font-dotso',
+    display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -33,7 +41,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={`${inter.variable} antialiased`}>
+            <body className={`${inter.variable} ${dotso.variable} antialiased`}>
                 <ErrorBoundary>
                     {children}
                     <SpeedInsights debug={process.env.NODE_ENV === 'development'} />

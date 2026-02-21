@@ -7,6 +7,7 @@ const config: Config = {
         './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
         './src/components/**/*.{js,ts,jsx,tsx,mdx}',
         './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+        './src/**/*.stories.{ts,tsx}',
     ],
     theme: {
         extend: {
@@ -62,6 +63,19 @@ const config: Config = {
                     inverse: '#ffffff',
                     muted: '#d1d5db',
                 },
+                // DNA Design System
+                dna: {
+                    bg: 'rgb(226, 230, 231)',
+                    'bg-tint': 'rgb(218, 222, 224)',
+                    'bg-dark': 'rgb(208, 212, 214)',
+                    ink: '#1a1a1e',
+                    'ink-mid': '#4a4a52',
+                    'ink-light': '#7a7a86',
+                    'ink-ghost': '#a0a0ac',
+                    'ink-faint': '#c0c0c8',
+                    'accent-red': '#c0392b',
+                    'accent-blue': '#2255aa',
+                },
                 // Dashboard Design System - Light Theme
                 dashboard: {
                     // Backgrounds
@@ -101,9 +115,38 @@ const config: Config = {
                 stripe: ['var(--font-stripe)', 'sans-serif'],
                 nyangi: ['var(--font-nyangi)', 'sans-serif'],
                 bokeh: ['var(--font-bokeh)', 'sans-serif'],
+                // DNA monospace
+                'mono-main': ["'JetBrains Mono'", 'monospace'],
+                'mono-alt': ["'Space Mono'", 'monospace'],
+                // DNA pixel
+                dotso: ['var(--font-dotso)', 'monospace'],
                 // 기본 시스템
                 sans: ['var(--font-geist-sans)', 'sans-serif'],
                 mono: ['var(--font-geist-mono)', 'monospace'],
+            },
+            letterSpacing: {
+                'dna-tight': '-1px',
+                'dna-input': '0.3px',
+                'dna-detail': '0.5px',
+                'dna-system': '1px',
+                'dna-meta': '1.5px',
+                'dna-btn': '2px',
+                'dna-label': '2.5px',
+            },
+            fontSize: {
+                'dna-system': ['8px', { lineHeight: '1.4' }],
+                'dna-label': ['9px', { lineHeight: '1.4' }],
+                'dna-ui': ['10px', { lineHeight: '1.4' }],
+                'dna-meta-val': ['11px', { lineHeight: '1.6' }],
+                'dna-body': ['12px', { lineHeight: '1.75' }],
+                'dna-item': ['13px', { lineHeight: '1.4' }],
+            },
+            maxWidth: {
+                dna: '1080px',
+            },
+            spacing: {
+                'dna-gutter': '32px',
+                'dna-gap': '40px',
             },
             borderRadius: {
                 lg: 'var(--radius)',
