@@ -6,8 +6,11 @@ import { SectionLabel } from '@/components/dna/SectionLabel';
 import { useUnifiedSearch } from '@/hooks/use-search';
 import type { SearchArtistItem, SearchVenueItem, SearchEventItem } from '@/types/search';
 
+export type SearchFilter = 'All' | 'Artists' | 'Venues' | 'Events';
+
 interface SearchResultsProps {
     query: string;
+    filter: SearchFilter;
 }
 
 function ArtistSection({
@@ -128,7 +131,7 @@ function EventSection({
     );
 }
 
-export function SearchResults({ query }: SearchResultsProps) {
+export function SearchResults({ query, filter }: SearchResultsProps) {
     const { data, isLoading } = useUnifiedSearch(query);
 
     if (isLoading) {
@@ -138,8 +141,15 @@ export function SearchResults({ query }: SearchResultsProps) {
     if (!data) return null;
 
     const { artists, venues, events } = data.results;
+
+    const showArtists = filter === 'All' || filter === 'Artists';
+    const showVenues = filter === 'All' || filter === 'Venues';
+    const showEvents = filter === 'All' || filter === 'Events';
+
     const hasResults =
-        artists.items.length > 0 || venues.items.length > 0 || events.items.length > 0;
+        (showArtists && artists.items.length > 0) ||
+        (showVenues && venues.items.length > 0) ||
+        (showEvents && events.items.length > 0);
 
     if (!hasResults) {
         return (
@@ -151,9 +161,19 @@ export function SearchResults({ query }: SearchResultsProps) {
 
     return (
         <div>
-            <ArtistSection items={artists.items} total_count={artists.total_count} query={query} />
-            <VenueSection items={venues.items} total_count={venues.total_count} query={query} />
-            <EventSection items={events.items} total_count={events.total_count} query={query} />
+            {showArtists && (
+                <ArtistSection
+                    items={artists.items}
+                    total_count={artists.total_count}
+                    query={query}
+                />
+            )}
+            {showVenues && (
+                <VenueSection items={venues.items} total_count={venues.total_count} query={query} />
+            )}
+            {showEvents && (
+                <EventSection items={events.items} total_count={events.total_count} query={query} />
+            )}
         </div>
     );
 }
