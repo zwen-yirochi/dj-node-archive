@@ -185,14 +185,18 @@ export async function searchEvents(
 ): Promise<Result<{ items: SearchEventItem[]; total_count: number }>> {
     try {
         const supabase = await createClient();
-        const searchPattern = `%${query}%`;
 
-        // title 또는 lineup 텍스트에서 검색
-        const { data, error, count } = await supabase
+        let dbQuery = supabase
             .from('events')
             .select('id, title, date, venue, lineup, is_public', { count: 'exact' })
-            .eq('is_public', true)
-            .or(`title.ilike.${searchPattern},lineup::text.ilike.${searchPattern}`)
+            .eq('is_public', true);
+
+        // 검색어가 있으면 title ILIKE 필터 적용
+        if (query) {
+            dbQuery = dbQuery.ilike('title', `%${query}%`);
+        }
+
+        const { data, error, count } = await dbQuery
             .order('date', { ascending: false })
             .range(offset, offset + limit - 1);
 
@@ -204,23 +208,36 @@ export async function searchEvents(
             Event,
             'id' | 'title' | 'date' | 'venue' | 'lineup' | 'is_public'
         >[];
-        const items: SearchEventItem[] = raw.map((e) => ({
+
+        let items: SearchEventItem[] = raw.map((e) => ({
             id: e.id,
             title: e.title,
             date: e.date,
             venue_name: e.venue?.name || '',
-            venue_city: undefined, // venue JSONB에 city 없음
+            venue_city: undefined,
             lineup_text: formatLineupText(e.lineup || []),
             url: `/event/${e.id}`,
         }));
 
-        const sorted = sortByRelevance(
-            items,
-            query,
-            (item) => [item.title, item.lineup_text].filter(Boolean) as string[]
-        );
+        // lineup 텍스트 매칭은 JS에서 처리 (PostgREST에서 JSONB cast 불가)
+        if (query) {
+            const lowerQuery = query.toLowerCase();
+            items = items.filter(
+                (e) =>
+                    e.title.toLowerCase().includes(lowerQuery) ||
+                    (e.lineup_text && e.lineup_text.toLowerCase().includes(lowerQuery))
+            );
+        }
 
-        return success({ items: sorted, total_count: count ?? 0 });
+        if (query) {
+            sortByRelevance(
+                items,
+                query,
+                (item) => [item.title, item.lineup_text].filter(Boolean) as string[]
+            );
+        }
+
+        return success({ items, total_count: count ?? 0 });
     } catch (err) {
         return failure(
             createDatabaseError('이벤트 검색 중 오류가 발생했습니다.', 'searchEvents', err)
