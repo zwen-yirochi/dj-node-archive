@@ -18,16 +18,6 @@ export async function GET(request: Request) {
         );
         const offset = (page - 1) * limit;
 
-        if (query.length < 2) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: { code: 'VALIDATION_ERROR', message: '검색어는 2자 이상이어야 합니다.' },
-                },
-                { status: 400 }
-            );
-        }
-
         const result = await searchUsers(query, limit, offset);
 
         if (!isSuccess(result)) {

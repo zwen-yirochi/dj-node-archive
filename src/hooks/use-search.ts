@@ -77,29 +77,44 @@ export function useUnifiedSearch(query: string) {
     });
 }
 
-export function useArtistSearch(query: string, page: number = 1, limit: number = 20) {
+export function useArtistSearch(
+    query: string,
+    page: number = 1,
+    limit: number = 20,
+    enabled: boolean = true
+) {
     return useQuery({
         queryKey: searchKeys.artists(query, page),
         queryFn: () => fetchCategorySearch<SearchArtistItem>('artists', query, page, limit),
-        enabled: query.length >= 2,
+        enabled,
         staleTime: 30_000,
     });
 }
 
-export function useVenueSearch(query: string, page: number = 1, limit: number = 20) {
+export function useVenueSearch(
+    query: string,
+    page: number = 1,
+    limit: number = 20,
+    enabled: boolean = true
+) {
     return useQuery({
         queryKey: searchKeys.venues(query, page),
         queryFn: () => fetchCategorySearch<SearchVenueItem>('venues', query, page, limit),
-        enabled: query.length >= 2,
+        enabled,
         staleTime: 30_000,
     });
 }
 
-export function useEventSearch(query: string, page: number = 1, limit: number = 20) {
+export function useEventSearch(
+    query: string,
+    page: number = 1,
+    limit: number = 20,
+    enabled: boolean = true
+) {
     return useQuery({
         queryKey: searchKeys.events(query, page),
         queryFn: () => fetchCategorySearch<SearchEventItem>('events', query, page, limit),
-        enabled: query.length >= 2,
+        enabled,
         staleTime: 30_000,
     });
 }
