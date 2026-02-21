@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface NavLink {
     label: string;
@@ -14,7 +14,7 @@ interface TopNavProps {
     className?: string;
 }
 
-export function TopNav({ logo = 'CTX:', links, version, className }: TopNavProps) {
+export function TopNav({ logo = 'DNA:', links, version, className }: TopNavProps) {
     return (
         <nav
             className={cn(

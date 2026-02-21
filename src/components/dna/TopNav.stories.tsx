@@ -11,7 +11,7 @@ type Story = StoryObj<typeof TopNav>;
 
 export const Default: Story = {
     args: {
-        logo: 'CTX:',
+        logo: 'DNA:',
         links: [
             { label: 'Events', href: '/events', active: true },
             { label: 'Venues', href: '/venues' },
