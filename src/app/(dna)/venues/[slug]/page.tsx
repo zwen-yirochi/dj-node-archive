@@ -8,14 +8,16 @@ import { NodeLabel } from '@/components/dna/NodeLabel';
 import { SectionLabel } from '@/components/dna/SectionLabel';
 import { StatsRow } from '@/components/dna/StatsRow';
 import { findEventsByVenueId } from '@/lib/db/queries/event.queries';
+import { findStacksByVenueId } from '@/lib/db/queries/event-stack.queries';
 import { formatEventDate, venueCode } from '@/lib/formatters';
 import { findVenueBySlug } from '@/lib/db/queries/venue.queries';
-import type { Event as DBEvent, EventPerformer, Venue } from '@/types/database';
+import type { Event as DBEvent, EventPerformer, EventStack, Venue } from '@/types/database';
 import { isSuccess } from '@/types/result';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import PaginatedTimeline from '@/components/dna/PaginatedTimeline';
+import EventStackGroup from '@/components/dna/EventStackGroup';
 import GraphView from '@/components/graph/GraphView';
 
 interface PageProps {
@@ -74,8 +76,12 @@ export default async function VenuePage({ params }: PageProps) {
     }
 
     const venue: Venue = venueResult.data;
-    const eventsResult = await findEventsByVenueId(venue.id, 500);
+    const [eventsResult, stacksResult] = await Promise.all([
+        findEventsByVenueId(venue.id, 500),
+        findStacksByVenueId(venue.id),
+    ]);
     const allEvents: DBEvent[] = isSuccess(eventsResult) ? eventsResult.data : [];
+    const stacks: EventStack[] = isSuccess(stacksResult) ? stacksResult.data : [];
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -83,6 +89,22 @@ export default async function VenuePage({ params }: PageProps) {
         .filter((e) => new Date(e.date) >= today)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const pastEvents = allEvents.filter((e) => new Date(e.date) < today);
+
+    // 스택별 과거 이벤트 그룹핑
+    const stackMap = new Map(stacks.map((s) => [s.id, s]));
+    const stackedPastEvents = new Map<string, DBEvent[]>();
+    const unstackedPastEvents: DBEvent[] = [];
+
+    for (const event of pastEvents) {
+        if (event.stack_id && stackMap.has(event.stack_id)) {
+            if (!stackedPastEvents.has(event.stack_id)) {
+                stackedPastEvents.set(event.stack_id, []);
+            }
+            stackedPastEvents.get(event.stack_id)!.push(event);
+        } else {
+            unstackedPastEvents.push(event);
+        }
+    }
 
     const uniqueArtists = getUniqueArtists(allEvents);
     const vcode = venueCode(venue.id);
@@ -227,17 +249,46 @@ export default async function VenuePage({ params }: PageProps) {
             {pastEvents.length > 0 ? (
                 <section className="my-5">
                     <SectionLabel right={`${pastEvents.length} EVENTS`}>Event History</SectionLabel>
-                    <PaginatedTimeline
-                        entries={pastEvents.map((event) => {
-                            const lineup = getLineupText(event);
-                            return {
-                                date: formatEventDate(event.date),
-                                title: event.title || formatEventDate(event.date),
-                                venue: lineup || venue.name,
-                                link: `/event/${event.id}`,
-                            };
-                        })}
-                    />
+
+                    {/* 스택된 이벤트 그룹 */}
+                    {stackedPastEvents.size > 0 && (
+                        <div className="mb-4">
+                            {Array.from(stackedPastEvents.entries()).map(([stackId, events]) => {
+                                const stack = stackMap.get(stackId)!;
+                                return (
+                                    <EventStackGroup
+                                        key={stackId}
+                                        stackTitle={stack.title}
+                                        eventCount={events.length}
+                                        entries={events.map((event) => {
+                                            const lineup = getLineupText(event);
+                                            return {
+                                                date: formatEventDate(event.date),
+                                                title: event.title || formatEventDate(event.date),
+                                                venue: lineup || venue.name,
+                                                link: `/event/${event.id}`,
+                                            };
+                                        })}
+                                    />
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* 스택되지 않은 개별 이벤트 */}
+                    {unstackedPastEvents.length > 0 && (
+                        <PaginatedTimeline
+                            entries={unstackedPastEvents.map((event) => {
+                                const lineup = getLineupText(event);
+                                return {
+                                    date: formatEventDate(event.date),
+                                    title: event.title || formatEventDate(event.date),
+                                    venue: lineup || venue.name,
+                                    link: `/event/${event.id}`,
+                                };
+                            })}
+                        />
+                    )}
                 </section>
             ) : (
                 <section className="my-5">
