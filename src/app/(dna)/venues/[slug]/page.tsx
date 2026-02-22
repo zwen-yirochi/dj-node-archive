@@ -16,8 +16,8 @@ import { isSuccess } from '@/types/result';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { LineupArtist } from '@/components/dna/LineupText';
 import PaginatedTimeline from '@/components/dna/PaginatedTimeline';
-import EventStackGroup from '@/components/dna/EventStackGroup';
 import GraphView from '@/components/graph/GraphView';
 import DesktopOnly from '@/components/ui/DesktopOnly';
 
@@ -42,18 +42,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export const revalidate = 300;
 
-function getLineupText(event: { lineup: unknown; data: unknown }): string {
-    const data = event.data as Record<string, unknown> | null;
-    if (data?.lineup_text && typeof data.lineup_text === 'string') {
-        return data.lineup_text;
-    }
-    if (Array.isArray(event.lineup) && event.lineup.length > 0) {
-        return event.lineup
-            .map((a: { name?: string }) => a.name)
-            .filter(Boolean)
-            .join(', ');
-    }
-    return '';
+function getLineupArtists(event: { lineup: unknown }): LineupArtist[] {
+    if (!Array.isArray(event.lineup) || event.lineup.length === 0) return [];
+    return event.lineup
+        .filter((a: { name?: string }) => a.name)
+        .map((a: { name?: string; artist_id?: string }) => ({
+            name: a.name!,
+            linked: !!a.artist_id,
+        }));
 }
 
 function getUniqueArtists(events: DBEvent[]): number {
@@ -91,21 +87,7 @@ export default async function VenuePage({ params }: PageProps) {
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const pastEvents = allEvents.filter((e) => new Date(e.date) < today);
 
-    // 스택별 과거 이벤트 그룹핑
     const stackMap = new Map(stacks.map((s) => [s.id, s]));
-    const stackedPastEvents = new Map<string, DBEvent[]>();
-    const unstackedPastEvents: DBEvent[] = [];
-
-    for (const event of pastEvents) {
-        if (event.stack_id && stackMap.has(event.stack_id)) {
-            if (!stackedPastEvents.has(event.stack_id)) {
-                stackedPastEvents.set(event.stack_id, []);
-            }
-            stackedPastEvents.get(event.stack_id)!.push(event);
-        } else {
-            unstackedPastEvents.push(event);
-        }
-    }
 
     const uniqueArtists = getUniqueArtists(allEvents);
     const vcode = venueCode(venue.id);
@@ -237,12 +219,13 @@ export default async function VenuePage({ params }: PageProps) {
                         </SectionLabel>
                         <PaginatedTimeline
                             entries={upcomingEvents.map((event) => {
-                                const lineup = getLineupText(event);
+                                const artists = getLineupArtists(event);
                                 return {
                                     date: formatEventDate(event.date),
                                     title: event.title || formatEventDate(event.date),
-                                    venue: lineup || venue.name,
+                                    venue: venue.name,
                                     link: `/event/${event.id}`,
+                                    artists,
                                 };
                             })}
                         />
@@ -257,45 +240,21 @@ export default async function VenuePage({ params }: PageProps) {
                 <section className="my-5">
                     <SectionLabel right={`${pastEvents.length} EVENTS`}>Event History</SectionLabel>
 
-                    {/* 스택된 이벤트 그룹 */}
-                    {stackedPastEvents.size > 0 && (
-                        <div className="mb-4">
-                            {Array.from(stackedPastEvents.entries()).map(([stackId, events]) => {
-                                const stack = stackMap.get(stackId)!;
-                                return (
-                                    <EventStackGroup
-                                        key={stackId}
-                                        stackTitle={stack.title}
-                                        eventCount={events.length}
-                                        entries={events.map((event) => {
-                                            const lineup = getLineupText(event);
-                                            return {
-                                                date: formatEventDate(event.date),
-                                                title: event.title || formatEventDate(event.date),
-                                                venue: lineup || venue.name,
-                                                link: `/event/${event.id}`,
-                                            };
-                                        })}
-                                    />
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    {/* 스택되지 않은 개별 이벤트 */}
-                    {unstackedPastEvents.length > 0 && (
-                        <PaginatedTimeline
-                            entries={unstackedPastEvents.map((event) => {
-                                const lineup = getLineupText(event);
-                                return {
-                                    date: formatEventDate(event.date),
-                                    title: event.title || formatEventDate(event.date),
-                                    venue: lineup || venue.name,
-                                    link: `/event/${event.id}`,
-                                };
-                            })}
-                        />
-                    )}
+                    <PaginatedTimeline
+                        entries={pastEvents.map((event) => {
+                            const artists = getLineupArtists(event);
+                            const stack = event.stack_id ? stackMap.get(event.stack_id) : undefined;
+                            return {
+                                date: formatEventDate(event.date),
+                                title: event.title || formatEventDate(event.date),
+                                venue: venue.name,
+                                link: `/event/${event.id}`,
+                                stackLabel: stack?.title,
+                                stackLink: stack ? `/events/series/${stack.id}` : undefined,
+                                artists,
+                            };
+                        })}
+                    />
                 </section>
             ) : (
                 <section className="my-5">
