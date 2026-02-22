@@ -246,6 +246,39 @@ export async function findEventsByArtistId(
     }
 }
 
+/**
+ * stack_id로 이벤트 검색
+ */
+export async function findEventsByStackId(
+    stackId: string,
+    limit: number = 500
+): Promise<Result<Event[]>> {
+    try {
+        const supabase = await createClient();
+
+        const { data, error } = await supabase
+            .from('events')
+            .select('*')
+            .eq('stack_id', stackId)
+            .order('date', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'findEventsByStackId', error));
+        }
+
+        return success(data || []);
+    } catch (err) {
+        return failure(
+            createDatabaseError(
+                '스택 이벤트 목록 조회 중 오류가 발생했습니다.',
+                'findEventsByStackId',
+                err
+            )
+        );
+    }
+}
+
 // ============================================
 // Update
 // ============================================
