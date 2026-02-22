@@ -1,14 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Timeline } from '@/components/dna/Timeline';
-
-interface TimelineEntry {
-    date: string;
-    title: string;
-    venue: string;
-    link?: string;
-}
+import { Timeline, type TimelineEntry } from '@/components/dna/Timeline';
 
 /** Number of events loaded per page (initial + each "more" click) */
 const PAGE_SIZE = 5;

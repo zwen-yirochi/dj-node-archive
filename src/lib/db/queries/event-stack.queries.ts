@@ -3,7 +3,13 @@
 
 import { createClient } from '@/lib/supabase/server';
 import type { EventStack } from '@/types/database';
-import { type Result, success, failure, createDatabaseError } from '@/types/result';
+import {
+    type Result,
+    success,
+    failure,
+    createDatabaseError,
+    createNotFoundError,
+} from '@/types/result';
 
 /**
  * 이벤트 스택 upsert (venue_id + title 기준)
@@ -71,6 +77,35 @@ export async function upsertEventStack(
     } catch (err) {
         return failure(
             createDatabaseError('이벤트 스택 생성 중 오류가 발생했습니다.', 'upsertEventStack', err)
+        );
+    }
+}
+
+/**
+ * 스택 ID로 이벤트 스택 조회
+ */
+export async function findStackById(id: string): Promise<Result<EventStack>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('event_stacks')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                return failure(
+                    createNotFoundError('이벤트 스택을 찾을 수 없습니다.', 'event_stack')
+                );
+            }
+            return failure(createDatabaseError(error.message, 'findStackById', error));
+        }
+
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError('이벤트 스택 조회 중 오류가 발생했습니다.', 'findStackById', err)
         );
     }
 }

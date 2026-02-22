@@ -1,11 +1,15 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { LineupText, type LineupArtist } from '@/components/dna/LineupText';
 
-interface TimelineEntry {
+export interface TimelineEntry {
     date: string;
     title: string;
     venue: string;
     link?: string;
+    stackLabel?: string;
+    stackLink?: string;
+    artists?: LineupArtist[];
 }
 
 interface TimelineProps {
@@ -32,16 +36,30 @@ export function Timeline({ entries, className }: TimelineProps) {
                     </span>
 
                     <div className="dna-text-meta">{entry.date}</div>
-                    <div className="my-0.5 text-dna-item font-semibold">{entry.title}</div>
+                    <div className="my-0.5 text-dna-item font-semibold">
+                        {entry.link ? (
+                            <Link href={entry.link} className="text-inherit no-underline">
+                                {entry.title}
+                            </Link>
+                        ) : (
+                            entry.title
+                        )}
+                    </div>
+                    {entry.stackLabel && entry.stackLink && (
+                        <div className="text-dna-system text-dna-ink-light">
+                            {'→ '}
+                            <Link
+                                href={entry.stackLink}
+                                className="border-b border-dotted border-dna-ink-light no-underline hover:border-solid hover:text-dna-ink"
+                            >
+                                {entry.stackLabel} series
+                            </Link>
+                        </div>
+                    )}
                     <div className="text-dna-ui text-dna-ink-light">
                         @{' '}
-                        {entry.link ? (
-                            <Link
-                                href={entry.link}
-                                className="border-b border-dotted border-dna-accent-blue text-dna-accent-blue no-underline hover:border-solid"
-                            >
-                                {entry.venue}
-                            </Link>
+                        {entry.artists && entry.artists.length > 0 ? (
+                            <LineupText artists={entry.artists} fallback={entry.venue} />
                         ) : (
                             entry.venue
                         )}

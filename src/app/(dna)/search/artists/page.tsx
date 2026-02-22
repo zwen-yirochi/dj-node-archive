@@ -52,8 +52,17 @@ function ArtistSearchContent() {
                     {isLoading ? (
                         <div className="dna-text-system py-12 text-center">// SCANNING...</div>
                     ) : !data || data.items.length === 0 ? (
-                        <div className="py-12 text-center text-dna-body text-dna-ink-light">
-                            // NO RESULTS FOUND
+                        <div className="py-12 text-center">
+                            <p className="text-dna-body text-dna-ink-light">// NO RESULTS FOUND</p>
+                            <div className="mx-auto mt-6 max-w-md border border-dashed border-dna-ink-faint p-4">
+                                <p className="text-dna-meta-val uppercase tracking-dna-system text-dna-ink-light">
+                                    아티스트가 아직 등록되지 않았습니다.
+                                </p>
+                                <p className="mt-2 text-dna-ui text-dna-ink-ghost">
+                                    RA Import로 베뉴를 등록하면 라인업에 포함된 아티스트가 자동으로
+                                    추가됩니다.
+                                </p>
+                            </div>
                         </div>
                     ) : (
                         <>

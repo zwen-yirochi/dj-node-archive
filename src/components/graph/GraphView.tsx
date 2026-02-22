@@ -23,7 +23,7 @@ function GraphViewInner({ centerId, centerType, className }: GraphViewProps) {
     // Initial load only — no data at all yet
     if (!data) {
         return (
-            <div className={`flex items-center justify-center bg-dna-bg-tint ${className || ''}`}>
+            <div className={`flex items-center justify-center bg-transparent ${className || ''}`}>
                 <div className={STATUS_CLASS}>
                     {error ? '// err: graph load failed' : '// loading graph...'}
                 </div>
@@ -33,7 +33,7 @@ function GraphViewInner({ centerId, centerType, className }: GraphViewProps) {
 
     if (data.nodes.length === 0) {
         return (
-            <div className={`flex items-center justify-center bg-dna-bg-tint ${className || ''}`}>
+            <div className={`flex items-center justify-center bg-transparent ${className || ''}`}>
                 <div className={STATUS_CLASS}>// no connections</div>
             </div>
         );
