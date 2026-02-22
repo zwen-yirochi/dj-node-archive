@@ -19,6 +19,7 @@ import { notFound } from 'next/navigation';
 import PaginatedTimeline from '@/components/dna/PaginatedTimeline';
 import EventStackGroup from '@/components/dna/EventStackGroup';
 import GraphView from '@/components/graph/GraphView';
+import DesktopOnly from '@/components/ui/DesktopOnly';
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -213,12 +214,18 @@ export default async function VenuePage({ params }: PageProps) {
                 </div>
             </div>
 
-            {/* ── Graph View ── */}
-            <AsciiDivider text="GRAPH" />
-            <section className="my-5">
-                <SectionLabel right="LOCAL">Connection Graph</SectionLabel>
-                <GraphView centerId={venue.id} centerType="venue" className="h-[400px] w-full" />
-            </section>
+            {/* ── Graph View (desktop only) ── */}
+            <DesktopOnly>
+                <AsciiDivider text="GRAPH" />
+                <section className="my-5">
+                    <SectionLabel right="LOCAL">Connection Graph</SectionLabel>
+                    <GraphView
+                        centerId={venue.id}
+                        centerType="venue"
+                        className="h-[400px] w-full"
+                    />
+                </section>
+            </DesktopOnly>
 
             {/* ── Upcoming Events ── */}
             {upcomingEvents.length > 0 && (

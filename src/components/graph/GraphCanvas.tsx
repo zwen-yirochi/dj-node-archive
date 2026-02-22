@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import Graph from 'graphology';
-import Sigma from 'sigma';
-import forceAtlas2 from 'graphology-layout-forceatlas2';
 import type { LocalGraphData, NodeType } from '@/types/graph';
 import { NODE_COLORS } from '@/types/graph';
+import Graph from 'graphology';
+import forceAtlas2 from 'graphology-layout-forceatlas2';
+import { useEffect, useRef, useState } from 'react';
+import Sigma from 'sigma';
 
 interface GraphCanvasProps {
     data: LocalGraphData;
@@ -63,7 +63,7 @@ export default function GraphCanvas({ data, centerId, onRecenter }: GraphCanvasP
             labelSize: 11,
             labelColor: { color: '#1a1a1e' },
             labelFont: "'JetBrains Mono', monospace",
-            labelRenderedSizeThreshold: 5,
+            labelRenderedSizeThreshold: 3,
             defaultNodeType: 'circle',
             defaultEdgeType: 'line',
             stagePadding: 40,
@@ -82,7 +82,69 @@ export default function GraphCanvas({ data, centerId, onRecenter }: GraphCanvasP
         sigma.on('enterNode', ({ node }) => setHoveredNode(node));
         sigma.on('leaveNode', () => setHoveredNode(null));
 
+        // Elastic bounce-back for zoom & pan
+        const MAX_RATIO = 2.5;
+        const MIN_RATIO = 0.08;
+        const PAN_MIN = -0.5;
+        const PAN_MAX = 1.5;
+        let bounceTimer: ReturnType<typeof setTimeout> | null = null;
+        let isBouncing = false;
+
+        sigma.getCamera().on('updated', () => {
+            if (isBouncing) return;
+            if (bounceTimer) clearTimeout(bounceTimer);
+
+            bounceTimer = setTimeout(() => {
+                const camera = sigma.getCamera();
+                const { x, y, ratio } = camera.getState();
+                const target: Record<string, number> = {};
+                let needsBounce = false;
+
+                // Zoom bounce → recenter on current center node
+                if (ratio > MAX_RATIO || ratio < MIN_RATIO) {
+                    target.ratio = ratio > MAX_RATIO ? MAX_RATIO : MIN_RATIO;
+                    const centerNode = centerIdRef.current;
+                    const pos =
+                        sigmaRef.current && centerNode
+                            ? sigmaRef.current.getNodeDisplayData(centerNode)
+                            : null;
+                    if (pos) {
+                        target.x = pos.x;
+                        target.y = pos.y;
+                    }
+                    needsBounce = true;
+                }
+
+                // Pan bounce — Y axis: tighter rollback toward 0.5 center
+                if (y < PAN_MIN) {
+                    target.y = PAN_MIN * 0.3 + 0.5 * 0.7;
+                    needsBounce = true;
+                } else if (y > PAN_MAX) {
+                    target.y = PAN_MAX * 0.3 + 0.5 * 0.7;
+                    needsBounce = true;
+                }
+
+                // Pan bounce — X axis: clamp to boundary
+                if (x < PAN_MIN) {
+                    target.x = PAN_MIN;
+                    needsBounce = true;
+                } else if (x > PAN_MAX) {
+                    target.x = PAN_MAX;
+                    needsBounce = true;
+                }
+
+                if (needsBounce) {
+                    isBouncing = true;
+                    camera.animate(target, { duration: 300 });
+                    setTimeout(() => {
+                        isBouncing = false;
+                    }, 350);
+                }
+            }, 150);
+        });
+
         return () => {
+            if (bounceTimer) clearTimeout(bounceTimer);
             cancelAnimationFrame(animFrameRef.current);
             sigma.kill();
             sigmaRef.current = null;
@@ -140,8 +202,8 @@ export default function GraphCanvas({ data, centerId, onRecenter }: GraphCanvasP
             if (!graph.hasNode(edge.source_id) || !graph.hasNode(edge.target_id)) continue;
             if (graph.hasEdge(edge.source_id, edge.target_id)) continue;
             graph.addEdge(edge.source_id, edge.target_id, {
-                size: Math.max(0.5, edge.weight / 5),
-                color: `rgba(26, 26, 30, ${0.15 + (edge.weight / 10) * 0.35})`,
+                size: 2,
+                color: 'rgba(26, 26, 30, 0.15)',
             });
         }
 
@@ -193,14 +255,7 @@ export default function GraphCanvas({ data, centerId, onRecenter }: GraphCanvasP
             return attrs;
         });
 
-        sigma.setSetting('edgeReducer', (edge, attrs) => {
-            if (!hoveredNode) return attrs;
-            const src = graph.source(edge);
-            const tgt = graph.target(edge);
-            const isConnected = src === hoveredNode || tgt === hoveredNode;
-            if (isConnected) {
-                return { ...attrs, color: 'rgba(74, 74, 82, 0.15)' };
-            }
+        sigma.setSetting('edgeReducer', (_edge, attrs) => {
             return attrs;
         });
 
