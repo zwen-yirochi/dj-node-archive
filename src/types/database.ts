@@ -164,6 +164,20 @@ export interface EventData {
 }
 
 // ============================================
+// Event Stack
+// ============================================
+export interface EventStack {
+    id: string;
+    venue_id: string;
+    title: string;
+    event_count: number;
+    first_event_date: string | null;
+    last_event_date: string | null;
+    created_at: ISODateString;
+    updated_at: ISODateString;
+}
+
+// ============================================
 // Event
 // ============================================
 export interface Event {
@@ -177,6 +191,7 @@ export interface Event {
     is_public: boolean;
     created_by: string;
     source: string;
+    stack_id?: string | null;
     created_at: ISODateString;
     updated_at: ISODateString;
 }

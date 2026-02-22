@@ -25,8 +25,14 @@ import {
     countSystemImportsInWindow,
     createImportLog,
 } from '@/lib/db/queries/import.queries';
+import {
+    upsertEventStack,
+    assignStackToEvents,
+    refreshStackSummary,
+} from '@/lib/db/queries/event-stack.queries';
 import { findUserByAuthId } from '@/lib/db/queries/user.queries';
 import { mapRAVenueToDbInput, mapRAEventToDbInput } from '@/lib/mappers';
+import type { Event as DBEvent } from '@/types/database';
 import type { PreviewEventItem, VenueImportPreview, VenueImportResult } from '@/types/ra';
 import { NextResponse } from 'next/server';
 
@@ -259,7 +265,7 @@ export async function handleVenueImportConfirm(request: Request, { user }: AuthC
         );
     }
 
-    // 4. RA API 전체 수집
+    // 4. RA API 전체 수집 (과거 + 예정 병렬 조회)
     const raResult = await fetchAllRAVenueEvents(venueId, maxEvents);
     if (!raResult.success) {
         return NextResponse.json(
@@ -268,7 +274,7 @@ export async function handleVenueImportConfirm(request: Request, { user }: AuthC
         );
     }
 
-    const { venue: raVenue, events: raEvents } = raResult.data;
+    const { venue: raVenue, pastEvents, upcomingEvents } = raResult.data;
 
     if (!raVenue) {
         return NextResponse.json(
@@ -299,20 +305,24 @@ export async function handleVenueImportConfirm(request: Request, { user }: AuthC
 
     const createdVenue = venueCreateResult.data;
 
-    // 6. 이벤트 생성 + 로그
-    const eventInputs = raEvents.map((raEvent) =>
+    // 6. 이벤트 생성 (과거 + 예정)
+    const allRAEvents = [...pastEvents, ...upcomingEvents];
+    const eventInputs = allRAEvents.map((raEvent) =>
         mapRAEventToDbInput(raEvent, createdVenue.id, createdVenue.name, userId)
     );
 
     const eventsResult = await createImportedEvents(eventInputs);
-    const importedCount = isSuccess(eventsResult) ? eventsResult.data.length : 0;
+    const importedEvents = isSuccess(eventsResult) ? eventsResult.data : [];
+
+    // 6.5 이벤트 스택 생성
+    const stacksCreated = await createStacksForEvents(importedEvents, createdVenue.id);
 
     // Import 로그 기록 (실패해도 전체 응답에는 영향 없음)
     await createImportLog({
         user_id: userId,
         ra_url,
         venue_id: createdVenue.id,
-        event_count: importedCount,
+        event_count: importedEvents.length,
     });
 
     // 7. 응답
@@ -322,8 +332,47 @@ export async function handleVenueImportConfirm(request: Request, { user }: AuthC
             name: createdVenue.name,
             slug: createdVenue.slug,
         },
-        importedEventsCount: importedCount,
+        importedEventsCount: importedEvents.length,
+        importedUpcomingCount: upcomingEvents.length,
+        stacksCreated,
     };
 
     return successResponse(result, 201);
+}
+
+/**
+ * 이벤트를 title 기준으로 그룹핑 → 2개 이상인 그룹에 대해 스택 생성/할당
+ */
+async function createStacksForEvents(events: DBEvent[], venueId: string): Promise<number> {
+    // title별 그룹핑 (case-insensitive)
+    const groups = new Map<string, DBEvent[]>();
+    for (const event of events) {
+        const key = event.title.toLowerCase();
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push(event);
+    }
+
+    let stackCount = 0;
+    for (const [, groupEvents] of groups) {
+        if (groupEvents.length < 2) continue;
+
+        const sorted = groupEvents.sort(
+            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+
+        const stackResult = await upsertEventStack(
+            venueId,
+            groupEvents[0].title,
+            sorted.length,
+            sorted[0].date,
+            sorted[sorted.length - 1].date
+        );
+        if (!isSuccess(stackResult)) continue;
+
+        const eventIds = groupEvents.map((e) => e.id);
+        await assignStackToEvents(eventIds, stackResult.data.id);
+        stackCount++;
+    }
+
+    return stackCount;
 }

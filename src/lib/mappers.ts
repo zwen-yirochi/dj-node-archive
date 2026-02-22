@@ -1,6 +1,7 @@
 // lib/mappers.ts - DB ↔ Domain 변환 함수 통합
 import type {
     Event as DBEvent,
+    EventStack as DBEventStack,
     User as DBUser,
     Venue as DBVenue,
     Entry,
@@ -14,6 +15,7 @@ import {
     type ContentEntry,
     type Event,
     type EventEntry,
+    type EventStack,
     type LinkEntry,
     type MixsetEntry,
     type PublicEventEntry,
@@ -401,6 +403,21 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntr
                 icon: 'globe',
             } as LinkEntry;
     }
+}
+
+// ============================================
+// Event Stack Mappers
+// ============================================
+
+export function mapEventStackToDomain(dbStack: DBEventStack): EventStack {
+    return {
+        id: dbStack.id,
+        venueId: dbStack.venue_id,
+        title: dbStack.title,
+        eventCount: dbStack.event_count,
+        firstEventDate: dbStack.first_event_date,
+        lastEventDate: dbStack.last_event_date,
+    };
 }
 
 // ============================================

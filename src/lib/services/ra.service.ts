@@ -48,6 +48,34 @@ const VENUE_WITH_EVENTS_QUERY = `
   }
 `;
 
+// venue(id) 쿼리 — 베뉴 정보 + 예정 이벤트
+const VENUE_UPCOMING_EVENTS_QUERY = `
+  query GET_VENUE_UPCOMING($id: ID!, $eventLimit: Int!) {
+    venue(id: $id) {
+      id
+      name
+      address
+      area {
+        name
+        country {
+          name
+        }
+      }
+      events(type: LATEST, limit: $eventLimit) {
+        id
+        title
+        date
+        contentUrl
+        artists {
+          id
+          name
+          urlSafeName
+        }
+      }
+    }
+  }
+`;
+
 // 베뉴 정보만 조회 (이벤트 없이)
 const VENUE_INFO_QUERY = `
   query GET_VENUE_INFO($id: ID!) {
@@ -92,6 +120,7 @@ interface RAVenueResponse {
 
 const PREVIEW_LIMIT = 50;
 const MAX_EVENTS_DEFAULT = 500;
+const UPCOMING_LIMIT = 100;
 
 /**
  * RA 베뉴 URL에서 venue ID 추출
@@ -212,35 +241,78 @@ export async function fetchRAVenueEvents(
 }
 
 /**
- * RA 베뉴의 전체 이벤트 수집 (Confirm용, 최대 500건)
- * 단일 쿼리로 처리 (RA API가 limit 500까지 지원)
+ * RA 베뉴의 전체 이벤트 수집 (Confirm용)
+ * 과거 (최대 500건) + 예정 (최대 100건) 병렬 조회
  */
 export async function fetchAllRAVenueEvents(
     venueId: string,
-    maxEvents: number = MAX_EVENTS_DEFAULT
+    maxPastEvents: number = MAX_EVENTS_DEFAULT
 ): Promise<
-    Result<{ venue: RAVenueInfo | null; events: RAEventListingItem[]; totalResults: number }>
+    Result<{
+        venue: RAVenueInfo | null;
+        pastEvents: RAEventListingItem[];
+        upcomingEvents: RAEventListingItem[];
+        totalResults: number;
+    }>
 > {
-    const limit = Math.min(maxEvents, MAX_EVENTS_DEFAULT);
+    const limit = Math.min(maxPastEvents, MAX_EVENTS_DEFAULT);
 
-    const result = await queryRA<RAVenueResponse>(VENUE_WITH_EVENTS_QUERY, {
+    // 과거 + 예정 병렬 조회
+    const [pastResult, upcomingResult] = await Promise.all([
+        queryRA<RAVenueResponse>(VENUE_WITH_EVENTS_QUERY, {
+            id: venueId,
+            eventLimit: limit,
+        }),
+        queryRA<RAVenueResponse>(VENUE_UPCOMING_EVENTS_QUERY, {
+            id: venueId,
+            eventLimit: UPCOMING_LIMIT,
+        }),
+    ]);
+
+    if (!pastResult.success) return pastResult;
+
+    const venue = pastResult.data.data.venue;
+    if (!venue) {
+        return success({ venue: null, pastEvents: [], upcomingEvents: [], totalResults: 0 });
+    }
+
+    const venueInfo = extractVenueInfo(venue);
+    const pastEvents = extractEvents(venue.events, venueInfo);
+
+    let upcomingEvents: RAEventListingItem[] = [];
+    if (upcomingResult.success && upcomingResult.data.data.venue?.events) {
+        upcomingEvents = extractEvents(upcomingResult.data.data.venue.events, venueInfo);
+    }
+
+    return success({
+        venue: venueInfo,
+        pastEvents,
+        upcomingEvents,
+        totalResults: pastEvents.length + upcomingEvents.length,
+    });
+}
+
+/**
+ * RA 베뉴 예정 이벤트만 조회 (Cron refresh용)
+ */
+export async function fetchRAVenueUpcomingEvents(
+    venueId: string,
+    maxEvents: number = UPCOMING_LIMIT
+): Promise<Result<{ venue: RAVenueInfo | null; events: RAEventListingItem[] }>> {
+    const result = await queryRA<RAVenueResponse>(VENUE_UPCOMING_EVENTS_QUERY, {
         id: venueId,
-        eventLimit: limit,
+        eventLimit: Math.min(maxEvents, UPCOMING_LIMIT),
     });
 
     if (!result.success) return result;
 
     const venue = result.data.data.venue;
     if (!venue) {
-        return success({ venue: null, events: [], totalResults: 0 });
+        return success({ venue: null, events: [] });
     }
 
     const venueInfo = extractVenueInfo(venue);
     const events = extractEvents(venue.events, venueInfo);
 
-    return success({
-        venue: venueInfo,
-        events,
-        totalResults: events.length,
-    });
+    return success({ venue: venueInfo, events });
 }
