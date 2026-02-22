@@ -70,4 +70,6 @@ export interface VenueImportResult {
         slug: string;
     };
     importedEventsCount: number;
+    importedUpcomingCount: number;
+    stacksCreated: number;
 }

@@ -154,6 +154,18 @@ export interface Mixset {
 }
 
 // ============================================
+// Event Stack
+// ============================================
+export interface EventStack {
+    id: string;
+    venueId: string;
+    title: string;
+    eventCount: number;
+    firstEventDate: string | null;
+    lastEventDate: string | null;
+}
+
+// ============================================
 // Backlink (그래프뷰용)
 // ============================================
 export interface Backlink {
