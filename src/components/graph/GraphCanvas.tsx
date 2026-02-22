@@ -208,10 +208,6 @@ export default function GraphCanvas({ data, centerId, onRecenter }: GraphCanvasP
     }, [hoveredNode]);
 
     return (
-        <div
-            ref={containerRef}
-            className="h-full w-full"
-            style={{ background: 'rgb(218, 222, 224)' }}
-        />
+        <div ref={containerRef} className="h-full w-full" style={{ background: 'transparent' }} />
     );
 }
