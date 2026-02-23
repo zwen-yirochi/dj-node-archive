@@ -87,7 +87,7 @@ export default function ContentPanel() {
 
     // TanStack Query
     const { data } = useEditorData();
-    const entries = data?.contentEntries ?? [];
+    const entries = data.contentEntries;
     const updateEntryMutation = useUpdateEntry();
     const deleteEntryMutation = useDeleteEntry();
 

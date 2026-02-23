@@ -1,4 +1,3 @@
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
@@ -42,10 +41,8 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${inter.variable} ${dotso.variable} antialiased`}>
-                <ErrorBoundary>
-                    {children}
-                    <SpeedInsights debug={process.env.NODE_ENV === 'development'} />
-                </ErrorBoundary>
+                {children}
+                <SpeedInsights debug={process.env.NODE_ENV === 'development'} />
                 <Toaster />
             </body>
         </html>

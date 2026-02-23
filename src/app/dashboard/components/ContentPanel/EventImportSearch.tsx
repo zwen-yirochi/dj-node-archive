@@ -63,7 +63,7 @@ export default function EventImportSearch() {
     };
 
     const handleImport = async (event: EventSearchResult) => {
-        if (!data?.pageId) {
+        if (!data.pageId) {
             toast({
                 variant: 'destructive',
                 title: 'Error',

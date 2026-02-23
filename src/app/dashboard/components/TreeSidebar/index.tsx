@@ -50,7 +50,7 @@ import ViewSection from './ViewSection';
 export default function TreeSidebar() {
     // TanStack Query
     const { data } = useEditorData();
-    const entries = data?.contentEntries ?? [];
+    const entries = data.contentEntries;
 
     // User Store
     const user = useUserStore((state) => state?.user);

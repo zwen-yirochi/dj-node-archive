@@ -103,7 +103,7 @@ export default function CreateEventForm() {
     const onSubmit = async (formData: CreateEventData) => {
         clearErrors('root');
 
-        if (!data?.pageId) {
+        if (!data.pageId) {
             setError('root', { type: 'server', message: 'Page ID is not set. Please refresh.' });
             return;
         }

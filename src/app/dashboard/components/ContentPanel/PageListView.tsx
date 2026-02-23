@@ -129,7 +129,7 @@ function SortableItem({
 export default function PageListView() {
     // TanStack Query
     const { data } = useEditorData();
-    const entries = data?.contentEntries ?? [];
+    const entries = data.contentEntries;
     const toggleVisibilityMutation = useToggleVisibility();
     const removeFromDisplayMutation = useRemoveFromDisplay();
     const reorderDisplayMutation = useReorderDisplayEntries();

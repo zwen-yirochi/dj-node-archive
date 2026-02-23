@@ -1,5 +1,4 @@
-// components/DashboardSkeleton.tsx
-export default function DashboardSkeleton() {
+export default function Skeleton() {
     return (
         <div className="flex h-screen overflow-hidden">
             {/* 사이드바 */}

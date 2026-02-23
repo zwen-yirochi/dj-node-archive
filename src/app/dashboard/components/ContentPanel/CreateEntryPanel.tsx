@@ -52,7 +52,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
             return;
         }
 
-        if (!data?.pageId) {
+        if (!data.pageId) {
             toast({
                 variant: 'destructive',
                 title: 'Error',

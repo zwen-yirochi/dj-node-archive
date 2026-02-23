@@ -11,7 +11,7 @@ import { canAddToView } from '@/lib/validators';
 import type { EditorData } from '@/lib/services/user.service';
 import type { ContentEntry } from '@/types';
 import { isDisplayed } from '@/types';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 
 // ============================================
 // Query Keys
@@ -91,7 +91,7 @@ async function reorderDisplayAPI(updates: { id: string; displayOrder: number }[]
 // ============================================
 
 export function useEditorData(initialData?: EditorData) {
-    return useQuery({
+    return useSuspenseQuery({
         queryKey: entryKeys.all,
         queryFn: fetchEditorData,
         initialData,
