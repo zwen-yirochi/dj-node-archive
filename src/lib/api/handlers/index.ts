@@ -1,6 +1,7 @@
 // lib/api/handlers/index.ts
 export {
     handleCreateEntry,
+    handleGetEntry,
     handleUpdateEntry,
     handleDeleteEntry,
     handleReorderEntries,

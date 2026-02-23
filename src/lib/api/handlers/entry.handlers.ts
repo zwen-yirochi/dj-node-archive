@@ -14,6 +14,7 @@ import {
 import {
     createEntry,
     deleteEntry,
+    getEntryById,
     getMaxDisplayOrder,
     getMaxPosition,
     updateDisplayOrders,
@@ -22,7 +23,7 @@ import {
 } from '@/lib/db/queries/entry.queries';
 import { createEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
 import { findUserByAuthId } from '@/lib/db/queries/user.queries';
-import { mapEntryToDatabase } from '@/lib/mappers';
+import { mapEntryToDatabase, mapEntryToDomain } from '@/lib/mappers';
 import {
     createEntryRequestSchema,
     publishEventSchema,
@@ -125,6 +126,26 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
     }
 
     return successResponse({ ...result.data, referenceId }, 201);
+}
+
+/**
+ * GET /api/entries/[id]
+ * Entry 단건 조회
+ */
+export async function handleGetEntry({ user }: AuthContext, id: string) {
+    const ownership = await verifyEntryOwnership(id, user.id);
+    if (!ownership.ok) {
+        return ownership.reason === 'not_found' ? notFoundResponse('엔트리') : forbiddenResponse();
+    }
+
+    const result = await getEntryById(id);
+    if (!isSuccess(result)) {
+        return result.error.code === 'NOT_FOUND'
+            ? notFoundResponse('엔트리')
+            : internalErrorResponse(result.error.message);
+    }
+
+    return successResponse(mapEntryToDomain(result.data));
 }
 
 /**
