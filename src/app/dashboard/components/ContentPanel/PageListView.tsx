@@ -9,7 +9,6 @@ import {
 } from '../../hooks/use-entries';
 import { cn } from '@/lib/utils';
 import { useDashboardUIStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
 import type { ContentEntry } from '@/types';
 import {
     closestCenter,
@@ -126,7 +125,11 @@ function SortableItem({
     );
 }
 
-export default function PageListView() {
+interface PageListViewProps {
+    onSelectDetail: (id: string) => void;
+}
+
+export default function PageListView({ onSelectDetail }: PageListViewProps) {
     // TanStack Query
     const { data } = useEditorData();
     const entries = data.contentEntries;
@@ -136,9 +139,6 @@ export default function PageListView() {
 
     // Dashboard UI Store
     const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
-
-    // UI Store
-    const selectEntry = useUIStore((state) => state.selectEntry);
 
     const dndId = useId();
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -248,7 +248,7 @@ export default function PageListView() {
                                         isVisible={entry.isVisible}
                                         onToggleVisibility={() => handleToggleVisibility(entry.id)}
                                         onRemove={() => handleRemoveFromDisplay(entry.id)}
-                                        onSelect={() => selectEntry(entry.id)}
+                                        onSelect={() => onSelectDetail(entry.id)}
                                     />
                                 ))}
                             </div>

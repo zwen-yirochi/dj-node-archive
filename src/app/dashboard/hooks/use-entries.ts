@@ -77,6 +77,13 @@ async function reorderEntriesAPI(updates: { id: string; position: number }[]): P
     if (!res.ok) throw new Error(`Failed to reorder entries: ${res.status}`);
 }
 
+async function fetchEntryDetail(id: string): Promise<ContentEntry> {
+    const res = await fetch(`/api/entries/${id}`);
+    if (!res.ok) throw new Error(`Failed to fetch entry: ${res.status}`);
+    const json = await res.json();
+    return json.data;
+}
+
 async function reorderDisplayAPI(updates: { id: string; displayOrder: number }[]): Promise<void> {
     const res = await fetch('/api/entries/reorder-display', {
         method: 'PATCH',
@@ -96,6 +103,23 @@ export function useEditorData(initialData?: EditorData) {
         queryFn: fetchEditorData,
         initialData,
         initialDataUpdatedAt: initialData ? Date.now() : undefined,
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
+export function useEntryDetail(id: string) {
+    const queryClient = useQueryClient();
+
+    return useSuspenseQuery({
+        queryKey: entryKeys.detail(id),
+        queryFn: () => fetchEntryDetail(id),
+        initialData: () => {
+            const listData = queryClient.getQueryData<EditorData>(entryKeys.all);
+            return listData?.contentEntries.find((e) => e.id === id);
+        },
+        initialDataUpdatedAt: () => {
+            return queryClient.getQueryState(entryKeys.all)?.dataUpdatedAt;
+        },
         staleTime: 5 * 60 * 1000,
     });
 }

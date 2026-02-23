@@ -8,7 +8,7 @@ import { useUIStore } from '@/stores/uiStore';
 import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
 import EmptyState from './EmptyState';
-import PageListView from './PageListView'; // 디폴트 뷰는 static import
+import PagePanel from './PagePanel'; // 디폴트 뷰는 static import
 
 // 동적 import with 스켈레톤
 const BioDesignPanel = dynamic(() => import('./BioDesignPanel'), {
@@ -113,7 +113,7 @@ export default function ContentPanel() {
     if (activePanel === 'page') {
         return (
             <div className="h-full overflow-hidden rounded-2xl">
-                <PageListView />
+                <PagePanel />
             </div>
         );
     }
