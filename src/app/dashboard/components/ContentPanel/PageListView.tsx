@@ -6,7 +6,7 @@ import {
     useReorderDisplayEntries,
     useRemoveFromDisplay,
     useToggleVisibility,
-} from '@/hooks/use-entries';
+} from '../../hooks/use-entries';
 import { cn } from '@/lib/utils';
 import { useDashboardUIStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';

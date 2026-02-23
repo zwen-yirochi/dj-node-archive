@@ -1,6 +1,6 @@
 'use client';
 
-import { useEditorData, useDeleteEntry, useUpdateEntry } from '@/hooks/use-entries';
+import { useEditorData, useDeleteEntry, useUpdateEntry } from '../../hooks/use-entries';
 import { shouldTriggerPreview } from '@/lib/previewTrigger';
 import { canAddToView } from '@/lib/validators';
 import { useDashboardUIStore } from '@/stores/contentEntryStore';

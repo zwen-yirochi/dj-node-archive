@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCreateEntry, useEditorData } from '@/hooks/use-entries';
+import { useCreateEntry, useEditorData } from '../../hooks/use-entries';
 import { toast } from '@/hooks/use-toast';
 import { mapEventToEntry } from '@/lib/mappers';
 import { useDashboardUIStore } from '@/stores/contentEntryStore';

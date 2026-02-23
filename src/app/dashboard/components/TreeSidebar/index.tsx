@@ -7,7 +7,7 @@ import {
     useEditorData,
     useReorderDisplayEntries,
     useReorderEntries,
-} from '@/hooks/use-entries';
+} from '../../hooks/use-entries';
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/lib/validators';
 import { useDashboardUIStore } from '@/stores/contentEntryStore';

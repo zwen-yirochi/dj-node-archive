@@ -1,7 +1,7 @@
 // app/dashboard/components/StoreInitializer.tsx
 'use client';
 
-import { useEditorData } from '@/hooks/use-entries';
+import { useEditorData } from '../hooks/use-entries';
 import type { EditorData } from '@/lib/services/user.service';
 import { useDashboardUIStore } from '@/stores/contentEntryStore';
 import { useUIStore } from '@/stores/uiStore';

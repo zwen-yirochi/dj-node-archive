@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import OptionSelector from '@/components/ui/OptionSelector';
-import { useCreateEntry, useEditorData } from '@/hooks/use-entries';
+import { useCreateEntry, useEditorData } from '../../hooks/use-entries';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
 import { useDashboardUIStore } from '@/stores/contentEntryStore';
