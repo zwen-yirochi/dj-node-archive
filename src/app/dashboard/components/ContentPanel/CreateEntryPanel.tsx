@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import OptionSelector from '@/components/ui/OptionSelector';
-import { useCreateEntry, useEditorData } from '../../hooks/use-entries';
+import { useEditorData, useEntryMutations } from '../../hooks';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
 import { useDashboardUIStore } from '@/stores/contentEntryStore';
@@ -30,7 +30,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
 
     // TanStack Query
     const { data } = useEditorData();
-    const createEntryMutation = useCreateEntry();
+    const { create: createEntryMutation } = useEntryMutations();
 
     // Stores
     const addNewlyCreated = useDashboardUIStore((state) => state.addNewlyCreated);

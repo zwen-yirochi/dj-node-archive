@@ -1,13 +1,7 @@
 // app/dashboard/components/TreeSidebar/index.tsx
 'use client';
 
-import {
-    useAddToDisplay,
-    useDeleteEntry,
-    useEditorData,
-    useReorderDisplayEntries,
-    useReorderEntries,
-} from '../../hooks/use-entries';
+import { useEditorData, useEntryMutations } from '../../hooks';
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/lib/validators';
 import { useDashboardUIStore } from '@/stores/contentEntryStore';
@@ -56,10 +50,12 @@ export default function TreeSidebar() {
     const user = useUserStore((state) => state?.user);
 
     // TanStack Query Mutations
-    const deleteEntryMutation = useDeleteEntry();
-    const reorderEntriesMutation = useReorderEntries();
-    const addToDisplayMutation = useAddToDisplay();
-    const reorderDisplayMutation = useReorderDisplayEntries();
+    const {
+        remove: deleteEntryMutation,
+        reorder: reorderEntriesMutation,
+        addToDisplay: addToDisplayMutation,
+        reorderDisplay: reorderDisplayMutation,
+    } = useEntryMutations();
 
     // Dashboard UI Store
     const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);

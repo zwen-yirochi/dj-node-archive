@@ -1,12 +1,7 @@
 'use client';
 
 import { COMPONENT_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
-import {
-    useEditorData,
-    useReorderDisplayEntries,
-    useRemoveFromDisplay,
-    useToggleVisibility,
-} from '../../hooks/use-entries';
+import { useEditorData, useEntryMutations } from '../../hooks';
 import { cn } from '@/lib/utils';
 import { useDashboardUIStore } from '@/stores/contentEntryStore';
 import type { ContentEntry } from '@/types';
@@ -133,9 +128,11 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
     // TanStack Query
     const { data } = useEditorData();
     const entries = data.contentEntries;
-    const toggleVisibilityMutation = useToggleVisibility();
-    const removeFromDisplayMutation = useRemoveFromDisplay();
-    const reorderDisplayMutation = useReorderDisplayEntries();
+    const {
+        toggleVisibility: toggleVisibilityMutation,
+        removeFromDisplay: removeFromDisplayMutation,
+        reorderDisplay: reorderDisplayMutation,
+    } = useEntryMutations();
 
     // Dashboard UI Store
     const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);

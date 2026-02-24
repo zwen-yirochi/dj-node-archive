@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCreateEntry, useEditorData } from '../../hooks/use-entries';
+import { useEditorData, useEntryMutations } from '../../hooks';
 import { toast } from '@/hooks/use-toast';
 import { mapEventToEntry } from '@/lib/mappers';
 import { useDashboardUIStore } from '@/stores/contentEntryStore';
@@ -27,7 +27,7 @@ export default function EventImportSearch() {
 
     // TanStack Query
     const { data } = useEditorData();
-    const createEntryMutation = useCreateEntry();
+    const { create: createEntryMutation } = useEntryMutations();
 
     // Stores
     const finishCreatingEntry = useDashboardUIStore((state) => state.finishCreating);

@@ -14,6 +14,7 @@ interface EditableFieldProps {
     rows?: number;
     disabled?: boolean;
     required?: boolean;
+    forceEdit?: boolean;
 }
 
 /**
@@ -44,6 +45,7 @@ export function EditableField({
     rows = 3,
     disabled = false,
     required = false,
+    forceEdit = false,
 }: EditableFieldProps) {
     const [isEditing, setIsEditing] = React.useState(false);
     const [editValue, setEditValue] = React.useState(value);
@@ -55,6 +57,14 @@ export function EditableField({
             setEditValue(value);
         }
     }, [value, isEditing]);
+
+    // forceEdit가 true로 바뀌면 편집 모드 진입
+    React.useEffect(() => {
+        if (forceEdit && !isEditing) {
+            setEditValue(value);
+            setIsEditing(true);
+        }
+    }, [forceEdit, isEditing, value]);
 
     // 편집 모드 진입 시 포커스
     React.useEffect(() => {

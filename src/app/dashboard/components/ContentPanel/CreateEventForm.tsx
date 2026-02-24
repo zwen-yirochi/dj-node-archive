@@ -18,7 +18,7 @@ import OptionSelector from '@/components/ui/OptionSelector';
 import SearchableInput from '@/components/ui/SearchableInput';
 import TagSearchInput from '@/components/ui/TagSearchInput';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateEntry, useEditorData } from '../../hooks/use-entries';
+import { useEditorData, useEntryMutations } from '../../hooks';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
 import { draftEventSchema, publishEventSchema } from '@/lib/validations/entry.schemas';
@@ -62,7 +62,7 @@ export default function CreateEventForm() {
 
     // TanStack Query
     const { data } = useEditorData();
-    const createEntryMutation = useCreateEntry();
+    const { create: createEntryMutation } = useEntryMutations();
 
     // Stores
     const finishCreatingEntry = useDashboardUIStore((state) => state.finishCreating);
