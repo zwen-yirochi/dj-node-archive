@@ -1,23 +1,13 @@
 'use client';
 
-import { useEditorData, useEntryDetail, useEntryMutations } from '../../hooks';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
+import { TypeBadge } from '@/components/dna';
+import { useEntryDetail, useEntryMutations } from '../../hooks';
 import { Button } from '@/components/ui/button';
 import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
-import { shouldTriggerPreview } from '@/lib/previewTrigger';
-import { canAddToView } from '@/lib/validators';
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
 import type { ContentEntry } from '@/types';
 import { isEventEntry, isMixsetEntry, isLinkEntry } from '@/types';
-import {
-    ArrowLeft,
-    Calendar,
-    Headphones,
-    ImageIcon,
-    Link as LinkIcon,
-    MoreHorizontal,
-    Trash2,
-    Type,
-} from 'lucide-react';
+import { ArrowLeft, ImageIcon, MoreHorizontal, Trash2, Type } from 'lucide-react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import EventEditor from './editors/EventEditor';
 import MixsetEditor from './editors/MixsetEditor';
@@ -76,11 +66,9 @@ interface EntryDetailViewProps {
 export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProps) {
     // Data
     const { data: entry } = useEntryDetail(entryId);
-    const { data: editorData } = useEditorData();
 
     // Mutations
     const { update: updateMutation, remove: deleteMutation } = useEntryMutations();
-    const triggerPreviewRefresh = useDashboardUIStore((s) => s.triggerPreviewRefresh);
 
     // Local editing state
     const [localEntry, setLocalEntry] = useState<ContentEntry>(entry);
@@ -91,27 +79,19 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         setLocalEntry(entry);
     }, [entry]);
 
-    // Save handler
+    // Save handler — preview refresh is handled by the mutation factory
     const handleSave = useCallback(
         async (updated: ContentEntry) => {
-            const previousEntry = editorData.contentEntries.find((e) => e.id === updated.id);
             await updateMutation.mutateAsync({ entry: updated });
-            if (previousEntry && shouldTriggerPreview(previousEntry, updated)) {
-                triggerPreviewRefresh();
-            }
         },
-        [editorData.contentEntries, updateMutation, triggerPreviewRefresh]
+        [updateMutation]
     );
 
     const { debouncedSave, isSaving, lastSaved } = useDebouncedSave(handleSave);
 
-    // Delete handler
+    // Delete handler — preview refresh is handled by the mutation factory
     const handleDelete = async () => {
-        const shouldRefresh = canAddToView(entry);
         await deleteMutation.mutateAsync(entry.id);
-        if (shouldRefresh) {
-            triggerPreviewRefresh();
-        }
         onBack?.();
     };
 
@@ -122,28 +102,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         debouncedSave(updated);
     };
 
-    // Type badge styling
-    const getTypeColor = () => {
-        switch (localEntry.type) {
-            case 'event':
-                return 'bg-blue-50 text-dashboard-type-event border-blue-200';
-            case 'mixset':
-                return 'bg-purple-50 text-dashboard-type-mixset border-purple-200';
-            case 'link':
-                return 'bg-green-50 text-dashboard-type-link border-green-200';
-        }
-    };
-
-    const getTypeIcon = () => {
-        switch (localEntry.type) {
-            case 'event':
-                return <Calendar className="h-4 w-4" />;
-            case 'mixset':
-                return <Headphones className="h-4 w-4" />;
-            case 'link':
-                return <LinkIcon className="h-4 w-4" />;
-        }
-    };
+    const config = ENTRY_TYPE_CONFIG[localEntry.type];
 
     // Save status
     const getSaveStatus = () => {
@@ -185,12 +144,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
             {/* Editor Header */}
             <div className="flex items-center justify-between border-b border-dashboard-border px-6 py-4">
                 <div className="flex items-center gap-3">
-                    <span
-                        className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${getTypeColor()}`}
-                    >
-                        {getTypeIcon()}
-                        {localEntry.type}
-                    </span>
+                    <TypeBadge type={config.badgeType} />
                     {saveStatus && (
                         <span className="text-xs text-dashboard-text-muted">{saveStatus}</span>
                     )}

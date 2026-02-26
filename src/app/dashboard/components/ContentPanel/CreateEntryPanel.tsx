@@ -1,10 +1,8 @@
 'use client';
 
-import {
-    ENTRY_TYPE_CONFIG,
-    EVENT_CREATE_OPTIONS,
-    type EventCreateOption,
-} from '@/app/dashboard/constants/entry';
+import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/constants/entryConfig';
+import { EVENT_CREATE_OPTIONS, type EventCreateOption } from '@/app/dashboard/constants/entry';
+import { TypeBadge } from '@/components/dna';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,8 +10,7 @@ import OptionSelector from '@/components/ui/OptionSelector';
 import { useEditorData, useEntryMutations } from '../../hooks';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
-import { type EntryType, useUIStore } from '@/stores/uiStore';
+import { useDashboardStore } from '@/stores/dashboardStore';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import CreateEventForm from './CreateEventForm';
@@ -32,15 +29,11 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
     const { data } = useEditorData();
     const { create: createEntryMutation } = useEntryMutations();
 
-    // Stores
-    const addNewlyCreated = useDashboardUIStore((state) => state.addNewlyCreated);
-    const finishCreatingEntry = useDashboardUIStore((state) => state.finishCreating);
-    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
-    const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
-    const selectEntry = useUIStore((state) => state.selectEntry);
+    // Store
+    const setView = useDashboardStore((state) => state.setView);
+    const closeCreatePanel = useDashboardStore((state) => state.closeCreatePanel);
 
     const config = ENTRY_TYPE_CONFIG[type];
-    const Icon = config.icon;
 
     const handleCreate = async () => {
         if (!title.trim()) {
@@ -66,15 +59,11 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
             const newEntry = createEmptyEntry(type);
             newEntry.title = title.trim();
 
-            addNewlyCreated(newEntry.id);
             await createEntryMutation.mutateAsync({
                 pageId: data.pageId,
                 entry: newEntry,
             });
-            finishCreatingEntry(newEntry.id);
-            triggerPreviewRefresh();
-            closeCreatePanel();
-            selectEntry(newEntry.id);
+            setView({ kind: 'detail', entryId: newEntry.id });
 
             toast({
                 title: 'Created',
@@ -113,11 +102,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
                 <div className="flex items-center gap-3">
-                    <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${config.bgColor} ${config.textColor}`}
-                    >
-                        <Icon className="h-5 w-5" />
-                    </div>
+                    <TypeBadge type={config.badgeType} />
                     <h2 className="text-xl font-semibold text-dashboard-text">
                         New {config.label}
                     </h2>

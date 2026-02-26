@@ -1,9 +1,9 @@
 'use client';
 
-import { COMPONENT_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
+import { TypeBadge } from '@/components/dna';
 import { useEditorData, useEntryMutations } from '../../hooks';
 import { cn } from '@/lib/utils';
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
 import type { ContentEntry } from '@/types';
 import {
     closestCenter,
@@ -52,8 +52,7 @@ function SortableItem({
         transition,
     };
 
-    const config = COMPONENT_TYPE_CONFIG[entry.type];
-    const Icon = config.icon;
+    const config = ENTRY_TYPE_CONFIG[entry.type];
 
     return (
         <div
@@ -77,14 +76,7 @@ function SortableItem({
             </button>
 
             {/* Type Badge */}
-            <div
-                className={cn(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                    config.bgColor
-                )}
-            >
-                <Icon className={cn('h-4 w-4', config.color)} />
-            </div>
+            <TypeBadge type={config.badgeType} />
 
             {/* Content */}
             <div className="min-w-0 flex-1 cursor-pointer" onClick={onSelect}>
@@ -134,9 +126,6 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
         reorderDisplay: reorderDisplayMutation,
     } = useEntryMutations();
 
-    // Dashboard UI Store
-    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
-
     const dndId = useId();
     const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -175,18 +164,15 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
         const newIndex = displayedEntries.findIndex((e) => e.id === over.id);
         if (newIndex !== -1) {
             reorderDisplayMutation.mutate({ entryId: active.id as string, newIndex });
-            triggerPreviewRefresh();
         }
     };
 
     const handleToggleVisibility = (entryId: string) => {
         toggleVisibilityMutation.mutate(entryId);
-        triggerPreviewRefresh();
     };
 
     const handleRemoveFromDisplay = (entryId: string) => {
         removeFromDisplayMutation.mutate(entryId);
-        triggerPreviewRefresh();
     };
 
     const activeEntry = activeId ? displayedEntries.find((e) => e.id === activeId) : null;
@@ -257,26 +243,9 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
                                     <div className="text-dashboard-text-placeholder">
                                         <GripVertical className="h-5 w-5" />
                                     </div>
-                                    <div
-                                        className={cn(
-                                            'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                                            COMPONENT_TYPE_CONFIG[activeEntry.type].bgColor
-                                        )}
-                                    >
-                                        {(() => {
-                                            const Icon =
-                                                COMPONENT_TYPE_CONFIG[activeEntry.type].icon;
-                                            return (
-                                                <Icon
-                                                    className={cn(
-                                                        'h-4 w-4',
-                                                        COMPONENT_TYPE_CONFIG[activeEntry.type]
-                                                            .color
-                                                    )}
-                                                />
-                                            );
-                                        })()}
-                                    </div>
+                                    <TypeBadge
+                                        type={ENTRY_TYPE_CONFIG[activeEntry.type].badgeType}
+                                    />
                                     <span className="text-sm font-medium text-dashboard-text">
                                         {activeEntry.title || '제목 없음'}
                                     </span>

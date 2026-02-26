@@ -1,10 +1,11 @@
 'use client';
 
-import { COMPONENT_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
+import { TypeBadge } from '@/components/dna';
 import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 import { cn } from '@/lib/utils';
 import { canAddToView, getMissingFieldLabels, getTreeItemStatus } from '@/lib/validators';
-import { useUIStore } from '@/stores/uiStore';
+import { useDashboardStore } from '@/stores/dashboardStore';
 import type { ContentEntry } from '@/types';
 import type { TreeItemStatus } from '@/types/entryFields';
 import { useSortable } from '@dnd-kit/sortable';
@@ -50,9 +51,9 @@ export default function TreeItem({
     onEdit,
     onDelete,
 }: TreeItemProps) {
-    // UI Store
-    const selectedEntryId = useUIStore((state) => state.selectedEntryId);
-    const selectEntry = useUIStore((state) => state.selectEntry);
+    // Dashboard Store
+    const contentView = useDashboardStore((state) => state.contentView);
+    const selectEntry = useDashboardStore((state) => state.selectEntry);
 
     // 상태 계산 - displayOrder가 숫자이면 Page에 있음
     const isInView = typeof entry.displayOrder === 'number';
@@ -60,9 +61,8 @@ export default function TreeItem({
     const status = getTreeItemStatus(isInView, isValid);
     const missingFields = status === 'warning' ? getMissingFieldLabels(entry, 'view') : [];
 
-    const isSelected = selectedEntryId === entry.id;
-    const config = COMPONENT_TYPE_CONFIG[entry.type];
-    const Icon = config.icon;
+    const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
+    const config = ENTRY_TYPE_CONFIG[entry.type];
 
     // ViewSection에서는 'view-{id}' 형식의 ID 사용 (SortableContext와 일치)
     const sortableId = isInViewSection ? `view-${entry.id}` : entry.id;
@@ -133,17 +133,8 @@ export default function TreeItem({
             )}
             onClick={handleClick}
         >
-            {/* Type Icon - Page 섹션에서만 표시 */}
-            {isInViewSection && (
-                <div
-                    className={cn(
-                        'flex h-5 w-5 shrink-0 items-center justify-center rounded',
-                        config.bgColor
-                    )}
-                >
-                    <Icon className={cn('h-3 w-3', config.color)} />
-                </div>
-            )}
+            {/* Type Badge - Page 섹션에서만 표시 */}
+            {isInViewSection && <TypeBadge type={config.badgeType} />}
 
             {/* Title */}
             <span className={cn('ml-2 min-w-0 flex-1 truncate text-sm', isInViewSection && 'ml-2')}>

@@ -1,11 +1,11 @@
 // app/dashboard/components/TreeSidebar/index.tsx
 'use client';
 
+import { TypeBadge } from '@/components/dna';
 import { useEditorData, useEntryMutations } from '../../hooks';
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/lib/validators';
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
+import { useDashboardStore } from '@/stores/dashboardStore';
 import { useUserStore } from '@/stores/userStore';
 import type { ContentEntry } from '@/types';
 import {
@@ -25,15 +25,7 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import {
-    Calendar,
-    ChevronDown,
-    ChevronRight,
-    FileText,
-    Headphones,
-    Link as LinkIcon,
-    Palette,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, FileText, Palette } from 'lucide-react';
 import Link from 'next/link';
 import { useId, useMemo, useState } from 'react';
 import AccountSection from './AccountSection';
@@ -57,22 +49,16 @@ export default function TreeSidebar() {
         reorderDisplay: reorderDisplayMutation,
     } = useEntryMutations();
 
-    // Dashboard UI Store
-    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
+    // Dashboard Store
+    const contentView = useDashboardStore((state) => state.contentView);
+    const setView = useDashboardStore((state) => state.setView);
+    const sidebarSections = useDashboardStore((state) => state.sidebarSections);
+    const toggleSection = useDashboardStore((state) => state.toggleSection);
 
-    // UI Store
-    const activePanel = useUIStore((state) => state?.activePanel ?? 'page');
-    const setActivePanel = useUIStore((state) => state?.setActivePanel);
-    const sidebarSections = useUIStore(
-        (state) =>
-            state?.sidebarSections ?? {
-                page: { collapsed: false },
-                events: { collapsed: false },
-                mixsets: { collapsed: false },
-                links: { collapsed: false },
-            }
-    );
-    const toggleSection = useUIStore((state) => state?.toggleSection);
+    // Derive sidebar highlight state from contentView
+    const isBioActive = contentView.kind === 'bio';
+    const isPageActive = contentView.kind === 'page' || contentView.kind === 'page-detail';
+    const selectedEntryId = contentView.kind === 'detail' ? contentView.entryId : null;
 
     // 필터링 & 정렬
     const events = useMemo(
@@ -157,7 +143,6 @@ export default function TreeSidebar() {
             }
 
             addToDisplayMutation.mutate(entry.id);
-            triggerPreviewRefresh();
             return;
         }
 
@@ -169,7 +154,6 @@ export default function TreeSidebar() {
 
             if (newIndex !== -1 && active.id !== over.id) {
                 reorderDisplayMutation.mutate({ entryId: activeEntry.id, newIndex });
-                triggerPreviewRefresh();
             }
             return;
         }
@@ -204,27 +188,18 @@ export default function TreeSidebar() {
     };
 
     const handleDelete = async (id: string) => {
-        const entry = entries.find((e) => e.id === id);
-        const shouldRefresh = entry ? canAddToView(entry) : false;
         await deleteEntryMutation.mutateAsync(id);
-        if (shouldRefresh) {
-            triggerPreviewRefresh();
-        }
     };
 
     const isPageCollapsed = sidebarSections?.page?.collapsed ?? false;
 
     const handlePageClick = () => {
-        if (setActivePanel) {
-            setActivePanel('page');
-        }
+        setView({ kind: 'page' });
     };
 
     const handlePageToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (toggleSection) {
-            toggleSection('page');
-        }
+        toggleSection('page');
     };
 
     // 로딩 상태
@@ -256,10 +231,10 @@ export default function TreeSidebar() {
                 <div className="flex-1 overflow-y-auto px-3 pb-3">
                     {/* Bio Design */}
                     <button
-                        onClick={() => setActivePanel?.('bio')}
+                        onClick={() => setView({ kind: 'bio' })}
                         className={cn(
                             'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
-                            activePanel === 'bio'
+                            isBioActive
                                 ? 'bg-dashboard-bg-active text-dashboard-text'
                                 : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
                         )}
@@ -273,7 +248,7 @@ export default function TreeSidebar() {
                         onClick={handlePageClick}
                         className={cn(
                             'group mb-1 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
-                            activePanel === 'page'
+                            isPageActive
                                 ? 'bg-dashboard-bg-active text-dashboard-text'
                                 : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
                         )}
@@ -314,7 +289,7 @@ export default function TreeSidebar() {
                     <SectionItem
                         section="events"
                         title="Events"
-                        icon={<Calendar className="h-4 w-4" />}
+                        icon={<TypeBadge type="EVT" />}
                         count={events.length}
                         entryType="event"
                     >
@@ -338,7 +313,7 @@ export default function TreeSidebar() {
                     <SectionItem
                         section="mixsets"
                         title="Mixsets"
-                        icon={<Headphones className="h-4 w-4" />}
+                        icon={<TypeBadge type="MIX" />}
                         count={mixsets.length}
                         entryType="mixset"
                     >
@@ -362,7 +337,7 @@ export default function TreeSidebar() {
                     <SectionItem
                         section="links"
                         title="Links"
-                        icon={<LinkIcon className="h-4 w-4" />}
+                        icon={<TypeBadge type="LNK" />}
                         count={links.length}
                         entryType="link"
                     >
