@@ -3,8 +3,7 @@
 
 import { useEditorData } from '../hooks';
 import type { EditorData } from '@/lib/services/user.service';
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
+import { useDashboardStore } from '@/stores/dashboardStore';
 import { useUserStore } from '@/stores/userStore';
 import { useLayoutEffect, useRef } from 'react';
 
@@ -22,8 +21,7 @@ export default function StoreInitializer({ initialData }: StoreInitializerProps)
     useLayoutEffect(() => {
         if (!initialized.current) {
             useUserStore.setState({ user: initialData.user });
-            useUIStore.getState().reset();
-            useDashboardUIStore.getState().reset();
+            useDashboardStore.getState().reset();
             initialized.current = true;
         }
     }, [initialData]);

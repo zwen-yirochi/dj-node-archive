@@ -1,12 +1,11 @@
 'use client';
 
-import { useUIStore } from '@/stores/uiStore';
+import { useDashboardStore } from '@/stores/dashboardStore';
 import dynamic from 'next/dynamic';
-import EmptyState from './EmptyState';
-import PagePanel from './PagePanel';
 import ErrorBoundaryWithQueryReset from '../ErrorBoundary';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
+import PageListView from './PageListView';
 
 // 동적 import with 스켈레톤
 const BioDesignPanel = dynamic(() => import('./BioDesignPanel'), {
@@ -77,55 +76,46 @@ function DetailSkeleton() {
 }
 
 export default function ContentPanel() {
-    const selectedEntryId = useUIStore((state) => state.selectedEntryId);
-    const activePanel = useUIStore((state) => state.activePanel);
-    const createPanelType = useUIStore((state) => state.createPanelType);
-    const selectEntry = useUIStore((state) => state.selectEntry);
+    const view = useDashboardStore((s) => s.contentView);
+    const setView = useDashboardStore((s) => s.setView);
 
-    // Bio design 패널 모드
-    if (activePanel === 'bio') {
-        return (
-            <div className="h-full overflow-hidden rounded-2xl">
-                <BioDesignPanel />
-            </div>
-        );
+    switch (view.kind) {
+        case 'bio':
+            return (
+                <div className="h-full overflow-hidden rounded-2xl">
+                    <BioDesignPanel />
+                </div>
+            );
+
+        case 'page':
+            return (
+                <div className="h-full overflow-hidden rounded-2xl">
+                    <PageListView
+                        onSelectDetail={(id) => setView({ kind: 'page-detail', entryId: id })}
+                    />
+                </div>
+            );
+
+        case 'page-detail':
+        case 'detail':
+            return (
+                <div className="h-full overflow-hidden rounded-2xl border border-white/10">
+                    <ErrorBoundaryWithQueryReset>
+                        <Suspense fallback={<DetailSkeleton />}>
+                            <EntryDetailView
+                                entryId={view.entryId}
+                                onBack={() => setView({ kind: 'page' })}
+                            />
+                        </Suspense>
+                    </ErrorBoundaryWithQueryReset>
+                </div>
+            );
+
+        case 'create':
+            return (
+                <div className="h-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
+                    <CreateEntryPanel type={view.entryType} />
+                </div>
+            );
     }
-
-    // Page 패널 모드 (디폴트 뷰)
-    if (activePanel === 'page') {
-        return (
-            <div className="h-full overflow-hidden rounded-2xl">
-                <PagePanel />
-            </div>
-        );
-    }
-
-    // 생성 패널 모드
-    if (createPanelType) {
-        return (
-            <div className="h-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
-                <CreateEntryPanel type={createPanelType} />
-            </div>
-        );
-    }
-
-    // 선택된 엔트리가 없으면 EmptyState
-    if (!selectedEntryId) {
-        return (
-            <div className="flex h-full items-center justify-center rounded-2xl">
-                <EmptyState />
-            </div>
-        );
-    }
-
-    // 엔트리 상세 편집
-    return (
-        <div className="h-full overflow-hidden rounded-2xl border border-white/10">
-            <ErrorBoundaryWithQueryReset>
-                <Suspense fallback={<DetailSkeleton />}>
-                    <EntryDetailView entryId={selectedEntryId} onBack={() => selectEntry(null)} />
-                </Suspense>
-            </ErrorBoundaryWithQueryReset>
-        </div>
-    );
 }

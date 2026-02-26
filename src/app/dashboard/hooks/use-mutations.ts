@@ -3,10 +3,12 @@
  * 단일 composite 뮤테이션 훅 — useEntryMutations()
  *
  * 8개 뮤테이션을 하나의 훅으로 통합. 각 뮤테이션은
- * mutationFn + optimisticUpdate 선언만으로 구성.
+ * mutationFn + optimisticUpdate + triggersPreview 선언만으로 구성.
  */
 
 import type { EditorData } from '@/lib/services/user.service';
+import { shouldTriggerPreview } from '@/lib/previewTrigger';
+import { canAddToView } from '@/lib/validators';
 import type { ContentEntry } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
@@ -44,6 +46,7 @@ export function useEntryMutations() {
                 ...data,
                 contentEntries: [...data.contentEntries, entry],
             }),
+            triggersPreview: true,
         })
     );
 
@@ -54,6 +57,10 @@ export function useEntryMutations() {
                 ...data,
                 contentEntries: data.contentEntries.map((e) => (e.id === entry.id ? entry : e)),
             }),
+            triggersPreview: ({ entry }, snapshot) => {
+                const previous = snapshot.contentEntries.find((e) => e.id === entry.id);
+                return !!previous && shouldTriggerPreview(previous, entry);
+            },
         })
     );
 
@@ -64,6 +71,10 @@ export function useEntryMutations() {
                 ...data,
                 contentEntries: data.contentEntries.filter((e) => e.id !== id),
             }),
+            triggersPreview: (id, snapshot) => {
+                const entry = snapshot.contentEntries.find((e) => e.id === id);
+                return !!entry && canAddToView(entry);
+            },
         })
     );
 
@@ -95,6 +106,7 @@ export function useEntryMutations() {
                     ),
                 };
             },
+            triggersPreview: true,
         })
     );
 
@@ -107,6 +119,7 @@ export function useEntryMutations() {
                     e.id === entryId ? { ...e, displayOrder: null } : e
                 ),
             }),
+            triggersPreview: true,
         })
     );
 
@@ -123,6 +136,7 @@ export function useEntryMutations() {
                     e.id === entryId ? { ...e, isVisible: !e.isVisible } : e
                 ),
             }),
+            triggersPreview: true,
         })
     );
 
@@ -157,6 +171,7 @@ export function useEntryMutations() {
                     }),
                 };
             },
+            // reorder는 섹션 내 순서만 변경, 페이지에 무관
         })
     );
 
@@ -183,6 +198,7 @@ export function useEntryMutations() {
                     }),
                 };
             },
+            triggersPreview: true,
         })
     );
 

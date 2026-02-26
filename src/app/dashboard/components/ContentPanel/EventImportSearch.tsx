@@ -5,8 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useEditorData, useEntryMutations } from '../../hooks';
 import { toast } from '@/hooks/use-toast';
 import { mapEventToEntry } from '@/lib/mappers';
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
+import { useDashboardStore } from '@/stores/dashboardStore';
 import type { DBEventWithVenue } from '@/types/database';
 import { Calendar, Loader2, MapPin, Search } from 'lucide-react';
 import { useState } from 'react';
@@ -29,11 +28,8 @@ export default function EventImportSearch() {
     const { data } = useEditorData();
     const { create: createEntryMutation } = useEntryMutations();
 
-    // Stores
-    const finishCreatingEntry = useDashboardUIStore((state) => state.finishCreating);
-    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
-    const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
-    const selectEntry = useUIStore((state) => state.selectEntry);
+    // Store
+    const setView = useDashboardStore((state) => state.setView);
 
     const handleSearch = async () => {
         if (!query.trim()) return;
@@ -87,10 +83,7 @@ export default function EventImportSearch() {
                 pageId: data.pageId,
                 entry: newEntry,
             });
-            finishCreatingEntry(newEntry.id);
-            triggerPreviewRefresh();
-            closeCreatePanel();
-            selectEntry(newEntry.id);
+            setView({ kind: 'detail', entryId: newEntry.id });
 
             toast({
                 title: 'Event imported',

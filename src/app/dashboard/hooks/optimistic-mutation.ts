@@ -4,15 +4,19 @@
  *
  * cancel → snapshot → optimistic update → rollback → invalidate
  * 보일러플레이트를 한 번만 작성.
+ *
+ * triggersPreview 옵션으로 미리보기 새로고침을 중앙 관리.
  */
 
 import type { EditorData } from '@/lib/services/user.service';
+import { useDashboardStore } from '@/stores/dashboardStore';
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { entryKeys } from './use-editor-data';
 
 export interface OptimisticMutationConfig<TParams> {
     mutationFn: (params: TParams, data: EditorData | undefined) => Promise<unknown>;
     optimisticUpdate: (params: TParams, data: EditorData) => EditorData;
+    triggersPreview?: boolean | ((params: TParams, snapshot: EditorData) => boolean);
 }
 
 /**
@@ -20,6 +24,7 @@ export interface OptimisticMutationConfig<TParams> {
  *
  * - `snapshotRef`로 onMutate 실행 전 데이터를 캡처 → mutationFn에 전달
  * - TanStack Query 실행 순서: onMutate → mutationFn
+ * - `triggersPreview`가 설정되면 onSuccess에서 미리보기 새로고침
  */
 export function makeOptimisticMutation<TParams>(
     queryClient: QueryClient,
@@ -39,6 +44,16 @@ export function makeOptimisticMutation<TParams>(
                 );
             }
             return { previous };
+        },
+        onSuccess: (_data, params) => {
+            if (!config.triggersPreview) return;
+            const shouldRefresh =
+                typeof config.triggersPreview === 'function'
+                    ? config.triggersPreview(params, snapshotRef.current!)
+                    : true;
+            if (shouldRefresh) {
+                useDashboardStore.getState().triggerPreviewRefresh();
+            }
         },
         onError: (_err, _vars, ctx) => {
             if (ctx?.previous) {

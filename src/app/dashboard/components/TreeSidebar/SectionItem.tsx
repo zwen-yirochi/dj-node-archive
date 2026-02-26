@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { type EntryType, type SectionKey, useUIStore } from '@/stores/uiStore';
+import { type EntryType, type SectionKey, useDashboardStore } from '@/stores/dashboardStore';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -22,9 +22,9 @@ export default function SectionItem({
     entryType,
     children,
 }: SectionItemProps) {
-    const sidebarSections = useUIStore((state) => state.sidebarSections);
-    const toggleSection = useUIStore((state) => state.toggleSection);
-    const openCreatePanel = useUIStore((state) => state.openCreatePanel);
+    const sidebarSections = useDashboardStore((state) => state.sidebarSections);
+    const toggleSection = useDashboardStore((state) => state.toggleSection);
+    const openCreatePanel = useDashboardStore((state) => state.openCreatePanel);
 
     const isCollapsed = sidebarSections[section].collapsed;
 

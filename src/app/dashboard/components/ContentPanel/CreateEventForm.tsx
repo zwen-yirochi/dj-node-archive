@@ -22,8 +22,7 @@ import { useEditorData, useEntryMutations } from '../../hooks';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
 import { draftEventSchema, publishEventSchema } from '@/lib/validations/entry.schemas';
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
+import { useDashboardStore } from '@/stores/dashboardStore';
 import type { CreateEventData, EventEntry } from '@/types/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
@@ -64,10 +63,9 @@ export default function CreateEventForm() {
     const { data } = useEditorData();
     const { create: createEntryMutation } = useEntryMutations();
 
-    // Stores
-    const finishCreatingEntry = useDashboardUIStore((state) => state.finishCreating);
-    const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
-    const selectEntry = useUIStore((state) => state.selectEntry);
+    // Store
+    const setView = useDashboardStore((state) => state.setView);
+    const closeCreatePanel = useDashboardStore((state) => state.closeCreatePanel);
 
     // watch 최적화: 필요한 필드만 구독
     const [title, posterUrl, date, venue, lineup, description] = watch([
@@ -134,9 +132,7 @@ export default function CreateEventForm() {
                 entry: newEntry,
                 publishOption,
             });
-            finishCreatingEntry(newEntry.id);
-            closeCreatePanel();
-            selectEntry(newEntry.id);
+            setView({ kind: 'detail', entryId: newEntry.id });
 
             toast({
                 title: 'Event created',
