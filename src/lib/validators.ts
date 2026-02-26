@@ -1,6 +1,7 @@
-import { COMPONENT_FIELDS, type EntryType } from '@/app/dashboard/constants/entryFields';
+import type { EntryType } from '@/app/dashboard/constants/entryConfig';
+import { VALIDATION_CONFIG } from '@/app/dashboard/constants/entryValidationConfig';
 import type { ContentEntry } from '@/types';
-import type { FieldConfig, TreeItemStatus, ValidationResult } from '@/types/entryFields';
+import type { FieldValidationConfig, TreeItemStatus, ValidationResult } from '@/types/entryFields';
 
 // ============================================
 // 내부 헬퍼 함수
@@ -22,12 +23,19 @@ function isValidUrl(url: string): boolean {
 /**
  * 단일 필드 값 검증
  */
-function validateFieldValue(value: unknown, config: FieldConfig): boolean {
+function validateFieldValue(
+    value: unknown,
+    config: FieldValidationConfig,
+    tier: 'create' | 'view'
+): boolean {
+    const rule = tier === 'create' ? config.create : config.view;
+    if (rule === false) return true; // 검증 불필요
+
     if (value === undefined || value === null) return false;
 
     if (typeof value === 'string') {
         if (!value.trim()) return false;
-        if (config.isUrl && !isValidUrl(value)) return false;
+        if ((rule === 'url' || config.isUrl) && !isValidUrl(value)) return false;
         return true;
     }
 
@@ -45,15 +53,18 @@ function validateFieldValue(value: unknown, config: FieldConfig): boolean {
 /**
  * 특정 검증 단계에서 필수인 필드 목록 반환
  */
-export function getRequiredFields(type: EntryType, tier: 'create' | 'view'): FieldConfig[] {
-    const fields = COMPONENT_FIELDS[type];
+export function getRequiredFields(
+    type: EntryType,
+    tier: 'create' | 'view'
+): FieldValidationConfig[] {
+    const fields = VALIDATION_CONFIG[type];
 
     if (tier === 'create') {
-        return fields.filter((f) => f.required === 'create');
+        return fields.filter((f) => f.create !== false);
     }
 
-    // view 단계: create + view 필드 모두 필수
-    return fields.filter((f) => f.required === 'create' || f.required === 'view');
+    // view 단계: create 또는 view 규칙이 있는 필드 모두 필수
+    return fields.filter((f) => f.create !== false || f.view !== false);
 }
 
 /**
@@ -64,23 +75,26 @@ export function isFieldRequired(
     fieldKey: string,
     tier: 'create' | 'view'
 ): boolean {
-    const fields = COMPONENT_FIELDS[type];
+    const fields = VALIDATION_CONFIG[type];
     const field = fields.find((f) => f.key === fieldKey);
 
     if (!field) return false;
 
     if (tier === 'create') {
-        return field.required === 'create';
+        return field.create !== false;
     }
 
-    return field.required === 'create' || field.required === 'view';
+    return field.create !== false || field.view !== false;
 }
 
 /**
  * 필드 설정 가져오기
  */
-export function getFieldConfig(type: EntryType, fieldKey: string): FieldConfig | undefined {
-    return COMPONENT_FIELDS[type].find((f) => f.key === fieldKey);
+export function getFieldConfig(
+    type: EntryType,
+    fieldKey: string
+): FieldValidationConfig | undefined {
+    return VALIDATION_CONFIG[type].find((f) => f.key === fieldKey);
 }
 
 // ============================================
@@ -104,7 +118,7 @@ export function validateEntry(
     const missingFields: string[] = [];
     for (const field of requiredFields) {
         const value = (entry as unknown as Record<string, unknown>)[field.key];
-        const isValid = validateFieldValue(value, field);
+        const isValid = validateFieldValue(value, field, tier);
         if (!isValid) {
             missingFields.push(field.key);
             if (field.isUrl && value && typeof value === 'string' && value.trim()) {
@@ -169,7 +183,7 @@ export function getMissingFieldLabels(
     tier: 'create' | 'view' = 'view'
 ): string[] {
     const type = entry.type as EntryType;
-    const fields = COMPONENT_FIELDS[type];
+    const fields = VALIDATION_CONFIG[type];
     const result = validateEntry(entry, tier);
 
     return result.missingFields

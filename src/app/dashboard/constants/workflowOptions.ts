@@ -1,3 +1,9 @@
+/**
+ * 워크플로우 옵션 설정
+ * - Event 생성 옵션 (import vs create)
+ * - Publish 옵션 (publish vs private)
+ */
+
 // ============================================
 // Event Creation Options
 // ============================================

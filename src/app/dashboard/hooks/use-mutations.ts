@@ -11,6 +11,8 @@ import { shouldTriggerPreview } from '@/lib/previewTrigger';
 import { canAddToView } from '@/lib/validators';
 import type { ContentEntry } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { PublishOption } from '@/app/dashboard/constants/workflowOptions';
+import { useDashboardStore } from '@/stores/dashboardStore';
 import { useRef } from 'react';
 import {
     createEntry,
@@ -23,14 +25,14 @@ import {
 } from './entries.api';
 import { makeOptimisticMutation, type OptimisticMutationConfig } from './optimistic-mutation';
 
-type PublishOption = 'publish' | 'private';
-
 export function useEntryMutations() {
     const queryClient = useQueryClient();
     const snapshotRef = useRef<EditorData | undefined>(undefined);
 
+    const onPreviewTrigger = () => useDashboardStore.getState().triggerPreviewRefresh();
+
     const m = <T>(config: OptimisticMutationConfig<T>) =>
-        makeOptimisticMutation(queryClient, snapshotRef, config);
+        makeOptimisticMutation(queryClient, snapshotRef, { ...config, onPreviewTrigger });
 
     // ── CRUD ──
 

@@ -9,7 +9,6 @@
  */
 
 import type { EditorData } from '@/lib/services/user.service';
-import { useDashboardStore } from '@/stores/dashboardStore';
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { entryKeys } from './use-editor-data';
 
@@ -17,6 +16,7 @@ export interface OptimisticMutationConfig<TParams> {
     mutationFn: (params: TParams, data: EditorData | undefined) => Promise<unknown>;
     optimisticUpdate: (params: TParams, data: EditorData) => EditorData;
     triggersPreview?: boolean | ((params: TParams, snapshot: EditorData) => boolean);
+    onPreviewTrigger?: () => void;
 }
 
 /**
@@ -46,13 +46,13 @@ export function makeOptimisticMutation<TParams>(
             return { previous };
         },
         onSuccess: (_data, params) => {
-            if (!config.triggersPreview) return;
+            if (!config.triggersPreview || !config.onPreviewTrigger) return;
             const shouldRefresh =
                 typeof config.triggersPreview === 'function'
                     ? config.triggersPreview(params, snapshotRef.current!)
                     : true;
             if (shouldRefresh) {
-                useDashboardStore.getState().triggerPreviewRefresh();
+                config.onPreviewTrigger();
             }
         },
         onError: (_err, _vars, ctx) => {

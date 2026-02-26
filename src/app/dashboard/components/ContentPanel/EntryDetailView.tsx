@@ -1,13 +1,15 @@
 'use client';
 
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
+import { EDITOR_CONFIG } from '@/app/dashboard/constants/entryEditorConfig';
 import { TypeBadge } from '@/components/dna';
 import { useEntryDetail, useEntryMutations } from '../../hooks';
 import { Button } from '@/components/ui/button';
-import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
+import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 import type { ContentEntry } from '@/types';
 import { isEventEntry, isMixsetEntry, isLinkEntry } from '@/types';
-import { ArrowLeft, ImageIcon, MoreHorizontal, Trash2, Type } from 'lucide-react';
+import { resolveMenuItems } from '@/types/entryFields';
+import { ArrowLeft, MoreHorizontal } from 'lucide-react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import EventEditor from './editors/EventEditor';
 import MixsetEditor from './editors/MixsetEditor';
@@ -116,13 +118,12 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
 
     const saveStatus = getSaveStatus();
 
-    // "..." 메뉴 items
-    const menuItems: DropdownMenuItemConfig[] = [
-        { label: '제목 변경', onClick: () => setEditingField('title'), icon: Type },
-        { label: '이미지 변경', onClick: () => setEditingField('image'), icon: ImageIcon },
-        { type: 'separator' },
-        { label: '삭제', onClick: handleDelete, icon: Trash2, variant: 'danger' },
-    ];
+    // "..." 메뉴 items — config-driven + declarative action resolution
+    const editorConfig = EDITOR_CONFIG[localEntry.type];
+    const menuItems = resolveMenuItems(editorConfig.menuItems, {
+        setEditingField,
+        onDelete: handleDelete,
+    });
 
     const handleEditingDone = () => setEditingField(null);
 

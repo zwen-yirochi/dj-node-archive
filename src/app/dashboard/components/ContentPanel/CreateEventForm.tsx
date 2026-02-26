@@ -1,6 +1,6 @@
 'use client';
 
-import { PUBLISH_OPTIONS, type PublishOption } from '@/app/dashboard/constants/entry';
+import { PUBLISH_OPTIONS, type PublishOption } from '@/app/dashboard/constants/workflowOptions';
 import { searchArtists, searchVenues } from '@/app/dashboard/services/search';
 import { Button } from '@/components/ui/button';
 import {

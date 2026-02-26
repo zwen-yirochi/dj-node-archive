@@ -1,7 +1,10 @@
 'use client';
 
 import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/constants/entryConfig';
-import { EVENT_CREATE_OPTIONS, type EventCreateOption } from '@/app/dashboard/constants/entry';
+import {
+    EVENT_CREATE_OPTIONS,
+    type EventCreateOption,
+} from '@/app/dashboard/constants/workflowOptions';
 import { TypeBadge } from '@/components/dna';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

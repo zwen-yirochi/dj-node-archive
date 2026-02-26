@@ -1,20 +1,4 @@
-import { Globe, Instagram, Mail, Music, Youtube } from 'lucide-react';
 import type { BadgeType } from '@/components/dna/TypeBadge';
-
-/**
- * 링크 컴포넌트 아이콘 매핑
- * LinkEditor에서 사용
- */
-export const LINK_ICON_COMPONENTS: Record<string, React.ComponentType<{ className?: string }>> = {
-    soundcloud: Music,
-    spotify: Music,
-    bandcamp: Music,
-    instagram: Instagram,
-    youtube: Youtube,
-    twitter: Globe,
-    globe: Globe,
-    mail: Mail,
-};
 
 /**
  * 엔트리 타입별 통합 설정

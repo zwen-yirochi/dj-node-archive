@@ -48,8 +48,3 @@ export type { ArtistSuggestion, EditorState, FontOption, IconOption } from './ui
 // Result types (에러 처리)
 // ============================================
 export * from './result';
-
-// ============================================
-// Type guards (추가)
-// ============================================
-export * from './guards';
