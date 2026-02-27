@@ -1,6 +1,6 @@
 'use client';
 
-import { useDashboardStore } from '@/stores/dashboardStore';
+import { useDashboardStore } from '../../stores/dashboardStore';
 import dynamic from 'next/dynamic';
 import ErrorBoundaryWithQueryReset from '../ErrorBoundary';
 import { Suspense } from 'react';

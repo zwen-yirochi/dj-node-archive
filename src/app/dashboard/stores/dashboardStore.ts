@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { EntryType } from '@/app/dashboard/constants/entryConfig';
+import type { EntryType } from '../config/entryConfig';
 
 export type { EntryType };
 

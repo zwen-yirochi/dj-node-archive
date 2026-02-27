@@ -1,6 +1,6 @@
 'use client';
 
-import { PUBLISH_OPTIONS, type PublishOption } from '@/app/dashboard/constants/workflowOptions';
+import { PUBLISH_OPTIONS, type PublishOption } from '@/app/dashboard/config/workflowOptions';
 import { searchArtists, searchVenues } from '@/app/dashboard/services/search';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +22,7 @@ import { useEditorData, useEntryMutations } from '../../hooks';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
 import { draftEventSchema, publishEventSchema } from '@/lib/validations/entry.schemas';
-import { useDashboardStore } from '@/stores/dashboardStore';
+import { useDashboardStore } from '../../stores/dashboardStore';
 import type { CreateEventData, EventEntry } from '@/types/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';

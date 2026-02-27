@@ -4,8 +4,8 @@
 import { TypeBadge } from '@/components/dna';
 import { useEditorData, useEntryMutations } from '../../hooks';
 import { cn } from '@/lib/utils';
-import { canAddToView } from '@/app/dashboard/constants/entryFieldConfig';
-import { useDashboardStore } from '@/stores/dashboardStore';
+import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
+import { useDashboardStore } from '../../stores/dashboardStore';
 import { useUserStore } from '@/stores/userStore';
 import type { ContentEntry } from '@/types';
 import {

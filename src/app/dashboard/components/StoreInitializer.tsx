@@ -3,7 +3,7 @@
 
 import { useEditorData } from '../hooks';
 import type { EditorData } from '@/lib/services/user.service';
-import { useDashboardStore } from '@/stores/dashboardStore';
+import { useDashboardStore } from '../stores/dashboardStore';
 import { useUserStore } from '@/stores/userStore';
 import { useLayoutEffect, useRef } from 'react';
 

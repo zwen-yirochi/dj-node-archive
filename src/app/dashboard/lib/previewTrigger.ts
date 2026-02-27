@@ -5,8 +5,8 @@
  * 미리보기 새로고침을 트리거하도록 중앙 관리합니다.
  */
 
-import type { EntryType } from '@/app/dashboard/constants/entryConfig';
-import { FIELD_CONFIG } from '@/app/dashboard/constants/entryFieldConfig';
+import type { EntryType } from '../config/entryConfig';
+import { FIELD_CONFIG } from '../config/entryFieldConfig';
 import type { ContentEntry } from '@/types';
 
 /**

@@ -1,6 +1,6 @@
 'use client';
 
-import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
 import { TypeBadge } from '@/components/dna';
 import { useEditorData, useEntryMutations } from '../../hooks';
 import { cn } from '@/lib/utils';

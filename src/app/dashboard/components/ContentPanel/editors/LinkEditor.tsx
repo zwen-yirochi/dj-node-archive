@@ -4,7 +4,7 @@ import { EditableField } from '@/components/ui/editable-field';
 import { cn } from '@/lib/utils';
 import type { LinkEntry } from '@/types';
 import { ICON_OPTIONS } from '@/types';
-import type { EntryEditorProps } from '@/app/dashboard/constants/editorRegistry';
+import type { EntryEditorProps } from './types';
 import { ExternalLink, Globe, Instagram, Mail, Music, Youtube } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

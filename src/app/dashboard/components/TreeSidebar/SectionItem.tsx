@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { type EntryType, type SectionKey, useDashboardStore } from '@/stores/dashboardStore';
+import { type EntryType, type SectionKey, useDashboardStore } from '../../stores/dashboardStore';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 

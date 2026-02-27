@@ -1,6 +1,6 @@
 'use client';
 
-import { useDashboardStore } from '@/stores/dashboardStore';
+import { useDashboardStore } from '../stores/dashboardStore';
 import { useUserStore } from '@/stores/userStore';
 import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import Link from 'next/link';

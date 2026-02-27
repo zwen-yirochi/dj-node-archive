@@ -1,6 +1,6 @@
 'use client';
 
-import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
 import { TypeBadge } from '@/components/dna';
 import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 import { cn } from '@/lib/utils';
@@ -9,8 +9,8 @@ import {
     getMissingFieldLabels,
     getTreeItemStatus,
     type TreeItemStatus,
-} from '@/app/dashboard/constants/entryFieldConfig';
-import { useDashboardStore } from '@/stores/dashboardStore';
+} from '@/app/dashboard/config/entryFieldConfig';
+import { useDashboardStore } from '../../stores/dashboardStore';
 import type { ContentEntry } from '@/types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';

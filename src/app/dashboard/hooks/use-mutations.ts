@@ -7,12 +7,12 @@
  */
 
 import type { EditorData } from '@/lib/services/user.service';
-import { shouldTriggerPreview } from '@/lib/previewTrigger';
-import { canAddToView } from '@/app/dashboard/constants/entryFieldConfig';
+import { shouldTriggerPreview } from '../lib/previewTrigger';
+import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
 import type { ContentEntry } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { PublishOption } from '@/app/dashboard/constants/workflowOptions';
-import { useDashboardStore } from '@/stores/dashboardStore';
+import type { PublishOption } from '@/app/dashboard/config/workflowOptions';
+import { useDashboardStore } from '../stores/dashboardStore';
 import { useRef } from 'react';
 import {
     createEntry,

@@ -1,15 +1,24 @@
 'use client';
 
-import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
-import { EDITOR_REGISTRY } from '@/app/dashboard/constants/editorRegistry';
-import { EDITOR_MENU_CONFIG, resolveMenuItems } from '@/app/dashboard/constants/menuConfig';
+import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
+import { EDITOR_MENU_CONFIG, resolveMenuItems } from '@/app/dashboard/config/menuConfig';
 import { TypeBadge } from '@/components/dna';
 import { useEntryDetail, useEntryMutations } from '../../hooks';
 import { Button } from '@/components/ui/button';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 import type { ContentEntry } from '@/types';
 import { ArrowLeft, MoreHorizontal } from 'lucide-react';
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { type ComponentType, useState, useCallback, useRef, useEffect } from 'react';
+import type { EntryEditorProps } from './editors/types';
+import EventEditor from './editors/EventEditor';
+import MixsetEditor from './editors/MixsetEditor';
+import LinkEditor from './editors/LinkEditor';
+
+const EDITOR_REGISTRY: Record<EntryType, ComponentType<EntryEditorProps>> = {
+    event: EventEditor,
+    mixset: MixsetEditor,
+    link: LinkEditor,
+};
 
 // ============================================
 // useDebouncedSave hook

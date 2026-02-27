@@ -2,7 +2,7 @@
 
 import { EditableField } from '@/components/ui/editable-field';
 import type { MixsetEntry } from '@/types';
-import type { EntryEditorProps } from '@/app/dashboard/constants/editorRegistry';
+import type { EntryEditorProps } from './types';
 import { Plus, X } from 'lucide-react';
 import { useArrayField } from '../../../hooks/use-array-field';
 import ImageEditor from './ImageEditor';

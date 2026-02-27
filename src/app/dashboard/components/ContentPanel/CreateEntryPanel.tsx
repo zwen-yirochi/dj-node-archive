@@ -1,10 +1,10 @@
 'use client';
 
-import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/constants/entryConfig';
+import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
 import {
     EVENT_CREATE_OPTIONS,
     type EventCreateOption,
-} from '@/app/dashboard/constants/workflowOptions';
+} from '@/app/dashboard/config/workflowOptions';
 import { TypeBadge } from '@/components/dna';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import OptionSelector from '@/components/ui/OptionSelector';
 import { useEditorData, useEntryMutations } from '../../hooks';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
-import { useDashboardStore } from '@/stores/dashboardStore';
+import { useDashboardStore } from '../../stores/dashboardStore';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import CreateEventForm from './CreateEventForm';

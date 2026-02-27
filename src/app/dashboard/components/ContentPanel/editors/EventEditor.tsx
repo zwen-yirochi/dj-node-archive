@@ -2,7 +2,7 @@
 
 import { EditableDateField, EditableField } from '@/components/ui/editable-field';
 import type { EventEntry } from '@/types';
-import type { EntryEditorProps } from '@/app/dashboard/constants/editorRegistry';
+import type { EntryEditorProps } from './types';
 import { Calendar, ExternalLink, MapPin, Plus, Users, X } from 'lucide-react';
 import { useState } from 'react';
 import { useArrayField } from '../../../hooks/use-array-field';
