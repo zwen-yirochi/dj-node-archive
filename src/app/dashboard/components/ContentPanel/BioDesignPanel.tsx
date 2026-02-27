@@ -3,64 +3,52 @@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useUserStore } from '@/stores/userStore';
+import type { EditorData } from '@/lib/services/user.service';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useState, useTransition } from 'react';
-import { deleteAvatar, updateProfile, uploadAvatar } from '../../actions/user';
+import { useState } from 'react';
+import { useUser, useUserMutations } from '../../hooks';
+import { entryKeys } from '../../hooks/use-editor-data';
+import { useQueryClient } from '@tanstack/react-query';
 import AvatarUpload from './AvatarUpload';
 import HeaderStyleSection from './HeaderStyleSection';
 
 export default function BioDesignPanel() {
-    const user = useUserStore((state) => state.user);
-    const updateUser = useUserStore((state) => state.updateUser);
+    const user = useUser();
+    const { updateProfile, uploadAvatar, deleteAvatar } = useUserMutations();
+    const queryClient = useQueryClient();
 
     const [isProfileOpen, setIsProfileOpen] = useState(true);
-    const [isPending, startTransition] = useTransition();
 
-    // Debounced save function
-    const debouncedSave = useDebounce(
-        async (userId: string, field: 'displayName' | 'bio', value: string) => {
-            const result = await updateProfile(userId, { [field]: value });
-            if (!result.success) {
-                console.error('프로필 저장 오류:', result.error);
-            }
-        },
-        500
-    );
-
-    if (!user) return null;
+    // Debounced save — 타이핑 중 서버 동기화
+    const debouncedSave = useDebounce((updates: { displayName?: string; bio?: string }) => {
+        updateProfile.mutate({ userId: user.id, updates });
+    }, 500);
 
     const handleUploadAvatar = (formData: FormData) => {
-        startTransition(async () => {
-            const result = await uploadAvatar(user.id, formData);
-
-            if (result.success) {
-                if (result.data) {
-                    updateUser({ avatarUrl: result.data.avatarUrl });
-                }
-            } else {
-                alert(result.error);
+        uploadAvatar.mutate(
+            { userId: user.id, formData },
+            {
+                onError: () => alert('이미지 업로드에 실패했습니다.'),
             }
-        });
+        );
     };
 
     const handleDeleteAvatar = () => {
-        startTransition(async () => {
-            const result = await deleteAvatar(user.id);
-
-            if (result.success) {
-                updateUser({ avatarUrl: '' });
-            } else {
-                console.error('아바타 삭제 오류:', result.error);
+        deleteAvatar.mutate(
+            { userId: user.id },
+            {
+                onError: () => console.error('아바타 삭제 오류'),
             }
-        });
+        );
     };
 
     const handleProfileChange = (field: 'displayName' | 'bio', value: string) => {
-        // Optimistic update
-        updateUser({ [field]: value });
-        // Debounced save
-        debouncedSave(user.id, field, value);
+        // 즉시 TQ 캐시 업데이트 (타이핑 반영)
+        queryClient.setQueryData<EditorData>(entryKeys.all, (prev) =>
+            prev ? { ...prev, user: { ...prev.user, [field]: value } } : prev
+        );
+        // 디바운스 서버 동기화
+        debouncedSave({ [field]: value });
     };
 
     return (
@@ -100,7 +88,7 @@ export default function BioDesignPanel() {
                                         avatarUrl={user.avatarUrl}
                                         displayName={user.displayName}
                                         username={user.username}
-                                        isPending={isPending}
+                                        isPending={uploadAvatar.isPending || deleteAvatar.isPending}
                                         onUpload={handleUploadAvatar}
                                         onDelete={handleDeleteAvatar}
                                     />

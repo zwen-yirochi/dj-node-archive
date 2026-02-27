@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
-import { useUserStore } from '@/stores/userStore';
+import { useUser, useUserMutations } from '../../hooks';
 import type { User } from '@/types';
 import {
     Camera,
@@ -28,15 +28,13 @@ interface AccountSectionProps {
 }
 
 export default function AccountSection({ username }: AccountSectionProps) {
-    const user = useUserStore((state) => state.user);
-    const updateUser = useUserStore((state) => state.updateUser);
+    const user = useUser();
+    const { updateProfile, uploadAvatar, deleteAvatar } = useUserMutations();
 
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [tempUser, setTempUser] = useState<User | null>(user);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    if (!user) return null;
 
     const getInitials = (name: string) => {
         return name
@@ -52,27 +50,22 @@ export default function AccountSection({ username }: AccountSectionProps) {
         setIsEditDialogOpen(true);
     };
 
-    const handleSave = async () => {
+    const handleSave = () => {
         if (!tempUser) return;
 
-        updateUser(tempUser);
-        setIsEditDialogOpen(false);
-
-        try {
-            const response = await fetch(`/api/users/${user.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(tempUser),
-            });
-
-            if (!response.ok) {
-                updateUser(user);
-                console.error('프로필 업데이트 실패');
+        updateProfile.mutate(
+            {
+                userId: user.id,
+                updates: {
+                    displayName: tempUser.displayName,
+                    bio: tempUser.bio,
+                },
+            },
+            {
+                onError: () => console.error('프로필 업데이트 실패'),
             }
-        } catch (error) {
-            updateUser(user);
-            console.error('프로필 업데이트 오류:', error);
-        }
+        );
+        setIsEditDialogOpen(false);
     };
 
     const handleCancel = () => {
@@ -100,57 +93,41 @@ export default function AccountSection({ username }: AccountSectionProps) {
 
         setIsUploading(true);
 
-        try {
-            const supabase = createClient();
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        const formData = new FormData();
+        formData.append('file', file);
 
-            if (tempUser.avatarUrl?.includes('avatars')) {
-                const oldPath = tempUser.avatarUrl.split('/avatars/')[1];
-                if (oldPath) {
-                    await supabase.storage.from('avatars').remove([oldPath]);
-                }
+        uploadAvatar.mutate(
+            { userId: user.id, formData },
+            {
+                onSuccess: (data) => {
+                    setTempUser((prev) => (prev ? { ...prev, avatarUrl: data.avatarUrl } : prev));
+                },
+                onError: () => alert('이미지 업로드에 실패했습니다.'),
+                onSettled: () => {
+                    setIsUploading(false);
+                    if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                    }
+                },
             }
-
-            const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(fileName, file, { upsert: true });
-
-            if (uploadError) throw uploadError;
-
-            const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
-            setTempUser({ ...tempUser, avatarUrl: urlData.publicUrl });
-        } catch (error) {
-            console.error('아바타 업로드 오류:', error);
-            alert('이미지 업로드에 실패했습니다.');
-        } finally {
-            setIsUploading(false);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-        }
+        );
     };
 
-    const handleDeleteAvatar = async () => {
+    const handleDeleteAvatar = () => {
         if (!tempUser) return;
 
         setIsUploading(true);
 
-        try {
-            if (tempUser.avatarUrl?.includes('avatars')) {
-                const supabase = createClient();
-                const oldPath = tempUser.avatarUrl.split('/avatars/')[1];
-                if (oldPath) {
-                    await supabase.storage.from('avatars').remove([oldPath]);
-                }
+        deleteAvatar.mutate(
+            { userId: user.id },
+            {
+                onSuccess: () => {
+                    setTempUser((prev) => (prev ? { ...prev, avatarUrl: '' } : prev));
+                },
+                onError: () => console.error('아바타 삭제 오류'),
+                onSettled: () => setIsUploading(false),
             }
-
-            setTempUser({ ...tempUser, avatarUrl: '' });
-        } catch (error) {
-            console.error('아바타 삭제 오류:', error);
-        } finally {
-            setIsUploading(false);
-        }
+        );
     };
 
     const handleLogout = async () => {

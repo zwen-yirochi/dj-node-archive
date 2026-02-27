@@ -1,13 +1,13 @@
 'use client';
 
 import { useDashboardStore } from '../stores/dashboardStore';
-import { useUserStore } from '@/stores/userStore';
+import { useUser } from '../hooks';
 import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function PreviewPanel() {
-    const user = useUserStore((state) => state.user);
+    const user = useUser();
     const previewVersion = useDashboardStore((state) => state.previewVersion);
     const [copied, setCopied] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
@@ -65,14 +65,6 @@ export default function PreviewPanel() {
     const handleIframeLoad = useCallback(() => {
         setIsLoading(false);
     }, []);
-
-    if (!user?.username) {
-        return (
-            <div className="flex h-full items-center justify-center">
-                <p className="text-muted-foreground">사용자 정보를 불러오는 중...</p>
-            </div>
-        );
-    }
 
     const pageUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${user.username}`;
     const displayUrl = pageUrl.replace(/^https?:\/\//, '');

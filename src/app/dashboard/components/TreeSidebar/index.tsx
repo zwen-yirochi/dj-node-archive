@@ -7,7 +7,6 @@ import { useEditorData, useEntryMutations } from '../../hooks';
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
 import { useDashboardStore } from '../../stores/dashboardStore';
-import { useUserStore } from '@/stores/userStore';
 import type { ContentEntry } from '@/types';
 
 /** dnd-kit data 타입 — active.data.current의 구조를 선언 */
@@ -46,9 +45,7 @@ export default function TreeSidebar() {
     // TanStack Query
     const { data } = useEditorData();
     const entries = data.contentEntries;
-
-    // User Store
-    const user = useUserStore((state) => state?.user);
+    const user = data.user;
 
     // TanStack Query Mutations
     const {
@@ -219,7 +216,7 @@ export default function TreeSidebar() {
     };
 
     // 로딩 상태
-    if (!user || entries.length === 0) {
+    if (entries.length === 0) {
         return <TreeSidebarSkeleton />;
     }
 
