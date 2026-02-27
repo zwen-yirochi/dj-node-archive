@@ -2,9 +2,13 @@ import { type PublishOption } from '@/app/dashboard/config/workflowOptions';
 import { useEditorData, useEntryMutations } from '.';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
-import { draftEventSchema, publishEventSchema } from '@/lib/validations/entry.schemas';
+import {
+    draftEventSchema,
+    publishEventSchema,
+    type CreateEventData,
+} from '@/lib/validations/entry.schemas';
 import { selectSetView, useDashboardStore } from '../stores/dashboardStore';
-import type { CreateEventData, EventEntry } from '@/types/domain';
+import type { EventEntry } from '@/types/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';

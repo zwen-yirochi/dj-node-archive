@@ -2,7 +2,6 @@
 // Entry 관련 Zod 스키마 정의
 
 import { z } from 'zod';
-import type { CreateEventData } from '@/types/domain';
 
 // ============================================
 // Sub-schemas (공통)
@@ -62,39 +61,43 @@ export const publishEventSchema = z.object({
     venue: venueReferenceSchema,
     lineup: z.array(artistReferenceSchema).min(1, '아티스트를 1명 이상 추가해야 합니다'),
     description: z.string().min(1, '설명을 입력해야 합니다').trim(),
-}) satisfies z.ZodType<CreateEventData>;
+});
+
+/** 스키마에서 추론된 폼 데이터 타입 (단일 소스) */
+export type CreateEventData = z.infer<typeof publishEventSchema>;
+export type CreateMixsetFormData = z.infer<typeof draftMixsetSchema>;
 
 // ============================================
 // Mixset Schemas
 // ============================================
 
-export const draftMixsetSchema = z.object({
+const mixsetBase = z.object({
     title: z.string().min(1).max(100).trim(),
 });
 
-export const publishMixsetSchema = z
-    .object({
-        title: z.string().min(1).max(100).trim(),
-        coverUrl: z.string().min(1),
-        audioUrl: z.string().default(''),
-        soundcloudUrl: z.string().default(''),
-    })
-    .refine((d) => !!d.audioUrl?.trim() || !!d.soundcloudUrl?.trim(), {
-        message: '오디오 URL 또는 SoundCloud URL이 필요합니다',
-        path: ['audioUrl'],
-    });
+export const draftMixsetSchema = mixsetBase.extend({
+    coverUrl: z.string().default(''),
+    url: z.string().default(''),
+});
+
+export const publishMixsetSchema = mixsetBase.extend({
+    coverUrl: z.string().min(1, '커버 이미지가 필요합니다'),
+    url: z.string().url('유효한 URL이어야 합니다'),
+});
 
 // ============================================
 // Link Schemas
 // ============================================
 
-export const draftLinkSchema = z.object({
+const linkBase = z.object({
     title: z.string().min(1).max(100).trim(),
+});
+
+export const draftLinkSchema = linkBase.extend({
     url: z.string().min(1).trim(),
 });
 
-export const publishLinkSchema = z.object({
-    title: z.string().min(1).max(100).trim(),
+export const publishLinkSchema = linkBase.extend({
     url: z.string().url('유효한 URL이어야 합니다'),
 });
 
