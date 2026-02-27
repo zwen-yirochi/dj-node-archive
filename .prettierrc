@@ -8,6 +8,37 @@
     "arrowParens": "always",
     "endOfLine": "lf",
     "plugins": [
+        "@ianvs/prettier-plugin-sort-imports",
         "prettier-plugin-tailwindcss"
-    ]
+    ],
+    "importOrder": [
+        "^react$",
+        "^react-dom(/.*)?$",
+        "^next(/.*)?$",
+        "",
+        "^@supabase/(.*)$",
+        "^@tanstack/(.*)$",
+        "^zustand(.*)$",
+        "^zod(.*)$",
+        "^react-hook-form(.*)$",
+        "^@hookform/(.*)$",
+        "",
+        "^@radix-ui/(.*)$",
+        "^lucide-react$",
+        "^framer-motion(.*)$",
+        "^class-variance-authority(.*)$",
+        "^clsx$",
+        "^tailwind-merge$",
+        "",
+        "^@/types(/.*)?$",
+        "^@/lib(/.*)?$",
+        "^@/stores(/.*)?$",
+        "^@/hooks(/.*)?$",
+        "^@/app(/.*)?$",
+        "^@/components(/.*)?$",
+        "",
+        "^[./]"
+    ],
+    "importOrderParserPlugins": ["typescript", "jsx", "decorators-legacy"],
+    "importOrderTypeScriptVersion": "5.9.3"
 }
