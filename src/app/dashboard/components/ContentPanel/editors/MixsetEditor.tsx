@@ -77,7 +77,7 @@ function TracklistEditor({
     tracklist: { track: string; artist: string; time: string }[];
     onSave: (tracklist: { track: string; artist: string; time: string }[]) => void;
 }) {
-    const { add, update, remove } = useArrayField(tracklist, onSave, {
+    const { add, update, remove, keys } = useArrayField(tracklist, onSave, {
         track: '',
         artist: '',
         time: '0:00',
@@ -90,7 +90,7 @@ function TracklistEditor({
             </h3>
             <div className="space-y-2">
                 {tracklist.map((track, i) => (
-                    <div key={i} className="flex items-baseline gap-3 text-sm">
+                    <div key={keys[i]} className="flex items-baseline gap-3 text-sm">
                         <EditableField
                             value={track.time}
                             onSave={(value) => update(i, 'time', value)}
