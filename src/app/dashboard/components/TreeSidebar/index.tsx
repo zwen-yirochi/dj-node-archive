@@ -6,7 +6,13 @@ import { toast } from '@/hooks/use-toast';
 import { useEditorData, useEntryMutations } from '../../hooks';
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
-import { useDashboardStore } from '../../stores/dashboardStore';
+import {
+    selectContentView,
+    selectSetView,
+    selectSidebarSections,
+    selectToggleSection,
+    useDashboardStore,
+} from '../../stores/dashboardStore';
 import type { ContentEntry } from '@/types';
 
 /** dnd-kit data 타입 — active.data.current의 구조를 선언 */
@@ -56,10 +62,10 @@ export default function TreeSidebar() {
     } = useEntryMutations();
 
     // Dashboard Store
-    const contentView = useDashboardStore((state) => state.contentView);
-    const setView = useDashboardStore((state) => state.setView);
-    const sidebarSections = useDashboardStore((state) => state.sidebarSections);
-    const toggleSection = useDashboardStore((state) => state.toggleSection);
+    const contentView = useDashboardStore(selectContentView);
+    const setView = useDashboardStore(selectSetView);
+    const sidebarSections = useDashboardStore(selectSidebarSections);
+    const toggleSection = useDashboardStore(selectToggleSection);
 
     // Derive sidebar highlight state from contentView
     const isBioActive = contentView.kind === 'bio';

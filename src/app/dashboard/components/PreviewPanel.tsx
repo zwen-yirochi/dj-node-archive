@@ -1,6 +1,6 @@
 'use client';
 
-import { useDashboardStore } from '../stores/dashboardStore';
+import { selectPreviewVersion, useDashboardStore } from '../stores/dashboardStore';
 import { useUser } from '../hooks';
 import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function PreviewPanel() {
     const user = useUser();
-    const previewVersion = useDashboardStore((state) => state.previewVersion);
+    const previewVersion = useDashboardStore(selectPreviewVersion);
     const [copied, setCopied] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);

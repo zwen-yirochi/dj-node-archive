@@ -10,7 +10,7 @@ import {
     getTreeItemStatus,
     type TreeItemStatus,
 } from '@/app/dashboard/config/entryFieldConfig';
-import { useDashboardStore } from '../../stores/dashboardStore';
+import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 import type { ContentEntry } from '@/types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -56,8 +56,8 @@ export default function TreeItem({
     onDelete,
 }: TreeItemProps) {
     // Dashboard Store
-    const contentView = useDashboardStore((state) => state.contentView);
-    const setView = useDashboardStore((state) => state.setView);
+    const contentView = useDashboardStore(selectContentView);
+    const setView = useDashboardStore(selectSetView);
 
     // 상태 계산 - displayOrder가 숫자이면 Page에 있음
     const isInView = typeof entry.displayOrder === 'number';

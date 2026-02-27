@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 import type { EntryType } from '../config/entryConfig';
 
 export type { EntryType };
@@ -51,22 +52,46 @@ const DEFAULT_STATE = {
     previewVersion: 0,
 };
 
-export const useDashboardStore = create<DashboardStore>((set) => ({
-    ...DEFAULT_STATE,
+export const useDashboardStore = create<DashboardStore>()(
+    devtools(
+        (set) => ({
+            ...DEFAULT_STATE,
 
-    setView: (view) => set({ contentView: view }),
+            setView: (view) => set({ contentView: view }, undefined, 'setView'),
 
-    triggerPreviewRefresh: () => set((state) => ({ previewVersion: state.previewVersion + 1 })),
+            triggerPreviewRefresh: () =>
+                set(
+                    (state) => ({ previewVersion: state.previewVersion + 1 }),
+                    undefined,
+                    'triggerPreviewRefresh'
+                ),
 
-    toggleSection: (section) =>
-        set((state) => ({
-            sidebarSections: {
-                ...state.sidebarSections,
-                [section]: {
-                    collapsed: !state.sidebarSections[section].collapsed,
-                },
-            },
-        })),
+            toggleSection: (section) =>
+                set(
+                    (state) => ({
+                        sidebarSections: {
+                            ...state.sidebarSections,
+                            [section]: {
+                                collapsed: !state.sidebarSections[section].collapsed,
+                            },
+                        },
+                    }),
+                    undefined,
+                    'toggleSection'
+                ),
 
-    reset: () => set(DEFAULT_STATE),
-}));
+            reset: () => set(DEFAULT_STATE, undefined, 'reset'),
+        }),
+        { name: 'DashboardStore', enabled: process.env.NODE_ENV === 'development' }
+    )
+);
+
+// ============================================
+// Selectors (referential stability)
+// ============================================
+
+export const selectContentView = (s: DashboardStore) => s.contentView;
+export const selectSetView = (s: DashboardStore) => s.setView;
+export const selectSidebarSections = (s: DashboardStore) => s.sidebarSections;
+export const selectToggleSection = (s: DashboardStore) => s.toggleSection;
+export const selectPreviewVersion = (s: DashboardStore) => s.previewVersion;

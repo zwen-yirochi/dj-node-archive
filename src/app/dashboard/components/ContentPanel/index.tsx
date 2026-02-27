@@ -1,6 +1,6 @@
 'use client';
 
-import { useDashboardStore } from '../../stores/dashboardStore';
+import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 import dynamic from 'next/dynamic';
 import ErrorBoundaryWithQueryReset from '../ErrorBoundary';
 import { Suspense } from 'react';
@@ -76,8 +76,8 @@ function DetailSkeleton() {
 }
 
 export default function ContentPanel() {
-    const view = useDashboardStore((s) => s.contentView);
-    const setView = useDashboardStore((s) => s.setView);
+    const view = useDashboardStore(selectContentView);
+    const setView = useDashboardStore(selectSetView);
 
     switch (view.kind) {
         case 'bio':

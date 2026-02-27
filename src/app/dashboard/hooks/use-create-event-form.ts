@@ -3,7 +3,7 @@ import { useEditorData, useEntryMutations } from '.';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
 import { draftEventSchema, publishEventSchema } from '@/lib/validations/entry.schemas';
-import { useDashboardStore } from '../stores/dashboardStore';
+import { selectSetView, useDashboardStore } from '../stores/dashboardStore';
 import type { CreateEventData, EventEntry } from '@/types/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRef, useState } from 'react';
@@ -47,7 +47,7 @@ export function useCreateEventForm() {
     const { create: createEntryMutation } = useEntryMutations();
 
     // Store
-    const setView = useDashboardStore((state) => state.setView);
+    const setView = useDashboardStore(selectSetView);
 
     // Submit 버튼 활성화: draftEventSchema 최소 조건 (title + posterUrl)
     const [title, posterUrl] = watch(['title', 'posterUrl']);

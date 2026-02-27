@@ -13,7 +13,7 @@ import OptionSelector from '@/components/ui/OptionSelector';
 import { useEditorData, useEntryMutations } from '../../hooks';
 import { toast } from '@/hooks/use-toast';
 import { createEmptyEntry } from '@/lib/mappers';
-import { useDashboardStore } from '../../stores/dashboardStore';
+import { selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import CreateEventForm from './CreateEventForm';
@@ -33,7 +33,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
     const { create: createEntryMutation } = useEntryMutations();
 
     // Store
-    const setView = useDashboardStore((state) => state.setView);
+    const setView = useDashboardStore(selectSetView);
 
     const config = ENTRY_TYPE_CONFIG[type];
 
