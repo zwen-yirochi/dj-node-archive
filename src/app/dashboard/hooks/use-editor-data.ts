@@ -44,7 +44,7 @@ export function useEditorData(initialData?: EditorData) {
         queryFn: fetchEditorData,
         initialData,
         initialDataUpdatedAt: initialData ? Date.now() : undefined,
-        staleTime: 5 * 60 * 1000,
+        staleTime: 60_000,
     });
 }
 
@@ -61,6 +61,6 @@ export function useEntryDetail(id: string) {
         initialDataUpdatedAt: () => {
             return queryClient.getQueryState(entryKeys.all)?.dataUpdatedAt;
         },
-        staleTime: 5 * 60 * 1000,
+        staleTime: 60_000,
     });
 }

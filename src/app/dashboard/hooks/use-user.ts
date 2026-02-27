@@ -78,13 +78,15 @@ export function useUserMutations() {
             }
             return { previous };
         },
+        onSuccess: (serverUser) => {
+            queryClient.setQueryData<EditorData>(entryKeys.all, (prev) =>
+                prev ? { ...prev, user: serverUser } : prev
+            );
+        },
         onError: (_err, _vars, ctx) => {
             if (ctx?.previous) {
                 queryClient.setQueryData(entryKeys.all, ctx.previous);
             }
-        },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: entryKeys.all });
         },
     });
 
@@ -92,16 +94,9 @@ export function useUserMutations() {
         mutationFn: ({ userId, formData }: { userId: string; formData: FormData }) =>
             postAvatar(userId, formData),
         onSuccess: (data) => {
-            const previous = queryClient.getQueryData<EditorData>(entryKeys.all);
-            if (previous) {
-                queryClient.setQueryData<EditorData>(entryKeys.all, {
-                    ...previous,
-                    user: { ...previous.user, avatarUrl: data.avatarUrl },
-                });
-            }
-        },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: entryKeys.all });
+            queryClient.setQueryData<EditorData>(entryKeys.all, (prev) =>
+                prev ? { ...prev, user: { ...prev.user, avatarUrl: data.avatarUrl } } : prev
+            );
         },
     });
 
@@ -122,9 +117,6 @@ export function useUserMutations() {
             if (ctx?.previous) {
                 queryClient.setQueryData(entryKeys.all, ctx.previous);
             }
-        },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: entryKeys.all });
         },
     });
 
