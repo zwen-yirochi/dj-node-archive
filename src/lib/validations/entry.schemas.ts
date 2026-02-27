@@ -44,13 +44,12 @@ const eventBaseFields = {
  */
 export const draftEventSchema = z.object({
     ...eventBaseFields,
-    date: z.string().optional().default(''),
+    date: z.string().default(''),
     venue: z
         .object({ id: z.string().uuid().optional(), name: z.string().default('') })
-        .optional()
         .default({ name: '' }),
-    lineup: z.array(artistReferenceSchema).optional().default([]),
-    description: z.string().optional().default(''),
+    lineup: z.array(artistReferenceSchema).default([]),
+    description: z.string().default(''),
 });
 
 /**
@@ -77,8 +76,8 @@ export const publishMixsetSchema = z
     .object({
         title: z.string().min(1).max(100).trim(),
         coverUrl: z.string().min(1),
-        audioUrl: z.string().optional().default(''),
-        soundcloudUrl: z.string().optional().default(''),
+        audioUrl: z.string().default(''),
+        soundcloudUrl: z.string().default(''),
     })
     .refine((d) => !!d.audioUrl?.trim() || !!d.soundcloudUrl?.trim(), {
         message: '오디오 URL 또는 SoundCloud URL이 필요합니다',
@@ -117,7 +116,7 @@ export const createEntryRequestSchema = z.object({
             type: z.enum(['event', 'mixset', 'link']),
         })
         .passthrough(),
-    publishOption: z.enum(['publish', 'private']).optional().default('private'),
+    publishOption: z.enum(['publish', 'private']).default('private'),
 });
 
 /**
