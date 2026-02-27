@@ -73,7 +73,6 @@ export default function CreateEventForm() {
 
     // Store
     const setView = useDashboardStore((state) => state.setView);
-    const closeCreatePanel = useDashboardStore((state) => state.closeCreatePanel);
 
     // Submit 버튼 활성화: draftEventSchema 최소 조건 (title + posterUrl)
     const [title, posterUrl] = watch(['title', 'posterUrl']);
@@ -82,7 +81,7 @@ export default function CreateEventForm() {
     const handleCancel = () => {
         reset();
         setPublishOption('private');
-        closeCreatePanel();
+        setView({ kind: 'page' });
     };
 
     const handlePublishOptionChange = (value: PublishOption) => {

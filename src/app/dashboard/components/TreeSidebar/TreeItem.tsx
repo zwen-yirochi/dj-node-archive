@@ -57,7 +57,7 @@ export default function TreeItem({
 }: TreeItemProps) {
     // Dashboard Store
     const contentView = useDashboardStore((state) => state.contentView);
-    const selectEntry = useDashboardStore((state) => state.selectEntry);
+    const setView = useDashboardStore((state) => state.setView);
 
     // 상태 계산 - displayOrder가 숫자이면 Page에 있음
     const isInView = typeof entry.displayOrder === 'number';
@@ -85,7 +85,7 @@ export default function TreeItem({
     };
 
     const handleClick = () => {
-        selectEntry(entry.id);
+        setView({ kind: 'detail', entryId: entry.id });
     };
 
     const handleVisibilityClick = (e?: React.MouseEvent) => {
@@ -94,7 +94,7 @@ export default function TreeItem({
     };
 
     const handleEdit = () => {
-        selectEntry(entry.id);
+        setView({ kind: 'detail', entryId: entry.id });
         onEdit?.();
     };
 

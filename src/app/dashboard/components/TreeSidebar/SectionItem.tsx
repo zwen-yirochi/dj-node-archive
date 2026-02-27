@@ -24,7 +24,7 @@ export default function SectionItem({
 }: SectionItemProps) {
     const sidebarSections = useDashboardStore((state) => state.sidebarSections);
     const toggleSection = useDashboardStore((state) => state.toggleSection);
-    const openCreatePanel = useDashboardStore((state) => state.openCreatePanel);
+    const setView = useDashboardStore((state) => state.setView);
 
     const isCollapsed = sidebarSections[section].collapsed;
 
@@ -64,7 +64,7 @@ export default function SectionItem({
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
-                            openCreatePanel(entryType);
+                            setView({ kind: 'create', entryType });
                         }}
                         className="rounded p-1 opacity-0 transition-opacity hover:bg-dashboard-bg-active group-hover:opacity-100"
                     >

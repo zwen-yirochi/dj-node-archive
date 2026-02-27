@@ -34,7 +34,6 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
 
     // Store
     const setView = useDashboardStore((state) => state.setView);
-    const closeCreatePanel = useDashboardStore((state) => state.closeCreatePanel);
 
     const config = ENTRY_TYPE_CONFIG[type];
 
@@ -84,7 +83,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
     };
 
     const handleCancel = () => {
-        closeCreatePanel();
+        setView({ kind: 'page' });
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
