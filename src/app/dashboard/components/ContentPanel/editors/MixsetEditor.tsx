@@ -2,22 +2,18 @@
 
 import { EditableField } from '@/components/ui/editable-field';
 import type { MixsetEntry } from '@/types';
+import type { EntryEditorProps } from '@/app/dashboard/constants/editorRegistry';
 import { Plus, X } from 'lucide-react';
+import { useArrayField } from '../../../hooks/use-array-field';
 import ImageEditor from './ImageEditor';
 
-interface MixsetEditorProps {
-    entry: MixsetEntry;
-    onUpdate: (updates: Partial<MixsetEntry>) => void;
-    editingField: 'title' | 'image' | null;
-    onEditingDone: () => void;
-}
-
 export default function MixsetEditor({
-    entry,
+    entry: rawEntry,
     onUpdate,
     editingField,
     onEditingDone,
-}: MixsetEditorProps) {
+}: EntryEditorProps) {
+    const entry = rawEntry as MixsetEntry;
     return (
         <div className="space-y-4">
             {/* Cover */}
@@ -81,19 +77,11 @@ function TracklistEditor({
     tracklist: { track: string; artist: string; time: string }[];
     onSave: (tracklist: { track: string; artist: string; time: string }[]) => void;
 }) {
-    const addTrack = () => {
-        onSave([...tracklist, { track: '', artist: '', time: '0:00' }]);
-    };
-
-    const updateTrack = (index: number, field: 'track' | 'artist' | 'time', value: string) => {
-        const newTracklist = [...tracklist];
-        newTracklist[index] = { ...newTracklist[index], [field]: value };
-        onSave(newTracklist);
-    };
-
-    const removeTrack = (index: number) => {
-        onSave(tracklist.filter((_, i) => i !== index));
-    };
+    const { add, update, remove } = useArrayField(tracklist, onSave, {
+        track: '',
+        artist: '',
+        time: '0:00',
+    });
 
     return (
         <div className="rounded-xl bg-dashboard-bg-muted p-4">
@@ -105,26 +93,26 @@ function TracklistEditor({
                     <div key={i} className="flex items-baseline gap-3 text-sm">
                         <EditableField
                             value={track.time}
-                            onSave={(value) => updateTrack(i, 'time', value)}
+                            onSave={(value) => update(i, 'time', value)}
                             placeholder="0:00"
                             className="w-12 shrink-0 font-mono text-xs text-dashboard-text-placeholder"
                         />
                         <div className="min-w-0 flex-1">
                             <EditableField
                                 value={track.track}
-                                onSave={(value) => updateTrack(i, 'track', value)}
+                                onSave={(value) => update(i, 'track', value)}
                                 placeholder="트랙 제목"
                                 className="text-dashboard-text-secondary"
                             />
                         </div>
                         <EditableField
                             value={track.artist}
-                            onSave={(value) => updateTrack(i, 'artist', value)}
+                            onSave={(value) => update(i, 'artist', value)}
                             placeholder="아티스트"
                             className="text-dashboard-text-placeholder"
                         />
                         <button
-                            onClick={() => removeTrack(i)}
+                            onClick={() => remove(i)}
                             className="p-1 text-dashboard-text-placeholder hover:text-red-500"
                         >
                             <X className="h-3.5 w-3.5" />
@@ -132,7 +120,7 @@ function TracklistEditor({
                     </div>
                 ))}
                 <button
-                    onClick={addTrack}
+                    onClick={add}
                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-dashboard-border-hover p-2 text-sm text-dashboard-text-muted transition-colors hover:border-dashboard-text hover:text-dashboard-text-secondary"
                 >
                     <Plus className="h-3.5 w-3.5" />

@@ -4,10 +4,14 @@ import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
 import { TypeBadge } from '@/components/dna';
 import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 import { cn } from '@/lib/utils';
-import { canAddToView, getMissingFieldLabels, getTreeItemStatus } from '@/lib/validators';
+import {
+    canAddToView,
+    getMissingFieldLabels,
+    getTreeItemStatus,
+    type TreeItemStatus,
+} from '@/app/dashboard/constants/entryFieldConfig';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import type { ContentEntry } from '@/types';
-import type { TreeItemStatus } from '@/types/entryFields';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';

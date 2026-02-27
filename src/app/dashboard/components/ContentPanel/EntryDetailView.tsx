@@ -1,19 +1,15 @@
 'use client';
 
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
-import { EDITOR_CONFIG } from '@/app/dashboard/constants/entryEditorConfig';
+import { EDITOR_REGISTRY } from '@/app/dashboard/constants/editorRegistry';
+import { EDITOR_MENU_CONFIG, resolveMenuItems } from '@/app/dashboard/constants/menuConfig';
 import { TypeBadge } from '@/components/dna';
 import { useEntryDetail, useEntryMutations } from '../../hooks';
 import { Button } from '@/components/ui/button';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 import type { ContentEntry } from '@/types';
-import { isEventEntry, isMixsetEntry, isLinkEntry } from '@/types';
-import { resolveMenuItems } from '@/types/entryFields';
 import { ArrowLeft, MoreHorizontal } from 'lucide-react';
 import { useState, useCallback, useRef, useEffect } from 'react';
-import EventEditor from './editors/EventEditor';
-import MixsetEditor from './editors/MixsetEditor';
-import LinkEditor from './editors/LinkEditor';
 
 // ============================================
 // useDebouncedSave hook
@@ -119,13 +115,13 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     const saveStatus = getSaveStatus();
 
     // "..." 메뉴 items — config-driven + declarative action resolution
-    const editorConfig = EDITOR_CONFIG[localEntry.type];
-    const menuItems = resolveMenuItems(editorConfig.menuItems, {
+    const menuItems = resolveMenuItems(EDITOR_MENU_CONFIG[localEntry.type], {
         setEditingField,
         onDelete: handleDelete,
     });
 
     const handleEditingDone = () => setEditingField(null);
+    const Editor = EDITOR_REGISTRY[localEntry.type];
 
     return (
         <div className="flex h-full flex-col">
@@ -165,30 +161,12 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                 <p className="mb-4 text-xs text-dashboard-text-placeholder">
                     더블클릭하여 편집 · Enter로 저장 · Escape로 취소
                 </p>
-                {isEventEntry(localEntry) && (
-                    <EventEditor
-                        entry={localEntry}
-                        onUpdate={(updates) => handleUpdate(updates as Partial<ContentEntry>)}
-                        editingField={editingField}
-                        onEditingDone={handleEditingDone}
-                    />
-                )}
-                {isMixsetEntry(localEntry) && (
-                    <MixsetEditor
-                        entry={localEntry}
-                        onUpdate={(updates) => handleUpdate(updates as Partial<ContentEntry>)}
-                        editingField={editingField}
-                        onEditingDone={handleEditingDone}
-                    />
-                )}
-                {isLinkEntry(localEntry) && (
-                    <LinkEditor
-                        entry={localEntry}
-                        onUpdate={(updates) => handleUpdate(updates as Partial<ContentEntry>)}
-                        editingField={editingField}
-                        onEditingDone={handleEditingDone}
-                    />
-                )}
+                <Editor
+                    entry={localEntry}
+                    onUpdate={handleUpdate}
+                    editingField={editingField}
+                    onEditingDone={handleEditingDone}
+                />
             </div>
         </div>
     );

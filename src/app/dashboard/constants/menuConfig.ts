@@ -1,19 +1,17 @@
 /**
- * Entry 필드 관련 타입 정의
+ * 메뉴 시스템 설정
+ * - 선언적 메뉴 액션 타입 + 리졸버
+ * - 타입별 에디터 메뉴 구성
  */
 
 import type { DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 import type { LucideIcon } from 'lucide-react';
+import { ImageIcon, Trash2, Type } from 'lucide-react';
+import type { EntryType } from './entryConfig';
 
 // ============================================
-// Editor types
+// Menu action types
 // ============================================
-
-export interface EditorFieldConfig {
-    key: string;
-    label: string;
-    triggersPreview: boolean;
-}
 
 /** 선언적 메뉴 액션 — variant 추가 시 union 확장 + resolveAction에 case 추가 */
 export type MenuAction =
@@ -32,11 +30,6 @@ export interface MenuSeparatorConfig {
 }
 
 export type EditorMenuItemConfig = MenuActionItem | MenuSeparatorConfig;
-
-export interface EntryEditorConfig {
-    fields: EditorFieldConfig[];
-    menuItems: EditorMenuItemConfig[];
-}
 
 // ============================================
 // Menu action resolution
@@ -74,31 +67,33 @@ export function resolveMenuItems(
 }
 
 // ============================================
-// Validation types
+// 공유 메뉴 아이템 상수
 // ============================================
 
-export type ValidationRule = 'required' | 'url' | false;
-
-export interface FieldValidationConfig {
-    key: string;
-    label: string;
-    create: ValidationRule;
-    view: ValidationRule;
-    isUrl?: boolean;
-    allowEmptyArray?: boolean;
-}
+const EDIT_TITLE: EditorMenuItemConfig = {
+    action: { type: 'set-editing-field', field: 'title' },
+    label: '제목 변경',
+    icon: Type,
+};
+const EDIT_IMAGE: EditorMenuItemConfig = {
+    action: { type: 'set-editing-field', field: 'image' },
+    label: '이미지 변경',
+    icon: ImageIcon,
+};
+const SEPARATOR: EditorMenuItemConfig = { type: 'separator' };
+const DELETE: EditorMenuItemConfig = {
+    action: { type: 'delete' },
+    label: '삭제',
+    icon: Trash2,
+    variant: 'danger',
+};
 
 // ============================================
-// Common types (유지)
+// 타입별 에디터 메뉴 구성
 // ============================================
 
-/** 검증 결과 */
-export interface ValidationResult {
-    isValid: boolean;
-    errors: string[];
-    /** 누락된 필드 키 목록 */
-    missingFields: string[];
-}
-
-/** TreeItem 상태 (우측 아이콘 표시용) */
-export type TreeItemStatus = 'inView' | 'normal' | 'warning';
+export const EDITOR_MENU_CONFIG: Record<EntryType, EditorMenuItemConfig[]> = {
+    event: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE],
+    mixset: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE],
+    link: [EDIT_TITLE, SEPARATOR, DELETE],
+};

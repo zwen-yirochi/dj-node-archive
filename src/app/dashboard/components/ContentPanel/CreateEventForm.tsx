@@ -26,7 +26,7 @@ import { useDashboardStore } from '@/stores/dashboardStore';
 import type { CreateEventData, EventEntry } from '@/types/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 // 공통 Input 스타일
@@ -34,8 +34,17 @@ const inputClassName =
     'border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-dashboard-border-hover focus:ring-1';
 
 export default function CreateEventForm() {
+    // publishOption에 따라 resolver가 전환 (draft ↔ publish)
+    const [publishOption, setPublishOption] = useState<PublishOption>('private');
+    const publishOptionRef = useRef(publishOption);
+    publishOptionRef.current = publishOption;
+
     const form = useForm<CreateEventData>({
-        resolver: zodResolver(draftEventSchema),
+        resolver: (values, context, options) => {
+            const schema =
+                publishOptionRef.current === 'publish' ? publishEventSchema : draftEventSchema;
+            return zodResolver(schema)(values, context, options);
+        },
         mode: 'onTouched',
         defaultValues: {
             title: '',
@@ -54,10 +63,9 @@ export default function CreateEventForm() {
         reset,
         setError,
         clearErrors,
+        trigger,
         formState: { errors, isSubmitting },
     } = form;
-
-    const [publishOption, setPublishOption] = useState<PublishOption>('private');
 
     // TanStack Query
     const { data } = useEditorData();
@@ -67,38 +75,34 @@ export default function CreateEventForm() {
     const setView = useDashboardStore((state) => state.setView);
     const closeCreatePanel = useDashboardStore((state) => state.closeCreatePanel);
 
-    // watch 최적화: 필요한 필드만 구독
-    const [title, posterUrl, date, venue, lineup, description] = watch([
-        'title',
-        'posterUrl',
-        'date',
-        'venue',
-        'lineup',
-        'description',
-    ]);
+    // Submit 버튼 활성화: draftEventSchema 최소 조건 (title + posterUrl)
+    const [title, posterUrl] = watch(['title', 'posterUrl']);
+    const canCreate = !!title?.trim() && !!posterUrl?.trim();
 
-    // 필수 필드 검증
-    const hasRequiredFields = title?.trim() && posterUrl?.trim();
-
-    // 모든 필드 검증 (Publishing용) - Zod 스키마로 검증
-    const canPublish = publishEventSchema.safeParse({
-        title,
-        posterUrl,
-        date,
-        venue,
-        lineup,
-        description,
-    }).success;
-
-    const canCreate = hasRequiredFields;
-
-    // 취소 핸들러
     const handleCancel = () => {
         reset();
+        setPublishOption('private');
         closeCreatePanel();
     };
 
+    const handlePublishOptionChange = (value: PublishOption) => {
+        if (value === 'publish') {
+            const result = publishEventSchema.safeParse(form.getValues());
+            if (!result.success) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Cannot publish',
+                    description: 'All fields must be filled to publish.',
+                });
+                return;
+            }
+        }
+        setPublishOption(value);
+        trigger();
+    };
+
     const onSubmit = async (formData: CreateEventData) => {
+        // resolver가 publishOption에 맞는 스키마로 이미 검증 완료
         clearErrors('root');
 
         if (!data.pageId) {
@@ -106,26 +110,14 @@ export default function CreateEventForm() {
             return;
         }
 
-        if (publishOption === 'publish') {
-            const publishResult = publishEventSchema.safeParse(formData);
-            if (!publishResult.success) {
-                toast({
-                    variant: 'destructive',
-                    title: 'All fields required',
-                    description: 'Publishing requires all fields to be filled.',
-                });
-                return;
-            }
-        }
-
         try {
-            const newEntry = createEmptyEntry('event') as EventEntry;
-            newEntry.title = formData.title.trim();
-            newEntry.posterUrl = formData.posterUrl.trim();
-            newEntry.date = formData.date || new Date().toISOString().split('T')[0];
-            newEntry.venue = formData.venue;
-            newEntry.lineup = formData.lineup;
-            newEntry.description = formData.description?.trim() || '';
+            const newEntry = {
+                ...createEmptyEntry('event'),
+                ...formData,
+                title: formData.title.trim(),
+                date: formData.date || new Date().toISOString().split('T')[0],
+                description: formData.description?.trim() || '',
+            } as EventEntry;
 
             await createEntryMutation.mutateAsync({
                 pageId: data.pageId,
@@ -140,16 +132,13 @@ export default function CreateEventForm() {
                     publishOption === 'publish' ? 'Event published.' : 'Event saved as private.',
             });
         } catch (error) {
-            // 서버 에러를 폼에 표시
             const message = error instanceof Error ? error.message : 'An unexpected error occurred';
 
-            // 특정 필드 에러인 경우 해당 필드에 표시
             if (message.includes('title')) {
                 setError('title', { type: 'server', message });
             } else if (message.includes('poster')) {
                 setError('posterUrl', { type: 'server', message });
             } else {
-                // 일반 에러는 root에 설정
                 setError('root', { type: 'server', message });
                 toast({
                     variant: 'destructive',
@@ -295,25 +284,9 @@ export default function CreateEventForm() {
                 <div className="space-y-2">
                     <Label className="text-dashboard-text-secondary">Visibility</Label>
                     <OptionSelector
-                        options={PUBLISH_OPTIONS.map((opt) => ({
-                            ...opt,
-                            description:
-                                opt.id === 'publish' && !canPublish
-                                    ? 'Fill all fields to enable publishing'
-                                    : opt.description,
-                        }))}
+                        options={PUBLISH_OPTIONS}
                         value={publishOption}
-                        onChange={(value) => {
-                            if (value === 'publish' && !canPublish) {
-                                toast({
-                                    variant: 'destructive',
-                                    title: 'Cannot publish',
-                                    description: 'All fields must be filled to publish.',
-                                });
-                                return;
-                            }
-                            setPublishOption(value);
-                        }}
+                        onChange={handlePublishOptionChange}
                     />
                 </div>
 

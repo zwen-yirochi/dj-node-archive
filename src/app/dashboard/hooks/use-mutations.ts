@@ -8,7 +8,7 @@
 
 import type { EditorData } from '@/lib/services/user.service';
 import { shouldTriggerPreview } from '@/lib/previewTrigger';
-import { canAddToView } from '@/lib/validators';
+import { canAddToView } from '@/app/dashboard/constants/entryFieldConfig';
 import type { ContentEntry } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { PublishOption } from '@/app/dashboard/constants/workflowOptions';

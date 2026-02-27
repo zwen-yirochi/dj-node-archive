@@ -2,23 +2,19 @@
 
 import { EditableDateField, EditableField } from '@/components/ui/editable-field';
 import type { EventEntry } from '@/types';
+import type { EntryEditorProps } from '@/app/dashboard/constants/editorRegistry';
 import { Calendar, ExternalLink, MapPin, Plus, Users, X } from 'lucide-react';
 import { useState } from 'react';
+import { useArrayField } from '../../../hooks/use-array-field';
 import ImageEditor from './ImageEditor';
 
-interface EventEditorProps {
-    entry: EventEntry;
-    onUpdate: (updates: Partial<EventEntry>) => void;
-    editingField: 'title' | 'image' | null;
-    onEditingDone: () => void;
-}
-
 export default function EventEditor({
-    entry,
+    entry: rawEntry,
     onUpdate,
     editingField,
     onEditingDone,
-}: EventEditorProps) {
+}: EntryEditorProps) {
+    const entry = rawEntry as EventEntry;
     return (
         <div className="space-y-4">
             {/* Poster */}
@@ -193,19 +189,7 @@ function LinksEditor({
     links: { title: string; url: string }[];
     onSave: (links: { title: string; url: string }[]) => void;
 }) {
-    const addLink = () => {
-        onSave([...links, { title: '', url: '' }]);
-    };
-
-    const updateLink = (index: number, field: 'title' | 'url', value: string) => {
-        const newLinks = [...links];
-        newLinks[index] = { ...newLinks[index], [field]: value };
-        onSave(newLinks);
-    };
-
-    const removeLink = (index: number) => {
-        onSave(links.filter((_, i) => i !== index));
-    };
+    const { add, update, remove } = useArrayField(links, onSave, { title: '', url: '' });
 
     return (
         <div className="space-y-2">
@@ -220,18 +204,18 @@ function LinksEditor({
                     <ExternalLink className="h-3.5 w-3.5 shrink-0 text-dashboard-text-placeholder" />
                     <EditableField
                         value={link.title}
-                        onSave={(value) => updateLink(i, 'title', value)}
+                        onSave={(value) => update(i, 'title', value)}
                         placeholder="링크 제목"
                         className="flex-1 text-sm text-dashboard-text-secondary"
                     />
                     <EditableField
                         value={link.url}
-                        onSave={(value) => updateLink(i, 'url', value)}
+                        onSave={(value) => update(i, 'url', value)}
                         placeholder="URL"
                         className="flex-1 text-sm text-dashboard-text-muted"
                     />
                     <button
-                        onClick={() => removeLink(i)}
+                        onClick={() => remove(i)}
                         className="p-1 text-dashboard-text-placeholder hover:text-red-500"
                     >
                         <X className="h-3.5 w-3.5" />
@@ -239,7 +223,7 @@ function LinksEditor({
                 </div>
             ))}
             <button
-                onClick={addLink}
+                onClick={add}
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-dashboard-border-hover p-2 text-sm text-dashboard-text-muted transition-colors hover:border-dashboard-text hover:text-dashboard-text-secondary"
             >
                 <Plus className="h-3.5 w-3.5" />

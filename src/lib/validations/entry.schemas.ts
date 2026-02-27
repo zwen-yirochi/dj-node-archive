@@ -66,10 +66,49 @@ export const publishEventSchema = z.object({
     links: z.array(externalLinkSchema).optional(),
 }) satisfies z.ZodType<CreateEventData>;
 
-/**
- * Create event: publishEventSchema와 동일
- */
-export const createEventSchema = publishEventSchema;
+// ============================================
+// Mixset Schemas
+// ============================================
+
+export const draftMixsetSchema = z
+    .object({
+        title: z.string().min(1).max(100).trim(),
+    })
+    .passthrough();
+
+export const publishMixsetSchema = z
+    .object({
+        title: z.string().min(1),
+        coverUrl: z.string().min(1),
+    })
+    .passthrough()
+    .refine(
+        (d) =>
+            !!(d as Record<string, unknown>).audioUrl?.toString().trim() ||
+            !!(d as Record<string, unknown>).soundcloudUrl?.toString().trim(),
+        {
+            message: '오디오 URL 또는 SoundCloud URL이 필요합니다',
+            path: ['audioUrl'],
+        }
+    );
+
+// ============================================
+// Link Schemas
+// ============================================
+
+export const draftLinkSchema = z
+    .object({
+        title: z.string().min(1).max(100).trim(),
+        url: z.string().min(1).trim(),
+    })
+    .passthrough();
+
+export const publishLinkSchema = z
+    .object({
+        title: z.string().min(1),
+        url: z.string().url(),
+    })
+    .passthrough();
 
 // ============================================
 // API Request Schemas

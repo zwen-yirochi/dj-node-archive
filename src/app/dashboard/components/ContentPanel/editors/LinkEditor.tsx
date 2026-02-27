@@ -4,6 +4,7 @@ import { EditableField } from '@/components/ui/editable-field';
 import { cn } from '@/lib/utils';
 import type { LinkEntry } from '@/types';
 import { ICON_OPTIONS } from '@/types';
+import type { EntryEditorProps } from '@/app/dashboard/constants/editorRegistry';
 import { ExternalLink, Globe, Instagram, Mail, Music, Youtube } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -18,19 +19,13 @@ const iconComponents: Record<string, React.ComponentType<{ className?: string }>
     mail: Mail,
 };
 
-interface LinkEditorProps {
-    entry: LinkEntry;
-    onUpdate: (updates: Partial<LinkEntry>) => void;
-    editingField: 'title' | 'image' | null;
-    onEditingDone: () => void;
-}
-
 export default function LinkEditor({
-    entry,
+    entry: rawEntry,
     onUpdate,
     editingField,
     onEditingDone,
-}: LinkEditorProps) {
+}: EntryEditorProps) {
+    const entry = rawEntry as LinkEntry;
     const [showIconSelector, setShowIconSelector] = useState(false);
     const IconComponent = iconComponents[entry.icon || ''] || Globe;
 

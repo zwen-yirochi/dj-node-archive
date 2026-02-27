@@ -6,7 +6,7 @@
  */
 
 import type { EntryType } from '@/app/dashboard/constants/entryConfig';
-import { EDITOR_CONFIG } from '@/app/dashboard/constants/entryEditorConfig';
+import { FIELD_CONFIG } from '@/app/dashboard/constants/entryFieldConfig';
 import type { ContentEntry } from '@/types';
 
 /**
@@ -46,11 +46,11 @@ export function shouldTriggerPreview(
     updatedEntry: ContentEntry
 ): boolean {
     const type = updatedEntry.type as EntryType;
-    const config = EDITOR_CONFIG[type];
+    const fields = FIELD_CONFIG[type];
 
-    if (!config) return false;
+    if (!fields) return false;
 
-    for (const field of config.fields) {
+    for (const field of fields) {
         // triggersPreview가 false인 필드는 건너뜀
         if (!field.triggersPreview) continue;
 
@@ -74,8 +74,8 @@ export function shouldTriggerPreview(
  * @returns 해당 필드가 미리보기를 트리거하면 true
  */
 export function doesFieldTriggerPreview(type: EntryType, fieldKey: string): boolean {
-    const config = EDITOR_CONFIG[type];
-    const field = config?.fields.find((f) => f.key === fieldKey);
+    const fields = FIELD_CONFIG[type];
+    const field = fields?.find((f) => f.key === fieldKey);
     return field?.triggersPreview ?? false;
 }
 
@@ -86,6 +86,6 @@ export function doesFieldTriggerPreview(type: EntryType, fieldKey: string): bool
  * @returns triggersPreview가 true인 필드 키 목록
  */
 export function getPreviewTriggerFields(type: EntryType): string[] {
-    const config = EDITOR_CONFIG[type];
-    return config?.fields.filter((f) => f.triggersPreview).map((f) => f.key) ?? [];
+    const fields = FIELD_CONFIG[type];
+    return fields?.filter((f) => f.triggersPreview).map((f) => f.key) ?? [];
 }
