@@ -22,9 +22,9 @@ function isEqual(a: unknown, b: unknown): boolean {
         return a.every((item, i) => isEqual(item, b[i]));
     }
 
-    if (typeof a === 'object' && typeof b === 'object') {
-        const keysA = Object.keys(a as object);
-        const keysB = Object.keys(b as object);
+    if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
+        const keysA = Object.keys(a);
+        const keysB = Object.keys(b);
         if (keysA.length !== keysB.length) return false;
         return keysA.every((key) =>
             isEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])

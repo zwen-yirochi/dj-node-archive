@@ -2,6 +2,7 @@
 'use client';
 
 import { TypeBadge } from '@/components/dna';
+import { toast } from '@/hooks/use-toast';
 import { useEditorData, useEntryMutations } from '../../hooks';
 import { cn } from '@/lib/utils';
 import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
@@ -142,7 +143,9 @@ export default function TreeSidebar() {
                 return;
             }
 
-            addToDisplayMutation.mutate(entry.id);
+            addToDisplayMutation.mutate(entry.id, {
+                onError: () => toast({ variant: 'destructive', title: 'Failed to add to Page' }),
+            });
             return;
         }
 
@@ -153,7 +156,10 @@ export default function TreeSidebar() {
             const newIndex = displayedEntries.findIndex((e) => e.id === overId);
 
             if (newIndex !== -1 && active.id !== over.id) {
-                reorderDisplayMutation.mutate({ entryId: activeEntry.id, newIndex });
+                reorderDisplayMutation.mutate(
+                    { entryId: activeEntry.id, newIndex },
+                    { onError: () => toast({ variant: 'destructive', title: 'Failed to reorder' }) }
+                );
             }
             return;
         }
@@ -177,11 +183,13 @@ export default function TreeSidebar() {
 
                 const overIndex = sectionEntries.findIndex((e) => e.id === over.id);
                 if (overIndex !== -1) {
-                    reorderEntriesMutation.mutate({
-                        type: sectionType,
-                        entryId: activeEntry.id,
-                        newPosition: overIndex,
-                    });
+                    reorderEntriesMutation.mutate(
+                        { type: sectionType, entryId: activeEntry.id, newPosition: overIndex },
+                        {
+                            onError: () =>
+                                toast({ variant: 'destructive', title: 'Failed to reorder' }),
+                        }
+                    );
                 }
             }
         }

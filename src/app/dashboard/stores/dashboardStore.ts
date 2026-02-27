@@ -25,20 +25,16 @@ export type ContentView =
     | { kind: 'create'; entryType: EntryType }
     | { kind: 'detail'; entryId: string };
 
+// 단일 스토어 유지: state 3개 + action 4개로 분리 시 보일러플레이트만 증가.
+// Zustand 셀렉터가 이미 불필요한 리렌더 방지.
 interface DashboardStore {
     contentView: ContentView;
     sidebarSections: SidebarSections;
     previewVersion: number;
 
     setView: (view: ContentView) => void;
-    selectEntry: (id: string) => void;
-    openCreatePanel: (type: EntryType) => void;
-    closeCreatePanel: () => void;
-
     triggerPreviewRefresh: () => void;
-
     toggleSection: (section: SectionKey) => void;
-    setSectionCollapsed: (section: SectionKey, collapsed: boolean) => void;
     reset: () => void;
 }
 
@@ -49,18 +45,16 @@ const initialSidebarSections: SidebarSections = {
     links: { collapsed: false },
 };
 
-export const useDashboardStore = create<DashboardStore>((set) => ({
-    contentView: { kind: 'page' },
+const DEFAULT_STATE = {
+    contentView: { kind: 'page' } as ContentView,
     sidebarSections: initialSidebarSections,
     previewVersion: 0,
+};
+
+export const useDashboardStore = create<DashboardStore>((set) => ({
+    ...DEFAULT_STATE,
 
     setView: (view) => set({ contentView: view }),
-
-    selectEntry: (id) => set({ contentView: { kind: 'detail', entryId: id } }),
-
-    openCreatePanel: (type) => set({ contentView: { kind: 'create', entryType: type } }),
-
-    closeCreatePanel: () => set({ contentView: { kind: 'page' } }),
 
     triggerPreviewRefresh: () => set((state) => ({ previewVersion: state.previewVersion + 1 })),
 
@@ -74,23 +68,5 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
             },
         })),
 
-    setSectionCollapsed: (section, collapsed) =>
-        set((state) => ({
-            sidebarSections: {
-                ...state.sidebarSections,
-                [section]: { collapsed },
-            },
-        })),
-
-    reset: () =>
-        set({
-            contentView: { kind: 'page' },
-            sidebarSections: {
-                page: { collapsed: false },
-                events: { collapsed: false },
-                mixsets: { collapsed: false },
-                links: { collapsed: false },
-            },
-            previewVersion: 0,
-        }),
+    reset: () => set(DEFAULT_STATE),
 }));
