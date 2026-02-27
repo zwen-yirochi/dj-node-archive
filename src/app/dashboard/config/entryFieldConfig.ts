@@ -7,15 +7,17 @@
  */
 
 import type { ZodSchema } from 'zod';
+
+import type { ContentEntry } from '@/types';
 import {
     draftEventSchema,
-    publishEventSchema,
-    draftMixsetSchema,
-    publishMixsetSchema,
     draftLinkSchema,
+    draftMixsetSchema,
+    publishEventSchema,
     publishLinkSchema,
+    publishMixsetSchema,
 } from '@/lib/validations/entry.schemas';
-import type { ContentEntry } from '@/types';
+
 import type { EntryType } from './entryConfig';
 
 // ============================================

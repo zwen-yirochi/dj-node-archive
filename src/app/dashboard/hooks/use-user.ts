@@ -6,9 +6,11 @@
  * StoreInitializer가 initialData로 hydration하므로 실제 suspend 없음.
  */
 
-import type { EditorData } from '@/lib/services/user.service';
-import type { User } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+import type { User } from '@/types';
+import type { EditorData } from '@/lib/services/user.service';
+
 import { entryKeys, useEditorData } from './use-editor-data';
 
 // ============================================

@@ -3,9 +3,10 @@
  * 에디터 데이터 쿼리 훅 — entryKeys, useEditorData, useEntryDetail
  */
 
-import type { EditorData } from '@/lib/services/user.service';
-import type { ContentEntry } from '@/types';
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+
+import type { ContentEntry } from '@/types';
+import type { EditorData } from '@/lib/services/user.service';
 
 // ============================================
 // Query Keys
