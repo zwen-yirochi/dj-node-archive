@@ -143,8 +143,14 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
     }
 }
 
+/**
+ * Zod .passthrough() 결과도 허용하는 넓은 입력 타입.
+ * 내부 switch에서 구체 타입으로 좁혀 사용한다.
+ */
+type EntryMapperInput = ContentEntry | ({ type: ContentEntry['type'] } & Record<string, unknown>);
+
 export function mapEntryToDatabase(
-    entry: ContentEntry,
+    entry: EntryMapperInput,
     position: number
 ): Omit<Entry, 'id' | 'created_at' | 'updated_at' | 'page_id' | 'reference_id'> {
     switch (entry.type) {
@@ -156,8 +162,8 @@ export function mapEntryToDatabase(
                 return {
                     type: 'event',
                     position,
-                    display_order: entry.displayOrder,
-                    is_visible: entry.isVisible,
+                    display_order: eventEntry.displayOrder,
+                    is_visible: eventEntry.isVisible,
                     data: {
                         event_id: eventEntry.eventId,
                         custom_title: eventEntry.title || undefined,
@@ -169,8 +175,8 @@ export function mapEntryToDatabase(
             return {
                 type: 'event',
                 position,
-                display_order: entry.displayOrder,
-                is_visible: entry.isVisible,
+                display_order: eventEntry.displayOrder,
+                is_visible: eventEntry.isVisible,
                 data: {
                     title: eventEntry.title,
                     date: eventEntry.date,
@@ -195,8 +201,8 @@ export function mapEntryToDatabase(
                 return {
                     type: 'mixset',
                     position,
-                    display_order: entry.displayOrder,
-                    is_visible: entry.isVisible,
+                    display_order: mixsetEntry.displayOrder,
+                    is_visible: mixsetEntry.isVisible,
                     data: {
                         mixset_id: mixsetEntry.mixsetId,
                     },
@@ -207,8 +213,8 @@ export function mapEntryToDatabase(
             return {
                 type: 'mixset',
                 position,
-                display_order: entry.displayOrder,
-                is_visible: entry.isVisible,
+                display_order: mixsetEntry.displayOrder,
+                is_visible: mixsetEntry.isVisible,
                 data: {
                     title: mixsetEntry.title,
                     tracklist: mixsetEntry.tracklist || [],
@@ -227,8 +233,8 @@ export function mapEntryToDatabase(
             return {
                 type: 'link',
                 position,
-                display_order: entry.displayOrder,
-                is_visible: entry.isVisible,
+                display_order: linkEntry.displayOrder,
+                is_visible: linkEntry.isVisible,
                 data: {
                     title: linkEntry.title,
                     url: linkEntry.url,

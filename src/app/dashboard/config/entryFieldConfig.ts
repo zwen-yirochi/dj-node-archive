@@ -81,7 +81,7 @@ export function validateEntry(
     entry: ContentEntry,
     tier: 'create' | 'view' = 'view'
 ): ValidationResult {
-    const type = entry.type as EntryType;
+    const type: EntryType = entry.type;
     const schema = tier === 'create' ? ENTRY_SCHEMAS[type].create : ENTRY_SCHEMAS[type].view;
     const result = schema.safeParse(entry);
 
@@ -117,7 +117,7 @@ export function getMissingFieldLabels(
     entry: ContentEntry,
     tier: 'create' | 'view' = 'view'
 ): string[] {
-    const type = entry.type as EntryType;
+    const type: EntryType = entry.type;
     const fields = FIELD_CONFIG[type];
     const result = validateEntry(entry, tier);
     return result.missingFields

@@ -9,6 +9,14 @@ import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useUserStore } from '@/stores/userStore';
 import type { ContentEntry } from '@/types';
+
+/** dnd-kit data 타입 — active.data.current의 구조를 선언 */
+interface DragData {
+    type: 'entry' | 'display-entry';
+    entry: ContentEntry;
+    displayEntryId?: string;
+}
+
 import {
     closestCenter,
     DndContext,
@@ -108,7 +116,7 @@ export default function TreeSidebar() {
 
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
-        const data = active.data.current;
+        const data = active.data.current as DragData | undefined;
 
         if (data?.entry) {
             setActiveItem({
@@ -131,12 +139,12 @@ export default function TreeSidebar() {
 
         if (!over) return;
 
-        const activeData = active.data.current;
-        const overData = over.data.current;
+        const activeData = active.data.current as DragData | undefined;
+        const overData = over.data.current as DragData | undefined;
 
         // View 드롭존에 드롭
         if (over.id === 'view-drop-zone' && activeData?.type === 'entry') {
-            const entry = activeData.entry as ContentEntry;
+            const entry = activeData.entry;
 
             if (!canAddToView(entry)) {
                 console.warn('엔트리를 완성해야 Page에 추가할 수 있습니다.');
@@ -151,7 +159,7 @@ export default function TreeSidebar() {
 
         // View 섹션 내 순서 변경
         if (activeData?.type === 'display-entry' && overData?.type === 'display-entry') {
-            const activeEntry = activeData.entry as ContentEntry;
+            const activeEntry = activeData.entry;
             const overId = String(over.id).replace('view-', '');
             const newIndex = displayedEntries.findIndex((e) => e.id === overId);
 
@@ -166,8 +174,8 @@ export default function TreeSidebar() {
 
         // 섹션 내 순서 변경
         if (activeData?.type === 'entry' && overData?.type === 'entry') {
-            const activeEntry = activeData.entry as ContentEntry;
-            const overEntry = overData.entry as ContentEntry;
+            const activeEntry = activeData.entry;
+            const overEntry = overData.entry;
 
             if (activeEntry.type === overEntry.type && active.id !== over.id) {
                 const sectionType = activeEntry.type as 'event' | 'mixset' | 'link';

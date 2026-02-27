@@ -9,6 +9,11 @@ import type { EntryType } from '../config/entryConfig';
 import { FIELD_CONFIG } from '../config/entryFieldConfig';
 import type { ContentEntry } from '@/types';
 
+/** ContentEntry의 동적 필드 접근 — double cast를 헬퍼 내부로 격리 */
+function getEntryField(entry: ContentEntry, key: string): unknown {
+    return (entry as unknown as Record<string, unknown>)[key];
+}
+
 /**
  * 두 값이 같은지 깊은 비교
  */
@@ -45,7 +50,7 @@ export function shouldTriggerPreview(
     previousEntry: ContentEntry,
     updatedEntry: ContentEntry
 ): boolean {
-    const type = updatedEntry.type as EntryType;
+    const type: EntryType = updatedEntry.type;
     const fields = FIELD_CONFIG[type];
 
     if (!fields) return false;
@@ -54,8 +59,8 @@ export function shouldTriggerPreview(
         // triggersPreview가 false인 필드는 건너뜀
         if (!field.triggersPreview) continue;
 
-        const prevValue = (previousEntry as unknown as Record<string, unknown>)[field.key];
-        const newValue = (updatedEntry as unknown as Record<string, unknown>)[field.key];
+        const prevValue = getEntryField(previousEntry, field.key);
+        const newValue = getEntryField(updatedEntry, field.key);
 
         // 값이 다르면 트리거 필요
         if (!isEqual(prevValue, newValue)) {

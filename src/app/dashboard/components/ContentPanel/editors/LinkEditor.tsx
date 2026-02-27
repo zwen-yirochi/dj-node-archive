@@ -2,7 +2,6 @@
 
 import { EditableField } from '@/components/ui/editable-field';
 import { cn } from '@/lib/utils';
-import type { LinkEntry } from '@/types';
 import { ICON_OPTIONS } from '@/types';
 import type { EntryEditorProps } from './types';
 import { ExternalLink, Globe, Instagram, Mail, Music, Youtube } from 'lucide-react';
@@ -25,9 +24,7 @@ export default function LinkEditor({
     editingField,
     onEditingDone,
 }: EntryEditorProps) {
-    const entry = rawEntry as LinkEntry;
     const [showIconSelector, setShowIconSelector] = useState(false);
-    const IconComponent = iconComponents[entry.icon || ''] || Globe;
 
     // LinkEntry doesn't have images — dismiss image editing immediately
     useEffect(() => {
@@ -35,6 +32,10 @@ export default function LinkEditor({
             onEditingDone();
         }
     }, [editingField, onEditingDone]);
+
+    if (rawEntry.type !== 'link') return null;
+    const entry = rawEntry;
+    const IconComponent = iconComponents[entry.icon || ''] || Globe;
 
     return (
         <div className="space-y-4 py-4 text-center">

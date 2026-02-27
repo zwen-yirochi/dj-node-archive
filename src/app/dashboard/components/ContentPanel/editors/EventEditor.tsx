@@ -1,7 +1,6 @@
 'use client';
 
 import { EditableDateField, EditableField } from '@/components/ui/editable-field';
-import type { EventEntry } from '@/types';
 import type { EntryEditorProps } from './types';
 import { Calendar, ExternalLink, MapPin, Plus, Users, X } from 'lucide-react';
 import { useState } from 'react';
@@ -14,7 +13,8 @@ export default function EventEditor({
     editingField,
     onEditingDone,
 }: EntryEditorProps) {
-    const entry = rawEntry as EventEntry;
+    if (rawEntry.type !== 'event') return null;
+    const entry = rawEntry;
     return (
         <div className="space-y-4">
             {/* Poster */}

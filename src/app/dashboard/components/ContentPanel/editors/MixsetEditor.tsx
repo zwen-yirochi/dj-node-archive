@@ -1,7 +1,6 @@
 'use client';
 
 import { EditableField } from '@/components/ui/editable-field';
-import type { MixsetEntry } from '@/types';
 import type { EntryEditorProps } from './types';
 import { Plus, X } from 'lucide-react';
 import { useArrayField } from '../../../hooks/use-array-field';
@@ -13,7 +12,8 @@ export default function MixsetEditor({
     editingField,
     onEditingDone,
 }: EntryEditorProps) {
-    const entry = rawEntry as MixsetEntry;
+    if (rawEntry.type !== 'mixset') return null;
+    const entry = rawEntry;
     return (
         <div className="space-y-4">
             {/* Cover */}
