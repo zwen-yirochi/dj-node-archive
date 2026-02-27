@@ -8,7 +8,6 @@ import {
 } from '@/lib/api';
 import { deleteEvent, findEventById, updateEvent } from '@/lib/db/queries/event.queries';
 import { isSuccess } from '@/types/result';
-import { NextResponse } from 'next/server';
 
 interface RouteParams {
     params: Promise<{ id: string }>;
@@ -16,37 +15,17 @@ interface RouteParams {
 
 // GET /api/events/[id] - 이벤트 상세 조회 (public)
 export async function GET(_request: Request, { params }: RouteParams) {
-    try {
-        const { id } = await params;
+    const { id } = await params;
 
-        const result = await findEventById(id);
+    const result = await findEventById(id);
 
-        if (!isSuccess(result)) {
-            return result.error.code === 'NOT_FOUND'
-                ? NextResponse.json(
-                      {
-                          success: false,
-                          error: { code: 'NOT_FOUND', message: result.error.message },
-                      },
-                      { status: 404 }
-                  )
-                : NextResponse.json(
-                      {
-                          success: false,
-                          error: { code: 'INTERNAL_ERROR', message: result.error.message },
-                      },
-                      { status: 500 }
-                  );
-        }
-
-        return NextResponse.json({ success: true, data: result.data });
-    } catch (err) {
-        console.error('GET /api/events/[id] error:', err);
-        return NextResponse.json(
-            { success: false, error: { code: 'INTERNAL_ERROR', message: '이벤트 조회 실패' } },
-            { status: 500 }
-        );
+    if (!isSuccess(result)) {
+        return result.error.code === 'NOT_FOUND'
+            ? notFoundResponse('이벤트')
+            : internalErrorResponse(result.error.message);
     }
+
+    return successResponse(result.data);
 }
 
 // PATCH /api/events/[id] - 이벤트 수정
