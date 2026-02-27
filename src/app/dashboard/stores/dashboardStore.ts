@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+
 import type { EntryType } from '../config/entryConfig';
 
 export type { EntryType };
@@ -31,10 +32,8 @@ export type ContentView =
 interface DashboardStore {
     contentView: ContentView;
     sidebarSections: SidebarSections;
-    previewVersion: number;
 
     setView: (view: ContentView) => void;
-    triggerPreviewRefresh: () => void;
     toggleSection: (section: SectionKey) => void;
     reset: () => void;
 }
@@ -49,7 +48,6 @@ const initialSidebarSections: SidebarSections = {
 const DEFAULT_STATE = {
     contentView: { kind: 'page' } as ContentView,
     sidebarSections: initialSidebarSections,
-    previewVersion: 0,
 };
 
 export const useDashboardStore = create<DashboardStore>()(
@@ -58,13 +56,6 @@ export const useDashboardStore = create<DashboardStore>()(
             ...DEFAULT_STATE,
 
             setView: (view) => set({ contentView: view }, undefined, 'setView'),
-
-            triggerPreviewRefresh: () =>
-                set(
-                    (state) => ({ previewVersion: state.previewVersion + 1 }),
-                    undefined,
-                    'triggerPreviewRefresh'
-                ),
 
             toggleSection: (section) =>
                 set(
@@ -94,4 +85,3 @@ export const selectContentView = (s: DashboardStore) => s.contentView;
 export const selectSetView = (s: DashboardStore) => s.setView;
 export const selectSidebarSections = (s: DashboardStore) => s.sidebarSections;
 export const selectToggleSection = (s: DashboardStore) => s.toggleSection;
-export const selectPreviewVersion = (s: DashboardStore) => s.previewVersion;

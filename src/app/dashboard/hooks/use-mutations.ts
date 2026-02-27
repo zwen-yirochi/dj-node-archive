@@ -6,30 +6,33 @@
  * mutationFn + optimisticUpdate + triggersPreview 선언만으로 구성.
  */
 
-import type { EditorData } from '@/lib/services/user.service';
-import { shouldTriggerPreview } from '../lib/previewTrigger';
-import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
-import type { ContentEntry } from '@/types';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { PublishOption } from '@/app/dashboard/config/workflowOptions';
-import { useDashboardStore } from '../stores/dashboardStore';
 import { useRef } from 'react';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+import type { ContentEntry } from '@/types';
+import type { EditorData } from '@/lib/services/user.service';
+import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
+import type { PublishOption } from '@/app/dashboard/config/workflowOptions';
+
+import { shouldTriggerPreview } from '../lib/previewTrigger';
 import {
-    createEntry,
-    updateEntry,
-    deleteEntry,
-    reorderEntries,
-    reorderDisplay as reorderDisplayAPI,
-    computeReorderedPositions,
     computeReorderedDisplay,
+    computeReorderedPositions,
+    createEntry,
+    deleteEntry,
+    reorderDisplay as reorderDisplayAPI,
+    reorderEntries,
+    updateEntry,
 } from './entries.api';
 import { makeOptimisticMutation, type OptimisticMutationConfig } from './optimistic-mutation';
+import { triggerPreviewRefresh } from './use-preview-refresh';
 
 export function useEntryMutations() {
     const queryClient = useQueryClient();
     const snapshotRef = useRef<EditorData | undefined>(undefined);
 
-    const onPreviewTrigger = () => useDashboardStore.getState().triggerPreviewRefresh();
+    const onPreviewTrigger = () => triggerPreviewRefresh();
 
     const m = <T>(config: OptimisticMutationConfig<T>) =>
         makeOptimisticMutation(queryClient, snapshotRef, { ...config, onPreviewTrigger });
@@ -144,26 +147,11 @@ export function useEntryMutations() {
 
     // ── Reorder ──
 
+    // reorder mutations: updates를 mutate 호출 시점에 확정하여 snapshotRef 경합 방지
     const reorder = useMutation(
-        m<{ type: ContentEntry['type']; entryId: string; newPosition: number }>({
-            mutationFn: ({ type, entryId, newPosition }, data) => {
-                const updates = computeReorderedPositions(
-                    data?.contentEntries ?? [],
-                    type,
-                    entryId,
-                    newPosition
-                );
-                return updates ? reorderEntries(updates) : Promise.resolve();
-            },
-            optimisticUpdate: ({ type, entryId, newPosition }, data) => {
-                const updates = computeReorderedPositions(
-                    data.contentEntries,
-                    type,
-                    entryId,
-                    newPosition
-                );
-                if (!updates) return data;
-
+        m<{ updates: { id: string; position: number }[] }>({
+            mutationFn: ({ updates }) => reorderEntries(updates),
+            optimisticUpdate: ({ updates }, data) => {
                 const positionMap = new Map(updates.map((u) => [u.id, u.position]));
                 return {
                     ...data,
@@ -178,19 +166,9 @@ export function useEntryMutations() {
     );
 
     const reorderDisplay = useMutation(
-        m<{ entryId: string; newIndex: number }>({
-            mutationFn: ({ entryId, newIndex }, data) => {
-                const updates = computeReorderedDisplay(
-                    data?.contentEntries ?? [],
-                    entryId,
-                    newIndex
-                );
-                return updates ? reorderDisplayAPI(updates) : Promise.resolve();
-            },
-            optimisticUpdate: ({ entryId, newIndex }, data) => {
-                const updates = computeReorderedDisplay(data.contentEntries, entryId, newIndex);
-                if (!updates) return data;
-
+        m<{ updates: { id: string; displayOrder: number }[] }>({
+            mutationFn: ({ updates }) => reorderDisplayAPI(updates),
+            optimisticUpdate: ({ updates }, data) => {
                 const orderMap = new Map(updates.map((u) => [u.id, u.displayOrder]));
                 return {
                     ...data,

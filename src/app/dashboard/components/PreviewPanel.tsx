@@ -6,11 +6,10 @@ import Link from 'next/link';
 import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 
 import { useUser } from '../hooks';
-import { selectPreviewVersion, useDashboardStore } from '../stores/dashboardStore';
+import { useRegisterPreviewRefresh } from '../hooks/use-preview-refresh';
 
 export default function PreviewPanel() {
     const user = useUser();
-    const previewVersion = useDashboardStore(selectPreviewVersion);
     const [copied, setCopied] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -51,11 +50,8 @@ export default function PreviewPanel() {
         }
     }, [isVisible]);
 
-    useEffect(() => {
-        if (previewVersion > 0 && isVisible) {
-            refreshPreview();
-        }
-    }, [previewVersion, isVisible, refreshPreview]);
+    // mutation onSuccess → triggerPreviewRefresh() → 이 콜백 실행
+    useRegisterPreviewRefresh(refreshPreview);
 
     const handleIframeLoad = useCallback(() => {
         setIsLoading(false);
