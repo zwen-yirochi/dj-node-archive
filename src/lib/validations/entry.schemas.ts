@@ -31,10 +31,10 @@ export const externalLinkSchema = z.object({
 const eventBaseFields = {
     title: z
         .string()
-        .min(2, 'Title must be at least 2 characters')
-        .max(100, 'Title must be 100 characters or less')
+        .min(2, '제목은 2자 이상이어야 합니다')
+        .max(100, '제목은 100자 이하여야 합니다')
         .trim(),
-    posterUrl: z.string().min(1, 'Poster image is required').trim(),
+    posterUrl: z.string().min(1, '포스터 이미지가 필요합니다').trim(),
     links: z.array(externalLinkSchema).optional(),
 };
 
@@ -59,10 +59,10 @@ export const draftEventSchema = z.object({
  */
 export const publishEventSchema = z.object({
     ...eventBaseFields,
-    date: z.string().min(1, 'Date is required'),
+    date: z.string().min(1, '날짜를 입력해야 합니다'),
     venue: venueReferenceSchema,
-    lineup: z.array(artistReferenceSchema).min(1, 'At least one artist is required'),
-    description: z.string().min(1, 'Description is required').trim(),
+    lineup: z.array(artistReferenceSchema).min(1, '아티스트를 1명 이상 추가해야 합니다'),
+    description: z.string().min(1, '설명을 입력해야 합니다').trim(),
 }) satisfies z.ZodType<CreateEventData>;
 
 // ============================================
@@ -96,7 +96,7 @@ export const draftLinkSchema = z.object({
 
 export const publishLinkSchema = z.object({
     title: z.string().min(1).max(100).trim(),
-    url: z.string().url('Valid URL is required'),
+    url: z.string().url('유효한 URL이어야 합니다'),
 });
 
 // ============================================
@@ -110,7 +110,7 @@ export const publishLinkSchema = z.object({
  * type별로 payload 형태가 다르며, 상세 검증은 handler에서 수행.
  */
 export const createEntryRequestSchema = z.object({
-    pageId: z.string().uuid('Invalid page ID'),
+    pageId: z.string().uuid('유효하지 않은 페이지 ID입니다'),
     entry: z
         .object({
             id: z.string().uuid(),
@@ -143,7 +143,7 @@ export const updateEntryRequestSchema = z
             data.entry !== undefined ||
             data.displayOrder !== undefined ||
             data.isVisible !== undefined,
-        { message: 'At least one of entry, displayOrder, or isVisible is required' }
+        { message: 'entry, displayOrder, isVisible 중 하나 이상 필요합니다' }
     );
 
 /**
@@ -157,7 +157,7 @@ export const reorderEntriesRequestSchema = z.object({
                 position: z.number().int().min(0),
             })
         )
-        .min(1, 'At least one update is required'),
+        .min(1, '하나 이상의 업데이트가 필요합니다'),
 });
 
 /**
@@ -171,5 +171,5 @@ export const reorderDisplayEntriesRequestSchema = z.object({
                 displayOrder: z.number().int().min(0).nullable(),
             })
         )
-        .min(1, 'At least one update is required'),
+        .min(1, '하나 이상의 업데이트가 필요합니다'),
 });
