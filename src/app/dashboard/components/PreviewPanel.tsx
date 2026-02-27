@@ -1,10 +1,12 @@
 'use client';
 
-import { selectPreviewVersion, useDashboardStore } from '../stores/dashboardStore';
-import { useUser } from '../hooks';
-import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+
+import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
+
+import { useUser } from '../hooks';
+import { selectPreviewVersion, useDashboardStore } from '../stores/dashboardStore';
 
 export default function PreviewPanel() {
     const user = useUser();
@@ -59,12 +61,12 @@ export default function PreviewPanel() {
         setIsLoading(false);
     }, []);
 
-    const pageUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${user.username}`;
-    const displayUrl = pageUrl.replace(/^https?:\/\//, '');
+    const pagePath = `/${user.username}`;
 
     const handleCopy = async () => {
         try {
-            await navigator.clipboard.writeText(displayUrl);
+            const fullUrl = `${window.location.origin}${pagePath}`;
+            await navigator.clipboard.writeText(fullUrl);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (error) {
@@ -87,7 +89,7 @@ export default function PreviewPanel() {
                     target="_blank"
                     className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                    <span className="font-mono text-xs">{displayUrl}</span>
+                    <span className="font-mono text-xs">{pagePath}</span>
                     <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                 </Link>
                 <div className="h-4 w-px bg-border" />
