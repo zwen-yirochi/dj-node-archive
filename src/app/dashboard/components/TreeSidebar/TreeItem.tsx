@@ -1,20 +1,23 @@
 'use client';
 
-import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
-import { TypeBadge } from '@/components/dna';
-import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+
+import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
 import {
     canAddToView,
     getMissingFieldLabels,
     getTreeItemStatus,
     type TreeItemStatus,
 } from '@/app/dashboard/config/entryFieldConfig';
+import { TypeBadge } from '@/components/dna';
+import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
+
 import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
-import type { ContentEntry } from '@/types';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 
 interface TreeItemProps {
     entry: ContentEntry;
@@ -138,7 +141,7 @@ export default function TreeItem({
             onClick={handleClick}
         >
             {/* Type Badge - Page 섹션에서만 표시 */}
-            {isInViewSection && <TypeBadge type={config.badgeType} />}
+            {isInViewSection && <TypeBadge type={config.badgeType} size="sm" />}
 
             {/* Title */}
             <span className={cn('ml-2 min-w-0 flex-1 truncate text-sm', isInViewSection && 'ml-2')}>

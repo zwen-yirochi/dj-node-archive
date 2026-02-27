@@ -1,10 +1,5 @@
 'use client';
 
-import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
-import { TypeBadge } from '@/components/dna';
-import { useEditorData, useEntryMutations } from '../../hooks';
-import { cn } from '@/lib/utils';
-import type { ContentEntry } from '@/types';
 import {
     closestCenter,
     DndContext,
@@ -23,8 +18,16 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Calendar, Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
+
+import { Calendar, Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
+
+import type { ContentEntry } from '@/types';
+import { cn } from '@/lib/utils';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
+import { TypeBadge } from '@/components/dna';
+
+import { useEditorData, useEntryMutations } from '../../hooks';
 
 interface SortableItemProps {
     id: string;
@@ -76,7 +79,7 @@ function SortableItem({
             </button>
 
             {/* Type Badge */}
-            <TypeBadge type={config.badgeType} />
+            <TypeBadge type={config.badgeType} size="sm" />
 
             {/* Content */}
             <div className="min-w-0 flex-1 cursor-pointer" onClick={onSelect}>
@@ -245,6 +248,7 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
                                     </div>
                                     <TypeBadge
                                         type={ENTRY_TYPE_CONFIG[activeEntry.type].badgeType}
+                                        size="sm"
                                     />
                                     <span className="text-sm font-medium text-dashboard-text">
                                         {activeEntry.title || '제목 없음'}

@@ -1,27 +1,6 @@
 // app/dashboard/components/TreeSidebar/index.tsx
 'use client';
 
-import { TypeBadge } from '@/components/dna';
-import { toast } from '@/hooks/use-toast';
-import { useEditorData, useEntryMutations } from '../../hooks';
-import { cn } from '@/lib/utils';
-import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
-import {
-    selectContentView,
-    selectSetView,
-    selectSidebarSections,
-    selectToggleSection,
-    useDashboardStore,
-} from '../../stores/dashboardStore';
-import type { ContentEntry } from '@/types';
-
-/** dnd-kit data 타입 — active.data.current의 구조를 선언 */
-interface DragData {
-    type: 'entry' | 'display-entry';
-    entry: ContentEntry;
-    displayEntryId?: string;
-}
-
 import {
     closestCenter,
     DndContext,
@@ -39,13 +18,36 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { ChevronDown, ChevronRight, FileText, Palette } from 'lucide-react';
-import Link from 'next/link';
 import { useId, useMemo, useState } from 'react';
+import Link from 'next/link';
+
+import { ChevronDown, ChevronRight, FileText, Palette } from 'lucide-react';
+
+import type { ContentEntry } from '@/types';
+import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
+import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
+import { TypeBadge } from '@/components/dna';
+
+import { useEditorData, useEntryMutations } from '../../hooks';
+import {
+    selectContentView,
+    selectSetView,
+    selectSidebarSections,
+    selectToggleSection,
+    useDashboardStore,
+} from '../../stores/dashboardStore';
 import AccountSection from './AccountSection';
 import SectionItem from './SectionItem';
 import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
+
+/** dnd-kit data 타입 — active.data.current의 구조를 선언 */
+interface DragData {
+    type: 'entry' | 'display-entry';
+    entry: ContentEntry;
+    displayEntryId?: string;
+}
 
 export default function TreeSidebar() {
     // TanStack Query
@@ -308,7 +310,7 @@ export default function TreeSidebar() {
                     <SectionItem
                         section="events"
                         title="Events"
-                        icon={<TypeBadge type="EVT" />}
+                        icon={<TypeBadge type="EVT" size="sm" />}
                         count={events.length}
                         entryType="event"
                     >
@@ -332,7 +334,7 @@ export default function TreeSidebar() {
                     <SectionItem
                         section="mixsets"
                         title="Mixsets"
-                        icon={<TypeBadge type="MIX" />}
+                        icon={<TypeBadge type="MIX" size="sm" />}
                         count={mixsets.length}
                         entryType="mixset"
                     >
@@ -356,7 +358,7 @@ export default function TreeSidebar() {
                     <SectionItem
                         section="links"
                         title="Links"
-                        icon={<TypeBadge type="LNK" />}
+                        icon={<TypeBadge type="LNK" size="sm" />}
                         count={links.length}
                         entryType="link"
                     >

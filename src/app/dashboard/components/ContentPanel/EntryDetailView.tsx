@@ -1,18 +1,21 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
+
+import { ArrowLeft, MoreHorizontal } from 'lucide-react';
+
+import type { ContentEntry } from '@/types';
 import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
 import { EDITOR_MENU_CONFIG, resolveMenuItems } from '@/app/dashboard/config/menuConfig';
 import { TypeBadge } from '@/components/dna';
-import { useEntryDetail, useEntryMutations } from '../../hooks';
 import { Button } from '@/components/ui/button';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
-import type { ContentEntry } from '@/types';
-import { ArrowLeft, MoreHorizontal } from 'lucide-react';
-import { type ComponentType, useState, useCallback, useRef, useEffect } from 'react';
-import type { EntryEditorProps } from './editors/types';
+
+import { useEntryDetail, useEntryMutations } from '../../hooks';
 import EventEditor from './editors/EventEditor';
-import MixsetEditor from './editors/MixsetEditor';
 import LinkEditor from './editors/LinkEditor';
+import MixsetEditor from './editors/MixsetEditor';
+import type { EntryEditorProps } from './editors/types';
 
 const EDITOR_REGISTRY: Record<EntryType, ComponentType<EntryEditorProps>> = {
     event: EventEditor,
@@ -156,7 +159,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
             {/* Editor Header */}
             <div className="flex items-center justify-between border-b border-dashboard-border px-6 py-4">
                 <div className="flex items-center gap-3">
-                    <TypeBadge type={config.badgeType} />
+                    <TypeBadge type={config.badgeType} size="sm" />
                     {saveStatus && (
                         <span className="text-xs text-dashboard-text-muted">{saveStatus}</span>
                     )}

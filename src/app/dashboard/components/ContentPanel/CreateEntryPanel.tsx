@@ -1,16 +1,19 @@
 'use client';
 
+import { useState, type ComponentType } from 'react';
+
+import { Loader2 } from 'lucide-react';
+
+import { createEmptyEntry } from '@/lib/mappers';
+import { toast } from '@/hooks/use-toast';
 import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
 import { TypeBadge } from '@/components/dna';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
 import { useEditorData, useEntryMutations } from '../../hooks';
-import { toast } from '@/hooks/use-toast';
-import { createEmptyEntry } from '@/lib/mappers';
 import { selectSetView, useDashboardStore } from '../../stores/dashboardStore';
-import { Loader2 } from 'lucide-react';
-import { useState, type ComponentType } from 'react';
 import CreateMixsetForm from './CreateMixsetForm';
 import EventCreateSection from './EventCreateSection';
 
@@ -140,7 +143,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
                 <div className="flex items-center gap-3">
-                    <TypeBadge type={config.badgeType} />
+                    <TypeBadge type={config.badgeType} size="sm" />
                     <h2 className="text-xl font-semibold text-dashboard-text">
                         New {config.label}
                     </h2>
