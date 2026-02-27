@@ -32,6 +32,38 @@ export async function createDefaultPage(userId: string, slug: string): Promise<R
     }
 }
 
+export interface UpdatePageInput {
+    theme?: string;
+    is_public?: boolean;
+}
+
+export async function updatePage(pageId: string, input: UpdatePageInput): Promise<Result<Page>> {
+    try {
+        const supabase = await createClient();
+        const updateData: Record<string, unknown> = {
+            updated_at: new Date().toISOString(),
+        };
+        if (input.theme !== undefined) updateData.theme = input.theme;
+        if (input.is_public !== undefined) updateData.is_public = input.is_public;
+
+        const { data, error } = await supabase
+            .from('pages')
+            .update(updateData)
+            .eq('id', pageId)
+            .select()
+            .single();
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'updatePage', error));
+        }
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError('페이지 업데이트 중 오류가 발생했습니다.', 'updatePage', err)
+        );
+    }
+}
+
 export async function findPageByUserId(userId: string): Promise<Result<Page | null>> {
     try {
         const supabase = await createClient();
