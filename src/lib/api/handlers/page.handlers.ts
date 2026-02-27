@@ -1,14 +1,26 @@
 // lib/api/handlers/page.handlers.ts
-import type { AuthContext } from '@/lib/api';
+import { z } from 'zod';
+
+import { isSuccess } from '@/types/result';
 import {
     forbiddenResponse,
     internalErrorResponse,
     notFoundResponse,
     successResponse,
+    validationErrorResponse,
+    verifyPageOwnership,
+    type AuthContext,
 } from '@/lib/api';
-import { verifyPageOwnership } from '@/lib/api';
 import { updatePage } from '@/lib/db/queries/page.queries';
-import { isSuccess } from '@/types/result';
+
+const updatePageSchema = z
+    .object({
+        theme: z.string().max(50).optional(),
+        is_public: z.boolean().optional(),
+    })
+    .refine((data) => data.theme !== undefined || data.is_public !== undefined, {
+        message: 'theme 또는 is_public 중 하나 이상 필요합니다',
+    });
 
 /**
  * PATCH /api/pages/[id]
@@ -26,9 +38,20 @@ export async function handleUpdatePage(
         return ownership.reason === 'not_found' ? notFoundResponse('페이지') : forbiddenResponse();
     }
 
-    // 2. Parse
-    const body = await request.json();
-    const { theme, is_public } = body;
+    // 2. Parse & Validate
+    let body: unknown;
+    try {
+        body = await request.json();
+    } catch {
+        return validationErrorResponse('request body');
+    }
+
+    const parsed = updatePageSchema.safeParse(body);
+    if (!parsed.success) {
+        return validationErrorResponse(parsed.error.issues[0]?.message ?? 'request body');
+    }
+
+    const { theme, is_public } = parsed.data;
 
     // 3. Database
     const result = await updatePage(id, { theme, is_public });

@@ -1,15 +1,16 @@
 // lib/mappers.ts - DB ↔ Domain 변환 함수 통합
+import { v4 as uuidv4 } from 'uuid';
+
 import type {
     Event as DBEvent,
     EventStack as DBEventStack,
     User as DBUser,
     Venue as DBVenue,
     Entry,
-    EventVenue,
     EventData,
+    EventVenue,
     VenueExternalSources,
 } from '@/types/database';
-import type { RAEventListingItem, RAVenueInfo } from '@/types/ra';
 import {
     isPublicEventEntry,
     type ContentEntry,
@@ -22,7 +23,7 @@ import {
     type User,
     type Venue,
 } from '@/types/domain';
-import { v4 as uuidv4 } from 'uuid';
+import type { RAEventListingItem, RAVenueInfo } from '@/types/ra';
 
 // ============================================
 // User Mappers
@@ -224,7 +225,7 @@ export function mapEntryToDatabase(
                     cover_url: mixsetEntry.coverUrl || undefined,
                     url: mixsetEntry.url || undefined,
                     description: mixsetEntry.description || undefined,
-                    duration_minutes: mixsetEntry.durationMinutes || undefined,
+                    duration_minutes: mixsetEntry.durationMinutes ?? undefined,
                 },
             };
         }

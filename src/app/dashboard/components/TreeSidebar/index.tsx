@@ -242,11 +242,6 @@ export default function TreeSidebar() {
         toggleSection('page');
     };
 
-    // 로딩 상태
-    if (entries.length === 0) {
-        return <TreeSidebarSkeleton />;
-    }
-
     return (
         <DndContext
             id={dndId}
@@ -338,13 +333,17 @@ export default function TreeSidebar() {
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {events.map((entry) => (
-                                    <TreeItem
-                                        key={entry.id}
-                                        entry={entry}
-                                        onDelete={() => handleDelete(entry.id)}
-                                    />
-                                ))}
+                                {events.length === 0 ? (
+                                    <SectionEmptyHint label="event" />
+                                ) : (
+                                    events.map((entry) => (
+                                        <TreeItem
+                                            key={entry.id}
+                                            entry={entry}
+                                            onDelete={() => handleDelete(entry.id)}
+                                        />
+                                    ))
+                                )}
                             </div>
                         </SortableContext>
                     </SectionItem>
@@ -362,13 +361,17 @@ export default function TreeSidebar() {
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {mixsets.map((entry) => (
-                                    <TreeItem
-                                        key={entry.id}
-                                        entry={entry}
-                                        onDelete={() => handleDelete(entry.id)}
-                                    />
-                                ))}
+                                {mixsets.length === 0 ? (
+                                    <SectionEmptyHint label="mixset" />
+                                ) : (
+                                    mixsets.map((entry) => (
+                                        <TreeItem
+                                            key={entry.id}
+                                            entry={entry}
+                                            onDelete={() => handleDelete(entry.id)}
+                                        />
+                                    ))
+                                )}
                             </div>
                         </SortableContext>
                     </SectionItem>
@@ -386,13 +389,17 @@ export default function TreeSidebar() {
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {links.map((entry) => (
-                                    <TreeItem
-                                        key={entry.id}
-                                        entry={entry}
-                                        onDelete={() => handleDelete(entry.id)}
-                                    />
-                                ))}
+                                {links.length === 0 ? (
+                                    <SectionEmptyHint label="link" />
+                                ) : (
+                                    links.map((entry) => (
+                                        <TreeItem
+                                            key={entry.id}
+                                            entry={entry}
+                                            onDelete={() => handleDelete(entry.id)}
+                                        />
+                                    ))
+                                )}
                             </div>
                         </SortableContext>
                     </SectionItem>
@@ -416,18 +423,10 @@ export default function TreeSidebar() {
     );
 }
 
-// Skeleton 컴포넌트
-function TreeSidebarSkeleton() {
+function SectionEmptyHint({ label }: { label: string }) {
     return (
-        <aside className="flex h-full w-64 flex-col rounded-2xl bg-dashboard-bg-surface p-4 shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
-            <div className="animate-pulse space-y-4">
-                <div className="h-6 w-20 rounded bg-gray-200" />
-                <div className="space-y-2">
-                    <div className="h-8 rounded bg-gray-200" />
-                    <div className="h-8 rounded bg-gray-200" />
-                    <div className="h-8 rounded bg-gray-200" />
-                </div>
-            </div>
-        </aside>
+        <p className="py-2 pl-6 text-xs text-dashboard-text-placeholder">
+            + 버튼으로 {label}을 추가하세요
+        </p>
     );
 }

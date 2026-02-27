@@ -1,16 +1,16 @@
 // lib/api/handlers/user.handlers.ts
 // User API 핸들러
 
-import type { AuthContext } from '@/lib/api';
+import { isSuccess } from '@/types/result';
 import {
     forbiddenResponse,
     internalErrorResponse,
     successResponse,
     validationErrorResponse,
+    type AuthContext,
 } from '@/lib/api';
 import { findUserByAuthId, updateUser } from '@/lib/db/queries/user.queries';
 import { mapUserToDomain } from '@/lib/mappers';
-import { isSuccess } from '@/types/result';
 import { createClient } from '@/lib/supabase/server';
 
 // ============================================
@@ -107,15 +107,7 @@ export async function handleUploadAvatar(
         const fileExt = file.name.split('.').pop();
         const fileName = `${params.id}/${Date.now()}.${fileExt}`;
 
-        // 기존 아바타 삭제
-        if (ownership.user.avatar_url?.includes('avatars')) {
-            const oldPath = ownership.user.avatar_url.split('/avatars/')[1];
-            if (oldPath) {
-                await supabase.storage.from('avatars').remove([oldPath]);
-            }
-        }
-
-        // 새 파일 업로드
+        // 새 파일 업로드 (기존 파일 삭제 전에 수행하여 실패 시 기존 아바타 유지)
         const arrayBuffer = await file.arrayBuffer();
         const { error: uploadError } = await supabase.storage
             .from('avatars')
@@ -135,7 +127,18 @@ export async function handleUploadAvatar(
         const result = await updateUser(params.id, { avatar_url: urlData.publicUrl });
         if (!isSuccess(result)) return internalErrorResponse(result.error.message);
 
-        // 6. Response
+        // 6. 기존 아바타 삭제 (업로드+DB 성공 후, 실패해도 응답에 영향 없음)
+        if (ownership.user.avatar_url?.includes('avatars')) {
+            const oldPath = ownership.user.avatar_url.split('/avatars/')[1];
+            if (oldPath) {
+                await supabase.storage
+                    .from('avatars')
+                    .remove([oldPath])
+                    .catch(() => {});
+            }
+        }
+
+        // 7. Response
         return successResponse({ avatarUrl: urlData.publicUrl });
     } catch {
         return internalErrorResponse('이미지 업로드 중 오류가 발생했습니다');
