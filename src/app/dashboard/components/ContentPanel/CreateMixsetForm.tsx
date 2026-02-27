@@ -1,5 +1,7 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
     Form,
@@ -11,15 +13,16 @@ import {
 } from '@/components/ui/form';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
-import { useCreateMixsetForm } from '../../hooks/use-create-mixset-form';
+
+import { MIXSET_FORM_CONFIG } from '../../config/entryFormConfig';
+import { useCreateEntryForm } from '../../hooks/use-create-entry-form';
 
 const inputClassName =
     'border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-dashboard-border-hover focus:ring-1';
 
 export default function CreateMixsetForm() {
     const { form, canCreate, errors, isSubmitting, handleCancel, handleSubmit } =
-        useCreateMixsetForm();
+        useCreateEntryForm(MIXSET_FORM_CONFIG);
 
     const { control } = form;
 

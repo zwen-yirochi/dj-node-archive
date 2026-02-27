@@ -1,5 +1,7 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
+
 import { PUBLISH_OPTIONS } from '@/app/dashboard/config/workflowOptions';
 import { searchArtists, searchVenues } from '@/app/dashboard/services/search';
 import { Button } from '@/components/ui/button';
@@ -18,8 +20,9 @@ import OptionSelector from '@/components/ui/OptionSelector';
 import SearchableInput from '@/components/ui/SearchableInput';
 import TagSearchInput from '@/components/ui/TagSearchInput';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2 } from 'lucide-react';
-import { useCreateEventForm } from '../../hooks/use-create-event-form';
+
+import { EVENT_FORM_CONFIG } from '../../config/entryFormConfig';
+import { useCreateEntryForm } from '../../hooks/use-create-entry-form';
 
 // 공통 Input 스타일
 const inputClassName =
@@ -35,7 +38,7 @@ export default function CreateEventForm() {
         handleCancel,
         handlePublishOptionChange,
         handleSubmit,
-    } = useCreateEventForm();
+    } = useCreateEntryForm(EVENT_FORM_CONFIG);
 
     const { control } = form;
 
@@ -175,8 +178,8 @@ export default function CreateEventForm() {
                     <Label className="text-dashboard-text-secondary">Visibility</Label>
                     <OptionSelector
                         options={PUBLISH_OPTIONS}
-                        value={publishOption}
-                        onChange={handlePublishOptionChange}
+                        value={publishOption!}
+                        onChange={handlePublishOptionChange!}
                     />
                 </div>
 
