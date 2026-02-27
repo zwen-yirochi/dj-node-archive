@@ -123,6 +123,29 @@ export async function findVenueBySlug(slug: string): Promise<Result<Venue>> {
     }
 }
 
+/**
+ * slug 존재 여부 확인
+ */
+export async function isVenueSlugTaken(slug: string): Promise<Result<boolean>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('venues')
+            .select('id')
+            .eq('slug', slug)
+            .maybeSingle();
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'isVenueSlugTaken', error));
+        }
+        return success(data !== null);
+    } catch (err) {
+        return failure(
+            createDatabaseError('slug 확인 중 오류가 발생했습니다.', 'isVenueSlugTaken', err)
+        );
+    }
+}
+
 export interface CreateVenueInput {
     name: string;
     slug: string;
