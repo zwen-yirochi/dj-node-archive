@@ -163,7 +163,8 @@ ContentView =
   | { kind: 'detail'; entryId: string }
 
 State: contentView, sidebarSections, previewVersion
-Actions: setView, selectEntry, openCreatePanel, closeCreatePanel, triggerPreviewRefresh, toggleSection
+Actions: setView, triggerPreviewRefresh, toggleSection, reset
+Selectors: selectContentView, selectSetView, selectSidebarSections, selectToggleSection, selectPreviewVersion
 ```
 
 ### TanStack Query — 서버 상태
@@ -209,32 +210,40 @@ src/app/dashboard/
 │
 ├── hooks/
 │   ├── index.ts                 barrel export
-│   ├── use-editor-data.ts       useSuspenseQuery
-│   ├── use-mutations.ts         8개 mutation
+│   ├── use-editor-data.ts       entryKeys + useEditorData + useEntryDetail
+│   ├── use-mutations.ts         8개 entry mutation
+│   ├── use-user.ts              useUser + useUserMutations
 │   ├── optimistic-mutation.ts   mutation 팩토리
-│   ├── entries.api.ts           순수 fetch
-│   └── use-array-field.ts       배열 필드 CRUD
+│   ├── entries.api.ts           순수 fetch (mutation용)
+│   ├── use-array-field.ts       배열 CRUD + stable key
+│   └── use-create-event-form.ts RHF + 이벤트 폼 로직
+│
+├── actions/
+│   └── upload.ts                포스터 업로드 Server Action
 │
 ├── components/
-│   ├── StoreInitializer.tsx     SSR data → cache + store init
-│   ├── ErrorBoundary.tsx
+│   ├── StoreInitializer.tsx     SSR data → TQ 캐시 + 스토어 초기화
+│   ├── ErrorBoundary.tsx        QueryErrorResetBoundary 포함
 │   ├── Skeleton.tsx
 │   ├── PreviewPanel.tsx
 │   │
 │   ├── TreeSidebar/
 │   │   ├── index.tsx            DnD + 섹션 네비
-│   │   ├── TreeItem.tsx         엔트리 행 + 상태 아이콘
+│   │   ├── TreeItem.tsx         엔트리 행 + 완성도 아이콘
 │   │   ├── ViewSection.tsx
 │   │   ├── SectionItem.tsx
 │   │   └── AccountSection.tsx
 │   │
 │   └── ContentPanel/
 │       ├── index.tsx            contentView.kind 기반 라우팅
-│       ├── EntryDetailView.tsx  에디터 셸 (debounced save + EDITOR_REGISTRY)
+│       ├── EntryDetailView.tsx  에디터 셸 (debounced save + 메뉴)
 │       ├── PageListView.tsx
 │       ├── CreateEntryPanel.tsx
 │       ├── CreateEventForm.tsx  RHF + dynamic zodResolver
 │       ├── BioDesignPanel.tsx
+│       ├── AvatarUpload.tsx     아바타 업로드/삭제
+│       ├── HeaderStyleSection.tsx 헤더 스타일 설정
+│       ├── EventImportSearch.tsx 이벤트 임포트
 │       └── editors/
 │           ├── types.ts         EntryEditorProps 인터페이스
 │           ├── EventEditor.tsx
@@ -244,8 +253,4 @@ src/app/dashboard/
 
 src/lib/validations/
 └── entry.schemas.ts             Zod 스키마 (API + 클라이언트 공용)
-
-src/stores/
-├── index.ts                     barrel (userStore만 re-export)
-└── userStore.ts                 user 정보
 ```
