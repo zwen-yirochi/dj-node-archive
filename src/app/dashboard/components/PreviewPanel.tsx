@@ -16,36 +16,29 @@ export default function PreviewPanel() {
     const containerRef = useRef<HTMLDivElement>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    // Intersection Observer
+    // Intersection Observer + 1초 fallback 통합
     useEffect(() => {
+        if (isVisible) return;
+
         const observer = new IntersectionObserver(
             ([entry]) => {
                 if (entry.isIntersecting) {
                     setIsVisible(true);
                 }
             },
-            {
-                threshold: 0.01,
-                rootMargin: '0px',
-            }
+            { threshold: 0.01 }
         );
 
         if (containerRef.current) {
             observer.observe(containerRef.current);
         }
 
-        return () => observer.disconnect();
-    }, []);
+        const timer = setTimeout(() => setIsVisible(true), 1000);
 
-    // Fallback: 1초 후 강제 visible
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (!isVisible) {
-                setIsVisible(true);
-            }
-        }, 1000);
-
-        return () => clearTimeout(timer);
+        return () => {
+            observer.disconnect();
+            clearTimeout(timer);
+        };
     }, [isVisible]);
 
     // iframe 새로고침
