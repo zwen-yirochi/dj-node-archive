@@ -28,6 +28,7 @@ import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
 import { TypeBadge } from '@/components/dna';
 
 import { useEditorData, useEntryMutations } from '../../hooks';
+import { computeReorderedDisplay } from '../../hooks/entries.api';
 
 interface SortableItemProps {
     id: string;
@@ -166,7 +167,10 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
         // Page 내 순서 변경 (displayOrder 업데이트)
         const newIndex = displayedEntries.findIndex((e) => e.id === over.id);
         if (newIndex !== -1) {
-            reorderDisplayMutation.mutate({ entryId: active.id as string, newIndex });
+            const updates = computeReorderedDisplay(entries, active.id as string, newIndex);
+            if (updates) {
+                reorderDisplayMutation.mutate({ updates });
+            }
         }
     };
 

@@ -30,6 +30,7 @@ import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
 import { TypeBadge } from '@/components/dna';
 
 import { useEditorData, useEntryMutations } from '../../hooks';
+import { computeReorderedDisplay, computeReorderedPositions } from '../../hooks/entries.api';
 import {
     selectContentView,
     selectSetView,
@@ -169,10 +170,20 @@ export default function TreeSidebar() {
             const newIndex = displayedEntries.findIndex((e) => e.id === overId);
 
             if (newIndex !== -1 && active.id !== over.id) {
-                reorderDisplayMutation.mutate(
-                    { entryId: activeEntry.id, newIndex },
-                    { onError: () => toast({ variant: 'destructive', title: 'Failed to reorder' }) }
+                const updates = computeReorderedDisplay(
+                    data.contentEntries,
+                    activeEntry.id,
+                    newIndex
                 );
+                if (updates) {
+                    reorderDisplayMutation.mutate(
+                        { updates },
+                        {
+                            onError: () =>
+                                toast({ variant: 'destructive', title: 'Failed to reorder' }),
+                        }
+                    );
+                }
             }
             return;
         }
@@ -196,13 +207,21 @@ export default function TreeSidebar() {
 
                 const overIndex = sectionEntries.findIndex((e) => e.id === over.id);
                 if (overIndex !== -1) {
-                    reorderEntriesMutation.mutate(
-                        { type: sectionType, entryId: activeEntry.id, newPosition: overIndex },
-                        {
-                            onError: () =>
-                                toast({ variant: 'destructive', title: 'Failed to reorder' }),
-                        }
+                    const updates = computeReorderedPositions(
+                        data.contentEntries,
+                        sectionType,
+                        activeEntry.id,
+                        overIndex
                     );
+                    if (updates) {
+                        reorderEntriesMutation.mutate(
+                            { updates },
+                            {
+                                onError: () =>
+                                    toast({ variant: 'destructive', title: 'Failed to reorder' }),
+                            }
+                        );
+                    }
                 }
             }
         }
