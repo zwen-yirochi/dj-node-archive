@@ -29,6 +29,8 @@ function useDebouncedSave(onSave: (entry: ContentEntry) => Promise<void>, delay:
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
+    const hasPendingSave = useCallback(() => timeoutRef.current !== null, []);
+
     const debouncedSave = useCallback(
         (entry: ContentEntry) => {
             if (timeoutRef.current) {
@@ -36,6 +38,7 @@ function useDebouncedSave(onSave: (entry: ContentEntry) => Promise<void>, delay:
             }
 
             timeoutRef.current = setTimeout(async () => {
+                timeoutRef.current = null;
                 setIsSaving(true);
                 try {
                     await onSave(entry);
@@ -58,7 +61,7 @@ function useDebouncedSave(onSave: (entry: ContentEntry) => Promise<void>, delay:
         };
     }, []);
 
-    return { debouncedSave, isSaving, lastSaved };
+    return { debouncedSave, isSaving, lastSaved, hasPendingSave };
 }
 
 // ============================================
@@ -81,11 +84,6 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     const [localEntry, setLocalEntry] = useState<ContentEntry>(entry);
     const [editingField, setEditingField] = useState<'title' | 'image' | null>(null);
 
-    // Sync external entry changes to local state
-    useEffect(() => {
-        setLocalEntry(entry);
-    }, [entry]);
-
     // Save handler — preview refresh is handled by the mutation factory
     const handleSave = useCallback(
         async (updated: ContentEntry) => {
@@ -94,7 +92,15 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         [updateMutation]
     );
 
-    const { debouncedSave, isSaving, lastSaved } = useDebouncedSave(handleSave);
+    const { debouncedSave, isSaving, lastSaved, hasPendingSave } = useDebouncedSave(handleSave);
+
+    // Sync external entry changes to local state — skip during pending/in-flight saves
+    // to prevent server refetch from overwriting edits in progress
+    useEffect(() => {
+        if (!isSaving && !hasPendingSave()) {
+            setLocalEntry(entry);
+        }
+    }, [entry, isSaving, hasPendingSave]);
 
     // Delete handler — preview refresh is handled by the mutation factory
     const handleDelete = async () => {
