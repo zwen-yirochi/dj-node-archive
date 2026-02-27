@@ -68,9 +68,7 @@ export interface MixsetEntry extends EntryBase {
     // 표시용 데이터
     title: string;
     coverUrl?: string;
-    audioUrl?: string;
-    soundcloudUrl?: string;
-    mixcloudUrl?: string;
+    url?: string;
     tracklist: { track: string; artist: string; time: string }[];
     description?: string;
     durationMinutes?: number;
@@ -207,16 +205,6 @@ export function isDisplayed(entry: ContentEntry): boolean {
 export function isVisibleOnPage(entry: ContentEntry): boolean {
     return typeof entry.displayOrder === 'number' && entry.isVisible;
 }
-
-// ============================================
-// Form/API Data Types
-// ============================================
-export type CreateEventData = Pick<
-    EventEntry,
-    'title' | 'date' | 'venue' | 'lineup' | 'posterUrl' | 'description' | 'links'
->;
-
-export type UpdateEventData = Partial<CreateEventData>;
 
 // ============================================
 // Legacy Aliases (호환성)

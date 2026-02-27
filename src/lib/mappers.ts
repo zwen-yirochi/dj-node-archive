@@ -119,9 +119,12 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                 title: (data.title as string) || '',
                 tracklist: tracklist || [],
                 coverUrl: data.cover_url as string | undefined,
-                audioUrl: data.audio_url as string | undefined,
-                soundcloudUrl: data.soundcloud_url as string | undefined,
-                mixcloudUrl: data.mixcloud_url as string | undefined,
+                // 기존 데이터 호환: url || audio_url || soundcloud_url
+                url:
+                    (data.url as string) ||
+                    (data.audio_url as string) ||
+                    (data.soundcloud_url as string) ||
+                    undefined,
                 description: data.description as string | undefined,
                 durationMinutes: data.duration_minutes as number | undefined,
             } as MixsetEntry;
@@ -219,9 +222,7 @@ export function mapEntryToDatabase(
                     title: mixsetEntry.title,
                     tracklist: mixsetEntry.tracklist || [],
                     cover_url: mixsetEntry.coverUrl || undefined,
-                    audio_url: mixsetEntry.audioUrl || undefined,
-                    soundcloud_url: mixsetEntry.soundcloudUrl || undefined,
-                    mixcloud_url: mixsetEntry.mixcloudUrl || undefined,
+                    url: mixsetEntry.url || undefined,
                     description: mixsetEntry.description || undefined,
                     duration_minutes: mixsetEntry.durationMinutes || undefined,
                 },
@@ -389,9 +390,7 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntr
                 title: '',
                 tracklist: [],
                 coverUrl: '',
-                audioUrl: '',
-                soundcloudUrl: '',
-                mixcloudUrl: '',
+                url: '',
                 description: '',
                 createdAt: '',
                 updatedAt: '',

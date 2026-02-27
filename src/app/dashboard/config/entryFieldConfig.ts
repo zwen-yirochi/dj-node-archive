@@ -41,12 +41,9 @@ export const FIELD_CONFIG: Record<EntryType, FieldConfig[]> = {
     mixset: [
         { key: 'title', label: '제목', triggersPreview: true },
         { key: 'coverUrl', label: '커버 이미지', triggersPreview: true },
-        { key: 'audioUrl', label: '오디오 URL', triggersPreview: true },
-        { key: 'soundcloudUrl', label: 'SoundCloud', triggersPreview: true },
+        { key: 'url', label: 'URL', triggersPreview: true },
         { key: 'tracklist', label: '트랙리스트', triggersPreview: false },
         { key: 'description', label: '설명', triggersPreview: false },
-        { key: 'releaseDate', label: '발매일', triggersPreview: true },
-        { key: 'genre', label: '장르', triggersPreview: true },
     ],
     link: [
         { key: 'title', label: '제목', triggersPreview: true },

@@ -37,15 +37,15 @@ export default function MixsetEditor({
                 className="text-center text-xl font-bold text-dashboard-text"
             />
 
-            {/* SoundCloud URL */}
+            {/* URL */}
             <div className="rounded-xl bg-dashboard-bg-muted p-4">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                    SoundCloud URL
+                    URL
                 </p>
                 <EditableField
-                    value={entry.soundcloudUrl || ''}
-                    onSave={(value) => onUpdate({ soundcloudUrl: value })}
-                    placeholder="https://soundcloud.com/..."
+                    value={entry.url || ''}
+                    onSave={(value) => onUpdate({ url: value })}
+                    placeholder="Audio or SoundCloud URL"
                     className="text-sm text-dashboard-text-secondary"
                 />
             </div>

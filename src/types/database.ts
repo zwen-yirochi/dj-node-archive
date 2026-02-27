@@ -70,9 +70,7 @@ export interface MixsetSelfData {
     title: string;
     tracklist?: Track[];
     cover_url?: string;
-    audio_url?: string;
-    soundcloud_url?: string;
-    mixcloud_url?: string;
+    url?: string;
     description?: string;
     duration_minutes?: number;
 }
