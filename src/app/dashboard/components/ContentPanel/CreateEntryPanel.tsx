@@ -12,8 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-import { useEditorData, useEntryMutations } from '../../hooks';
-import { selectSetView, useDashboardStore } from '../../stores/dashboardStore';
+import { useEntryMutations } from '../../hooks';
+import { selectPageId, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 import CreateMixsetForm from './CreateMixsetForm';
 import EventCreateSection from './EventCreateSection';
 
@@ -34,7 +34,7 @@ function DefaultCreateForm({ type }: { type: EntryType }) {
     const [isSaving, setIsSaving] = useState(false);
 
     const config = ENTRY_TYPE_CONFIG[type];
-    const { data } = useEditorData();
+    const pageId = useDashboardStore(selectPageId);
     const { create: createEntryMutation } = useEntryMutations();
     const setView = useDashboardStore(selectSetView);
 
@@ -47,7 +47,7 @@ function DefaultCreateForm({ type }: { type: EntryType }) {
             });
             return;
         }
-        if (!data.pageId) {
+        if (!pageId) {
             toast({
                 variant: 'destructive',
                 title: 'Error',
@@ -60,7 +60,7 @@ function DefaultCreateForm({ type }: { type: EntryType }) {
         try {
             const newEntry = createEmptyEntry(type);
             newEntry.title = title.trim();
-            await createEntryMutation.mutateAsync({ pageId: data.pageId, entry: newEntry });
+            await createEntryMutation.mutateAsync({ pageId, entry: newEntry });
             setView({ kind: 'detail', entryId: newEntry.id });
             toast({ title: 'Created', description: `${config.label} has been created.` });
         } catch {

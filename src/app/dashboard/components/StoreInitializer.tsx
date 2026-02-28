@@ -1,10 +1,12 @@
 // app/dashboard/components/StoreInitializer.tsx
 'use client';
 
-import { useEditorData } from '../hooks';
-import type { EditorData } from '@/lib/services/user.service';
-import { useDashboardStore } from '../stores/dashboardStore';
 import { useLayoutEffect, useRef } from 'react';
+
+import type { EditorData } from '@/lib/services/user.service';
+
+import { useEntries, useUserQuery } from '../hooks/use-editor-data';
+import { useDashboardStore } from '../stores/dashboardStore';
 
 interface StoreInitializerProps {
     initialData: EditorData;
@@ -13,13 +15,15 @@ interface StoreInitializerProps {
 export default function StoreInitializer({ initialData }: StoreInitializerProps) {
     const initialized = useRef(false);
 
-    // TanStack Query hydration: SSR 데이터를 initialData로 전달 (user + entries)
-    useEditorData(initialData);
+    // TanStack Query hydration: SSR 데이터를 분리된 캐시에 주입
+    useEntries(initialData.contentEntries);
+    useUserQuery(initialData.user);
 
-    // UI Store 초기화
+    // UI Store 초기화 + pageId 설정
     useLayoutEffect(() => {
         if (!initialized.current) {
             useDashboardStore.getState().reset();
+            useDashboardStore.getState().setPageId(initialData.pageId);
             initialized.current = true;
         }
     }, [initialData]);

@@ -23,10 +23,10 @@ import type { ContentEntry } from '@/types/domain';
 import { toast } from '@/hooks/use-toast';
 import { type PublishOption } from '@/app/dashboard/config/workflowOptions';
 
-import { useEditorData, useEntryMutations } from '.';
+import { useEntryMutations } from '.';
 import { ENTRY_TYPE_CONFIG, type EntryType } from '../config/entryConfig';
 import { ENTRY_SCHEMAS } from '../config/entryFieldConfig';
-import { selectSetView, useDashboardStore } from '../stores/dashboardStore';
+import { selectPageId, selectSetView, useDashboardStore } from '../stores/dashboardStore';
 
 // ── Config ──────────────────────────────────
 export interface CreateEntryFormConfig<T extends FieldValues> {
@@ -78,7 +78,7 @@ export function useCreateEntryForm<T extends FieldValues>(config: CreateEntryFor
     } = form;
 
     // ── 외부 의존성 ──
-    const { data } = useEditorData();
+    const pageId = useDashboardStore(selectPageId);
     const { create: createEntryMutation } = useEntryMutations();
     const setView = useDashboardStore(selectSetView);
 
@@ -116,7 +116,7 @@ export function useCreateEntryForm<T extends FieldValues>(config: CreateEntryFor
     const onSubmit = async (formData: T) => {
         clearErrors('root');
 
-        if (!data.pageId) {
+        if (!pageId) {
             setError('root', { type: 'server', message: 'Page ID is not set. Please refresh.' });
             return;
         }
@@ -125,7 +125,7 @@ export function useCreateEntryForm<T extends FieldValues>(config: CreateEntryFor
             const newEntry = toEntry(formData);
 
             await createEntryMutation.mutateAsync({
-                pageId: data.pageId,
+                pageId,
                 entry: newEntry,
                 ...(hasPublishOption ? { publishOption } : {}),
             });

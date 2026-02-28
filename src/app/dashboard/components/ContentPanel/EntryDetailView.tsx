@@ -27,24 +27,33 @@ const EDITOR_REGISTRY: Record<EntryType, ComponentType<EntryEditorProps>> = {
 // useDebouncedSave hook
 // ============================================
 
-function useDebouncedSave(onSave: (entry: ContentEntry) => Promise<void>, delay: number = 800) {
+function useDebouncedSave(
+    onSave: (entry: ContentEntry, changedFields: string[]) => Promise<void>,
+    delay: number = 800
+) {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
     const hasPendingSave = useCallback(() => timeoutRef.current !== null, []);
 
+    const pendingFieldsRef = useRef<Set<string>>(new Set());
+
     const debouncedSave = useCallback(
-        (entry: ContentEntry) => {
+        (entry: ContentEntry, changedFields: string[]) => {
+            for (const key of changedFields) pendingFieldsRef.current.add(key);
+
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
             }
 
             timeoutRef.current = setTimeout(async () => {
                 timeoutRef.current = null;
+                const fields = [...pendingFieldsRef.current];
+                pendingFieldsRef.current.clear();
                 setIsSaving(true);
                 try {
-                    await onSave(entry);
+                    await onSave(entry, fields);
                     setLastSaved(new Date());
                 } catch (error) {
                     console.error('저장 실패:', error);
@@ -87,10 +96,10 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     const [localEntry, setLocalEntry] = useState<ContentEntry>(entry);
     const [editingField, setEditingField] = useState<'title' | 'image' | null>(null);
 
-    // Save handler — preview refresh is handled by the mutation factory
+    // Save handler — changedFields를 mutation에 전달하여 preview 트리거 판단
     const handleSave = useCallback(
-        async (updated: ContentEntry) => {
-            await updateMutation.mutateAsync({ entry: updated });
+        async (updated: ContentEntry, changedFields: string[]) => {
+            await updateMutation.mutateAsync({ entry: updated, changedFields });
         },
         [updateMutation]
     );
@@ -111,11 +120,11 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         onBack?.();
     };
 
-    // Update field helper
+    // Update field helper — 변경된 필드 키를 함께 전달
     const handleUpdate = (updates: Partial<ContentEntry>) => {
         const updated = { ...localEntry, ...updates } as ContentEntry;
         setLocalEntry(updated);
-        debouncedSave(updated);
+        debouncedSave(updated, Object.keys(updates));
     };
 
     const config = ENTRY_TYPE_CONFIG[localEntry.type];

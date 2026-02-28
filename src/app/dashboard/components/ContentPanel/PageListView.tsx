@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
 import { TypeBadge } from '@/components/dna';
 
-import { useEditorData, useEntryMutations } from '../../hooks';
+import { useEntries, useEntryMutations } from '../../hooks';
 import { computeReorderedDisplay } from '../../hooks/entries.api';
 
 interface SortableItemProps {
@@ -122,8 +122,7 @@ interface PageListViewProps {
 
 export default function PageListView({ onSelectDetail }: PageListViewProps) {
     // TanStack Query
-    const { data } = useEditorData();
-    const entries = data.contentEntries;
+    const { data: entries } = useEntries();
     const {
         toggleVisibility: toggleVisibilityMutation,
         removeFromDisplay: removeFromDisplayMutation,

@@ -29,7 +29,7 @@ import { toast } from '@/hooks/use-toast';
 import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
 import { TypeBadge } from '@/components/dna';
 
-import { useEditorData, useEntryMutations } from '../../hooks';
+import { useEntries, useEntryMutations, useUser } from '../../hooks';
 import { computeReorderedDisplay, computeReorderedPositions } from '../../hooks/entries.api';
 import {
     selectContentView,
@@ -52,9 +52,8 @@ interface DragData {
 
 export default function TreeSidebar() {
     // TanStack Query
-    const { data } = useEditorData();
-    const entries = data.contentEntries;
-    const user = data.user;
+    const { data: entries } = useEntries();
+    const user = useUser();
 
     // TanStack Query Mutations
     const {
@@ -170,11 +169,7 @@ export default function TreeSidebar() {
             const newIndex = displayedEntries.findIndex((e) => e.id === overId);
 
             if (newIndex !== -1 && active.id !== over.id) {
-                const updates = computeReorderedDisplay(
-                    data.contentEntries,
-                    activeEntry.id,
-                    newIndex
-                );
+                const updates = computeReorderedDisplay(entries, activeEntry.id, newIndex);
                 if (updates) {
                     reorderDisplayMutation.mutate(
                         { updates },
@@ -208,7 +203,7 @@ export default function TreeSidebar() {
                 const overIndex = sectionEntries.findIndex((e) => e.id === over.id);
                 if (overIndex !== -1) {
                     const updates = computeReorderedPositions(
-                        data.contentEntries,
+                        entries,
                         sectionType,
                         activeEntry.id,
                         overIndex

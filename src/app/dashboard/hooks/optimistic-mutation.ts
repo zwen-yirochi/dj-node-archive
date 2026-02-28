@@ -5,17 +5,20 @@
  * cancel → snapshot → optimistic update → rollback → invalidate
  * 보일러플레이트를 한 번만 작성.
  *
+ * 캐시 대상: ContentEntry[] (순수 배열)
  * triggersPreview 옵션으로 미리보기 새로고침을 중앙 관리.
  */
 
-import type { EditorData } from '@/lib/services/user.service';
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
+
+import type { ContentEntry } from '@/types';
+
 import { entryKeys } from './use-editor-data';
 
 export interface OptimisticMutationConfig<TParams> {
-    mutationFn: (params: TParams, data: EditorData | undefined) => Promise<unknown>;
-    optimisticUpdate: (params: TParams, data: EditorData) => EditorData;
-    triggersPreview?: boolean | ((params: TParams, snapshot: EditorData) => boolean);
+    mutationFn: (params: TParams, entries: ContentEntry[] | undefined) => Promise<unknown>;
+    optimisticUpdate: (params: TParams, entries: ContentEntry[]) => ContentEntry[];
+    triggersPreview?: boolean | ((params: TParams, snapshot: ContentEntry[]) => boolean);
     onPreviewTrigger?: () => void;
 }
 
@@ -28,17 +31,17 @@ export interface OptimisticMutationConfig<TParams> {
  */
 export function makeOptimisticMutation<TParams>(
     queryClient: QueryClient,
-    snapshotRef: { current: EditorData | undefined },
+    snapshotRef: { current: ContentEntry[] | undefined },
     config: OptimisticMutationConfig<TParams>
-): UseMutationOptions<unknown, Error, TParams, { previous?: EditorData }> {
+): UseMutationOptions<unknown, Error, TParams, { previous?: ContentEntry[] }> {
     return {
         mutationFn: (params: TParams) => config.mutationFn(params, snapshotRef.current),
         onMutate: async (params: TParams) => {
             await queryClient.cancelQueries({ queryKey: entryKeys.all });
-            const previous = queryClient.getQueryData<EditorData>(entryKeys.all);
+            const previous = queryClient.getQueryData<ContentEntry[]>(entryKeys.all);
             snapshotRef.current = previous;
             if (previous) {
-                queryClient.setQueryData<EditorData>(
+                queryClient.setQueryData<ContentEntry[]>(
                     entryKeys.all,
                     config.optimisticUpdate(params, previous)
                 );

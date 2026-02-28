@@ -1,16 +1,23 @@
 // hooks/use-editor-data.ts
 /**
- * 에디터 데이터 쿼리 훅 — entryKeys, useEditorData, useEntryDetail
+ * 쿼리 키 & 훅 — entries / user / entryDetail
+ *
+ * - entryKeys: ContentEntry[] 전용
+ * - userKeys: User 전용
+ * - pageId는 Zustand dashboardStore에서 관리 (세션 내 불변)
  */
 
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 
-import type { ContentEntry } from '@/types';
-import type { EditorData } from '@/lib/services/user.service';
+import type { ContentEntry, User } from '@/types';
 
 // ============================================
 // Query Keys
 // ============================================
+
+export const userKeys = {
+    all: ['user'] as const,
+};
 
 export const entryKeys = {
     all: ['entries'] as const,
@@ -21,11 +28,18 @@ export const entryKeys = {
 // API Functions
 // ============================================
 
-async function fetchEditorData(): Promise<EditorData> {
+async function fetchEntries(): Promise<ContentEntry[]> {
     const res = await fetch('/api/editor/data');
-    if (!res.ok) throw new Error(`Failed to fetch editor data: ${res.status}`);
+    if (!res.ok) throw new Error(`Failed to fetch entries: ${res.status}`);
     const json = await res.json();
-    return json.data;
+    return json.data.contentEntries;
+}
+
+async function fetchUser(): Promise<User> {
+    const res = await fetch('/api/editor/data');
+    if (!res.ok) throw new Error(`Failed to fetch user: ${res.status}`);
+    const json = await res.json();
+    return json.data.user;
 }
 
 async function fetchEntryDetail(id: string): Promise<ContentEntry> {
@@ -39,13 +53,23 @@ async function fetchEntryDetail(id: string): Promise<ContentEntry> {
 // Query Hooks
 // ============================================
 
-export function useEditorData(initialData?: EditorData) {
+export function useEntries(initialEntries?: ContentEntry[]) {
     return useSuspenseQuery({
         queryKey: entryKeys.all,
-        queryFn: fetchEditorData,
-        initialData,
-        initialDataUpdatedAt: initialData ? Date.now() : undefined,
+        queryFn: fetchEntries,
+        initialData: initialEntries,
+        initialDataUpdatedAt: initialEntries ? Date.now() : undefined,
         staleTime: 60_000,
+    });
+}
+
+export function useUserQuery(initialUser?: User) {
+    return useSuspenseQuery({
+        queryKey: userKeys.all,
+        queryFn: fetchUser,
+        initialData: initialUser,
+        initialDataUpdatedAt: initialUser ? Date.now() : undefined,
+        staleTime: 5 * 60_000,
     });
 }
 
@@ -56,8 +80,8 @@ export function useEntryDetail(id: string) {
         queryKey: entryKeys.detail(id),
         queryFn: () => fetchEntryDetail(id),
         initialData: () => {
-            const listData = queryClient.getQueryData<EditorData>(entryKeys.all);
-            return listData?.contentEntries.find((e) => e.id === id);
+            const entries = queryClient.getQueryData<ContentEntry[]>(entryKeys.all);
+            return entries?.find((e) => e.id === id);
         },
         initialDataUpdatedAt: () => {
             return queryClient.getQueryState(entryKeys.all)?.dataUpdatedAt;

@@ -1,14 +1,18 @@
 'use client';
 
+import { useState } from 'react';
+
+import { useQueryClient } from '@tanstack/react-query';
+
+import { ChevronDown, ChevronRight } from 'lucide-react';
+
+import type { User } from '@/types';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useDebounce } from '@/hooks/useDebounce';
-import type { EditorData } from '@/lib/services/user.service';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+
 import { useUser, useUserMutations } from '../../hooks';
-import { entryKeys } from '../../hooks/use-editor-data';
-import { useQueryClient } from '@tanstack/react-query';
+import { userKeys } from '../../hooks/use-editor-data';
 import AvatarUpload from './AvatarUpload';
 import HeaderStyleSection from './HeaderStyleSection';
 
@@ -44,8 +48,8 @@ export default function BioDesignPanel() {
 
     const handleProfileChange = (field: 'displayName' | 'bio', value: string) => {
         // 즉시 TQ 캐시 업데이트 (타이핑 반영)
-        queryClient.setQueryData<EditorData>(entryKeys.all, (prev) =>
-            prev ? { ...prev, user: { ...prev.user, [field]: value } } : prev
+        queryClient.setQueryData<User>(userKeys.all, (prev) =>
+            prev ? { ...prev, [field]: value } : prev
         );
         // 디바운스 서버 동기화
         debouncedSave({ [field]: value });

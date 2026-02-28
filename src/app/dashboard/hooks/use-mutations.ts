@@ -4,6 +4,8 @@
  *
  * 8개 뮤테이션을 하나의 훅으로 통합. 각 뮤테이션은
  * mutationFn + optimisticUpdate + triggersPreview 선언만으로 구성.
+ *
+ * 캐시 대상: ContentEntry[] (순수 배열)
  */
 
 import { useRef } from 'react';
@@ -11,14 +13,14 @@ import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { ContentEntry } from '@/types';
-import type { EditorData } from '@/lib/services/user.service';
-import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
+import {
+    canAddToView,
+    FIELD_CONFIG,
+    type FieldConfig,
+} from '@/app/dashboard/config/entryFieldConfig';
 import type { PublishOption } from '@/app/dashboard/config/workflowOptions';
 
-import { shouldTriggerPreview } from '../lib/previewTrigger';
 import {
-    computeReorderedDisplay,
-    computeReorderedPositions,
     createEntry,
     deleteEntry,
     reorderDisplay as reorderDisplayAPI,
@@ -30,7 +32,7 @@ import { triggerPreviewRefresh } from './use-preview-refresh';
 
 export function useEntryMutations() {
     const queryClient = useQueryClient();
-    const snapshotRef = useRef<EditorData | undefined>(undefined);
+    const snapshotRef = useRef<ContentEntry[] | undefined>(undefined);
 
     const onPreviewTrigger = () => triggerPreviewRefresh();
 
@@ -47,39 +49,26 @@ export function useEntryMutations() {
                     entry: params.entry,
                     publishOption: params.publishOption ?? 'private',
                 }),
-            optimisticUpdate: ({ entry }, data) => ({
-                ...data,
-                contentEntries: [...data.contentEntries, entry],
-            }),
+            optimisticUpdate: ({ entry }, entries) => [...entries, entry],
             triggersPreview: true,
         })
     );
 
     const update = useMutation(
-        m<{ entry: ContentEntry }>({
+        m<{ entry: ContentEntry; changedFields?: string[] }>({
             mutationFn: ({ entry }) => updateEntry({ id: entry.id, entry }),
-            optimisticUpdate: ({ entry }, data) => ({
-                ...data,
-                contentEntries: data.contentEntries.map((e) => (e.id === entry.id ? entry : e)),
-            }),
-            triggersPreview: ({ entry }, snapshot) => {
-                const previous = snapshot.contentEntries.find((e) => e.id === entry.id);
-                return !!previous && shouldTriggerPreview(previous, entry);
-            },
+            optimisticUpdate: ({ entry }, entries) =>
+                entries.map((e) => (e.id === entry.id ? entry : e)),
+            triggersPreview: ({ entry, changedFields }) =>
+                hasPreviewField(entry.type, changedFields),
         })
     );
 
     const remove = useMutation(
         m<string>({
             mutationFn: (id) => deleteEntry(id),
-            optimisticUpdate: (id, data) => ({
-                ...data,
-                contentEntries: data.contentEntries.filter((e) => e.id !== id),
-            }),
-            triggersPreview: (id, snapshot) => {
-                const entry = snapshot.contentEntries.find((e) => e.id === id);
-                return !!entry && canAddToView(entry);
-            },
+            optimisticUpdate: (id, entries) => entries.filter((e) => e.id !== id),
+            triggersPreview: (id, snapshot) => wasVisibleEntry(snapshot, id),
         })
     );
 
@@ -87,29 +76,25 @@ export function useEntryMutations() {
 
     const addToDisplay = useMutation(
         m<string>({
-            mutationFn: (entryId, data) => {
-                const entries = data?.contentEntries ?? [];
-                const orders = entries
+            mutationFn: (entryId, entries) => {
+                const orders = (entries ?? [])
                     .filter((e) => typeof e.displayOrder === 'number')
                     .map((e) => e.displayOrder!);
                 const next = orders.length > 0 ? Math.max(...orders) + 1 : 0;
                 return updateEntry({ id: entryId, displayOrder: next, isVisible: true });
             },
-            optimisticUpdate: (entryId, data) => {
-                const target = data.contentEntries.find((e) => e.id === entryId);
-                if (!target || typeof target.displayOrder === 'number') return data;
+            optimisticUpdate: (entryId, entries) => {
+                const target = entries.find((e) => e.id === entryId);
+                if (!target || typeof target.displayOrder === 'number') return entries;
 
-                const orders = data.contentEntries
+                const orders = entries
                     .filter((e) => typeof e.displayOrder === 'number')
                     .map((e) => e.displayOrder!);
                 const next = orders.length > 0 ? Math.max(...orders) + 1 : 0;
 
-                return {
-                    ...data,
-                    contentEntries: data.contentEntries.map((e) =>
-                        e.id === entryId ? { ...e, displayOrder: next, isVisible: true } : e
-                    ),
-                };
+                return entries.map((e) =>
+                    e.id === entryId ? { ...e, displayOrder: next, isVisible: true } : e
+                );
             },
             triggersPreview: true,
         })
@@ -118,65 +103,49 @@ export function useEntryMutations() {
     const removeFromDisplay = useMutation(
         m<string>({
             mutationFn: (entryId) => updateEntry({ id: entryId, displayOrder: null }),
-            optimisticUpdate: (entryId, data) => ({
-                ...data,
-                contentEntries: data.contentEntries.map((e) =>
-                    e.id === entryId ? { ...e, displayOrder: null } : e
-                ),
-            }),
+            optimisticUpdate: (entryId, entries) =>
+                entries.map((e) => (e.id === entryId ? { ...e, displayOrder: null } : e)),
             triggersPreview: true,
         })
     );
 
     const toggleVisibility = useMutation(
         m<string>({
-            mutationFn: (entryId, data) => {
-                const entry = data?.contentEntries.find((e) => e.id === entryId);
+            mutationFn: (entryId, entries) => {
+                const entry = entries?.find((e) => e.id === entryId);
                 if (!entry || typeof entry.displayOrder !== 'number') return Promise.resolve();
                 return updateEntry({ id: entryId, isVisible: !entry.isVisible });
             },
-            optimisticUpdate: (entryId, data) => ({
-                ...data,
-                contentEntries: data.contentEntries.map((e) =>
-                    e.id === entryId ? { ...e, isVisible: !e.isVisible } : e
-                ),
-            }),
+            optimisticUpdate: (entryId, entries) =>
+                entries.map((e) => (e.id === entryId ? { ...e, isVisible: !e.isVisible } : e)),
             triggersPreview: true,
         })
     );
 
     // ── Reorder ──
 
-    // reorder mutations: updates를 mutate 호출 시점에 확정하여 snapshotRef 경합 방지
     const reorder = useMutation(
         m<{ updates: { id: string; position: number }[] }>({
             mutationFn: ({ updates }) => reorderEntries(updates),
-            optimisticUpdate: ({ updates }, data) => {
+            optimisticUpdate: ({ updates }, entries) => {
                 const positionMap = new Map(updates.map((u) => [u.id, u.position]));
-                return {
-                    ...data,
-                    contentEntries: data.contentEntries.map((entry) => {
-                        const newPos = positionMap.get(entry.id);
-                        return newPos !== undefined ? { ...entry, position: newPos } : entry;
-                    }),
-                };
+                return entries.map((entry) => {
+                    const newPos = positionMap.get(entry.id);
+                    return newPos !== undefined ? { ...entry, position: newPos } : entry;
+                });
             },
-            // reorder는 섹션 내 순서만 변경, 페이지에 무관
         })
     );
 
     const reorderDisplay = useMutation(
         m<{ updates: { id: string; displayOrder: number }[] }>({
             mutationFn: ({ updates }) => reorderDisplayAPI(updates),
-            optimisticUpdate: ({ updates }, data) => {
+            optimisticUpdate: ({ updates }, entries) => {
                 const orderMap = new Map(updates.map((u) => [u.id, u.displayOrder]));
-                return {
-                    ...data,
-                    contentEntries: data.contentEntries.map((e) => {
-                        const newOrder = orderMap.get(e.id);
-                        return newOrder !== undefined ? { ...e, displayOrder: newOrder } : e;
-                    }),
-                };
+                return entries.map((e) => {
+                    const newOrder = orderMap.get(e.id);
+                    return newOrder !== undefined ? { ...e, displayOrder: newOrder } : e;
+                });
             },
             triggersPreview: true,
         })
@@ -192,4 +161,22 @@ export function useEntryMutations() {
         reorder,
         reorderDisplay,
     };
+}
+
+// ============================================
+// Preview Trigger Helpers
+// ============================================
+
+/** 변경된 필드 중 프리뷰에 영향을 주는 필드가 있는지 판단 */
+function hasPreviewField(type: ContentEntry['type'], changedFields?: string[]): boolean {
+    if (!changedFields?.length) return false;
+    const fields: FieldConfig[] | undefined = FIELD_CONFIG[type];
+    if (!fields) return false;
+    return changedFields.some((key) => fields.find((f) => f.key === key)?.triggersPreview);
+}
+
+/** 삭제 대상이 공개 페이지에 표시 중인지 판단 */
+function wasVisibleEntry(snapshot: ContentEntry[], id: string): boolean {
+    const entry = snapshot.find((e) => e.id === id);
+    return !!entry && canAddToView(entry);
 }

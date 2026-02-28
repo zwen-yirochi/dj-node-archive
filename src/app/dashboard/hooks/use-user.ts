@@ -2,24 +2,23 @@
 /**
  * User 데이터 읽기 훅 + User 뮤테이션 훅
  *
- * user 데이터는 EditorData(entryKeys.all) 쿼리 캐시에서 파생.
+ * user 데이터는 독립 캐시 ['user']에서 관리.
  * StoreInitializer가 initialData로 hydration하므로 실제 suspend 없음.
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { User } from '@/types';
-import type { EditorData } from '@/lib/services/user.service';
 
-import { entryKeys, useEditorData } from './use-editor-data';
+import { userKeys, useUserQuery } from './use-editor-data';
 
 // ============================================
 // Query Hook
 // ============================================
 
 export function useUser(): User {
-    const { data } = useEditorData();
-    return data.user;
+    const { data } = useUserQuery();
+    return data;
 }
 
 // ============================================
@@ -70,24 +69,22 @@ export function useUserMutations() {
             updates: Partial<Pick<User, 'displayName' | 'bio'>>;
         }) => patchProfile(userId, updates),
         onMutate: async ({ updates }) => {
-            await queryClient.cancelQueries({ queryKey: entryKeys.all });
-            const previous = queryClient.getQueryData<EditorData>(entryKeys.all);
+            await queryClient.cancelQueries({ queryKey: userKeys.all });
+            const previous = queryClient.getQueryData<User>(userKeys.all);
             if (previous) {
-                queryClient.setQueryData<EditorData>(entryKeys.all, {
+                queryClient.setQueryData<User>(userKeys.all, {
                     ...previous,
-                    user: { ...previous.user, ...updates },
+                    ...updates,
                 });
             }
             return { previous };
         },
         onSuccess: (serverUser) => {
-            queryClient.setQueryData<EditorData>(entryKeys.all, (prev) =>
-                prev ? { ...prev, user: serverUser } : prev
-            );
+            queryClient.setQueryData<User>(userKeys.all, serverUser);
         },
         onError: (_err, _vars, ctx) => {
             if (ctx?.previous) {
-                queryClient.setQueryData(entryKeys.all, ctx.previous);
+                queryClient.setQueryData(userKeys.all, ctx.previous);
             }
         },
     });
@@ -96,8 +93,8 @@ export function useUserMutations() {
         mutationFn: ({ userId, formData }: { userId: string; formData: FormData }) =>
             postAvatar(userId, formData),
         onSuccess: (data) => {
-            queryClient.setQueryData<EditorData>(entryKeys.all, (prev) =>
-                prev ? { ...prev, user: { ...prev.user, avatarUrl: data.avatarUrl } } : prev
+            queryClient.setQueryData<User>(userKeys.all, (prev) =>
+                prev ? { ...prev, avatarUrl: data.avatarUrl } : prev
             );
         },
     });
@@ -105,19 +102,19 @@ export function useUserMutations() {
     const deleteAvatar = useMutation({
         mutationFn: ({ userId }: { userId: string }) => removeAvatar(userId),
         onMutate: async () => {
-            await queryClient.cancelQueries({ queryKey: entryKeys.all });
-            const previous = queryClient.getQueryData<EditorData>(entryKeys.all);
+            await queryClient.cancelQueries({ queryKey: userKeys.all });
+            const previous = queryClient.getQueryData<User>(userKeys.all);
             if (previous) {
-                queryClient.setQueryData<EditorData>(entryKeys.all, {
+                queryClient.setQueryData<User>(userKeys.all, {
                     ...previous,
-                    user: { ...previous.user, avatarUrl: '' },
+                    avatarUrl: '',
                 });
             }
             return { previous };
         },
         onError: (_err, _vars, ctx) => {
             if (ctx?.previous) {
-                queryClient.setQueryData(entryKeys.all, ctx.previous);
+                queryClient.setQueryData(userKeys.all, ctx.previous);
             }
         },
     });
