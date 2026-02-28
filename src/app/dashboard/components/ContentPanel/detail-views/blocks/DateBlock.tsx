@@ -7,7 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Calendar } from 'lucide-react';
 
-import { dateBlockSchema, type DateFormValues } from '../schemas';
+import { eventFieldSchemas, type EventDateForm } from '@/lib/validations/entry.schemas';
+
 import type { FieldBlockProps } from '../types';
 
 export default function DateBlock({ entry, onSave, disabled }: FieldBlockProps) {
@@ -19,8 +20,8 @@ export default function DateBlock({ entry, onSave, disabled }: FieldBlockProps) 
         watch,
         formState: { errors, isDirty },
         reset,
-    } = useForm<DateFormValues>({
-        resolver: zodResolver(dateBlockSchema),
+    } = useForm<EventDateForm>({
+        resolver: zodResolver(eventFieldSchemas.date),
         defaultValues: { date },
         mode: 'onChange',
     });

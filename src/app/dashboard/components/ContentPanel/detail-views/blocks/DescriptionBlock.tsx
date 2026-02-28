@@ -5,7 +5,8 @@ import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { descriptionBlockSchema, type DescriptionFormValues } from '../schemas';
+import { eventFieldSchemas, type EventDescriptionForm } from '@/lib/validations/entry.schemas';
+
 import type { FieldBlockProps } from '../types';
 
 export default function DescriptionBlock({ entry, onSave, disabled }: FieldBlockProps) {
@@ -19,8 +20,8 @@ export default function DescriptionBlock({ entry, onSave, disabled }: FieldBlock
         watch,
         formState: { isDirty },
         reset,
-    } = useForm<DescriptionFormValues>({
-        resolver: zodResolver(descriptionBlockSchema),
+    } = useForm<EventDescriptionForm>({
+        resolver: zodResolver(eventFieldSchemas.description),
         defaultValues: { description },
         mode: 'onChange',
     });

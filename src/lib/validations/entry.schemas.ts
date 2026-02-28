@@ -68,6 +68,24 @@ export type CreateEventData = z.infer<typeof publishEventSchema>;
 export type CreateMixsetFormData = z.infer<typeof draftMixsetSchema>;
 
 // ============================================
+// Event Field Schemas (블록 컴포넌트용 — 필드 단위 검증)
+// ============================================
+
+export const eventFieldSchemas = {
+    date: z.object({ date: z.string().min(1, '날짜를 입력해야 합니다') }),
+    venue: z.object({ venue: venueReferenceSchema }),
+    lineup: z.object({ lineup: z.array(artistReferenceSchema) }),
+    description: z.object({ description: z.string() }),
+    links: z.object({ links: z.array(externalLinkSchema).optional() }),
+};
+
+export type EventDateForm = z.infer<typeof eventFieldSchemas.date>;
+export type EventVenueForm = z.infer<typeof eventFieldSchemas.venue>;
+export type EventLineupForm = z.infer<typeof eventFieldSchemas.lineup>;
+export type EventDescriptionForm = z.infer<typeof eventFieldSchemas.description>;
+export type EventLinksForm = z.infer<typeof eventFieldSchemas.links>;
+
+// ============================================
 // Mixset Schemas
 // ============================================
 

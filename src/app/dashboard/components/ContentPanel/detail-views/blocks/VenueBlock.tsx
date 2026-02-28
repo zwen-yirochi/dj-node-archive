@@ -7,7 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { MapPin } from 'lucide-react';
 
-import { venueBlockSchema, type VenueFormValues } from '../schemas';
+import { eventFieldSchemas, type EventVenueForm } from '@/lib/validations/entry.schemas';
+
 import type { FieldBlockProps } from '../types';
 
 export default function VenueBlock({ entry, onSave, disabled }: FieldBlockProps) {
@@ -19,8 +20,8 @@ export default function VenueBlock({ entry, onSave, disabled }: FieldBlockProps)
         watch,
         formState: { errors, isDirty },
         reset,
-    } = useForm<VenueFormValues>({
-        resolver: zodResolver(venueBlockSchema),
+    } = useForm<EventVenueForm>({
+        resolver: zodResolver(eventFieldSchemas.venue),
         defaultValues: { venue },
         mode: 'onChange',
     });
