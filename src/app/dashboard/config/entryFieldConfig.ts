@@ -109,7 +109,7 @@ export function canCreate(entry: ContentEntry): boolean {
 }
 
 export function canAddToView(entry: ContentEntry): boolean {
-    return validateEntry(entry, 'view').isValid;
+    return validateEntry(entry, 'create').isValid;
 }
 
 export function getMissingFieldLabels(

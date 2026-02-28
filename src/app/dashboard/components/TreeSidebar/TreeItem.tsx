@@ -66,7 +66,7 @@ export default function TreeItem({
     const isInView = typeof entry.displayOrder === 'number';
     const isValid = canAddToView(entry);
     const status = getTreeItemStatus(isInView, isValid);
-    const missingFields = status === 'warning' ? getMissingFieldLabels(entry, 'view') : [];
+    const missingFields = status === 'warning' ? getMissingFieldLabels(entry, 'create') : [];
 
     const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
     const config = ENTRY_TYPE_CONFIG[entry.type];
