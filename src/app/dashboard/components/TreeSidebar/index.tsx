@@ -2,19 +2,6 @@
 'use client';
 
 import {
-    useAddToDisplay,
-    useDeleteEntry,
-    useEditorData,
-    useReorderDisplayEntries,
-    useReorderEntries,
-} from '@/hooks/use-entries';
-import { cn } from '@/lib/utils';
-import { canAddToView } from '@/lib/validators';
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
-import { useUserStore } from '@/stores/userStore';
-import type { ContentEntry } from '@/types';
-import {
     closestCenter,
     DndContext,
     DragOverlay,
@@ -31,52 +18,61 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import {
-    Calendar,
-    ChevronDown,
-    ChevronRight,
-    FileText,
-    Headphones,
-    Link as LinkIcon,
-    Palette,
-} from 'lucide-react';
-import Link from 'next/link';
 import { useId, useMemo, useState } from 'react';
+import Link from 'next/link';
+
+import { ChevronDown, ChevronRight, FileText, Palette } from 'lucide-react';
+
+import type { ContentEntry } from '@/types';
+import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
+import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
+import { TypeBadge } from '@/components/dna';
+
+import { useEntries, useEntryMutations, useUser } from '../../hooks';
+import { computeReorderedDisplay, computeReorderedPositions } from '../../hooks/entries.api';
+import {
+    selectContentView,
+    selectSetView,
+    selectSidebarSections,
+    selectToggleSection,
+    useDashboardStore,
+} from '../../stores/dashboardStore';
 import AccountSection from './AccountSection';
 import SectionItem from './SectionItem';
 import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
 
+/** dnd-kit data 타입 — active.data.current의 구조를 선언 */
+interface DragData {
+    type: 'entry' | 'display-entry';
+    entry: ContentEntry;
+    displayEntryId?: string;
+}
+
 export default function TreeSidebar() {
     // TanStack Query
-    const { data } = useEditorData();
-    const entries = data?.contentEntries ?? [];
-
-    // User Store
-    const user = useUserStore((state) => state?.user);
+    const { data: entries } = useEntries();
+    const user = useUser();
 
     // TanStack Query Mutations
-    const deleteEntryMutation = useDeleteEntry();
-    const reorderEntriesMutation = useReorderEntries();
-    const addToDisplayMutation = useAddToDisplay();
-    const reorderDisplayMutation = useReorderDisplayEntries();
+    const {
+        remove: deleteEntryMutation,
+        reorder: reorderEntriesMutation,
+        addToDisplay: addToDisplayMutation,
+        reorderDisplay: reorderDisplayMutation,
+    } = useEntryMutations();
 
-    // Dashboard UI Store
-    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
+    // Dashboard Store
+    const contentView = useDashboardStore(selectContentView);
+    const setView = useDashboardStore(selectSetView);
+    const sidebarSections = useDashboardStore(selectSidebarSections);
+    const toggleSection = useDashboardStore(selectToggleSection);
 
-    // UI Store
-    const activePanel = useUIStore((state) => state?.activePanel ?? 'page');
-    const setActivePanel = useUIStore((state) => state?.setActivePanel);
-    const sidebarSections = useUIStore(
-        (state) =>
-            state?.sidebarSections ?? {
-                page: { collapsed: false },
-                events: { collapsed: false },
-                mixsets: { collapsed: false },
-                links: { collapsed: false },
-            }
-    );
-    const toggleSection = useUIStore((state) => state?.toggleSection);
+    // Derive sidebar highlight state from contentView
+    const isBioActive = contentView.kind === 'bio';
+    const isPageActive = contentView.kind === 'page' || contentView.kind === 'page-detail';
+    const selectedEntryId = contentView.kind === 'detail' ? contentView.entryId : null;
 
     // 필터링 & 정렬
     const events = useMemo(
@@ -125,7 +121,7 @@ export default function TreeSidebar() {
 
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
-        const data = active.data.current;
+        const data = active.data.current as DragData | undefined;
 
         if (data?.entry) {
             setActiveItem({
@@ -148,40 +144,49 @@ export default function TreeSidebar() {
 
         if (!over) return;
 
-        const activeData = active.data.current;
-        const overData = over.data.current;
+        const activeData = active.data.current as DragData | undefined;
+        const overData = over.data.current as DragData | undefined;
 
         // View 드롭존에 드롭
         if (over.id === 'view-drop-zone' && activeData?.type === 'entry') {
-            const entry = activeData.entry as ContentEntry;
+            const entry = activeData.entry;
 
             if (!canAddToView(entry)) {
                 console.warn('엔트리를 완성해야 Page에 추가할 수 있습니다.');
                 return;
             }
 
-            addToDisplayMutation.mutate(entry.id);
-            triggerPreviewRefresh();
+            addToDisplayMutation.mutate(entry.id, {
+                onError: () => toast({ variant: 'destructive', title: 'Failed to add to Page' }),
+            });
             return;
         }
 
         // View 섹션 내 순서 변경
         if (activeData?.type === 'display-entry' && overData?.type === 'display-entry') {
-            const activeEntry = activeData.entry as ContentEntry;
+            const activeEntry = activeData.entry;
             const overId = String(over.id).replace('view-', '');
             const newIndex = displayedEntries.findIndex((e) => e.id === overId);
 
             if (newIndex !== -1 && active.id !== over.id) {
-                reorderDisplayMutation.mutate({ entryId: activeEntry.id, newIndex });
-                triggerPreviewRefresh();
+                const updates = computeReorderedDisplay(entries, activeEntry.id, newIndex);
+                if (updates) {
+                    reorderDisplayMutation.mutate(
+                        { updates },
+                        {
+                            onError: () =>
+                                toast({ variant: 'destructive', title: 'Failed to reorder' }),
+                        }
+                    );
+                }
             }
             return;
         }
 
         // 섹션 내 순서 변경
         if (activeData?.type === 'entry' && overData?.type === 'entry') {
-            const activeEntry = activeData.entry as ContentEntry;
-            const overEntry = overData.entry as ContentEntry;
+            const activeEntry = activeData.entry;
+            const overEntry = overData.entry;
 
             if (activeEntry.type === overEntry.type && active.id !== over.id) {
                 const sectionType = activeEntry.type as 'event' | 'mixset' | 'link';
@@ -197,44 +202,40 @@ export default function TreeSidebar() {
 
                 const overIndex = sectionEntries.findIndex((e) => e.id === over.id);
                 if (overIndex !== -1) {
-                    reorderEntriesMutation.mutate({
-                        type: sectionType,
-                        entryId: activeEntry.id,
-                        newPosition: overIndex,
-                    });
+                    const updates = computeReorderedPositions(
+                        entries,
+                        sectionType,
+                        activeEntry.id,
+                        overIndex
+                    );
+                    if (updates) {
+                        reorderEntriesMutation.mutate(
+                            { updates },
+                            {
+                                onError: () =>
+                                    toast({ variant: 'destructive', title: 'Failed to reorder' }),
+                            }
+                        );
+                    }
                 }
             }
         }
     };
 
     const handleDelete = async (id: string) => {
-        const entry = entries.find((e) => e.id === id);
-        const shouldRefresh = entry ? canAddToView(entry) : false;
         await deleteEntryMutation.mutateAsync(id);
-        if (shouldRefresh) {
-            triggerPreviewRefresh();
-        }
     };
 
     const isPageCollapsed = sidebarSections?.page?.collapsed ?? false;
 
     const handlePageClick = () => {
-        if (setActivePanel) {
-            setActivePanel('page');
-        }
+        setView({ kind: 'page' });
     };
 
     const handlePageToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (toggleSection) {
-            toggleSection('page');
-        }
+        toggleSection('page');
     };
-
-    // 로딩 상태
-    if (!user || entries.length === 0) {
-        return <TreeSidebarSkeleton />;
-    }
 
     return (
         <DndContext
@@ -260,10 +261,10 @@ export default function TreeSidebar() {
                 <div className="flex-1 overflow-y-auto px-3 pb-3">
                     {/* Bio Design */}
                     <button
-                        onClick={() => setActivePanel?.('bio')}
+                        onClick={() => setView({ kind: 'bio' })}
                         className={cn(
                             'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
-                            activePanel === 'bio'
+                            isBioActive
                                 ? 'bg-dashboard-bg-active text-dashboard-text'
                                 : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
                         )}
@@ -277,7 +278,7 @@ export default function TreeSidebar() {
                         onClick={handlePageClick}
                         className={cn(
                             'group mb-1 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
-                            activePanel === 'page'
+                            isPageActive
                                 ? 'bg-dashboard-bg-active text-dashboard-text'
                                 : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
                         )}
@@ -318,7 +319,7 @@ export default function TreeSidebar() {
                     <SectionItem
                         section="events"
                         title="Events"
-                        icon={<Calendar className="h-4 w-4" />}
+                        icon={<TypeBadge type="EVT" size="sm" />}
                         count={events.length}
                         entryType="event"
                     >
@@ -327,13 +328,17 @@ export default function TreeSidebar() {
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {events.map((entry) => (
-                                    <TreeItem
-                                        key={entry.id}
-                                        entry={entry}
-                                        onDelete={() => handleDelete(entry.id)}
-                                    />
-                                ))}
+                                {events.length === 0 ? (
+                                    <SectionEmptyHint label="event" />
+                                ) : (
+                                    events.map((entry) => (
+                                        <TreeItem
+                                            key={entry.id}
+                                            entry={entry}
+                                            onDelete={() => handleDelete(entry.id)}
+                                        />
+                                    ))
+                                )}
                             </div>
                         </SortableContext>
                     </SectionItem>
@@ -342,7 +347,7 @@ export default function TreeSidebar() {
                     <SectionItem
                         section="mixsets"
                         title="Mixsets"
-                        icon={<Headphones className="h-4 w-4" />}
+                        icon={<TypeBadge type="MIX" size="sm" />}
                         count={mixsets.length}
                         entryType="mixset"
                     >
@@ -351,13 +356,17 @@ export default function TreeSidebar() {
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {mixsets.map((entry) => (
-                                    <TreeItem
-                                        key={entry.id}
-                                        entry={entry}
-                                        onDelete={() => handleDelete(entry.id)}
-                                    />
-                                ))}
+                                {mixsets.length === 0 ? (
+                                    <SectionEmptyHint label="mixset" />
+                                ) : (
+                                    mixsets.map((entry) => (
+                                        <TreeItem
+                                            key={entry.id}
+                                            entry={entry}
+                                            onDelete={() => handleDelete(entry.id)}
+                                        />
+                                    ))
+                                )}
                             </div>
                         </SortableContext>
                     </SectionItem>
@@ -366,7 +375,7 @@ export default function TreeSidebar() {
                     <SectionItem
                         section="links"
                         title="Links"
-                        icon={<LinkIcon className="h-4 w-4" />}
+                        icon={<TypeBadge type="LNK" size="sm" />}
                         count={links.length}
                         entryType="link"
                     >
@@ -375,13 +384,17 @@ export default function TreeSidebar() {
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="py-0.5">
-                                {links.map((entry) => (
-                                    <TreeItem
-                                        key={entry.id}
-                                        entry={entry}
-                                        onDelete={() => handleDelete(entry.id)}
-                                    />
-                                ))}
+                                {links.length === 0 ? (
+                                    <SectionEmptyHint label="link" />
+                                ) : (
+                                    links.map((entry) => (
+                                        <TreeItem
+                                            key={entry.id}
+                                            entry={entry}
+                                            onDelete={() => handleDelete(entry.id)}
+                                        />
+                                    ))
+                                )}
                             </div>
                         </SortableContext>
                     </SectionItem>
@@ -405,18 +418,10 @@ export default function TreeSidebar() {
     );
 }
 
-// Skeleton 컴포넌트
-function TreeSidebarSkeleton() {
+function SectionEmptyHint({ label }: { label: string }) {
     return (
-        <aside className="flex h-full w-64 flex-col rounded-2xl bg-dashboard-bg-surface p-4 shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
-            <div className="animate-pulse space-y-4">
-                <div className="h-6 w-20 rounded bg-gray-200" />
-                <div className="space-y-2">
-                    <div className="h-8 rounded bg-gray-200" />
-                    <div className="h-8 rounded bg-gray-200" />
-                    <div className="h-8 rounded bg-gray-200" />
-                </div>
-            </div>
-        </aside>
+        <p className="py-2 pl-6 text-xs text-dashboard-text-placeholder">
+            + 버튼으로 {label}을 추가하세요
+        </p>
     );
 }

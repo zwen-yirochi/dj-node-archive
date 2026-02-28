@@ -1,16 +1,5 @@
 'use client';
 
-import { COMPONENT_TYPE_CONFIG } from '@/app/dashboard/constants/entryConfig';
-import {
-    useEditorData,
-    useReorderDisplayEntries,
-    useRemoveFromDisplay,
-    useToggleVisibility,
-} from '@/hooks/use-entries';
-import { cn } from '@/lib/utils';
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
-import type { ContentEntry } from '@/types';
 import {
     closestCenter,
     DndContext,
@@ -29,8 +18,17 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Calendar, Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
+
+import { Calendar, Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
+
+import type { ContentEntry } from '@/types';
+import { cn } from '@/lib/utils';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
+import { TypeBadge } from '@/components/dna';
+
+import { useEntries, useEntryMutations } from '../../hooks';
+import { computeReorderedDisplay } from '../../hooks/entries.api';
 
 interface SortableItemProps {
     id: string;
@@ -58,8 +56,7 @@ function SortableItem({
         transition,
     };
 
-    const config = COMPONENT_TYPE_CONFIG[entry.type];
-    const Icon = config.icon;
+    const config = ENTRY_TYPE_CONFIG[entry.type];
 
     return (
         <div
@@ -83,14 +80,7 @@ function SortableItem({
             </button>
 
             {/* Type Badge */}
-            <div
-                className={cn(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                    config.bgColor
-                )}
-            >
-                <Icon className={cn('h-4 w-4', config.color)} />
-            </div>
+            <TypeBadge type={config.badgeType} size="sm" />
 
             {/* Content */}
             <div className="min-w-0 flex-1 cursor-pointer" onClick={onSelect}>
@@ -126,19 +116,18 @@ function SortableItem({
     );
 }
 
-export default function PageListView() {
+interface PageListViewProps {
+    onSelectDetail: (id: string) => void;
+}
+
+export default function PageListView({ onSelectDetail }: PageListViewProps) {
     // TanStack Query
-    const { data } = useEditorData();
-    const entries = data?.contentEntries ?? [];
-    const toggleVisibilityMutation = useToggleVisibility();
-    const removeFromDisplayMutation = useRemoveFromDisplay();
-    const reorderDisplayMutation = useReorderDisplayEntries();
-
-    // Dashboard UI Store
-    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
-
-    // UI Store
-    const selectEntry = useUIStore((state) => state.selectEntry);
+    const { data: entries } = useEntries();
+    const {
+        toggleVisibility: toggleVisibilityMutation,
+        removeFromDisplay: removeFromDisplayMutation,
+        reorderDisplay: reorderDisplayMutation,
+    } = useEntryMutations();
 
     const dndId = useId();
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -177,19 +166,19 @@ export default function PageListView() {
         // Page 내 순서 변경 (displayOrder 업데이트)
         const newIndex = displayedEntries.findIndex((e) => e.id === over.id);
         if (newIndex !== -1) {
-            reorderDisplayMutation.mutate({ entryId: active.id as string, newIndex });
-            triggerPreviewRefresh();
+            const updates = computeReorderedDisplay(entries, active.id as string, newIndex);
+            if (updates) {
+                reorderDisplayMutation.mutate({ updates });
+            }
         }
     };
 
     const handleToggleVisibility = (entryId: string) => {
         toggleVisibilityMutation.mutate(entryId);
-        triggerPreviewRefresh();
     };
 
     const handleRemoveFromDisplay = (entryId: string) => {
         removeFromDisplayMutation.mutate(entryId);
-        triggerPreviewRefresh();
     };
 
     const activeEntry = activeId ? displayedEntries.find((e) => e.id === activeId) : null;
@@ -248,7 +237,7 @@ export default function PageListView() {
                                         isVisible={entry.isVisible}
                                         onToggleVisibility={() => handleToggleVisibility(entry.id)}
                                         onRemove={() => handleRemoveFromDisplay(entry.id)}
-                                        onSelect={() => selectEntry(entry.id)}
+                                        onSelect={() => onSelectDetail(entry.id)}
                                     />
                                 ))}
                             </div>
@@ -260,26 +249,10 @@ export default function PageListView() {
                                     <div className="text-dashboard-text-placeholder">
                                         <GripVertical className="h-5 w-5" />
                                     </div>
-                                    <div
-                                        className={cn(
-                                            'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                                            COMPONENT_TYPE_CONFIG[activeEntry.type].bgColor
-                                        )}
-                                    >
-                                        {(() => {
-                                            const Icon =
-                                                COMPONENT_TYPE_CONFIG[activeEntry.type].icon;
-                                            return (
-                                                <Icon
-                                                    className={cn(
-                                                        'h-4 w-4',
-                                                        COMPONENT_TYPE_CONFIG[activeEntry.type]
-                                                            .color
-                                                    )}
-                                                />
-                                            );
-                                        })()}
-                                    </div>
+                                    <TypeBadge
+                                        type={ENTRY_TYPE_CONFIG[activeEntry.type].badgeType}
+                                        size="sm"
+                                    />
                                     <span className="text-sm font-medium text-dashboard-text">
                                         {activeEntry.title || '제목 없음'}
                                     </span>

@@ -1,15 +1,17 @@
 'use client';
 
+import { useState } from 'react';
+
+import { Calendar, Loader2, MapPin, Search } from 'lucide-react';
+
+import type { DBEventWithVenue } from '@/types/database';
+import { mapEventToEntry } from '@/lib/mappers';
+import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCreateEntry, useEditorData } from '@/hooks/use-entries';
-import { toast } from '@/hooks/use-toast';
-import { mapEventToEntry } from '@/lib/mappers';
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
-import type { DBEventWithVenue } from '@/types/database';
-import { Calendar, Loader2, MapPin, Search } from 'lucide-react';
-import { useState } from 'react';
+
+import { useEntryMutations } from '../../hooks';
+import { selectPageId, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 
 interface EventSearchResult {
     id: string;
@@ -26,14 +28,11 @@ export default function EventImportSearch() {
     const [isImporting, setIsImporting] = useState<string | null>(null);
 
     // TanStack Query
-    const { data } = useEditorData();
-    const createEntryMutation = useCreateEntry();
+    const { create: createEntryMutation } = useEntryMutations();
 
-    // Stores
-    const finishCreatingEntry = useDashboardUIStore((state) => state.finishCreating);
-    const triggerPreviewRefresh = useDashboardUIStore((state) => state.triggerPreviewRefresh);
-    const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
-    const selectEntry = useUIStore((state) => state.selectEntry);
+    // Store
+    const pageId = useDashboardStore(selectPageId);
+    const setView = useDashboardStore(selectSetView);
 
     const handleSearch = async () => {
         if (!query.trim()) return;
@@ -63,7 +62,7 @@ export default function EventImportSearch() {
     };
 
     const handleImport = async (event: EventSearchResult) => {
-        if (!data?.pageId) {
+        if (!pageId) {
             toast({
                 variant: 'destructive',
                 title: 'Error',
@@ -84,13 +83,10 @@ export default function EventImportSearch() {
             const newEntry = mapEventToEntry(eventData);
 
             await createEntryMutation.mutateAsync({
-                pageId: data.pageId,
+                pageId,
                 entry: newEntry,
             });
-            finishCreatingEntry(newEntry.id);
-            triggerPreviewRefresh();
-            closeCreatePanel();
-            selectEntry(newEntry.id);
+            setView({ kind: 'detail', entryId: newEntry.id });
 
             toast({
                 title: 'Event imported',

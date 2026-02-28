@@ -14,6 +14,7 @@ import {
 import {
     createEntry,
     deleteEntry,
+    getEntryById,
     getMaxDisplayOrder,
     getMaxPosition,
     updateDisplayOrders,
@@ -22,7 +23,7 @@ import {
 } from '@/lib/db/queries/entry.queries';
 import { createEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
 import { findUserByAuthId } from '@/lib/db/queries/user.queries';
-import { mapEntryToDatabase } from '@/lib/mappers';
+import { mapEntryToDatabase, mapEntryToDomain } from '@/lib/mappers';
 import {
     createEntryRequestSchema,
     publishEventSchema,
@@ -30,7 +31,6 @@ import {
     reorderEntriesRequestSchema,
     updateEntryRequestSchema,
 } from '@/lib/validations/entry.schemas';
-import type { ContentEntry, EventEntry } from '@/types/domain';
 import { isSuccess } from '@/types/result';
 import { ZodError } from 'zod';
 
@@ -72,13 +72,12 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
 
     // Publish 옵션이고 event 타입인 경우: events 테이블에 먼저 생성
     if (publishOption === 'publish' && entry.type === 'event') {
-        const eventEntry = entry as unknown as EventEntry;
-
-        // publish 시 이벤트 데이터 검증
-        const eventParsed = publishEventSchema.safeParse(eventEntry);
+        // publish 시 이벤트 데이터 검증 — Zod 결과를 직접 사용하여 타입 안전성 확보
+        const eventParsed = publishEventSchema.safeParse(entry);
         if (!eventParsed.success) {
             return zodValidationErrorResponse(eventParsed.error);
         }
+        const eventData = eventParsed.data;
 
         // user.id는 auth.users.id이므로 users.id로 변환 필요
         const userResult = await findUserByAuthId(user.id);
@@ -88,15 +87,15 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
         const userId = userResult.data.id;
 
         const eventResult = await createEvent({
-            title: eventEntry.title,
-            slug: generateEventSlug(eventEntry.title, eventEntry.date),
-            date: eventEntry.date,
-            venue: eventEntry.venue || { name: '' },
-            lineup: eventEntry.lineup || [],
+            title: eventData.title,
+            slug: generateEventSlug(eventData.title, eventData.date),
+            date: eventData.date,
+            venue: eventData.venue || { name: '' },
+            lineup: eventData.lineup || [],
             data: {
-                poster_url: eventEntry.posterUrl,
-                description: eventEntry.description,
-                links: eventEntry.links,
+                poster_url: eventData.posterUrl,
+                description: eventData.description,
+                links: eventData.links,
             },
             is_public: true,
             created_by: userId,
@@ -109,7 +108,7 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
         referenceId = eventResult.data.id;
     }
 
-    const dbEntry = mapEntryToDatabase(entry as unknown as ContentEntry, newPosition);
+    const dbEntry = mapEntryToDatabase(entry, newPosition);
 
     // Option B: 둘 다 유지 - entries.data에 전체 데이터, reference_id는 플래그
     const result = await createEntry(entry.id, {
@@ -125,6 +124,26 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
     }
 
     return successResponse({ ...result.data, referenceId }, 201);
+}
+
+/**
+ * GET /api/entries/[id]
+ * Entry 단건 조회
+ */
+export async function handleGetEntry({ user }: AuthContext, id: string) {
+    const ownership = await verifyEntryOwnership(id, user.id);
+    if (!ownership.ok) {
+        return ownership.reason === 'not_found' ? notFoundResponse('엔트리') : forbiddenResponse();
+    }
+
+    const result = await getEntryById(id);
+    if (!isSuccess(result)) {
+        return result.error.code === 'NOT_FOUND'
+            ? notFoundResponse('엔트리')
+            : internalErrorResponse(result.error.message);
+    }
+
+    return successResponse(mapEntryToDomain(result.data));
 }
 
 /**
@@ -189,7 +208,7 @@ export async function handleUpdateEntry(request: Request, { user }: AuthContext,
     }
 
     // position은 유지하면서 type과 data만 업데이트
-    const dbEntry = mapEntryToDatabase(entry as unknown as ContentEntry, 0);
+    const dbEntry = mapEntryToDatabase(entry, 0);
 
     const result = await updateEntry(id, {
         type: dbEntry.type,

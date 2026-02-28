@@ -1,6 +1,7 @@
 // lib/api/handlers/index.ts
 export {
     handleCreateEntry,
+    handleGetEntry,
     handleUpdateEntry,
     handleDeleteEntry,
     handleReorderEntries,
@@ -8,8 +9,10 @@ export {
     handleGetMaxDisplayOrder,
 } from './entry.handlers';
 
-export { handleVenueImportPreview, handleVenueImportConfirm } from './import.handlers';
+export { handleUpdatePage } from './page.handlers';
 
-// NOTE: display-entry handlers are deprecated.
-// Use entries.is_visible instead of page_view_items table.
-// TODO: Remove display-entry.handlers.ts and related API routes
+export { handleUpdateProfile, handleUploadAvatar, handleDeleteAvatar } from './user.handlers';
+
+export { handleCreateVenue, handleListVenues } from './venue.handlers';
+
+export { handleVenueImportPreview, handleVenueImportConfirm } from './import.handlers';

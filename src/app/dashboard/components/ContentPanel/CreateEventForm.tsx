@@ -1,6 +1,8 @@
 'use client';
 
-import { PUBLISH_OPTIONS, type PublishOption } from '@/app/dashboard/constants/entry';
+import { Loader2 } from 'lucide-react';
+
+import { PUBLISH_OPTIONS } from '@/app/dashboard/config/workflowOptions';
 import { searchArtists, searchVenues } from '@/app/dashboard/services/search';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,155 +20,31 @@ import OptionSelector from '@/components/ui/OptionSelector';
 import SearchableInput from '@/components/ui/SearchableInput';
 import TagSearchInput from '@/components/ui/TagSearchInput';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateEntry, useEditorData } from '@/hooks/use-entries';
-import { toast } from '@/hooks/use-toast';
-import { createEmptyEntry } from '@/lib/mappers';
-import { draftEventSchema, publishEventSchema } from '@/lib/validations/entry.schemas';
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
-import type { CreateEventData, EventEntry } from '@/types/domain';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+
+import { EVENT_FORM_CONFIG } from '../../config/entryFormConfig';
+import { useCreateEntryForm } from '../../hooks/use-create-entry-form';
 
 // 공통 Input 스타일
 const inputClassName =
     'border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-dashboard-border-hover focus:ring-1';
 
 export default function CreateEventForm() {
-    const form = useForm<CreateEventData>({
-        resolver: zodResolver(draftEventSchema),
-        mode: 'onTouched',
-        defaultValues: {
-            title: '',
-            posterUrl: '',
-            date: '',
-            venue: { name: '' },
-            lineup: [],
-            description: '',
-        },
-    });
-
     const {
-        control,
+        form,
+        publishOption,
+        canCreate,
+        errors,
+        isSubmitting,
+        handleCancel,
+        handlePublishOptionChange,
         handleSubmit,
-        watch,
-        reset,
-        setError,
-        clearErrors,
-        formState: { errors, isSubmitting },
-    } = form;
+    } = useCreateEntryForm(EVENT_FORM_CONFIG);
 
-    const [publishOption, setPublishOption] = useState<PublishOption>('private');
-
-    // TanStack Query
-    const { data } = useEditorData();
-    const createEntryMutation = useCreateEntry();
-
-    // Stores
-    const finishCreatingEntry = useDashboardUIStore((state) => state.finishCreating);
-    const closeCreatePanel = useUIStore((state) => state.closeCreatePanel);
-    const selectEntry = useUIStore((state) => state.selectEntry);
-
-    // watch 최적화: 필요한 필드만 구독
-    const [title, posterUrl, date, venue, lineup, description] = watch([
-        'title',
-        'posterUrl',
-        'date',
-        'venue',
-        'lineup',
-        'description',
-    ]);
-
-    // 필수 필드 검증
-    const hasRequiredFields = title?.trim() && posterUrl?.trim();
-
-    // 모든 필드 검증 (Publishing용) - Zod 스키마로 검증
-    const canPublish = publishEventSchema.safeParse({
-        title,
-        posterUrl,
-        date,
-        venue,
-        lineup,
-        description,
-    }).success;
-
-    const canCreate = hasRequiredFields;
-
-    // 취소 핸들러
-    const handleCancel = () => {
-        reset();
-        closeCreatePanel();
-    };
-
-    const onSubmit = async (formData: CreateEventData) => {
-        clearErrors('root');
-
-        if (!data?.pageId) {
-            setError('root', { type: 'server', message: 'Page ID is not set. Please refresh.' });
-            return;
-        }
-
-        if (publishOption === 'publish') {
-            const publishResult = publishEventSchema.safeParse(formData);
-            if (!publishResult.success) {
-                toast({
-                    variant: 'destructive',
-                    title: 'All fields required',
-                    description: 'Publishing requires all fields to be filled.',
-                });
-                return;
-            }
-        }
-
-        try {
-            const newEntry = createEmptyEntry('event') as EventEntry;
-            newEntry.title = formData.title.trim();
-            newEntry.posterUrl = formData.posterUrl.trim();
-            newEntry.date = formData.date || new Date().toISOString().split('T')[0];
-            newEntry.venue = formData.venue;
-            newEntry.lineup = formData.lineup;
-            newEntry.description = formData.description?.trim() || '';
-
-            await createEntryMutation.mutateAsync({
-                pageId: data.pageId,
-                entry: newEntry,
-                publishOption,
-            });
-            finishCreatingEntry(newEntry.id);
-            closeCreatePanel();
-            selectEntry(newEntry.id);
-
-            toast({
-                title: 'Event created',
-                description:
-                    publishOption === 'publish' ? 'Event published.' : 'Event saved as private.',
-            });
-        } catch (error) {
-            // 서버 에러를 폼에 표시
-            const message = error instanceof Error ? error.message : 'An unexpected error occurred';
-
-            // 특정 필드 에러인 경우 해당 필드에 표시
-            if (message.includes('title')) {
-                setError('title', { type: 'server', message });
-            } else if (message.includes('poster')) {
-                setError('posterUrl', { type: 'server', message });
-            } else {
-                // 일반 에러는 root에 설정
-                setError('root', { type: 'server', message });
-                toast({
-                    variant: 'destructive',
-                    title: 'Creation failed',
-                    description: message,
-                });
-            }
-        }
-    };
+    const { control } = form;
 
     return (
         <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Root 에러 표시 */}
                 {errors.root && (
                     <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
@@ -299,25 +177,9 @@ export default function CreateEventForm() {
                 <div className="space-y-2">
                     <Label className="text-dashboard-text-secondary">Visibility</Label>
                     <OptionSelector
-                        options={PUBLISH_OPTIONS.map((opt) => ({
-                            ...opt,
-                            description:
-                                opt.id === 'publish' && !canPublish
-                                    ? 'Fill all fields to enable publishing'
-                                    : opt.description,
-                        }))}
-                        value={publishOption}
-                        onChange={(value) => {
-                            if (value === 'publish' && !canPublish) {
-                                toast({
-                                    variant: 'destructive',
-                                    title: 'Cannot publish',
-                                    description: 'All fields must be filled to publish.',
-                                });
-                                return;
-                            }
-                            setPublishOption(value);
-                        }}
+                        options={PUBLISH_OPTIONS}
+                        value={publishOption!}
+                        onChange={handlePublishOptionChange!}
                     />
                 </div>
 

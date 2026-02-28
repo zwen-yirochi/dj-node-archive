@@ -1,15 +1,16 @@
 // lib/mappers.ts - DB ↔ Domain 변환 함수 통합
+import { v4 as uuidv4 } from 'uuid';
+
 import type {
     Event as DBEvent,
     EventStack as DBEventStack,
     User as DBUser,
     Venue as DBVenue,
     Entry,
-    EventVenue,
     EventData,
+    EventVenue,
     VenueExternalSources,
 } from '@/types/database';
-import type { RAEventListingItem, RAVenueInfo } from '@/types/ra';
 import {
     isPublicEventEntry,
     type ContentEntry,
@@ -22,7 +23,7 @@ import {
     type User,
     type Venue,
 } from '@/types/domain';
-import { v4 as uuidv4 } from 'uuid';
+import type { RAEventListingItem, RAVenueInfo } from '@/types/ra';
 
 // ============================================
 // User Mappers
@@ -119,9 +120,12 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                 title: (data.title as string) || '',
                 tracklist: tracklist || [],
                 coverUrl: data.cover_url as string | undefined,
-                audioUrl: data.audio_url as string | undefined,
-                soundcloudUrl: data.soundcloud_url as string | undefined,
-                mixcloudUrl: data.mixcloud_url as string | undefined,
+                // 기존 데이터 호환: url || audio_url || soundcloud_url
+                url:
+                    (data.url as string) ||
+                    (data.audio_url as string) ||
+                    (data.soundcloud_url as string) ||
+                    undefined,
                 description: data.description as string | undefined,
                 durationMinutes: data.duration_minutes as number | undefined,
             } as MixsetEntry;
@@ -143,8 +147,14 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
     }
 }
 
+/**
+ * Zod .passthrough() 결과도 허용하는 넓은 입력 타입.
+ * 내부 switch에서 구체 타입으로 좁혀 사용한다.
+ */
+type EntryMapperInput = ContentEntry | ({ type: ContentEntry['type'] } & Record<string, unknown>);
+
 export function mapEntryToDatabase(
-    entry: ContentEntry,
+    entry: EntryMapperInput,
     position: number
 ): Omit<Entry, 'id' | 'created_at' | 'updated_at' | 'page_id' | 'reference_id'> {
     switch (entry.type) {
@@ -156,8 +166,8 @@ export function mapEntryToDatabase(
                 return {
                     type: 'event',
                     position,
-                    display_order: entry.displayOrder,
-                    is_visible: entry.isVisible,
+                    display_order: eventEntry.displayOrder,
+                    is_visible: eventEntry.isVisible,
                     data: {
                         event_id: eventEntry.eventId,
                         custom_title: eventEntry.title || undefined,
@@ -169,8 +179,8 @@ export function mapEntryToDatabase(
             return {
                 type: 'event',
                 position,
-                display_order: entry.displayOrder,
-                is_visible: entry.isVisible,
+                display_order: eventEntry.displayOrder,
+                is_visible: eventEntry.isVisible,
                 data: {
                     title: eventEntry.title,
                     date: eventEntry.date,
@@ -195,8 +205,8 @@ export function mapEntryToDatabase(
                 return {
                     type: 'mixset',
                     position,
-                    display_order: entry.displayOrder,
-                    is_visible: entry.isVisible,
+                    display_order: mixsetEntry.displayOrder,
+                    is_visible: mixsetEntry.isVisible,
                     data: {
                         mixset_id: mixsetEntry.mixsetId,
                     },
@@ -207,17 +217,15 @@ export function mapEntryToDatabase(
             return {
                 type: 'mixset',
                 position,
-                display_order: entry.displayOrder,
-                is_visible: entry.isVisible,
+                display_order: mixsetEntry.displayOrder,
+                is_visible: mixsetEntry.isVisible,
                 data: {
                     title: mixsetEntry.title,
                     tracklist: mixsetEntry.tracklist || [],
                     cover_url: mixsetEntry.coverUrl || undefined,
-                    audio_url: mixsetEntry.audioUrl || undefined,
-                    soundcloud_url: mixsetEntry.soundcloudUrl || undefined,
-                    mixcloud_url: mixsetEntry.mixcloudUrl || undefined,
+                    url: mixsetEntry.url || undefined,
                     description: mixsetEntry.description || undefined,
-                    duration_minutes: mixsetEntry.durationMinutes || undefined,
+                    duration_minutes: mixsetEntry.durationMinutes ?? undefined,
                 },
             };
         }
@@ -227,8 +235,8 @@ export function mapEntryToDatabase(
             return {
                 type: 'link',
                 position,
-                display_order: entry.displayOrder,
-                is_visible: entry.isVisible,
+                display_order: linkEntry.displayOrder,
+                is_visible: linkEntry.isVisible,
                 data: {
                     title: linkEntry.title,
                     url: linkEntry.url,
@@ -383,9 +391,7 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntr
                 title: '',
                 tracklist: [],
                 coverUrl: '',
-                audioUrl: '',
-                soundcloudUrl: '',
-                mixcloudUrl: '',
+                url: '',
                 description: '',
                 createdAt: '',
                 updatedAt: '',

@@ -1,14 +1,15 @@
 'use client';
 
-import { useDashboardUIStore } from '@/stores/contentEntryStore';
-import { useUserStore } from '@/stores/userStore';
-import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+
+import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
+
+import { useUser } from '../hooks';
+import { useRegisterPreviewRefresh } from '../hooks/use-preview-refresh';
 
 export default function PreviewPanel() {
-    const user = useUserStore((state) => state.user);
-    const previewVersion = useDashboardUIStore((state) => state.previewVersion);
+    const user = useUser();
     const [copied, setCopied] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -16,36 +17,29 @@ export default function PreviewPanel() {
     const containerRef = useRef<HTMLDivElement>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    // Intersection Observer
+    // Intersection Observer + 1초 fallback 통합
     useEffect(() => {
+        if (isVisible) return;
+
         const observer = new IntersectionObserver(
             ([entry]) => {
                 if (entry.isIntersecting) {
                     setIsVisible(true);
                 }
             },
-            {
-                threshold: 0.01,
-                rootMargin: '0px',
-            }
+            { threshold: 0.01 }
         );
 
         if (containerRef.current) {
             observer.observe(containerRef.current);
         }
 
-        return () => observer.disconnect();
-    }, []);
+        const timer = setTimeout(() => setIsVisible(true), 1000);
 
-    // Fallback: 1초 후 강제 visible
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (!isVisible) {
-                setIsVisible(true);
-            }
-        }, 1000);
-
-        return () => clearTimeout(timer);
+        return () => {
+            observer.disconnect();
+            clearTimeout(timer);
+        };
     }, [isVisible]);
 
     // iframe 새로고침
@@ -56,30 +50,19 @@ export default function PreviewPanel() {
         }
     }, [isVisible]);
 
-    useEffect(() => {
-        if (previewVersion > 0 && isVisible) {
-            refreshPreview();
-        }
-    }, [previewVersion, isVisible, refreshPreview]);
+    // mutation onSuccess → triggerPreviewRefresh() → 이 콜백 실행
+    useRegisterPreviewRefresh(refreshPreview);
 
     const handleIframeLoad = useCallback(() => {
         setIsLoading(false);
     }, []);
 
-    if (!user?.username) {
-        return (
-            <div className="flex h-full items-center justify-center">
-                <p className="text-muted-foreground">사용자 정보를 불러오는 중...</p>
-            </div>
-        );
-    }
-
-    const pageUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${user.username}`;
-    const displayUrl = pageUrl.replace(/^https?:\/\//, '');
+    const pagePath = `/${user.username}`;
 
     const handleCopy = async () => {
         try {
-            await navigator.clipboard.writeText(displayUrl);
+            const fullUrl = `${window.location.origin}${pagePath}`;
+            await navigator.clipboard.writeText(fullUrl);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (error) {
@@ -102,7 +85,7 @@ export default function PreviewPanel() {
                     target="_blank"
                     className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                    <span className="font-mono text-xs">{displayUrl}</span>
+                    <span className="font-mono text-xs">{pagePath}</span>
                     <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                 </Link>
                 <div className="h-4 w-px bg-border" />

@@ -92,6 +92,26 @@ export async function updateEntry(id: string, input: UpdateEntryInput): Promise<
     }
 }
 
+export async function getEntryById(id: string): Promise<Result<Entry>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase.from('entries').select().eq('id', id).single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                return failure(createNotFoundError('엔트리를 찾을 수 없습니다.', 'entry'));
+            }
+            return failure(createDatabaseError(error.message, 'getEntryById', error));
+        }
+
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError('엔트리 조회 중 오류가 발생했습니다.', 'getEntryById', err)
+        );
+    }
+}
+
 export async function deleteEntry(id: string): Promise<Result<void>> {
     try {
         const supabase = await createClient();

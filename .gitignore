@@ -48,3 +48,5 @@ next-env.d.ts
 .mcp.json
 
 /nextjs-kit
+/docs/study
+commits.json

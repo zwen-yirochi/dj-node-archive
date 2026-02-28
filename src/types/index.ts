@@ -10,8 +10,6 @@ export type {
     // Entries
     ContentEntry,
     ContentEntryType,
-    // Form/API data types
-    CreateEventData,
     Event,
     EventEntry,
     ExternalLink,
@@ -21,13 +19,15 @@ export type {
     Page,
     PublicEventEntry,
     TracklistItem,
-    UpdateEventData,
     // User & Page
     User,
     // Entities
     Venue,
     VenueReference,
 } from './domain';
+
+// Form data types (스키마에서 추론)
+export type { CreateEventData, CreateMixsetFormData } from '@/lib/validations/entry.schemas';
 
 // Type guards
 export { isEventEntry, isLinkEntry, isMixsetEntry, isPublicEventEntry } from './domain';
@@ -48,8 +48,3 @@ export type { ArtistSuggestion, EditorState, FontOption, IconOption } from './ui
 // Result types (에러 처리)
 // ============================================
 export * from './result';
-
-// ============================================
-// Type guards (추가)
-// ============================================
-export * from './guards';

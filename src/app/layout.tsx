@@ -1,9 +1,11 @@
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { Toaster } from '@/components/ui/toaster';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import localFont from 'next/font/local';
+
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Toaster } from '@/components/ui/toaster';
+
 import './globals.css';
 
 // Dashboard UI용 메이저 폰트 - 다양한 웨이트 지원
@@ -42,10 +44,8 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${inter.variable} ${dotso.variable} antialiased`}>
-                <ErrorBoundary>
-                    {children}
-                    <SpeedInsights debug={process.env.NODE_ENV === 'development'} />
-                </ErrorBoundary>
+                <ErrorBoundary>{children}</ErrorBoundary>
+                <SpeedInsights debug={process.env.NODE_ENV === 'development'} />
                 <Toaster />
             </body>
         </html>

@@ -2,7 +2,6 @@
 // Entry 관련 Zod 스키마 정의
 
 import { z } from 'zod';
-import type { CreateEventData } from '@/types/domain';
 
 // ============================================
 // Sub-schemas (공통)
@@ -27,25 +26,29 @@ export const externalLinkSchema = z.object({
 // Event Schemas
 // ============================================
 
+/** draft/publish 공통 필드 */
+const eventBaseFields = {
+    title: z
+        .string()
+        .min(2, '제목은 2자 이상이어야 합니다')
+        .max(100, '제목은 100자 이하여야 합니다')
+        .trim(),
+    posterUrl: z.string().min(1, '포스터 이미지가 필요합니다').trim(),
+    links: z.array(externalLinkSchema).optional(),
+};
+
 /**
  * Draft event: title과 posterUrl만 필수 (나머지 optional/느슨)
  * 폼에서 기본 resolver로 사용
  */
 export const draftEventSchema = z.object({
-    title: z
-        .string()
-        .min(2, 'Title must be at least 2 characters')
-        .max(100, 'Title must be 100 characters or less')
-        .trim(),
-    posterUrl: z.string().min(1, 'Poster image is required').trim(),
-    date: z.string().optional().default(''),
+    ...eventBaseFields,
+    date: z.string().default(''),
     venue: z
         .object({ id: z.string().uuid().optional(), name: z.string().default('') })
-        .optional()
         .default({ name: '' }),
-    lineup: z.array(artistReferenceSchema).optional().default([]),
-    description: z.string().optional().default(''),
-    links: z.array(externalLinkSchema).optional(),
+    lineup: z.array(artistReferenceSchema).default([]),
+    description: z.string().default(''),
 });
 
 /**
@@ -53,23 +56,50 @@ export const draftEventSchema = z.object({
  * publish 옵션 선택 시 추가 검증에 사용
  */
 export const publishEventSchema = z.object({
-    title: z
-        .string()
-        .min(2, 'Title must be at least 2 characters')
-        .max(100, 'Title must be 100 characters or less')
-        .trim(),
-    date: z.string().min(1, 'Date is required'),
+    ...eventBaseFields,
+    date: z.string().min(1, '날짜를 입력해야 합니다'),
     venue: venueReferenceSchema,
-    lineup: z.array(artistReferenceSchema).min(1, 'At least one artist is required'),
-    posterUrl: z.string().min(1, 'Poster image is required').trim(),
-    description: z.string().min(1, 'Description is required').trim(),
-    links: z.array(externalLinkSchema).optional(),
-}) satisfies z.ZodType<CreateEventData>;
+    lineup: z.array(artistReferenceSchema).min(1, '아티스트를 1명 이상 추가해야 합니다'),
+    description: z.string().min(1, '설명을 입력해야 합니다').trim(),
+});
 
-/**
- * Create event: publishEventSchema와 동일
- */
-export const createEventSchema = publishEventSchema;
+/** 스키마에서 추론된 폼 데이터 타입 (단일 소스) */
+export type CreateEventData = z.infer<typeof publishEventSchema>;
+export type CreateMixsetFormData = z.infer<typeof draftMixsetSchema>;
+
+// ============================================
+// Mixset Schemas
+// ============================================
+
+const mixsetBase = z.object({
+    title: z.string().min(1).max(100).trim(),
+});
+
+export const draftMixsetSchema = mixsetBase.extend({
+    coverUrl: z.string().default(''),
+    url: z.string().default(''),
+});
+
+export const publishMixsetSchema = mixsetBase.extend({
+    coverUrl: z.string().min(1, '커버 이미지가 필요합니다'),
+    url: z.string().url('유효한 URL이어야 합니다'),
+});
+
+// ============================================
+// Link Schemas
+// ============================================
+
+const linkBase = z.object({
+    title: z.string().min(1).max(100).trim(),
+});
+
+export const draftLinkSchema = linkBase.extend({
+    url: z.string().min(1).trim(),
+});
+
+export const publishLinkSchema = linkBase.extend({
+    url: z.string().url('유효한 URL이어야 합니다'),
+});
 
 // ============================================
 // API Request Schemas
@@ -77,20 +107,26 @@ export const createEventSchema = publishEventSchema;
 
 /**
  * POST /api/entries - 엔트리 생성 요청
+ *
+ * entry 필드는 .passthrough() 유지:
+ * type별로 payload 형태가 다르며, 상세 검증은 handler에서 수행.
  */
 export const createEntryRequestSchema = z.object({
-    pageId: z.string().uuid('Invalid page ID'),
+    pageId: z.string().uuid('유효하지 않은 페이지 ID입니다'),
     entry: z
         .object({
             id: z.string().uuid(),
             type: z.enum(['event', 'mixset', 'link']),
         })
         .passthrough(),
-    publishOption: z.enum(['publish', 'private']).optional().default('private'),
+    publishOption: z.enum(['publish', 'private']).default('private'),
 });
 
 /**
  * PATCH /api/entries/[id] - 엔트리 수정 요청
+ *
+ * entry 필드는 .passthrough() 유지:
+ * type별로 payload 형태가 다르며, 상세 검증은 handler에서 수행.
  */
 export const updateEntryRequestSchema = z
     .object({
@@ -109,7 +145,7 @@ export const updateEntryRequestSchema = z
             data.entry !== undefined ||
             data.displayOrder !== undefined ||
             data.isVisible !== undefined,
-        { message: 'At least one of entry, displayOrder, or isVisible is required' }
+        { message: 'entry, displayOrder, isVisible 중 하나 이상 필요합니다' }
     );
 
 /**
@@ -123,7 +159,7 @@ export const reorderEntriesRequestSchema = z.object({
                 position: z.number().int().min(0),
             })
         )
-        .min(1, 'At least one update is required'),
+        .min(1, '하나 이상의 업데이트가 필요합니다'),
 });
 
 /**
@@ -137,5 +173,5 @@ export const reorderDisplayEntriesRequestSchema = z.object({
                 displayOrder: z.number().int().min(0).nullable(),
             })
         )
-        .min(1, 'At least one update is required'),
+        .min(1, '하나 이상의 업데이트가 필요합니다'),
 });
