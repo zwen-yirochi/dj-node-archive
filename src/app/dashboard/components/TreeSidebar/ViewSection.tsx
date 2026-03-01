@@ -1,9 +1,11 @@
 'use client';
 
-import { cn } from '@/lib/utils';
-import { ContentEntry } from '@/types';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+
+import { ContentEntry } from '@/types';
+import { cn } from '@/lib/utils';
+
 import TreeItem from './TreeItem';
 
 interface ViewSectionProps {
@@ -35,7 +37,7 @@ export default function ViewSection({
         if (removeFromDisplay) removeFromDisplay(entryId);
     };
 
-    // 드래그 중이면 접힌 상태라도 표시
+    // Show even when collapsed if dragging over
     const shouldShow = !isCollapsed || showDropIndicator;
 
     return (
@@ -58,7 +60,7 @@ export default function ViewSection({
                     strategy={verticalListSortingStrategy}
                 >
                     <div className="relative py-0.5">
-                        {/* Tree Line - 세로선 */}
+                        {/* Tree Line - vertical line */}
                         {displayedEntries.length > 0 && (
                             <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
                         )}
@@ -79,7 +81,7 @@ export default function ViewSection({
                                     showDropIndicator && 'text-dashboard-text-secondary'
                                 )}
                             >
-                                {showDropIndicator ? '여기에 드롭하여 추가' : '드래그하여 추가'}
+                                {showDropIndicator ? 'Drop here to add' : 'Drag to add'}
                             </p>
                         )}
                     </div>

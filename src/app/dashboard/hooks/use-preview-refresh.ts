@@ -1,16 +1,16 @@
 /**
- * 프리뷰 새로고침 콜백 시스템
+ * Preview refresh callback system
  *
- * Zustand 상태(previewVersion) 대신 콜백 ref로 이벤트 전달.
- * - PreviewPanel이 useRegisterPreviewRefresh로 콜백 등록
- * - mutations의 onSuccess에서 triggerPreviewRefresh() 호출
+ * Uses callback ref instead of Zustand state (previewVersion) for event dispatch.
+ * - PreviewPanel registers a callback via useRegisterPreviewRefresh
+ * - triggerPreviewRefresh() is called from mutations' onSuccess
  */
 
 import { useEffect } from 'react';
 
 const previewRefreshRef = { current: () => {} };
 
-/** PreviewPanel에서 호출: iframe reload 콜백을 등록 */
+/** Called from PreviewPanel: registers the iframe reload callback */
 export function useRegisterPreviewRefresh(callback: () => void) {
     useEffect(() => {
         previewRefreshRef.current = callback;
@@ -20,7 +20,7 @@ export function useRegisterPreviewRefresh(callback: () => void) {
     }, [callback]);
 }
 
-/** mutation onSuccess에서 호출: 등록된 콜백 실행 */
+/** Called from mutation onSuccess: executes the registered callback */
 export function triggerPreviewRefresh() {
     previewRefreshRef.current();
 }

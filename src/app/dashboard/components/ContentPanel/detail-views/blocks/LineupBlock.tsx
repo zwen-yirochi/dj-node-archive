@@ -78,7 +78,7 @@ export default function LineupBlock({ entry, onSave, disabled }: FieldBlockProps
                             setIsEditing(false);
                         }}
                         className="min-w-[80px] flex-1 border-none bg-transparent text-sm focus:outline-none"
-                        placeholder="@username으로 아티스트 태그"
+                        placeholder="Tag artists with @username"
                         autoFocus
                     />
                 </div>
@@ -92,7 +92,7 @@ export default function LineupBlock({ entry, onSave, disabled }: FieldBlockProps
             <div
                 className={`flex-1 ${disabled ? '' : 'cursor-pointer'}`}
                 onDoubleClick={() => !disabled && setIsEditing(true)}
-                title={disabled ? undefined : '더블클릭하여 편집'}
+                title={disabled ? undefined : 'Double-click to edit'}
             >
                 {lineup.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
@@ -107,7 +107,7 @@ export default function LineupBlock({ entry, onSave, disabled }: FieldBlockProps
                     </div>
                 ) : (
                     <span className="text-dashboard-text-placeholder">
-                        @username으로 아티스트 태그
+                        Tag artists with @username
                     </span>
                 )}
             </div>

@@ -61,7 +61,7 @@ function useDebouncedSave(
                     await onSave(entry, fields);
                     setLastSaved(new Date());
                 } catch (error) {
-                    console.error('저장 실패:', error);
+                    console.error('Save failed:', error);
                 } finally {
                     setIsSaving(false);
                 }
@@ -104,7 +104,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
 
     const [editingField, setEditingField] = useState<'title' | 'image' | null>(null);
 
-    // Save handler — changedFields를 mutation에 전달하여 preview 트리거 판단
+    // Save handler — pass changedFields to mutation for preview trigger decision
     const handleSave = useCallback(
         async (updated: ContentEntry, changedFields: string[]) => {
             await updateMutation.mutateAsync({ entry: updated, changedFields });
@@ -128,7 +128,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         onBack?.();
     };
 
-    // Field-level save — ref로 항상 최신 localEntry 참조
+    // Field-level save — always reference latest localEntry via ref
     const handleFieldSave = useCallback(
         (fieldKey: string, value: unknown) => {
             const updated = { ...localEntryRef.current, [fieldKey]: value } as ContentEntry;
@@ -142,21 +142,21 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
 
     // Save status
     const getSaveStatus = () => {
-        if (isSaving) return '저장 중...';
+        if (isSaving) return 'Saving...';
         if (lastSaved) {
             const seconds = Math.floor((Date.now() - lastSaved.getTime()) / 1000);
-            if (seconds < 5) return '저장됨';
+            if (seconds < 5) return 'Saved';
         }
         return null;
     };
 
     const saveStatus = getSaveStatus();
 
-    // View 추가 가능 여부 경고
+    // Warning for view-readiness
     const isViewReady = canAddToView(localEntry);
     const missingFields = isViewReady ? [] : getMissingFieldLabels(localEntry, 'create');
 
-    // "..." 메뉴 items — config-driven + declarative action resolution
+    // "..." menu items — config-driven + declarative action resolution
     const menuItems = resolveMenuItems(EDITOR_MENU_CONFIG[localEntry.type], {
         setEditingField,
         onDelete: handleDelete,
@@ -175,7 +175,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                         className="flex items-center gap-2 text-sm text-dashboard-text-muted transition-colors hover:text-dashboard-text"
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        목록으로
+                        Back
                     </button>
                 </div>
             )}
@@ -189,11 +189,11 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                     )}
                     {!isViewReady && (
                         <span
-                            title={`Page에 추가하려면 필요: ${missingFields.join(', ')}`}
+                            title={`Required to add to Page: ${missingFields.join(', ')}`}
                             className="flex items-center gap-1.5"
                         >
                             <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
-                            <span className="text-xs text-amber-500">미완성</span>
+                            <span className="text-xs text-amber-500">Incomplete</span>
                         </span>
                     )}
                 </div>

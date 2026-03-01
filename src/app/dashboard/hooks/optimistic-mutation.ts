@@ -1,12 +1,12 @@
 // hooks/optimistic-mutation.ts
 /**
- * 옵티미스틱 뮤테이션 팩토리 함수
+ * Optimistic mutation factory function
  *
- * cancel → snapshot → optimistic update → rollback → invalidate
- * 보일러플레이트를 한 번만 작성.
+ * cancel -> snapshot -> optimistic update -> rollback -> invalidate
+ * Write the boilerplate once.
  *
- * 캐시 대상: ContentEntry[] (순수 배열)
- * triggersPreview 옵션으로 미리보기 새로고침을 중앙 관리.
+ * Cache target: ContentEntry[] (plain array)
+ * Centrally manages preview refresh via the triggersPreview option.
  */
 
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
@@ -23,11 +23,11 @@ export interface OptimisticMutationConfig<TParams> {
 }
 
 /**
- * useMutation에 넘길 옵션 객체를 생성하는 팩토리 함수.
+ * Factory function that creates an options object for useMutation.
  *
- * - `snapshotRef`로 onMutate 실행 전 데이터를 캡처 → mutationFn에 전달
- * - TanStack Query 실행 순서: onMutate → mutationFn
- * - `triggersPreview`가 설정되면 onSuccess에서 미리보기 새로고침
+ * - Captures data before onMutate via `snapshotRef` and passes it to mutationFn
+ * - TanStack Query execution order: onMutate -> mutationFn
+ * - When `triggersPreview` is set, refreshes the preview on onSuccess
  */
 export function makeOptimisticMutation<TParams>(
     queryClient: QueryClient,

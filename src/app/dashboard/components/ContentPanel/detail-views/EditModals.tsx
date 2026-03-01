@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 
 // ============================================
-// ImageEditModal — Event(poster) + Mixset(cover) 공용
+// ImageEditModal — Shared by Event (poster) + Mixset (cover)
 // ============================================
 
 export function ImageEditModal({
@@ -25,7 +25,7 @@ export function ImageEditModal({
     onSave,
     onClose,
     aspectRatio = '3/4',
-    title = '포스터 이미지 변경',
+    title = 'Change poster image',
 }: {
     value: string;
     onSave: (url: string) => void;
@@ -64,7 +64,7 @@ export function ImageEditModal({
                 setError(result.error);
             }
         } catch {
-            setError('업로드 중 오류가 발생했습니다');
+            setError('Upload failed');
         } finally {
             setIsUploading(false);
             if (inputRef.current) inputRef.current.value = '';
@@ -77,7 +77,7 @@ export function ImageEditModal({
                 <DialogHeader>
                     <DialogTitle className="text-dashboard-text">{title}</DialogTitle>
                     <DialogDescription className="text-dashboard-text-muted">
-                        이미지를 업로드하세요
+                        Upload an image
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -88,7 +88,7 @@ export function ImageEditModal({
                         >
                             <Image
                                 src={value}
-                                alt="현재 이미지"
+                                alt="Current image"
                                 fill
                                 className="object-cover"
                                 sizes="160px"
@@ -113,12 +113,12 @@ export function ImageEditModal({
                             {isUploading ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    업로드 중...
+                                    Uploading...
                                 </>
                             ) : (
                                 <>
                                     <ImagePlus className="mr-2 h-4 w-4" />
-                                    이미지 선택
+                                    Select image
                                 </>
                             )}
                         </Button>
@@ -132,7 +132,7 @@ export function ImageEditModal({
                             disabled={isUploading}
                             className="text-dashboard-text-muted"
                         >
-                            취소
+                            Cancel
                         </Button>
                     </div>
                 </div>
@@ -142,7 +142,7 @@ export function ImageEditModal({
 }
 
 // ============================================
-// TitleEditModal — Event + Mixset + Link 공용
+// TitleEditModal — Shared by Event + Mixset + Link
 // ============================================
 
 export function TitleEditModal({
@@ -168,9 +168,9 @@ export function TitleEditModal({
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="border-dashboard-border bg-dashboard-bg-card sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle className="text-dashboard-text">제목 변경</DialogTitle>
+                    <DialogTitle className="text-dashboard-text">Edit title</DialogTitle>
                     <DialogDescription className="text-dashboard-text-muted">
-                        새 제목을 입력하세요
+                        Enter a new title
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -181,7 +181,7 @@ export function TitleEditModal({
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') handleSave();
                         }}
-                        placeholder="제목"
+                        placeholder="Title"
                         className="w-full rounded-lg border border-dashboard-border bg-dashboard-bg px-3 py-2 text-sm text-dashboard-text focus:border-dashboard-text focus:outline-none"
                         autoFocus
                     />
@@ -192,7 +192,7 @@ export function TitleEditModal({
                             onClick={onClose}
                             className="text-dashboard-text-muted"
                         >
-                            취소
+                            Cancel
                         </Button>
                         <Button
                             size="sm"
@@ -200,7 +200,7 @@ export function TitleEditModal({
                             disabled={!inputValue.trim()}
                             className="bg-dashboard-text text-dashboard-bg hover:bg-dashboard-text/90"
                         >
-                            저장
+                            Save
                         </Button>
                     </div>
                 </div>

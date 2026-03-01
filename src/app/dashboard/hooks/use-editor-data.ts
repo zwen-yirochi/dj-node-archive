@@ -1,10 +1,10 @@
 // hooks/use-editor-data.ts
 /**
- * 쿼리 키 & 훅 — entries / user / entryDetail
+ * Query keys & hooks — entries / user / entryDetail
  *
- * - entryKeys: ContentEntry[] 전용
- * - userKeys: User 전용
- * - pageId는 Zustand dashboardStore에서 관리 (세션 내 불변)
+ * - entryKeys: for ContentEntry[]
+ * - userKeys: for User
+ * - pageId is managed in Zustand dashboardStore (immutable within a session)
  */
 
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';

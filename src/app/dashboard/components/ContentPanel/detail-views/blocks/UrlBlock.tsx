@@ -60,7 +60,7 @@ export default function UrlBlock({ entry, onSave, disabled }: FieldBlockProps) {
         setEditValue('');
     };
 
-    // Input mode — 빈 상태 또는 편집 중
+    // Input mode — empty state or editing
     if (!url || isEditing) {
         return (
             <div className="flex items-center gap-3 text-sm">
@@ -74,21 +74,21 @@ export default function UrlBlock({ entry, onSave, disabled }: FieldBlockProps) {
                     onKeyDown={handleKeyDown}
                     onFocus={() => setIsEditing(true)}
                     disabled={disabled}
-                    placeholder="URL을 붙여넣으세요"
+                    placeholder="Paste a URL"
                     className="w-full bg-transparent text-dashboard-text-secondary outline-none placeholder:text-dashboard-text-placeholder"
                 />
             </div>
         );
     }
 
-    // Read mode — 더블클릭으로 편집 + 복사/제거 버튼
+    // Read mode — double-click to edit + copy/remove buttons
     return (
         <div className="flex items-center gap-2">
             <ExternalLink className="h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
             <div
                 onDoubleClick={() => !disabled && setIsEditing(true)}
                 className="min-w-0 flex-1 cursor-text truncate rounded px-1 text-sm text-dashboard-text-secondary transition-colors hover:bg-dashboard-bg-hover"
-                title="더블클릭하여 편집"
+                title="Double-click to edit"
             >
                 {url}
             </div>
@@ -97,7 +97,7 @@ export default function UrlBlock({ entry, onSave, disabled }: FieldBlockProps) {
                     <button
                         onClick={handleCopy}
                         className="rounded p-1.5 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-bg-hover hover:text-dashboard-text-secondary"
-                        title="복사"
+                        title="Copy"
                     >
                         {copied ? (
                             <Check className="h-3.5 w-3.5 text-green-500" />
@@ -108,7 +108,7 @@ export default function UrlBlock({ entry, onSave, disabled }: FieldBlockProps) {
                     <button
                         onClick={handleClear}
                         className="rounded p-1.5 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-bg-hover hover:text-red-500"
-                        title="제거"
+                        title="Remove"
                     >
                         <X className="h-3.5 w-3.5" />
                     </button>

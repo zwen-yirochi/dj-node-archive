@@ -19,7 +19,7 @@ export default function LinkDetailView({
 
     return (
         <div className="space-y-6">
-            {/* Header — 아이콘 + 제목 */}
+            {/* Header — Icon + title */}
             <div className="space-y-3 text-center">
                 <IconBlock entry={entry} onSave={onSave} disabled={disabled} />
                 <h2 className="text-xl font-bold text-dashboard-text">{title}</h2>
@@ -35,7 +35,7 @@ export default function LinkDetailView({
                 />
             ))}
 
-            {/* Edit Modals — Link는 TitleEditModal만 사용 */}
+            {/* Edit Modals — Link only uses TitleEditModal */}
             {editingField === 'title' && (
                 <TitleEditModal
                     value={title}

@@ -1,11 +1,11 @@
 /**
- * 배열 필드 CRUD 훅
+ * Array field CRUD hook
  *
- * LinksEditor, TracklistEditor 등 동일 패턴의
- * add / update / remove 로직을 공통화.
+ * Extracts shared add / update / remove logic
+ * for LinksEditor, TracklistEditor, and similar patterns.
  *
- * `keys` 배열을 반환하여 안정적인 React key 제공
- * (index 기반 key 대신 사용하여 reorder/remove 시 상태 꼬임 방지).
+ * Returns a `keys` array for stable React keys
+ * (used instead of index-based keys to prevent state corruption on reorder/remove).
  */
 
 import { useRef } from 'react';
@@ -18,7 +18,7 @@ export function useArrayField<T extends Record<string, unknown>>(
     const nextKeyRef = useRef(0);
     const keysRef = useRef<string[]>([]);
 
-    // 아이템 수에 맞게 키 배열 동기화
+    // Sync key array to match item count
     while (keysRef.current.length < items.length) {
         keysRef.current.push(String(nextKeyRef.current++));
     }

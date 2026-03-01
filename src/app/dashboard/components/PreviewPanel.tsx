@@ -17,7 +17,7 @@ export default function PreviewPanel() {
     const containerRef = useRef<HTMLDivElement>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    // Intersection Observer + 1초 fallback 통합
+    // Intersection Observer + 1-second fallback combined
     useEffect(() => {
         if (isVisible) return;
 
@@ -42,7 +42,7 @@ export default function PreviewPanel() {
         };
     }, [isVisible]);
 
-    // iframe 새로고침
+    // iframe refresh
     const refreshPreview = useCallback(() => {
         if (iframeRef.current?.contentWindow && isVisible) {
             setIsLoading(true);
@@ -50,7 +50,7 @@ export default function PreviewPanel() {
         }
     }, [isVisible]);
 
-    // mutation onSuccess → triggerPreviewRefresh() → 이 콜백 실행
+    // mutation onSuccess -> triggerPreviewRefresh() -> this callback executes
     useRegisterPreviewRefresh(refreshPreview);
 
     const handleIframeLoad = useCallback(() => {
@@ -66,7 +66,7 @@ export default function PreviewPanel() {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (error) {
-            console.error('복사 실패:', error);
+            console.error('Copy failed:', error);
         }
     };
 
@@ -78,7 +78,7 @@ export default function PreviewPanel() {
 
     return (
         <div ref={containerRef} className="mr-6 flex h-full flex-col items-center py-4">
-            {/* 링크 + 복사 버튼 */}
+            {/* Link + copy button */}
             <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
                 <Link
                     href={`/${user.username}`}
@@ -101,7 +101,7 @@ export default function PreviewPanel() {
                 </button>
             </div>
 
-            {/* iPhone 프레임 */}
+            {/* iPhone frame */}
             <div className="relative flex flex-1 items-start justify-center">
                 <div
                     className="relative rounded-[35px] bg-stone-900 p-2 shadow-2xl"
@@ -109,10 +109,10 @@ export default function PreviewPanel() {
                         width: `${scaledWidth + 16}px`,
                     }}
                 >
-                    {/* 노치 */}
+                    {/* Notch */}
                     <div className="absolute left-1/2 top-2 z-10 h-5 w-20 -translate-x-1/2 rounded-b-xl bg-stone-900" />
 
-                    {/* 화면 영역 */}
+                    {/* Screen area */}
                     <div
                         className="relative overflow-hidden rounded-[27px] bg-white"
                         style={{
@@ -120,7 +120,7 @@ export default function PreviewPanel() {
                             height: `${scaledHeight}px`,
                         }}
                     >
-                        {/* 로딩 인디케이터 */}
+                        {/* Loading indicator */}
                         {isLoading && (
                             <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80">
                                 <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
@@ -141,12 +141,12 @@ export default function PreviewPanel() {
                                     ref={iframeRef}
                                     src={`/${user.username}?preview=true`}
                                     className="h-full w-full border-0"
-                                    title="페이지 미리보기"
+                                    title="Page preview"
                                     onLoad={handleIframeLoad}
                                 />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center bg-neutral-50">
-                                    <p className="text-xs text-neutral-400">미리보기 로딩 중...</p>
+                                    <p className="text-xs text-neutral-400">Loading preview...</p>
                                 </div>
                             )}
                         </div>

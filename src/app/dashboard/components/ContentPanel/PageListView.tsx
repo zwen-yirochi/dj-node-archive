@@ -85,7 +85,7 @@ function SortableItem({
             {/* Content */}
             <div className="min-w-0 flex-1 cursor-pointer" onClick={onSelect}>
                 <p className="truncate text-sm font-medium text-dashboard-text">
-                    {entry.title || '제목 없음'}
+                    {entry.title || 'Untitled'}
                 </p>
                 <p className="text-xs text-dashboard-text-muted">{config.label}</p>
             </div>
@@ -100,14 +100,14 @@ function SortableItem({
                             ? 'text-dashboard-text-muted hover:bg-dashboard-bg-muted hover:text-dashboard-text-secondary'
                             : 'text-dashboard-text-placeholder hover:bg-dashboard-bg-muted hover:text-dashboard-text-secondary'
                     )}
-                    title={isVisible ? '숨기기' : '표시하기'}
+                    title={isVisible ? 'Hide' : 'Show'}
                 >
                     {isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                 </button>
                 <button
                     onClick={onRemove}
                     className="rounded-md p-2 text-dashboard-text-placeholder transition-colors hover:bg-red-50 hover:text-red-600"
-                    title="Page에서 제거"
+                    title="Remove from Page"
                 >
                     <Trash2 className="h-4 w-4" />
                 </button>
@@ -132,8 +132,8 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
     const dndId = useId();
     const [activeId, setActiveId] = useState<string | null>(null);
 
-    // displayOrder가 숫자인 엔트리만 displayOrder 순으로 정렬 (Page에 표시된 엔트리)
-    // null과 undefined 모두 제외
+    // Only entries with a numeric displayOrder, sorted by displayOrder (entries displayed on Page)
+    // Exclude both null and undefined
     const displayedEntries = useMemo(
         () =>
             entries
@@ -163,7 +163,7 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
 
         if (!over || active.id === over.id) return;
 
-        // Page 내 순서 변경 (displayOrder 업데이트)
+        // Reorder within Page (update displayOrder)
         const newIndex = displayedEntries.findIndex((e) => e.id === over.id);
         if (newIndex !== -1) {
             const updates = computeReorderedDisplay(entries, active.id as string, newIndex);
@@ -183,20 +183,20 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
 
     const activeEntry = activeId ? displayedEntries.find((e) => e.id === activeId) : null;
 
-    // 실제 공개 표시되는 엔트리 수 (displayOrder !== null && isVisible)
+    // Count of publicly visible entries (displayOrder !== null && isVisible)
     const visibleCount = displayedEntries.filter((e) => e.isVisible).length;
 
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
             <div className="border-b bg-dashboard-bg-muted px-6 py-4">
-                <h2 className="text-lg font-semibold text-dashboard-text">Page 구성</h2>
+                <h2 className="text-lg font-semibold text-dashboard-text">Page layout</h2>
                 <p className="mt-1 text-sm text-dashboard-text-muted">
-                    공개 페이지에 표시될 엔트리를 관리합니다. 드래그하여 순서를 변경하세요.
+                    Manage entries displayed on your public page. Drag to reorder.
                 </p>
                 <div className="mt-2 flex items-center gap-4 text-xs text-dashboard-text-muted">
-                    <span>전체 {displayedEntries.length}개</span>
-                    <span>공개 {visibleCount}개</span>
+                    <span>{displayedEntries.length} total</span>
+                    <span>{visibleCount} visible</span>
                 </div>
             </div>
 
@@ -209,10 +209,10 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
                                 <Calendar className="h-8 w-8 text-dashboard-text-placeholder" />
                             </div>
                             <p className="text-sm font-medium text-dashboard-text-secondary">
-                                Page가 비어있습니다
+                                Page is empty
                             </p>
                             <p className="mt-1 text-xs text-dashboard-text-placeholder">
-                                사이드바에서 엔트리를 드래그하여 추가하세요
+                                Drag entries from the sidebar to add
                             </p>
                         </div>
                     </div>
@@ -254,7 +254,7 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
                                         size="sm"
                                     />
                                     <span className="text-sm font-medium text-dashboard-text">
-                                        {activeEntry.title || '제목 없음'}
+                                        {activeEntry.title || 'Untitled'}
                                     </span>
                                 </div>
                             )}

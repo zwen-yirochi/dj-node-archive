@@ -23,7 +23,7 @@ export default function BioDesignPanel() {
 
     const [isProfileOpen, setIsProfileOpen] = useState(true);
 
-    // Debounced save — 타이핑 중 서버 동기화
+    // Debounced save — sync to server while typing
     const debouncedSave = useDebounce((updates: { displayName?: string; bio?: string }) => {
         updateProfile.mutate({ userId: user.id, updates });
     }, 500);
@@ -32,7 +32,7 @@ export default function BioDesignPanel() {
         uploadAvatar.mutate(
             { userId: user.id, formData },
             {
-                onError: () => alert('이미지 업로드에 실패했습니다.'),
+                onError: () => alert('Image upload failed.'),
             }
         );
     };
@@ -41,17 +41,17 @@ export default function BioDesignPanel() {
         deleteAvatar.mutate(
             { userId: user.id },
             {
-                onError: () => console.error('아바타 삭제 오류'),
+                onError: () => console.error('Avatar delete error'),
             }
         );
     };
 
     const handleProfileChange = (field: 'displayName' | 'bio', value: string) => {
-        // 즉시 TQ 캐시 업데이트 (타이핑 반영)
+        // Immediately update TQ cache (reflect typing)
         queryClient.setQueryData<User>(userKeys.all, (prev) =>
             prev ? { ...prev, [field]: value } : prev
         );
-        // 디바운스 서버 동기화
+        // Debounced server sync
         debouncedSave({ [field]: value });
     };
 
@@ -61,7 +61,7 @@ export default function BioDesignPanel() {
             <div className="border-b border-dashboard-border px-6 py-4">
                 <h2 className="text-lg font-semibold text-dashboard-text">Bio Design</h2>
                 <p className="text-sm text-dashboard-text-muted">
-                    프로필과 페이지 스타일을 설정합니다
+                    Configure your profile and page style
                 </p>
             </div>
 
@@ -80,7 +80,7 @@ export default function BioDesignPanel() {
                                 <ChevronRight className="h-4 w-4 text-dashboard-text-muted" />
                             )}
                             <h3 className="text-sm font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                                프로필
+                                Profile
                             </h3>
                         </button>
 
@@ -105,7 +105,7 @@ export default function BioDesignPanel() {
                                             onChange={(e) =>
                                                 handleProfileChange('displayName', e.target.value)
                                             }
-                                            placeholder="이름"
+                                            placeholder="Name"
                                             className="border-dashboard-border bg-transparent text-dashboard-text placeholder:text-dashboard-text-placeholder"
                                         />
                                     </div>
@@ -115,7 +115,7 @@ export default function BioDesignPanel() {
                                 <Textarea
                                     value={user.bio || ''}
                                     onChange={(e) => handleProfileChange('bio', e.target.value)}
-                                    placeholder="소개"
+                                    placeholder="Bio"
                                     rows={3}
                                     className="resize-none border-dashboard-border bg-transparent text-dashboard-text placeholder:text-dashboard-text-placeholder"
                                 />

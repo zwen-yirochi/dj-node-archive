@@ -1,9 +1,9 @@
 /**
- * 엔트리 필드 설정 — 단일 책임: "각 타입의 필드는 무엇이고 어떤 규칙을 가지는가"
+ * Entry field configuration — single responsibility: "what fields does each type have and what rules apply"
  *
- * 1. 필드 메타데이터 (key, label, triggersPreview)
- * 2. 스키마 레지스트리 (create/view tier → Zod 스키마 매핑)
- * 3. 엔트리 완성도 헬퍼 (canAddToView, getTreeItemStatus 등)
+ * 1. Field metadata (key, label, triggersPreview)
+ * 2. Schema registry (create/view tier -> Zod schema mapping)
+ * 3. Entry completeness helpers (canAddToView, getTreeItemStatus, etc.)
  */
 
 import type { ZodSchema } from 'zod';
@@ -21,7 +21,7 @@ import {
 import type { EntryType } from './entryConfig';
 
 // ============================================
-// 필드 메타데이터
+// Field metadata
 // ============================================
 
 export interface FieldConfig {
@@ -32,30 +32,30 @@ export interface FieldConfig {
 
 export const FIELD_CONFIG: Record<EntryType, FieldConfig[]> = {
     event: [
-        { key: 'title', label: '제목', triggersPreview: true },
-        { key: 'date', label: '날짜', triggersPreview: true },
-        { key: 'venue', label: '장소', triggersPreview: true },
-        { key: 'posterUrl', label: '포스터 이미지', triggersPreview: true },
-        { key: 'lineup', label: '라인업', triggersPreview: true },
-        { key: 'description', label: '설명', triggersPreview: false },
-        { key: 'links', label: '링크', triggersPreview: false },
+        { key: 'title', label: 'Title', triggersPreview: true },
+        { key: 'date', label: 'Date', triggersPreview: true },
+        { key: 'venue', label: 'Venue', triggersPreview: true },
+        { key: 'posterUrl', label: 'Poster', triggersPreview: true },
+        { key: 'lineup', label: 'Lineup', triggersPreview: true },
+        { key: 'description', label: 'Description', triggersPreview: false },
+        { key: 'links', label: 'Links', triggersPreview: false },
     ],
     mixset: [
-        { key: 'title', label: '제목', triggersPreview: true },
-        { key: 'coverUrl', label: '커버 이미지', triggersPreview: true },
+        { key: 'title', label: 'Title', triggersPreview: true },
+        { key: 'coverUrl', label: 'Cover', triggersPreview: true },
         { key: 'url', label: 'URL', triggersPreview: true },
-        { key: 'tracklist', label: '트랙리스트', triggersPreview: false },
-        { key: 'description', label: '설명', triggersPreview: false },
+        { key: 'tracklist', label: 'Tracklist', triggersPreview: false },
+        { key: 'description', label: 'Description', triggersPreview: false },
     ],
     link: [
-        { key: 'title', label: '제목', triggersPreview: true },
+        { key: 'title', label: 'Title', triggersPreview: true },
         { key: 'url', label: 'URL', triggersPreview: true },
-        { key: 'icon', label: '아이콘', triggersPreview: true },
+        { key: 'icon', label: 'Icon', triggersPreview: true },
     ],
 };
 
 // ============================================
-// 스키마 레지스트리
+// Schema registry
 // ============================================
 
 export const ENTRY_SCHEMAS: Record<EntryType, { create: ZodSchema; view: ZodSchema }> = {
@@ -65,7 +65,7 @@ export const ENTRY_SCHEMAS: Record<EntryType, { create: ZodSchema; view: ZodSche
 };
 
 // ============================================
-// 엔트리 완성도 헬퍼
+// Entry completeness helpers
 // ============================================
 
 export type TreeItemStatus = 'inView' | 'normal' | 'warning';

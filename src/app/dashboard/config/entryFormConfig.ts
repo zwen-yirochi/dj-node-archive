@@ -1,11 +1,11 @@
 /**
- * 엔트리 생성 폼 설정
+ * Entry creation form configuration
  *
- * 폼 전용 관심사만 정의 (defaultValues, toEntry, errorFieldMap).
- * schemas, label, canCreate는 기존 config 체계에서 파생:
- * - ENTRY_SCHEMAS[type] → draftSchema / publishSchema
- * - ENTRY_TYPE_CONFIG[type] → label
- * - draftSchema.safeParse → canCreate
+ * Defines form-specific concerns only (defaultValues, toEntry, errorFieldMap).
+ * schemas, label, and canCreate are derived from existing config:
+ * - ENTRY_SCHEMAS[type] -> draftSchema / publishSchema
+ * - ENTRY_TYPE_CONFIG[type] -> label
+ * - draftSchema.safeParse -> canCreate
  */
 
 import type { EventEntry, MixsetEntry } from '@/types/domain';

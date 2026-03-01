@@ -47,7 +47,7 @@ export default function VenueBlock({ entry, onSave, disabled }: FieldBlockProps)
             <input
                 {...register('venue.name')}
                 disabled={disabled}
-                placeholder="장소를 입력하세요"
+                placeholder="Enter venue name"
                 className="flex-1 bg-transparent text-dashboard-text-secondary outline-none placeholder:text-dashboard-text-placeholder"
             />
             {errors.venue?.name && (

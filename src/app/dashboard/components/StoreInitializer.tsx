@@ -15,11 +15,11 @@ interface StoreInitializerProps {
 export default function StoreInitializer({ initialData }: StoreInitializerProps) {
     const initialized = useRef(false);
 
-    // TanStack Query hydration: SSR 데이터를 분리된 캐시에 주입
+    // TanStack Query hydration: inject SSR data into separate caches
     useEntries(initialData.contentEntries);
     useUserQuery(initialData.user);
 
-    // UI Store 초기화 + pageId 설정
+    // UI Store initialization + pageId setup
     useLayoutEffect(() => {
         if (!initialized.current) {
             useDashboardStore.getState().reset();

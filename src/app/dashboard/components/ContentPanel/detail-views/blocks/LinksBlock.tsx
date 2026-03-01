@@ -25,7 +25,7 @@ export default function LinksBlock({ entry, onSave, disabled }: FieldBlockProps)
     return (
         <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                관련 링크
+                Related links
             </p>
             {links.map((link, i) => (
                 <div
@@ -36,7 +36,7 @@ export default function LinksBlock({ entry, onSave, disabled }: FieldBlockProps)
                     <EditableField
                         value={link.title}
                         onSave={(value) => update(i, 'title', value)}
-                        placeholder="링크 제목"
+                        placeholder="Link title"
                         disabled={disabled}
                         className="flex-1 text-sm text-dashboard-text-secondary"
                     />
@@ -63,7 +63,7 @@ export default function LinksBlock({ entry, onSave, disabled }: FieldBlockProps)
                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-dashboard-border-hover p-2 text-sm text-dashboard-text-muted transition-colors hover:border-dashboard-text hover:text-dashboard-text-secondary"
                 >
                     <Plus className="h-3.5 w-3.5" />
-                    링크 추가
+                    Add link
                 </button>
             )}
         </div>

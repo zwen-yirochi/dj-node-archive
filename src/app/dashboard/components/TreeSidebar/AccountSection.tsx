@@ -1,15 +1,7 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/client';
-import { useUser, useUserMutations } from '../../hooks';
-import type { User } from '@/types';
+import { useRef, useState } from 'react';
+
 import {
     Camera,
     ChevronUp,
@@ -21,7 +13,18 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+
+import type { User } from '@/types';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
+import { Textarea } from '@/components/ui/textarea';
+
+import { useUser, useUserMutations } from '../../hooks';
 
 interface AccountSectionProps {
     username: string;
@@ -62,7 +65,7 @@ export default function AccountSection({ username }: AccountSectionProps) {
                 },
             },
             {
-                onError: () => console.error('프로필 업데이트 실패'),
+                onError: () => console.error('Profile update failed'),
             }
         );
         setIsEditDialogOpen(false);
@@ -82,12 +85,12 @@ export default function AccountSection({ username }: AccountSectionProps) {
         if (!file || !tempUser) return;
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('파일 크기는 5MB 이하여야 합니다.');
+            alert('File must be under 5MB.');
             return;
         }
 
         if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
-            alert('JPG, PNG, WebP, GIF 형식만 지원합니다.');
+            alert('Only JPG, PNG, WebP, GIF are supported.');
             return;
         }
 
@@ -102,7 +105,7 @@ export default function AccountSection({ username }: AccountSectionProps) {
                 onSuccess: (data) => {
                     setTempUser((prev) => (prev ? { ...prev, avatarUrl: data.avatarUrl } : prev));
                 },
-                onError: () => alert('이미지 업로드에 실패했습니다.'),
+                onError: () => alert('Image upload failed.'),
                 onSettled: () => {
                     setIsUploading(false);
                     if (fileInputRef.current) {
@@ -124,7 +127,7 @@ export default function AccountSection({ username }: AccountSectionProps) {
                 onSuccess: () => {
                     setTempUser((prev) => (prev ? { ...prev, avatarUrl: '' } : prev));
                 },
-                onError: () => console.error('아바타 삭제 오류'),
+                onError: () => console.error('Avatar delete error'),
                 onSettled: () => setIsUploading(false),
             }
         );
@@ -136,12 +139,12 @@ export default function AccountSection({ username }: AccountSectionProps) {
         window.location.href = '/login';
     };
 
-    // 계정 메뉴 아이템
+    // Account menu items
     const accountMenuItems: DropdownMenuItemConfig[] = [
-        { label: '프로필 편집', onClick: handleOpenEditDialog, icon: Pencil },
-        { label: '내 페이지 보기', href: `/${username}`, icon: ExternalLink, external: true },
+        { label: 'Edit profile', onClick: handleOpenEditDialog, icon: Pencil },
+        { label: 'View my page', href: `/${username}`, icon: ExternalLink, external: true },
         { type: 'separator' },
-        { label: '로그아웃', onClick: handleLogout, icon: LogOut, variant: 'danger' },
+        { label: 'Sign out', onClick: handleLogout, icon: LogOut, variant: 'danger' },
     ];
 
     return (
@@ -186,7 +189,7 @@ export default function AccountSection({ username }: AccountSectionProps) {
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent className="border-dashboard-border bg-dashboard-bg-card sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle className="text-dashboard-text">프로필 편집</DialogTitle>
+                        <DialogTitle className="text-dashboard-text">Edit profile</DialogTitle>
                     </DialogHeader>
 
                     <div className="space-y-4 py-4">

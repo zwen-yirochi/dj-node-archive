@@ -28,7 +28,7 @@ export default function MixsetDetailView({
 
     return (
         <div className="space-y-6">
-            {/* Header — 읽기 전용 커버 + 제목 */}
+            {/* Header — Read-only cover + title */}
             <div className="space-y-3">
                 {coverUrl ? (
                     <div className="relative mx-auto aspect-square max-w-[200px] overflow-hidden rounded-xl">
@@ -45,7 +45,7 @@ export default function MixsetDetailView({
                         <div className="text-center">
                             <ImagePlus className="mx-auto mb-2 h-8 w-8 text-dashboard-text-placeholder" />
                             <p className="text-xs text-dashboard-text-muted">
-                                &quot;...&quot; 메뉴에서 이미지 변경
+                                Change image from &quot;...&quot; menu
                             </p>
                         </div>
                     </div>
@@ -76,7 +76,7 @@ export default function MixsetDetailView({
                     }}
                     onClose={onEditingDone}
                     aspectRatio="1/1"
-                    title="커버 이미지 변경"
+                    title="Change cover image"
                 />
             )}
             {editingField === 'title' && (

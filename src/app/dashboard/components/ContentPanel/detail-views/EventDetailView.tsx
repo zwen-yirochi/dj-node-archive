@@ -27,7 +27,7 @@ export default function EventDetailView({
 
     return (
         <div className="space-y-6">
-            {/* Header — 읽기 전용 이미지 + 제목 */}
+            {/* Header — Read-only image + title */}
             <div className="space-y-3">
                 {posterUrl ? (
                     <div className="relative mx-auto aspect-[3/4] max-w-[200px] overflow-hidden rounded-xl">
@@ -44,7 +44,7 @@ export default function EventDetailView({
                         <div className="text-center">
                             <Music className="mx-auto mb-2 h-8 w-8 text-dashboard-text-placeholder" />
                             <p className="text-xs text-dashboard-text-muted">
-                                &quot;...&quot; 메뉴에서 이미지 변경
+                                Change image from &quot;...&quot; menu
                             </p>
                         </div>
                     </div>
@@ -74,7 +74,7 @@ export default function EventDetailView({
                 />
             ))}
 
-            {/* Edit Modals — "..." 메뉴에서 트리거 */}
+            {/* Edit Modals — Triggered from "..." menu */}
             {editingField === 'image' && (
                 <ImageEditModal
                     value={posterUrl || ''}

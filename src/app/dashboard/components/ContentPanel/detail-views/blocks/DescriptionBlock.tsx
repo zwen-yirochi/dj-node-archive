@@ -43,12 +43,12 @@ export default function DescriptionBlock({ entry, onSave, disabled }: FieldBlock
     return (
         <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                설명
+                Description
             </p>
             <textarea
                 {...register('description')}
                 disabled={disabled}
-                placeholder="설명을 입력하세요..."
+                placeholder="Add a description..."
                 rows={4}
                 className="w-full resize-none bg-transparent text-sm leading-relaxed text-dashboard-text-muted outline-none placeholder:text-dashboard-text-placeholder"
             />

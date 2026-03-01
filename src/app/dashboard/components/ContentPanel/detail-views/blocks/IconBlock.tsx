@@ -26,7 +26,7 @@ export default function IconBlock({ entry, onSave, disabled }: FieldBlockProps) 
     const icon = entry.type === 'link' ? entry.icon || '' : '';
     const IconComponent = iconComponents[icon] || Globe;
 
-    // 외부 클릭 시 팝업 닫기
+    // Close popup on outside click
     useEffect(() => {
         if (!showSelector) return;
         const handleClickOutside = (e: MouseEvent) => {
@@ -44,7 +44,7 @@ export default function IconBlock({ entry, onSave, disabled }: FieldBlockProps) 
                 onClick={() => !disabled && setShowSelector(!showSelector)}
                 disabled={disabled}
                 className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-dashboard-bg-muted transition-colors hover:bg-dashboard-bg-hover"
-                title="클릭하여 아이콘 변경"
+                title="Click to change icon"
             >
                 <IconComponent className="h-8 w-8 text-dashboard-text-secondary" />
             </button>

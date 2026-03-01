@@ -1,7 +1,7 @@
 /**
- * 필드 블록 설정 — 상세보기에서 사용할 블록 컴포넌트 + 스키마 매핑
+ * Field block configuration — block component + schema mapping for detail views
  *
- * 기존 entryFieldConfig.ts의 FIELD_CONFIG는 변경하지 않음 (triggersPreview 참조 중)
+ * The existing FIELD_CONFIG in entryFieldConfig.ts is unchanged (still referenced for triggersPreview)
  */
 
 import {
@@ -22,31 +22,31 @@ import type { FieldBlockConfig } from '@/app/dashboard/components/ContentPanel/d
 export const EVENT_FIELD_BLOCKS: FieldBlockConfig[] = [
     {
         key: 'date',
-        label: '날짜',
+        label: 'Date',
         schema: eventFieldSchemas.date,
         component: DateBlock,
     },
     {
         key: 'venue',
-        label: '장소',
+        label: 'Venue',
         schema: eventFieldSchemas.venue,
         component: VenueBlock,
     },
     {
         key: 'lineup',
-        label: '라인업',
+        label: 'Lineup',
         schema: eventFieldSchemas.lineup,
         component: LineupBlock,
     },
     {
         key: 'description',
-        label: '설명',
+        label: 'Description',
         schema: eventFieldSchemas.description,
         component: DescriptionBlock,
     },
     {
         key: 'links',
-        label: '링크',
+        label: 'Links',
         schema: eventFieldSchemas.links,
         component: LinksBlock,
     },
@@ -61,13 +61,13 @@ export const MIXSET_FIELD_BLOCKS: FieldBlockConfig[] = [
     },
     {
         key: 'description',
-        label: '설명',
+        label: 'Description',
         schema: mixsetFieldSchemas.description,
         component: DescriptionBlock,
     },
     {
         key: 'tracklist',
-        label: '트랙리스트',
+        label: 'Tracklist',
         schema: mixsetFieldSchemas.tracklist,
         component: TracklistBlock,
     },
@@ -82,7 +82,7 @@ export const LINK_FIELD_BLOCKS: FieldBlockConfig[] = [
     },
     {
         key: 'description',
-        label: '설명',
+        label: 'Description',
         schema: linkFieldSchemas.description,
         component: DescriptionBlock,
     },

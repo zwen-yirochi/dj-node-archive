@@ -1,9 +1,11 @@
 // app/dashboard/page.tsx
-import { getUser } from '@/app/actions/auth';
+import { notFound } from 'next/navigation';
+
+import { isSuccess } from '@/types/result';
 import { syncUserFromAuth } from '@/lib/api/handlers/auth.handlers';
 import { getEditorDataByAuthUserId } from '@/lib/services/user.service';
-import { isSuccess } from '@/types/result';
-import { notFound } from 'next/navigation';
+import { getUser } from '@/app/actions/auth';
+
 import ContentPanel from './components/ContentPanel';
 import PreviewPanel from './components/PreviewPanel';
 import StoreInitializer from './components/StoreInitializer';
@@ -15,7 +17,7 @@ export const metadata = {
 };
 
 export default async function DashboardPage() {
-    // 데이터 페칭
+    // Data fetching
     const authUser = await getUser();
 
     let result = await getEditorDataByAuthUserId(authUser!.id);
@@ -36,7 +38,7 @@ export default async function DashboardPage() {
 
     const initialData = result.data;
 
-    // UI 렌더링
+    // UI rendering
     return (
         <>
             <StoreInitializer initialData={initialData} />

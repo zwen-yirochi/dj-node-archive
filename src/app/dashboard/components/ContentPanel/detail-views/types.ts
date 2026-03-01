@@ -4,14 +4,14 @@ import type { ZodSchema } from 'zod';
 
 import type { ContentEntry } from '@/types';
 
-/** 모든 필드 블록의 공통 props */
+/** Common props for all field blocks */
 export interface FieldBlockProps {
     entry: ContentEntry;
     onSave: (fieldKey: string, value: unknown) => void;
     disabled?: boolean;
 }
 
-/** 필드 블록 설정 */
+/** Field block configuration */
 export interface FieldBlockConfig {
     key: string;
     label: string;
@@ -19,7 +19,7 @@ export interface FieldBlockConfig {
     component: ComponentType<FieldBlockProps>;
 }
 
-/** 상세보기 컴포넌트 props */
+/** Detail view component props */
 export interface DetailViewProps {
     entry: ContentEntry;
     onSave: (fieldKey: string, value: unknown) => void;

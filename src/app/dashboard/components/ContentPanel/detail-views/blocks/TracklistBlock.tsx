@@ -39,7 +39,7 @@ export default function TracklistBlock({ entry, onSave, disabled }: FieldBlockPr
                             <EditableField
                                 value={track.track}
                                 onSave={(value) => update(i, 'track', value)}
-                                placeholder="트랙 제목"
+                                placeholder="Track title"
                                 disabled={disabled}
                                 className="text-dashboard-text-secondary"
                             />
@@ -47,7 +47,7 @@ export default function TracklistBlock({ entry, onSave, disabled }: FieldBlockPr
                         <EditableField
                             value={track.artist}
                             onSave={(value) => update(i, 'artist', value)}
-                            placeholder="아티스트"
+                            placeholder="Artist"
                             disabled={disabled}
                             className="text-dashboard-text-placeholder"
                         />
@@ -67,7 +67,7 @@ export default function TracklistBlock({ entry, onSave, disabled }: FieldBlockPr
                         className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-dashboard-border-hover p-2 text-sm text-dashboard-text-muted transition-colors hover:border-dashboard-text hover:text-dashboard-text-secondary"
                     >
                         <Plus className="h-3.5 w-3.5" />
-                        트랙 추가
+                        Add track
                     </button>
                 )}
             </div>
