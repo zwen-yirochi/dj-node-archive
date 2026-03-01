@@ -10,8 +10,7 @@ import { eventFieldSchemas, type EventDescriptionForm } from '@/lib/validations/
 import type { FieldBlockProps } from '../types';
 
 export default function DescriptionBlock({ entry, onSave, disabled }: FieldBlockProps) {
-    const isEvent = entry.type === 'event';
-    const description = isEvent ? entry.description || '' : '';
+    const description = 'description' in entry ? (entry.description as string) || '' : '';
 
     const prevValueRef = useRef(description);
 
@@ -41,8 +40,6 @@ export default function DescriptionBlock({ entry, onSave, disabled }: FieldBlock
         }
     }, [descriptionValue]);
 
-    if (!isEvent) return null;
-
     return (
         <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
@@ -51,7 +48,7 @@ export default function DescriptionBlock({ entry, onSave, disabled }: FieldBlock
             <textarea
                 {...register('description')}
                 disabled={disabled}
-                placeholder="쇼에 대한 설명을 입력하세요..."
+                placeholder="설명을 입력하세요..."
                 rows={4}
                 className="w-full resize-none bg-transparent text-sm leading-relaxed text-dashboard-text-muted outline-none placeholder:text-dashboard-text-placeholder"
             />

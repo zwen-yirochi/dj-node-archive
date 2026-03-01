@@ -14,41 +14,9 @@ import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryDetail, useEntryMutations } from '../../hooks';
 import EventDetailView from './detail-views/EventDetailView';
+import LinkDetailView from './detail-views/LinkDetailView';
+import MixsetDetailView from './detail-views/MixsetDetailView';
 import type { DetailViewProps } from './detail-views/types';
-import LinkEditor from './editors/LinkEditor';
-import MixsetEditor from './editors/MixsetEditor';
-
-// ============================================
-// Adapters — Mixset/Link 마이그레이션 전까지 기존 에디터 래핑
-// ============================================
-
-function MixsetEditorAdapter({ entry, onSave, editingField, onEditingDone }: DetailViewProps) {
-    const handleUpdate = (updates: Partial<ContentEntry>) => {
-        Object.entries(updates).forEach(([key, value]) => onSave(key, value));
-    };
-    return (
-        <MixsetEditor
-            entry={entry}
-            onUpdate={handleUpdate}
-            editingField={editingField}
-            onEditingDone={onEditingDone}
-        />
-    );
-}
-
-function LinkEditorAdapter({ entry, onSave, editingField, onEditingDone }: DetailViewProps) {
-    const handleUpdate = (updates: Partial<ContentEntry>) => {
-        Object.entries(updates).forEach(([key, value]) => onSave(key, value));
-    };
-    return (
-        <LinkEditor
-            entry={entry}
-            onUpdate={handleUpdate}
-            editingField={editingField}
-            onEditingDone={onEditingDone}
-        />
-    );
-}
 
 // ============================================
 // Detail View Registry
@@ -56,8 +24,8 @@ function LinkEditorAdapter({ entry, onSave, editingField, onEditingDone }: Detai
 
 const DETAIL_VIEW_REGISTRY: Record<EntryType, ComponentType<DetailViewProps>> = {
     event: EventDetailView,
-    mixset: MixsetEditorAdapter,
-    link: LinkEditorAdapter,
+    mixset: MixsetDetailView,
+    link: LinkDetailView,
 };
 
 // ============================================

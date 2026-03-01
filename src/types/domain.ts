@@ -84,6 +84,7 @@ export interface LinkEntry extends EntryBase {
     title: string;
     url: string;
     icon?: string;
+    description?: string;
 }
 
 /** Entry 유니온 */
