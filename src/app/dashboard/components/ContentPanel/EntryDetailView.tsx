@@ -2,25 +2,30 @@
 
 import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 
-import { ArrowLeft, MoreHorizontal } from 'lucide-react';
+import { AlertCircle, ArrowLeft, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
 import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
+import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
 import { EDITOR_MENU_CONFIG, resolveMenuItems } from '@/app/dashboard/config/menuConfig';
 import { TypeBadge } from '@/components/dna';
 import { Button } from '@/components/ui/button';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryDetail, useEntryMutations } from '../../hooks';
-import EventEditor from './editors/EventEditor';
-import LinkEditor from './editors/LinkEditor';
-import MixsetEditor from './editors/MixsetEditor';
-import type { EntryEditorProps } from './editors/types';
+import EventDetailView from './detail-views/EventDetailView';
+import LinkDetailView from './detail-views/LinkDetailView';
+import MixsetDetailView from './detail-views/MixsetDetailView';
+import type { DetailViewProps } from './detail-views/types';
 
-const EDITOR_REGISTRY: Record<EntryType, ComponentType<EntryEditorProps>> = {
-    event: EventEditor,
-    mixset: MixsetEditor,
-    link: LinkEditor,
+// ============================================
+// Detail View Registry
+// ============================================
+
+const DETAIL_VIEW_REGISTRY: Record<EntryType, ComponentType<DetailViewProps>> = {
+    event: EventDetailView,
+    mixset: MixsetDetailView,
+    link: LinkDetailView,
 };
 
 // ============================================
@@ -56,7 +61,7 @@ function useDebouncedSave(
                     await onSave(entry, fields);
                     setLastSaved(new Date());
                 } catch (error) {
-                    console.error('저장 실패:', error);
+                    console.error('Save failed:', error);
                 } finally {
                     setIsSaving(false);
                 }
@@ -94,9 +99,12 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
 
     // Local editing state
     const [localEntry, setLocalEntry] = useState<ContentEntry>(entry);
+    const localEntryRef = useRef(localEntry);
+    localEntryRef.current = localEntry;
+
     const [editingField, setEditingField] = useState<'title' | 'image' | null>(null);
 
-    // Save handler — changedFields를 mutation에 전달하여 preview 트리거 판단
+    // Save handler — pass changedFields to mutation for preview trigger decision
     const handleSave = useCallback(
         async (updated: ContentEntry, changedFields: string[]) => {
             await updateMutation.mutateAsync({ entry: updated, changedFields });
@@ -120,35 +128,42 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         onBack?.();
     };
 
-    // Update field helper — 변경된 필드 키를 함께 전달
-    const handleUpdate = (updates: Partial<ContentEntry>) => {
-        const updated = { ...localEntry, ...updates } as ContentEntry;
-        setLocalEntry(updated);
-        debouncedSave(updated, Object.keys(updates));
-    };
+    // Field-level save — always reference latest localEntry via ref
+    const handleFieldSave = useCallback(
+        (fieldKey: string, value: unknown) => {
+            const updated = { ...localEntryRef.current, [fieldKey]: value } as ContentEntry;
+            setLocalEntry(updated);
+            debouncedSave(updated, [fieldKey]);
+        },
+        [debouncedSave]
+    );
 
     const config = ENTRY_TYPE_CONFIG[localEntry.type];
 
     // Save status
     const getSaveStatus = () => {
-        if (isSaving) return '저장 중...';
+        if (isSaving) return 'Saving...';
         if (lastSaved) {
             const seconds = Math.floor((Date.now() - lastSaved.getTime()) / 1000);
-            if (seconds < 5) return '저장됨';
+            if (seconds < 5) return 'Saved';
         }
         return null;
     };
 
     const saveStatus = getSaveStatus();
 
-    // "..." 메뉴 items — config-driven + declarative action resolution
+    // Warning for view-readiness
+    const isViewReady = canAddToView(localEntry);
+    const missingFields = isViewReady ? [] : getMissingFieldLabels(localEntry, 'create');
+
+    // "..." menu items — config-driven + declarative action resolution
     const menuItems = resolveMenuItems(EDITOR_MENU_CONFIG[localEntry.type], {
         setEditingField,
         onDelete: handleDelete,
     });
 
     const handleEditingDone = () => setEditingField(null);
-    const Editor = EDITOR_REGISTRY[localEntry.type];
+    const DetailView = DETAIL_VIEW_REGISTRY[localEntry.type];
 
     return (
         <div className="flex h-full flex-col">
@@ -160,7 +175,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                         className="flex items-center gap-2 text-sm text-dashboard-text-muted transition-colors hover:text-dashboard-text"
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        목록으로
+                        Back
                     </button>
                 </div>
             )}
@@ -171,6 +186,15 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                     <TypeBadge type={config.badgeType} size="sm" />
                     {saveStatus && (
                         <span className="text-xs text-dashboard-text-muted">{saveStatus}</span>
+                    )}
+                    {!isViewReady && (
+                        <span
+                            title={`Required to add to Page: ${missingFields.join(', ')}`}
+                            className="flex items-center gap-1.5"
+                        >
+                            <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                            <span className="text-xs text-amber-500">Incomplete</span>
+                        </span>
                     )}
                 </div>
                 <SimpleDropdown
@@ -183,14 +207,11 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                 />
             </div>
 
-            {/* Editor Content */}
+            {/* Detail View Content */}
             <div className="flex-1 overflow-y-auto p-6">
-                <p className="mb-4 text-xs text-dashboard-text-placeholder">
-                    더블클릭하여 편집 · Enter로 저장 · Escape로 취소
-                </p>
-                <Editor
+                <DetailView
                     entry={localEntry}
-                    onUpdate={handleUpdate}
+                    onSave={handleFieldSave}
                     editingField={editingField}
                     onEditingDone={handleEditingDone}
                 />

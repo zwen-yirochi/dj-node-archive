@@ -1,8 +1,8 @@
 import type { BadgeType } from '@/components/dna/TypeBadge';
 
 /**
- * 엔트리 타입별 통합 설정
- * TreeItem, PageListView, CreateEntryPanel, EntryDetailView에서 사용
+ * Unified configuration per entry type
+ * Used by TreeItem, PageListView, CreateEntryPanel, and EntryDetailView
  */
 export const ENTRY_TYPE_CONFIG = {
     event: {

@@ -1,11 +1,11 @@
 // hooks/use-mutations.ts
 /**
- * 단일 composite 뮤테이션 훅 — useEntryMutations()
+ * Single composite mutation hook — useEntryMutations()
  *
- * 8개 뮤테이션을 하나의 훅으로 통합. 각 뮤테이션은
- * mutationFn + optimisticUpdate + triggersPreview 선언만으로 구성.
+ * Combines 8 mutations into one hook. Each mutation is defined
+ * with just mutationFn + optimisticUpdate + triggersPreview.
  *
- * 캐시 대상: ContentEntry[] (순수 배열)
+ * Cache target: ContentEntry[] (plain array)
  */
 
 import { useRef } from 'react';
@@ -167,7 +167,7 @@ export function useEntryMutations() {
 // Preview Trigger Helpers
 // ============================================
 
-/** 변경된 필드 중 프리뷰에 영향을 주는 필드가 있는지 판단 */
+/** Determines whether any changed fields affect the preview */
 function hasPreviewField(type: ContentEntry['type'], changedFields?: string[]): boolean {
     if (!changedFields?.length) return false;
     const fields: FieldConfig[] | undefined = FIELD_CONFIG[type];
@@ -175,7 +175,7 @@ function hasPreviewField(type: ContentEntry['type'], changedFields?: string[]): 
     return changedFields.some((key) => fields.find((f) => f.key === key)?.triggersPreview);
 }
 
-/** 삭제 대상이 공개 페이지에 표시 중인지 판단 */
+/** Determines whether the deletion target is currently displayed on the public page */
 function wasVisibleEntry(snapshot: ContentEntry[], id: string): boolean {
     const entry = snapshot.find((e) => e.id === id);
     return !!entry && canAddToView(entry);

@@ -43,7 +43,7 @@ import SectionItem from './SectionItem';
 import TreeItem from './TreeItem';
 import ViewSection from './ViewSection';
 
-/** dnd-kit data 타입 — active.data.current의 구조를 선언 */
+/** dnd-kit data type — declares the structure of active.data.current */
 interface DragData {
     type: 'entry' | 'display-entry';
     entry: ContentEntry;
@@ -74,7 +74,7 @@ export default function TreeSidebar() {
     const isPageActive = contentView.kind === 'page' || contentView.kind === 'page-detail';
     const selectedEntryId = contentView.kind === 'detail' ? contentView.entryId : null;
 
-    // 필터링 & 정렬
+    // Filter & sort
     const events = useMemo(
         () => entries.filter((e) => e.type === 'event').sort((a, b) => a.position - b.position),
         [entries]
@@ -147,12 +147,12 @@ export default function TreeSidebar() {
         const activeData = active.data.current as DragData | undefined;
         const overData = over.data.current as DragData | undefined;
 
-        // View 드롭존에 드롭
+        // Drop onto the View drop zone
         if (over.id === 'view-drop-zone' && activeData?.type === 'entry') {
             const entry = activeData.entry;
 
             if (!canAddToView(entry)) {
-                console.warn('엔트리를 완성해야 Page에 추가할 수 있습니다.');
+                console.warn('Entry must be complete to add to Page.');
                 return;
             }
 
@@ -162,7 +162,7 @@ export default function TreeSidebar() {
             return;
         }
 
-        // View 섹션 내 순서 변경
+        // Reorder within the View section
         if (activeData?.type === 'display-entry' && overData?.type === 'display-entry') {
             const activeEntry = activeData.entry;
             const overId = String(over.id).replace('view-', '');
@@ -183,7 +183,7 @@ export default function TreeSidebar() {
             return;
         }
 
-        // 섹션 내 순서 변경
+        // Reorder within a section
         if (activeData?.type === 'entry' && overData?.type === 'entry') {
             const activeEntry = activeData.entry;
             const overEntry = overData.entry;
@@ -409,7 +409,7 @@ export default function TreeSidebar() {
                 {activeItem && (
                     <div className="rounded-lg border border-dashboard-border bg-dashboard-bg-card px-3 py-1 pl-8 shadow-lg">
                         <span className="text-sm text-dashboard-text">
-                            {activeItem.entry.title || '제목 없음'}
+                            {activeItem.entry.title || 'Untitled'}
                         </span>
                     </div>
                 )}
@@ -420,8 +420,6 @@ export default function TreeSidebar() {
 
 function SectionEmptyHint({ label }: { label: string }) {
     return (
-        <p className="py-2 pl-6 text-xs text-dashboard-text-placeholder">
-            + 버튼으로 {label}을 추가하세요
-        </p>
+        <p className="py-2 pl-6 text-xs text-dashboard-text-placeholder">Use + to add {label}</p>
     );
 }

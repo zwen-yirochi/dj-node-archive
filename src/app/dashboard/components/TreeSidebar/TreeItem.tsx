@@ -28,7 +28,7 @@ interface TreeItemProps {
     onDelete?: () => void;
 }
 
-/** 상태별 아이콘 컴포넌트 */
+/** Status icon component */
 function StatusIcon({
     status,
     missingFields,
@@ -41,7 +41,7 @@ function StatusIcon({
             return <Check className="h-3.5 w-3.5 text-dashboard-type-link" />;
         case 'warning':
             return (
-                <span title={`Page에 추가하려면 필요: ${missingFields.join(', ')}`}>
+                <span title={`Required to add to Page: ${missingFields.join(', ')}`}>
                     <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
                 </span>
             );
@@ -62,16 +62,16 @@ export default function TreeItem({
     const contentView = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
 
-    // 상태 계산 - displayOrder가 숫자이면 Page에 있음
+    // Compute status - numeric displayOrder means it's in the Page
     const isInView = typeof entry.displayOrder === 'number';
     const isValid = canAddToView(entry);
     const status = getTreeItemStatus(isInView, isValid);
-    const missingFields = status === 'warning' ? getMissingFieldLabels(entry, 'view') : [];
+    const missingFields = status === 'warning' ? getMissingFieldLabels(entry, 'create') : [];
 
     const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
     const config = ENTRY_TYPE_CONFIG[entry.type];
 
-    // ViewSection에서는 'view-{id}' 형식의 ID 사용 (SortableContext와 일치)
+    // ViewSection uses 'view-{id}' format IDs (matches SortableContext)
     const sortableId = isInViewSection ? `view-${entry.id}` : entry.id;
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -105,23 +105,23 @@ export default function TreeItem({
         onDelete?.();
     };
 
-    // 엔트리 섹션용 메뉴 아이템
+    // Entry section menu items
     const entryMenuItems: DropdownMenuItemConfig[] = [
-        { label: '편집', onClick: handleEdit, icon: Pencil },
+        { label: 'Edit', onClick: handleEdit, icon: Pencil },
         { type: 'separator' },
-        { label: '삭제', onClick: handleDelete, icon: Trash2, variant: 'danger' },
+        { label: 'Delete', onClick: handleDelete, icon: Trash2, variant: 'danger' },
     ];
 
-    // Page 섹션용 메뉴 아이템
+    // Page section menu items
     const viewMenuItems: DropdownMenuItemConfig[] = [
-        { label: '편집', onClick: handleEdit, icon: Pencil },
+        { label: 'Edit', onClick: handleEdit, icon: Pencil },
         {
-            label: isVisible ? '숨김' : '표시',
+            label: isVisible ? 'Hide' : 'Show',
             onClick: () => handleVisibilityClick(),
             icon: isVisible ? Eye : EyeOff,
         },
         { type: 'separator' },
-        { label: 'Page에서 제거', onClick: handleDelete, icon: Trash2, variant: 'danger' },
+        { label: 'Remove from Page', onClick: handleDelete, icon: Trash2, variant: 'danger' },
     ];
 
     return (
@@ -140,12 +140,12 @@ export default function TreeItem({
             )}
             onClick={handleClick}
         >
-            {/* Type Badge - Page 섹션에서만 표시 */}
+            {/* Type Badge - only shown in Page section */}
             {isInViewSection && <TypeBadge type={config.badgeType} size="sm" />}
 
             {/* Title */}
             <span className={cn('ml-2 min-w-0 flex-1 truncate text-sm', isInViewSection && 'ml-2')}>
-                {entry.title || '제목 없음'}
+                {entry.title || 'Untitled'}
             </span>
 
             {/* Right Side - View Section: Menu */}
@@ -163,13 +163,13 @@ export default function TreeItem({
                     contentClassName="w-36"
                 />
             ) : (
-                /* Right Side - Entry Section: Status Icon + Menu (같은 위치) */
+                /* Right Side - Entry Section: Status Icon + Menu (same position) */
                 <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
-                    {/* 상태 아이콘 - hover 시 숨김 */}
+                    {/* Status icon - hidden on hover */}
                     <div className="absolute transition-opacity group-hover:opacity-0">
                         <StatusIcon status={status} missingFields={missingFields} />
                     </div>
-                    {/* 더보기 메뉴 - hover 시 표시 */}
+                    {/* More menu - shown on hover */}
                     <SimpleDropdown
                         trigger={
                             <button

@@ -1,6 +1,6 @@
 // hooks/entries.api.ts
 /**
- * 순수 API 함수 + 리오더 헬퍼 (React 의존성 없음)
+ * Pure API functions + reorder helpers (no React dependencies)
  */
 
 import type { ContentEntry } from '@/types';

@@ -18,8 +18,8 @@ import CreateMixsetForm from './CreateMixsetForm';
 import EventCreateSection from './EventCreateSection';
 
 // ============================================
-// Registry: EntryType → 전용 폼 컴포넌트
-// 등록된 타입은 전용 폼을 렌더링, 미등록은 기본 Title Input 폼 사용
+// Registry: EntryType -> dedicated form component
+// Registered types render a dedicated form; unregistered types use the default Title Input form
 // ============================================
 const FORM_REGISTRY: Partial<Record<EntryType, ComponentType>> = {
     event: EventCreateSection,
@@ -27,7 +27,7 @@ const FORM_REGISTRY: Partial<Record<EntryType, ComponentType>> = {
 };
 
 // ============================================
-// Default Form: 전용 폼이 없는 타입용 (현재 link)
+// Default Form: for types without a dedicated form (currently link)
 // ============================================
 function DefaultCreateForm({ type }: { type: EntryType }) {
     const [title, setTitle] = useState('');
@@ -127,7 +127,7 @@ function DefaultCreateForm({ type }: { type: EntryType }) {
 }
 
 // ============================================
-// CreateEntryPanel: Registry 기반 렌더링
+// CreateEntryPanel: Registry-based rendering
 // ============================================
 interface CreateEntryPanelProps {
     type: EntryType;
@@ -160,7 +160,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
                 )}
             </div>
 
-            {/* Content: Registry lookup → 전용 폼 or 기본 폼 */}
+            {/* Content: Registry lookup -> dedicated form or default form */}
             {DedicatedForm ? (
                 <div className="flex-1 overflow-y-auto p-6">
                     <div className="space-y-6">

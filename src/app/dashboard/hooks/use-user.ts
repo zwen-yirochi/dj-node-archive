@@ -1,9 +1,9 @@
 // hooks/use-user.ts
 /**
- * User 데이터 읽기 훅 + User 뮤테이션 훅
+ * User data read hook + User mutation hook
  *
- * user 데이터는 독립 캐시 ['user']에서 관리.
- * StoreInitializer가 initialData로 hydration하므로 실제 suspend 없음.
+ * User data is managed in an independent cache ['user'].
+ * StoreInitializer hydrates with initialData, so no actual suspend occurs.
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';

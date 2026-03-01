@@ -1,16 +1,18 @@
 'use client';
 
+import { useState } from 'react';
+
 import {
     EVENT_CREATE_OPTIONS,
     type EventCreateOption,
 } from '@/app/dashboard/config/workflowOptions';
 import { Label } from '@/components/ui/label';
 import OptionSelector from '@/components/ui/OptionSelector';
-import { useState } from 'react';
+
 import CreateEventForm from './CreateEventForm';
 import EventImportSearch from './EventImportSearch';
 
-/** Event 생성 섹션: Source 선택(import/create) + 해당 폼 렌더링 */
+/** Event create section: Source selection (import/create) + render corresponding form */
 export default function EventCreateSection() {
     const [option, setOption] = useState<EventCreateOption>('create');
 

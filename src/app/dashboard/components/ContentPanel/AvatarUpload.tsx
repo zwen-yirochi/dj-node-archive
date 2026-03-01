@@ -1,5 +1,9 @@
 'use client';
 
+import { useRef } from 'react';
+
+import { ImagePlus, Loader2, Trash2 } from 'lucide-react';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
     DropdownMenu,
@@ -7,8 +11,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ImagePlus, Loader2, Trash2 } from 'lucide-react';
-import { useRef } from 'react';
 
 interface AvatarUploadProps {
     avatarUrl: string;
@@ -82,7 +84,7 @@ export default function AvatarUpload({
                         className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
                     >
                         <ImagePlus className="mr-2 h-4 w-4" />
-                        이미지 업로드
+                        Upload image
                     </DropdownMenuItem>
                     {avatarUrl && (
                         <DropdownMenuItem
@@ -90,7 +92,7 @@ export default function AvatarUpload({
                             className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600"
                         >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            삭제
+                            Delete
                         </DropdownMenuItem>
                     )}
                 </DropdownMenuContent>

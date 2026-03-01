@@ -39,12 +39,12 @@ export default function EventImportSearch() {
 
         setIsSearching(true);
         try {
-            // 현재 사용자의 이벤트 검색 (API가 인증된 사용자의 이벤트를 반환)
+            // Search current user's events (API returns authenticated user's events)
             const res = await fetch(`/api/events?limit=20`);
             if (!res.ok) throw new Error('Search failed');
 
             const events = await res.json();
-            // 클라이언트 측에서 제목 필터링
+            // Client-side title filtering
             const filtered = events.filter((e: EventSearchResult) =>
                 e.title?.toLowerCase().includes(query.toLowerCase())
             );
@@ -73,13 +73,13 @@ export default function EventImportSearch() {
 
         setIsImporting(event.id);
         try {
-            // 이벤트 상세 정보 가져오기
+            // Fetch event details
             const res = await fetch(`/api/events/${event.id}`);
             if (!res.ok) throw new Error('Failed to fetch event');
 
             const eventData: DBEventWithVenue = await res.json();
 
-            // Entry로 변환
+            // Convert to Entry
             const newEntry = mapEventToEntry(eventData);
 
             await createEntryMutation.mutateAsync({

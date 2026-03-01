@@ -1,23 +1,26 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
+import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
+
 import {
-    type EntryType,
-    type SectionKey,
     selectSetView,
     selectSidebarSections,
     selectToggleSection,
     useDashboardStore,
+    type EntryType,
+    type SectionKey,
 } from '../../stores/dashboardStore';
-import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
-import type { ReactNode } from 'react';
 
 interface SectionItemProps {
     section: SectionKey;
     title: string;
     icon?: ReactNode;
     count?: number;
-    entryType?: EntryType; // 생성 패널에서 사용할 타입
+    entryType?: EntryType; // Type used for the create panel
     children: ReactNode;
 }
 
@@ -87,7 +90,7 @@ export default function SectionItem({
                     isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'
                 )}
             >
-                {/* Tree Line - 세로선 */}
+                {/* Tree Line - vertical line */}
                 <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
                 {children}
             </div>

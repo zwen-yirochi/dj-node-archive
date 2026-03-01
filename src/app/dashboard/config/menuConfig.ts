@@ -1,19 +1,20 @@
 /**
- * 메뉴 시스템 설정
- * - 선언적 메뉴 액션 타입 + 리졸버
- * - 타입별 에디터 메뉴 구성
+ * Menu system configuration
+ * - Declarative menu action types + resolver
+ * - Per-type editor menu composition
  */
 
+import { ImageIcon, Trash2, Type, type LucideIcon } from 'lucide-react';
+
 import type { DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
-import type { LucideIcon } from 'lucide-react';
-import { ImageIcon, Trash2, Type } from 'lucide-react';
+
 import type { EntryType } from './entryConfig';
 
 // ============================================
 // Menu action types
 // ============================================
 
-/** 선언적 메뉴 액션 — variant 추가 시 union 확장 + resolveAction에 case 추가 */
+/** Declarative menu action — extend the union and add a case to resolveAction when adding variants */
 export type MenuAction =
     | { type: 'set-editing-field'; field: 'title' | 'image' }
     | { type: 'delete' };
@@ -35,7 +36,7 @@ export type EditorMenuItemConfig = MenuActionItem | MenuSeparatorConfig;
 // Menu action resolution
 // ============================================
 
-/** 컴포넌트가 제공하는 액션 컨텍스트 */
+/** Action context provided by the component */
 export interface MenuActionContext {
     setEditingField: (field: 'title' | 'image' | null) => void;
     onDelete: () => void;
@@ -50,7 +51,7 @@ function resolveAction(action: MenuAction, ctx: MenuActionContext): () => void {
     }
 }
 
-/** config-driven 메뉴 아이템 → DropdownMenuItemConfig 변환 */
+/** Convert config-driven menu items to DropdownMenuItemConfig */
 export function resolveMenuItems(
     items: EditorMenuItemConfig[],
     ctx: MenuActionContext
@@ -67,29 +68,29 @@ export function resolveMenuItems(
 }
 
 // ============================================
-// 공유 메뉴 아이템 상수
+// Shared menu item constants
 // ============================================
 
 const EDIT_TITLE: EditorMenuItemConfig = {
     action: { type: 'set-editing-field', field: 'title' },
-    label: '제목 변경',
+    label: 'Edit title',
     icon: Type,
 };
 const EDIT_IMAGE: EditorMenuItemConfig = {
     action: { type: 'set-editing-field', field: 'image' },
-    label: '이미지 변경',
+    label: 'Edit image',
     icon: ImageIcon,
 };
 const SEPARATOR: EditorMenuItemConfig = { type: 'separator' };
 const DELETE: EditorMenuItemConfig = {
     action: { type: 'delete' },
-    label: '삭제',
+    label: 'Delete',
     icon: Trash2,
     variant: 'danger',
 };
 
 // ============================================
-// 타입별 에디터 메뉴 구성
+// Per-type editor menu composition
 // ============================================
 
 export const EDITOR_MENU_CONFIG: Record<EntryType, EditorMenuItemConfig[]> = {

@@ -24,7 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { EVENT_FORM_CONFIG } from '../../config/entryFormConfig';
 import { useCreateEntryForm } from '../../hooks/use-create-entry-form';
 
-// 공통 Input 스타일
+// Common Input styles
 const inputClassName =
     'border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-dashboard-border-hover focus:ring-1';
 
@@ -45,7 +45,7 @@ export default function CreateEventForm() {
     return (
         <Form {...form}>
             <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Root 에러 표시 */}
+                {/* Root error display */}
                 {errors.root && (
                     <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
                         {errors.root.message}

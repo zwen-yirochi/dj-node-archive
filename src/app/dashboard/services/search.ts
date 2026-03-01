@@ -1,7 +1,7 @@
 /**
  * Dashboard Search Services
  *
- * API 검색 함수들을 제공합니다.
+ * Provides API search functions.
  */
 
 import type { SearchOption } from '@/components/ui/SearchableInput';

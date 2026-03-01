@@ -1,17 +1,17 @@
 /**
- * 엔트리 생성 폼 팩토리 훅
+ * Entry creation form factory hook
  *
- * Event/Mixset/Link 생성 폼의 공통 로직을 추출:
- * - useForm + zodResolver (고정 or 동적)
- * - publishOption 상태 관리 (publishable 설정 시)
- * - canCreate 판정 (draftSchema.safeParse 기반)
- * - onSubmit: pageId 확인 → toEntry → mutate → toast
- * - 서버 에러 → 폼 필드 매핑
+ * Extracts shared logic for Event/Mixset/Link creation forms:
+ * - useForm + zodResolver (static or dynamic)
+ * - publishOption state management (when publishable is enabled)
+ * - canCreate determination (based on draftSchema.safeParse)
+ * - onSubmit: verify pageId -> toEntry -> mutate -> toast
+ * - Server error -> form field mapping
  *
- * schemas, label, canCreate는 기존 config 체계에서 파생:
- * - ENTRY_SCHEMAS[type] → draftSchema / publishSchema
- * - ENTRY_TYPE_CONFIG[type] → label
- * - draftSchema.safeParse → canCreate
+ * schemas, label, canCreate are derived from the existing config system:
+ * - ENTRY_SCHEMAS[type] -> draftSchema / publishSchema
+ * - ENTRY_TYPE_CONFIG[type] -> label
+ * - draftSchema.safeParse -> canCreate
  */
 
 import { useRef, useState } from 'react';
@@ -30,21 +30,21 @@ import { selectPageId, selectSetView, useDashboardStore } from '../stores/dashbo
 
 // ── Config ──────────────────────────────────
 export interface CreateEntryFormConfig<T extends FieldValues> {
-    /** 엔트리 타입 — schemas, label, canCreate를 기존 config에서 파생 */
+    /** Entry type — schemas, label, canCreate are derived from existing config */
     type: EntryType;
-    /** publish/private 토글 UI 활성화 여부 (기본: false) */
+    /** Whether to enable publish/private toggle UI (default: false) */
     publishable?: boolean;
     defaultValues: DefaultValues<T>;
-    /** formData → ContentEntry 변환 */
+    /** Convert formData to ContentEntry */
     toEntry: (formData: T) => ContentEntry;
-    /** 서버 에러 메시지의 키워드 → 폼 필드 매핑 (e.g. { poster: 'posterUrl' }) */
+    /** Server error message keyword -> form field mapping (e.g. { poster: 'posterUrl' }) */
     errorFieldMap?: Record<string, Path<T>>;
 }
 
 export function useCreateEntryForm<T extends FieldValues>(config: CreateEntryFormConfig<T>) {
     const { type, publishable = false, defaultValues, toEntry, errorFieldMap = {} } = config;
 
-    // ── 기존 config 체계에서 파생 ──
+    // ── Derived from existing config system ──
     const { create: draftSchema, view: publishSchema } = ENTRY_SCHEMAS[type];
     const { label } = ENTRY_TYPE_CONFIG[type];
     const hasPublishOption = publishable;
@@ -77,12 +77,12 @@ export function useCreateEntryForm<T extends FieldValues>(config: CreateEntryFor
         formState: { errors, isSubmitting },
     } = form;
 
-    // ── 외부 의존성 ──
+    // ── External dependencies ──
     const pageId = useDashboardStore(selectPageId);
     const { create: createEntryMutation } = useEntryMutations();
     const setView = useDashboardStore(selectSetView);
 
-    // ── canCreate: draftSchema가 단일 판정 소스 ──
+    // ── canCreate: draftSchema is the single source of truth ──
     const formValues = watch();
     const canCreate = draftSchema.safeParse(formValues).success;
 
