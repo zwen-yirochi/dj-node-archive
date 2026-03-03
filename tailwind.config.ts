@@ -193,6 +193,7 @@ const config: Config = {
                 'dot-appear': 'dot-appear 0.3s ease-out both',
                 'slide-down': 'slide-down 0.6s ease-out both',
                 'fade-in-slow': 'fade-in 1s ease-out 0.5s both',
+                'fade-in-view': 'fade-in 150ms ease-in-out',
             },
             textShadow: {
                 xs: '0px 0px 2px color-mix(in srgb, currentColor 40%, transparent)',
