@@ -21,17 +21,20 @@ import {
 import { useId, useMemo, useState } from 'react';
 import Link from 'next/link';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 import { ChevronDown, ChevronRight, FileText, Palette } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
-import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
+import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
 import { SIDEBAR_SECTIONS } from '@/app/dashboard/config/sidebarConfig';
 import { TypeBadge } from '@/components/dna';
 
 import { useEntries, useEntryMutations, useUser } from '../../hooks';
 import { computeReorderedDisplay, computeReorderedPositions } from '../../hooks/entries.api';
+import { entryKeys } from '../../hooks/use-editor-data';
 import {
     selectContentView,
     selectSetView,
@@ -54,6 +57,7 @@ interface DragData {
 
 export default function TreeSidebar() {
     // TanStack Query
+    const queryClient = useQueryClient();
     const { data: entries } = useEntries();
     const user = useUser();
 
@@ -104,6 +108,7 @@ export default function TreeSidebar() {
     } | null>(null);
 
     const [isDraggingOverView, setIsDraggingOverView] = useState(false);
+    const isDraggingEntry = activeItem !== null && !activeItem.isDisplayEntry;
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -148,8 +153,21 @@ export default function TreeSidebar() {
         if (over.id === 'view-drop-zone' && activeData?.type === 'entry') {
             const entry = activeData.entry;
 
+            if (typeof entry.displayOrder === 'number') {
+                toast({ variant: 'destructive', title: 'Already added to Page' });
+                return;
+            }
+
             if (!canAddToView(entry)) {
-                console.warn('Entry must be complete to add to Page.');
+                const missing = getMissingFieldLabels(entry, 'create');
+                toast({
+                    variant: 'destructive',
+                    title: 'Cannot add to Page',
+                    description:
+                        missing.length > 0
+                            ? `Missing: ${missing.join(', ')}`
+                            : 'Entry is incomplete',
+                });
                 return;
             }
 
@@ -168,6 +186,14 @@ export default function TreeSidebar() {
             if (newIndex !== -1 && active.id !== over.id) {
                 const updates = computeReorderedDisplay(entries, activeEntry.id, newIndex);
                 if (updates) {
+                    // Sync cache update before mutate to prevent flash
+                    const orderMap = new Map(updates.map((u) => [u.id, u.displayOrder]));
+                    queryClient.setQueryData<ContentEntry[]>(entryKeys.all, (prev) =>
+                        prev?.map((e) => {
+                            const newOrder = orderMap.get(e.id);
+                            return newOrder !== undefined ? { ...e, displayOrder: newOrder } : e;
+                        })
+                    );
                     reorderDisplayMutation.mutate(
                         { updates },
                         {
@@ -198,6 +224,14 @@ export default function TreeSidebar() {
                         overIndex
                     );
                     if (updates) {
+                        // Sync cache update before mutate to prevent flash
+                        const posMap = new Map(updates.map((u) => [u.id, u.position]));
+                        queryClient.setQueryData<ContentEntry[]>(entryKeys.all, (prev) =>
+                            prev?.map((e) => {
+                                const newPos = posMap.get(e.id);
+                                return newPos !== undefined ? { ...e, position: newPos } : e;
+                            })
+                        );
                         reorderEntriesMutation.mutate(
                             { updates },
                             {
@@ -296,6 +330,7 @@ export default function TreeSidebar() {
                         <ViewSection
                             entries={displayedEntries}
                             isDraggingOver={isDraggingOverView}
+                            isDragging={isDraggingEntry}
                             isCollapsed={isPageCollapsed}
                             onDeleteEntry={handleDelete}
                         />
@@ -349,7 +384,7 @@ export default function TreeSidebar() {
             </aside>
 
             {/* Drag Overlay */}
-            <DragOverlay>
+            <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
                 {activeItem && (
                     <div className="rounded-lg border border-dashboard-border bg-dashboard-bg-card px-3 py-1 pl-8 shadow-lg">
                         <span className="text-sm text-dashboard-text">
