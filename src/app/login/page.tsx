@@ -1,6 +1,7 @@
 // src/app/login/page.tsx
-import { loginWithGoogle } from '@/app/actions/auth';
 import type { Metadata } from 'next';
+
+import { loginAsGuest, loginWithGoogle } from '@/app/actions/auth';
 
 export const metadata: Metadata = {
     title: 'Login - DJ Archive',
@@ -31,7 +32,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                             ? 'Authentication failed. Please try again.'
                             : error === 'oauth_failed'
                               ? 'OAuth login failed. Please try again.'
-                              : 'An error occurred. Please try again.'}
+                              : error === 'guest_unavailable'
+                                ? 'Guest login is not available.'
+                                : error === 'guest_failed'
+                                  ? 'Guest login failed. Please try again.'
+                                  : 'An error occurred. Please try again.'}
                     </div>
                 )}
 
@@ -44,6 +49,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                         Continue with Google
                     </button>
                 </form>
+
+                {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && (
+                    <form action={loginAsGuest}>
+                        <button
+                            type="submit"
+                            className="flex w-full items-center justify-center gap-3 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                        >
+                            Try as Guest
+                        </button>
+                    </form>
+                )}
 
                 <p className="text-center text-xs text-gray-500">
                     By signing in, you agree to our Terms of Service and Privacy Policy.
