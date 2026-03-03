@@ -1,6 +1,14 @@
 // types/domain.ts
 // camelCase, 화면 표시에 최적화
 
+// Header Style
+export type HeaderStyle = 'minimal' | 'banner' | 'portrait' | 'shapes';
+
+// Page Settings
+export interface PageSettings {
+    headerStyle: HeaderStyle;
+}
+
 // User & Page
 export interface User {
     id: string;
@@ -20,6 +28,7 @@ export interface Page {
     bio?: string;
     avatarUrl?: string;
     themeColor?: string;
+    headerStyle?: HeaderStyle;
 }
 
 // ============================================

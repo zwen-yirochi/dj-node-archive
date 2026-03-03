@@ -13,6 +13,9 @@ export type {
     Event,
     EventEntry,
     ExternalLink,
+    // Header Style & Page Settings
+    HeaderStyle,
+    PageSettings,
     LinkEntry,
     Mixset,
     MixsetEntry,

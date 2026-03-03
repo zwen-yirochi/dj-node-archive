@@ -28,6 +28,7 @@ export interface Page {
     bio?: string;
     avatar_url?: string;
     theme_color?: string;
+    header_style?: string;
     created_at: ISODateString;
     updated_at: ISODateString;
 }
