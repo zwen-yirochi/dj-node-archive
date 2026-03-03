@@ -38,6 +38,7 @@ import {
     selectToggleSection,
     useDashboardStore,
 } from '../../stores/dashboardStore';
+import { CommandPalette } from '../CommandPalette';
 import AccountSection from './AccountSection';
 import SectionItem from './SectionItem';
 import TreeItem from './TreeItem';
@@ -255,6 +256,11 @@ export default function TreeSidebar() {
                     >
                         DNA
                     </Link>
+                </div>
+
+                {/* Search */}
+                <div className="px-3 pb-2">
+                    <CommandPalette />
                 </div>
 
                 {/* Tree Content */}
