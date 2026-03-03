@@ -12,13 +12,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 import { useUser, useUserMutations } from '../../hooks';
-import { userKeys } from '../../hooks/use-editor-data';
+import { usePageMeta, userKeys } from '../../hooks/use-editor-data';
+import { usePageMutations } from '../../hooks/use-page';
+import { selectPageId, useDashboardStore } from '../../stores/dashboardStore';
 import AvatarUpload from './AvatarUpload';
 import HeaderStyleSection from './HeaderStyleSection';
 
 export default function BioDesignPanel() {
     const user = useUser();
     const { updateProfile, uploadAvatar, deleteAvatar } = useUserMutations();
+    const { data: pageMeta } = usePageMeta();
+    const { updateHeaderStyle } = usePageMutations();
+    const pageId = useDashboardStore(selectPageId);
     const queryClient = useQueryClient();
 
     const [isProfileOpen, setIsProfileOpen] = useState(true);
@@ -124,7 +129,14 @@ export default function BioDesignPanel() {
                     </section>
 
                     {/* Header Style Section */}
-                    <HeaderStyleSection />
+                    <HeaderStyleSection
+                        headerStyle={pageMeta.pageSettings.headerStyle}
+                        onChangeHeaderStyle={(style) => {
+                            if (pageId) {
+                                updateHeaderStyle.mutate({ pageId, headerStyle: style });
+                            }
+                        }}
+                    />
                 </div>
             </div>
         </div>
