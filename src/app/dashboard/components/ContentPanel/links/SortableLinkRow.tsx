@@ -58,7 +58,7 @@ export function SortableLinkRow({
             ref={setNodeRef}
             style={style}
             className={cn(
-                'flex items-center gap-2 border-b border-dashboard-border px-3 py-2 last:border-b-0',
+                'flex items-center gap-2 border-b border-dashboard-border/30 px-3 py-2.5 last:border-b-0',
                 isDragging && 'z-10 bg-dashboard-bg-surface shadow-md'
             )}
         >

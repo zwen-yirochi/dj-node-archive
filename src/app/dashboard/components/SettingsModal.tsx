@@ -42,13 +42,13 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DashboardDialogContent size="xl" className="gap-0 p-0">
-                <DialogHeader className="border-b border-dashboard-border px-6 py-4">
+                <DialogHeader className="border-b border-dashboard-border/50 px-6 py-4">
                     <DialogTitle className="text-dashboard-text">Settings</DialogTitle>
                 </DialogHeader>
 
                 <div className="flex min-h-[400px]">
                     {/* Left nav */}
-                    <nav className="w-44 shrink-0 border-r border-dashboard-border p-3">
+                    <nav className="w-44 shrink-0 border-r border-dashboard-border/50 p-3">
                         {SETTINGS_SECTIONS.map(({ key, label, icon: Icon }) => (
                             <button
                                 key={key}

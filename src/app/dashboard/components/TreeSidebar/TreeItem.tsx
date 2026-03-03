@@ -143,7 +143,7 @@ export default function TreeItem({
             {...attributes}
             {...listeners}
             className={cn(
-                'group relative flex cursor-pointer touch-none items-center rounded-md py-1.5 pl-5 pr-2 transition-colors',
+                'group relative flex cursor-pointer touch-none items-center rounded-md py-1 pl-5 pr-2 transition-colors',
                 isSelected
                     ? 'bg-dashboard-bg-active text-dashboard-text'
                     : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover hover:text-dashboard-text',

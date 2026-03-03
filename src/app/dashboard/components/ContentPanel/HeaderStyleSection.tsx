@@ -15,9 +15,7 @@ export default function HeaderStyleSection({
 }: HeaderStyleSectionProps) {
     return (
         <section>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                Header
-            </h3>
+            <h3 className="mb-4 text-sm font-semibold text-dashboard-text">Header</h3>
 
             {/* Style Cards */}
             <div className="grid grid-cols-2 gap-3">

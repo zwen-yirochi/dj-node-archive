@@ -27,7 +27,7 @@ export default function MixsetDetailView({
     const TracklistComponent = blockByKey.tracklist;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {/* Header — Read-only cover + title */}
             <div className="space-y-3">
                 {coverUrl ? (
@@ -54,7 +54,7 @@ export default function MixsetDetailView({
             </div>
 
             {/* URL block */}
-            <div className="rounded-xl bg-dashboard-bg-muted p-4">
+            <div>
                 <UrlComponent entry={entry} onSave={onSave} disabled={disabled} />
             </div>
 
@@ -62,7 +62,7 @@ export default function MixsetDetailView({
             <DescComponent entry={entry} onSave={onSave} disabled={disabled} />
 
             {/* Tracklist block */}
-            <div className="rounded-xl bg-dashboard-bg-muted p-4">
+            <div>
                 <TracklistComponent entry={entry} onSave={onSave} disabled={disabled} />
             </div>
 

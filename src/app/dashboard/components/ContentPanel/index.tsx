@@ -63,7 +63,7 @@ export default function ContentPanel() {
             case 'page-detail':
             case 'detail':
                 return (
-                    <div className="h-full overflow-hidden rounded-2xl border border-dashboard-border">
+                    <div className="h-full overflow-hidden rounded-2xl">
                         <ErrorBoundaryWithQueryReset>
                             <Suspense fallback={<LoadingSkeleton />}>
                                 <EntryDetailView
@@ -77,7 +77,7 @@ export default function ContentPanel() {
 
             case 'create':
                 return (
-                    <div className="h-full overflow-hidden rounded-2xl border border-dashboard-border shadow-xl">
+                    <div className="h-full overflow-hidden rounded-2xl">
                         <CreateEntryPanel type={view.entryType} />
                     </div>
                 );

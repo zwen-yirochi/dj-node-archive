@@ -173,7 +173,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         <div className="flex h-full flex-col">
             {/* Back button (optional) */}
             {onBack && (
-                <div className="border-b border-dashboard-border px-4 py-3">
+                <div className="border-b border-dashboard-border/50 px-4 py-3">
                     <button
                         onClick={onBack}
                         className="flex items-center gap-2 text-sm text-dashboard-text-muted transition-colors hover:text-dashboard-text"
@@ -185,7 +185,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
             )}
 
             {/* Editor Header */}
-            <div className="flex items-center justify-between border-b border-dashboard-border px-6 py-4">
+            <div className="flex items-center justify-between border-b border-dashboard-border/50 px-6 py-4">
                 <div className="flex items-center gap-3">
                     <TypeBadge type={config.badgeType} size="sm" />
                     {saveStatus && (

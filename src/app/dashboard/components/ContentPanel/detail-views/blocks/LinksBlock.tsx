@@ -24,9 +24,7 @@ export default function LinksBlock({ entry, onSave, disabled }: FieldBlockProps)
 
     return (
         <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                Related links
-            </p>
+            <p className="text-sm font-semibold text-dashboard-text">Related links</p>
             {links.map((link, i) => (
                 <div
                     key={keys[i]}

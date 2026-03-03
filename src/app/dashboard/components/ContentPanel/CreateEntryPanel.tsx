@@ -86,7 +86,7 @@ function DefaultCreateForm({ type }: { type: EntryType }) {
     return (
         <>
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
                 <div className="space-y-2">
                     <Label htmlFor="title" className="text-dashboard-text-secondary">
                         Title
@@ -105,7 +105,7 @@ function DefaultCreateForm({ type }: { type: EntryType }) {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 border-t border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
+            <div className="flex items-center justify-end gap-3 border-t border-dashboard-border/50 px-6 py-4">
                 <Button
                     onClick={handleCancel}
                     variant="ghost"
@@ -141,12 +141,10 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
     return (
         <div className="flex h-full flex-col bg-dashboard-bg-card">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
+            <div className="flex items-center justify-between border-b border-dashboard-border/50 px-6 py-5">
                 <div className="flex items-center gap-3">
                     <TypeBadge type={config.badgeType} size="sm" />
-                    <h2 className="text-xl font-semibold text-dashboard-text">
-                        New {config.label}
-                    </h2>
+                    <h2 className="text-lg font-medium text-dashboard-text">New {config.label}</h2>
                 </div>
                 {DedicatedForm && (
                     <Button
@@ -162,7 +160,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
 
             {/* Content: Registry lookup -> dedicated form or default form */}
             {DedicatedForm ? (
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
                     <div className="space-y-6">
                         <DedicatedForm />
                     </div>

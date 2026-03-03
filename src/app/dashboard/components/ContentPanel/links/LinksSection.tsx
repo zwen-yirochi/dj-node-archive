@@ -151,13 +151,11 @@ export default function LinksSection({ links, onSave }: LinksSectionProps) {
                 ) : (
                     <ChevronRight className="h-4 w-4 text-dashboard-text-muted" />
                 )}
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                    Links
-                </h3>
+                <h3 className="text-sm font-semibold text-dashboard-text">Links</h3>
             </button>
 
             {isOpen && (
-                <div className="mt-4 overflow-hidden rounded-lg border border-dashboard-border">
+                <div className="mt-4">
                     <DndContext
                         id={dndId}
                         sensors={sensors}
@@ -185,7 +183,7 @@ export default function LinksSection({ links, onSave }: LinksSectionProps) {
                     <button
                         type="button"
                         onClick={handleAddCustom}
-                        className="flex w-full items-center gap-1.5 border-t border-dashboard-border px-3 py-2 text-xs text-dashboard-text-muted hover:bg-dashboard-bg-hover hover:text-dashboard-text"
+                        className="flex w-full items-center gap-1.5 px-3 py-2 text-xs text-dashboard-text-muted hover:bg-dashboard-bg-hover hover:text-dashboard-text"
                     >
                         <Plus className="h-3.5 w-3.5" />
                         <span>Add Custom Link</span>

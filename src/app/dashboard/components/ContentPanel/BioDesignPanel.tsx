@@ -49,16 +49,16 @@ export default function BioDesignPanel() {
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="border-b border-dashboard-border px-6 py-4">
-                <h2 className="text-lg font-semibold text-dashboard-text">Bio Design</h2>
+            <div className="border-b border-dashboard-border/50 px-6 py-5">
+                <h2 className="text-lg font-medium text-dashboard-text">Bio Design</h2>
                 <p className="text-sm text-dashboard-text-muted">
                     Configure your profile and page style
                 </p>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-                <div className="space-y-6">
+            <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
+                <div className="space-y-8">
                     {/* Profile Section - Read Only */}
                     <section>
                         <div className="flex items-center gap-2">
@@ -71,7 +71,7 @@ export default function BioDesignPanel() {
                                 ) : (
                                     <ChevronRight className="h-4 w-4 text-dashboard-text-muted" />
                                 )}
-                                <h3 className="text-sm font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
+                                <h3 className="text-sm font-semibold text-dashboard-text">
                                     Profile
                                 </h3>
                             </button>

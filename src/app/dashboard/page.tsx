@@ -43,23 +43,23 @@ export default async function DashboardPage() {
         <>
             <StoreInitializer initialData={initialData} />
 
-            <div className="flex h-screen overflow-hidden">
-                {/* TreeSidebar */}
-                <div className="p-3">
+            <div className="flex h-screen overflow-hidden p-3">
+                <div className="flex flex-1 overflow-hidden rounded-2xl bg-white shadow-lg">
+                    {/* TreeSidebar */}
                     <TreeSidebar />
-                </div>
 
-                {/* Main Content */}
-                <div className="flex flex-1 gap-6 overflow-hidden p-3 pl-2">
-                    {/* ContentPanel */}
-                    <div className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-dashboard-bg-card shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
-                        <ContentPanel />
+                    {/* Main Content */}
+                    <div className="flex flex-1 overflow-hidden">
+                        {/* ContentPanel */}
+                        <div className="flex flex-1 flex-col overflow-hidden">
+                            <ContentPanel />
+                        </div>
+
+                        {/* PreviewPanel */}
+                        <aside className="w-[400px] shrink-0 overflow-hidden">
+                            <PreviewPanel />
+                        </aside>
                     </div>
-
-                    {/* PreviewPanel */}
-                    <aside className="w-[400px] shrink-0 overflow-hidden">
-                        <PreviewPanel />
-                    </aside>
                 </div>
             </div>
         </>

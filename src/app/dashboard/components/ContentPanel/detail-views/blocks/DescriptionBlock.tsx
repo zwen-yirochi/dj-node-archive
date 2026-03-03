@@ -42,9 +42,7 @@ export default function DescriptionBlock({ entry, onSave, disabled }: FieldBlock
 
     return (
         <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                Description
-            </p>
+            <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
             <textarea
                 {...register('description')}
                 disabled={disabled}

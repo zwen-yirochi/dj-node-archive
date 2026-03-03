@@ -77,8 +77,8 @@ function SortableItem({
             className={cn(
                 'group flex items-center gap-3 rounded-lg border p-3 transition-all',
                 isDragging
-                    ? 'border-dashboard-border-hover shadow-lg'
-                    : 'border-dashboard-border hover:border-dashboard-border-hover',
+                    ? 'shadow-panel-hover border-dashboard-border-hover'
+                    : 'hover:shadow-panel border-dashboard-border/60 hover:border-dashboard-border-hover',
                 !isVisible && 'opacity-60'
             )}
         >
@@ -210,8 +210,8 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="border-b bg-dashboard-bg-muted px-6 py-4">
-                <h2 className="text-lg font-semibold text-dashboard-text">Page layout</h2>
+            <div className="border-b border-dashboard-border/50 px-6 py-5">
+                <h2 className="text-lg font-medium text-dashboard-text">Page layout</h2>
                 <p className="mt-1 text-sm text-dashboard-text-muted">
                     Manage entries displayed on your public page. Drag to reorder.
                 </p>
@@ -226,8 +226,8 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
                 {displayedEntries.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                         <div className="text-center">
-                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-dashboard-bg-muted">
-                                <Calendar className="h-8 w-8 text-dashboard-text-placeholder" />
+                            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-dashboard-bg-hover/40">
+                                <Calendar className="h-6 w-6 text-dashboard-text-placeholder" />
                             </div>
                             <p className="text-sm font-medium text-dashboard-text-secondary">
                                 Page is empty

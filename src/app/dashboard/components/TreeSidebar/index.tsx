@@ -269,7 +269,7 @@ export default function TreeSidebar() {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <aside className="flex h-full w-64 flex-col rounded-2xl bg-dashboard-bg-surface shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
+            <aside className="flex h-full w-64 shrink-0 flex-col bg-dashboard-bg-muted">
                 {/* Header */}
                 <div className="px-4 py-4">
                     <Link
@@ -286,19 +286,19 @@ export default function TreeSidebar() {
                 </div>
 
                 {/* Tree Content */}
-                <div className="flex-1 overflow-y-auto px-3 pb-3">
+                <div className="scrollbar-thin flex-1 overflow-y-auto px-3 pb-3">
                     {/* Bio Design */}
                     <button
                         onClick={() => setView({ kind: 'bio' })}
                         className={cn(
                             'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
                             isBioActive
-                                ? 'bg-dashboard-bg-active text-dashboard-text'
-                                : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
+                                ? 'bg-dashboard-bg-active/70 font-medium text-dashboard-text'
+                                : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover/70'
                         )}
                     >
                         <Palette className="h-4 w-4 text-dashboard-text-muted" />
-                        <span className="flex-1 text-sm font-medium">Bio design</span>
+                        <span className="flex-1 text-sm">Bio design</span>
                     </button>
 
                     {/* Page */}
@@ -307,12 +307,12 @@ export default function TreeSidebar() {
                         className={cn(
                             'group mb-1 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
                             isPageActive
-                                ? 'bg-dashboard-bg-active text-dashboard-text'
-                                : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
+                                ? 'bg-dashboard-bg-active/70 font-medium text-dashboard-text'
+                                : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover/70'
                         )}
                     >
                         <FileText className="h-4 w-4 text-dashboard-text-muted" />
-                        <span className="flex-1 text-sm font-medium">Page</span>
+                        <span className="flex-1 text-sm">Page</span>
                         <button
                             onClick={handlePageToggle}
                             className="flex h-4 w-4 items-center justify-center text-dashboard-text-placeholder hover:text-dashboard-text-muted"
@@ -337,10 +337,10 @@ export default function TreeSidebar() {
                     </div>
 
                     {/* Divider */}
-                    <div className="my-3 border-t border-dashboard-border" />
+                    <div className="my-2" />
 
                     {/* Components */}
-                    <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-dashboard-text-placeholder">
+                    <p className="mb-2 px-2 text-[10px] font-medium uppercase tracking-wider text-dashboard-text-placeholder">
                         Components
                     </p>
 

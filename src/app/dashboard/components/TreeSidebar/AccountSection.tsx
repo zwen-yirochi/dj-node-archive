@@ -40,10 +40,10 @@ export default function AccountSection({ username }: AccountSectionProps) {
 
     return (
         <>
-            <div className="mt-auto border-t border-dashboard-border">
+            <div className="mt-auto">
                 <SimpleDropdown
                     trigger={
-                        <button className="flex w-full cursor-pointer items-center gap-3 p-3 transition-colors hover:bg-dashboard-bg-hover">
+                        <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 transition-colors hover:bg-dashboard-bg-hover/70">
                             <Avatar className="h-8 w-8 border border-dashboard-border">
                                 <AvatarImage
                                     src={user.avatarUrl}

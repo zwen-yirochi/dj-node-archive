@@ -26,7 +26,7 @@ export default function EventDetailView({
     const title = entry.title;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {/* Header — Read-only image + title */}
             <div className="space-y-3">
                 {posterUrl ? (
@@ -53,7 +53,7 @@ export default function EventDetailView({
             </div>
 
             {/* Info Grid — date, venue, lineup */}
-            <div className="space-y-3 rounded-xl bg-dashboard-bg-muted p-4">
+            <div className="space-y-3">
                 {EVENT_FIELD_BLOCKS.slice(0, 3).map((block) => (
                     <block.component
                         key={block.key}
