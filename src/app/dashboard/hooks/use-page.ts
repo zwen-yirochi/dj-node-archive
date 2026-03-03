@@ -9,6 +9,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { HeaderStyle, ProfileLink } from '@/types';
+import { toast } from '@/hooks/use-toast';
 
 import { pageKeys, usePageMeta, type PageMeta } from './use-editor-data';
 
@@ -53,6 +54,10 @@ export function usePageMutations() {
             if (ctx?.previous) {
                 queryClient.setQueryData(pageKeys.all, ctx.previous);
             }
+            toast({ variant: 'destructive', title: 'Failed to update header style.' });
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: pageKeys.all });
         },
     });
 
@@ -74,6 +79,10 @@ export function usePageMutations() {
             if (ctx?.previous) {
                 queryClient.setQueryData(pageKeys.all, ctx.previous);
             }
+            toast({ variant: 'destructive', title: 'Failed to save links.' });
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: pageKeys.all });
         },
     });
 

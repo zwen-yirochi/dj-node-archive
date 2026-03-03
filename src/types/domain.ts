@@ -11,13 +11,13 @@ export type ProfileLinkType =
     | 'spotify'
     | 'apple_music'
     | 'soundcloud'
-    | 'region'
     | 'custom';
 
 export interface ProfileLink {
     type: ProfileLinkType;
     url: string;
     label?: string;
+    enabled?: boolean;
 }
 
 // Page Settings

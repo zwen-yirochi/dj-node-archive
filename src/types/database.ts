@@ -22,6 +22,7 @@ export interface ProfileLinkData {
     type: string;
     url: string;
     label?: string;
+    enabled?: boolean;
 }
 
 export interface Page {

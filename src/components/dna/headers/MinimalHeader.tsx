@@ -82,14 +82,13 @@ const PLATFORM_LABELS: Record<string, string> = {
     spotify: 'Spotify',
     apple_music: 'Apple Music',
     soundcloud: 'SoundCloud',
-    region: 'Region',
 };
 
 export function SocialLinks({ links, className }: { links: ProfileLink[]; className?: string }) {
     if (links.length === 0) return null;
 
     const externalLinks = links
-        .filter((link) => link.url)
+        .filter((link) => link.url && link.enabled !== false)
         .map((link) => ({
             label:
                 link.type === 'custom'
