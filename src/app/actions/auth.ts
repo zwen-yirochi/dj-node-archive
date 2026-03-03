@@ -1,9 +1,10 @@
 // src/app/actions/auth.ts
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+
+import { createClient } from '@/lib/supabase/server';
 
 export async function loginWithGoogle() {
     const supabase = await createClient();
@@ -26,6 +27,27 @@ export async function loginWithGoogle() {
     if (data.url) {
         redirect(data.url);
     }
+}
+
+export async function loginAsGuest() {
+    const email = process.env.DEMO_ACCOUNT_EMAIL;
+    const password = process.env.DEMO_ACCOUNT_PASSWORD;
+
+    if (!email || !password) {
+        redirect('/login?error=guest_unavailable');
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    });
+
+    if (error) {
+        redirect('/login?error=guest_failed');
+    }
+
+    redirect('/dashboard');
 }
 
 export async function logout() {
