@@ -51,7 +51,7 @@ export default function VenueBlock({ entry, onSave, disabled }: FieldBlockProps)
                 className="flex-1 bg-transparent text-dashboard-text-secondary outline-none placeholder:text-dashboard-text-placeholder"
             />
             {errors.venue?.name && (
-                <span className="text-xs text-red-500">{errors.venue.name.message}</span>
+                <span className="text-xs text-dashboard-danger">{errors.venue.name.message}</span>
             )}
         </div>
     );

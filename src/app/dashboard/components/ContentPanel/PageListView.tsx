@@ -118,7 +118,7 @@ function SortableItem({
                 </button>
                 <button
                     onClick={onRemove}
-                    className="rounded-md p-2 text-dashboard-text-placeholder transition-colors hover:bg-red-50 hover:text-red-600"
+                    className="rounded-md p-2 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-danger-bg hover:text-dashboard-danger"
                     title="Remove from Page"
                 >
                     <Trash2 className="h-4 w-4" />
@@ -222,7 +222,7 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="scrollbar-thin flex-1 overflow-y-auto p-4">
                 {displayedEntries.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                         <div className="text-center">

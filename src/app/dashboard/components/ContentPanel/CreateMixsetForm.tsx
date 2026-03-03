@@ -30,7 +30,7 @@ export default function CreateMixsetForm() {
         <Form {...form}>
             <form onSubmit={handleSubmit} className="space-y-6">
                 {errors.root && (
-                    <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+                    <div className="rounded-md bg-dashboard-danger-bg p-3 text-sm text-dashboard-danger">
                         {errors.root.message}
                     </div>
                 )}
@@ -42,7 +42,7 @@ export default function CreateMixsetForm() {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel className="text-dashboard-text-secondary">
-                                Title <span className="text-red-500">*</span>
+                                Title <span className="text-dashboard-danger">*</span>
                             </FormLabel>
                             <FormControl>
                                 <Input

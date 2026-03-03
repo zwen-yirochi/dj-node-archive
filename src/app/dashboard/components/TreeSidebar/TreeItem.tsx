@@ -42,11 +42,11 @@ function StatusIcon({
 }) {
     switch (status) {
         case 'inView':
-            return <Check className="h-3.5 w-3.5 text-dashboard-type-link" />;
+            return <Check className="h-3.5 w-3.5 text-dashboard-success" />;
         case 'warning':
             return (
                 <span title={`Required to add to Page: ${missingFields.join(', ')}`}>
-                    <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                    <AlertCircle className="h-3.5 w-3.5 text-dashboard-warning" />
                 </span>
             );
         default:

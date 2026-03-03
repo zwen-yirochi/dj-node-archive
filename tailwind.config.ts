@@ -100,12 +100,17 @@ const config: Config = {
                         muted: 'rgb(245 245 245)', // neutral-100
                         hover: 'rgb(212 212 212)', // neutral-300
                     },
-                    // Component type colors
-                    type: {
-                        event: 'rgb(59 130 246)', // blue-500
-                        mixset: 'rgb(168 85 247)', // purple-500
-                        link: 'rgb(34 197 94)', // green-500
+                    // Danger (삭제, 에러, 유효성 실패)
+                    danger: {
+                        DEFAULT: 'rgb(239 68 68)', // red-500 — 텍스트, 아이콘, 필수표시(*)
+                        bg: 'rgb(254 242 242)', // red-50  — 에러 알림 배경
+                        emphasis: 'rgb(220 38 38)', // red-600 — 파괴적 버튼 배경
+                        'emphasis-hover': 'rgb(185 28 28)', // red-700 — 파괴적 버튼 호버
                     },
+                    // Warning (미완성 상태)
+                    warning: 'rgb(245 158 11)', // amber-500
+                    // Success (뷰 추가됨 표시 등)
+                    success: 'rgb(34 197 94)', // green-500
                 },
             },
             fontFamily: {

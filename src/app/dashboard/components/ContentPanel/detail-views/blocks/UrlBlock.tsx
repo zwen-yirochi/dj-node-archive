@@ -107,7 +107,7 @@ export default function UrlBlock({ entry, onSave, disabled }: FieldBlockProps) {
                     </button>
                     <button
                         onClick={handleClear}
-                        className="rounded p-1.5 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-bg-hover hover:text-red-500"
+                        className="rounded p-1.5 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-bg-hover hover:text-dashboard-danger"
                         title="Remove"
                     >
                         <X className="h-3.5 w-3.5" />

@@ -123,7 +123,7 @@ export function ImageEditModal({
                             )}
                         </Button>
                     </div>
-                    {error && <p className="text-center text-xs text-red-500">{error}</p>}
+                    {error && <p className="text-center text-xs text-dashboard-danger">{error}</p>}
                     <div className="flex justify-end">
                         <Button
                             variant="ghost"

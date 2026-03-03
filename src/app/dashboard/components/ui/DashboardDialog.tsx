@@ -122,7 +122,7 @@ function DashboardConfirmDialog({
                         }}
                         className={
                             destructive
-                                ? 'bg-red-600 text-white hover:bg-red-700'
+                                ? 'bg-dashboard-danger-emphasis text-white hover:bg-dashboard-danger-emphasis-hover'
                                 : 'bg-dashboard-text text-white hover:bg-dashboard-text/90'
                         }
                     >

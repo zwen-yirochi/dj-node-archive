@@ -2,7 +2,11 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+
 import { type LucideIcon } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,7 +14,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from './dropdown-menu';
-import { cn } from '@/lib/utils';
 
 // 클릭 액션 아이템 타입
 export interface DropdownActionItem {
@@ -107,7 +110,7 @@ export function SimpleDropdown({
                     const itemClassName = cn(
                         'cursor-pointer',
                         isDanger
-                            ? 'text-red-600 focus:bg-red-50 focus:text-red-600'
+                            ? 'text-dashboard-danger focus:bg-dashboard-danger-bg'
                             : 'text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text'
                     );
 

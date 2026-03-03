@@ -196,8 +196,8 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                             title={`Required to add to Page: ${missingFields.join(', ')}`}
                             className="flex items-center gap-1.5"
                         >
-                            <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
-                            <span className="text-xs text-amber-500">Incomplete</span>
+                            <AlertCircle className="h-3.5 w-3.5 text-dashboard-warning" />
+                            <span className="text-xs text-dashboard-warning">Incomplete</span>
                         </span>
                     )}
                 </div>
@@ -212,7 +212,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
             </div>
 
             {/* Detail View Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
                 <DetailView
                     entry={localEntry}
                     onSave={handleFieldSave}

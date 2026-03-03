@@ -71,7 +71,9 @@ export default function DateBlock({ entry, onSave, disabled }: FieldBlockProps) 
                     </p>
                 )}
             </div>
-            {errors.date && <span className="text-xs text-red-500">{errors.date.message}</span>}
+            {errors.date && (
+                <span className="text-xs text-dashboard-danger">{errors.date.message}</span>
+            )}
         </div>
     );
 }

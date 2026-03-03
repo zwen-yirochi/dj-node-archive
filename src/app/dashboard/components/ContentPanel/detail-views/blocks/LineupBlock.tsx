@@ -46,7 +46,7 @@ export default function LineupBlock({ entry, onSave, disabled }: FieldBlockProps
                             {!disabled && (
                                 <button
                                     onClick={() => removePerformer(performer)}
-                                    className="text-dashboard-text-placeholder hover:text-red-500"
+                                    className="text-dashboard-text-placeholder hover:text-dashboard-danger"
                                 >
                                     <X className="h-3 w-3" />
                                 </button>

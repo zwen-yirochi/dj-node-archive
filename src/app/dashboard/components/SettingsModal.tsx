@@ -205,7 +205,7 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
                         disabled={isUploading}
                         variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-600"
+                        className="text-dashboard-danger hover:bg-dashboard-danger-bg"
                     >
                         <Trash2 className="mr-1 h-4 w-4" />
                         Remove photo
@@ -289,7 +289,7 @@ function AccountSettingsSection() {
                     onClick={handleLogout}
                     variant="ghost"
                     size="sm"
-                    className="mt-3 text-red-600 hover:bg-red-50 hover:text-red-600"
+                    className="mt-3 text-dashboard-danger hover:bg-dashboard-danger-bg"
                 >
                     <LogOut className="mr-1.5 h-4 w-4" />
                     Sign out
