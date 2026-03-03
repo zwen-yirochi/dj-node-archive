@@ -35,13 +35,14 @@ import {
 // Types
 // ============================================
 
-/** Internal representation — presets always exist, active = has URL */
+/** Internal representation — presets always exist, toggled on/off */
 interface LinkItem {
     id: string; // stable ID for dnd-kit
     type: ProfileLinkType;
     url: string;
     label?: string;
     isPreset: boolean;
+    enabled: boolean; // preset: toggle state, custom: always true
 }
 
 // Preset types (always visible, cannot be deleted)
@@ -63,6 +64,7 @@ function buildLinkItems(links: ProfileLink[]): LinkItem[] {
             url: link.url,
             label: link.label,
             isPreset,
+            enabled: true, // saved links are always enabled
         });
     }
 
@@ -74,6 +76,7 @@ function buildLinkItems(links: ProfileLink[]): LinkItem[] {
                 type: presetType,
                 url: '',
                 isPreset: true,
+                enabled: false,
             });
         }
     }
@@ -82,9 +85,9 @@ function buildLinkItems(links: ProfileLink[]): LinkItem[] {
 }
 
 function toProfileLinks(items: LinkItem[]): ProfileLink[] {
-    // Only export items that have a URL (active presets + custom links with URL)
+    // Export enabled items that have a URL
     return items
-        .filter((item) => item.url.trim() !== '')
+        .filter((item) => item.enabled && item.url.trim() !== '')
         .map((item) => ({
             type: item.type,
             url: item.url,
@@ -107,12 +110,19 @@ interface LinksSectionProps {
 
 interface SortableLinkRowProps {
     item: LinkItem;
+    onToggle: (id: string) => void;
     onUrlChange: (id: string, url: string) => void;
     onLabelChange: (id: string, label: string) => void;
     onRemove?: (id: string) => void;
 }
 
-function SortableLinkRow({ item, onUrlChange, onLabelChange, onRemove }: SortableLinkRowProps) {
+function SortableLinkRow({
+    item,
+    onToggle,
+    onUrlChange,
+    onLabelChange,
+    onRemove,
+}: SortableLinkRowProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: item.id,
     });
@@ -122,7 +132,7 @@ function SortableLinkRow({ item, onUrlChange, onLabelChange, onRemove }: Sortabl
         transition,
     };
 
-    const isActive = item.url.trim() !== '';
+    const isActive = item.isPreset ? item.enabled : true;
     const isCustom = item.type === 'custom';
 
     return (
@@ -131,8 +141,7 @@ function SortableLinkRow({ item, onUrlChange, onLabelChange, onRemove }: Sortabl
             style={style}
             className={cn(
                 'flex items-center gap-2 border-b border-dashboard-border px-3 py-2 last:border-b-0',
-                isDragging && 'z-10 bg-dashboard-bg-surface shadow-md',
-                !isActive && item.isPreset && 'opacity-50'
+                isDragging && 'z-10 bg-dashboard-bg-surface shadow-md'
             )}
         >
             {/* Drag handle */}
@@ -145,6 +154,25 @@ function SortableLinkRow({ item, onUrlChange, onLabelChange, onRemove }: Sortabl
                 <GripVertical className="h-3.5 w-3.5" />
             </button>
 
+            {/* Toggle (preset only) */}
+            {item.isPreset && (
+                <button
+                    type="button"
+                    onClick={() => onToggle(item.id)}
+                    className={cn(
+                        'h-4 w-7 shrink-0 rounded-full transition-colors',
+                        isActive ? 'bg-dashboard-text' : 'bg-dashboard-border'
+                    )}
+                >
+                    <span
+                        className={cn(
+                            'block h-3 w-3 rounded-full bg-dashboard-bg-surface transition-transform',
+                            isActive ? 'translate-x-3.5' : 'translate-x-0.5'
+                        )}
+                    />
+                </button>
+            )}
+
             {/* Platform label */}
             <span
                 className={cn(
@@ -156,12 +184,17 @@ function SortableLinkRow({ item, onUrlChange, onLabelChange, onRemove }: Sortabl
             </span>
 
             {/* URL input */}
-            <Input
-                value={item.url}
-                onChange={(e) => onUrlChange(item.id, e.target.value)}
-                placeholder={getPlatformPlaceholder(item.type)}
-                className="h-7 flex-1 border-0 bg-transparent px-2 text-xs text-dashboard-text shadow-none placeholder:text-dashboard-text-placeholder focus-visible:ring-0"
-            />
+            {isActive && (
+                <Input
+                    value={item.url}
+                    onChange={(e) => onUrlChange(item.id, e.target.value)}
+                    placeholder={getPlatformPlaceholder(item.type)}
+                    className="h-7 flex-1 border-0 bg-transparent px-2 text-xs text-dashboard-text shadow-none placeholder:text-dashboard-text-placeholder focus-visible:ring-0"
+                />
+            )}
+
+            {/* Spacer when inactive preset */}
+            {!isActive && <div className="flex-1" />}
 
             {/* Custom label input */}
             {isCustom && (
@@ -257,6 +290,23 @@ export default function LinksSection({ links, onSave }: LinksSectionProps) {
         [debouncedSave]
     );
 
+    const handleToggle = useCallback(
+        (id: string) => {
+            setItems((prev) => {
+                const next = prev.map((item) => {
+                    if (item.id !== id || !item.isPreset) return item;
+                    // Toggle: disable clears URL, enable keeps existing
+                    return item.enabled
+                        ? { ...item, enabled: false, url: '' }
+                        : { ...item, enabled: true };
+                });
+                onSave(toProfileLinks(next));
+                return next;
+            });
+        },
+        [onSave]
+    );
+
     const handleAddCustom = useCallback(() => {
         customCounter.current += 1;
         const newItem: LinkItem = {
@@ -265,6 +315,7 @@ export default function LinksSection({ links, onSave }: LinksSectionProps) {
             url: '',
             label: '',
             isPreset: false,
+            enabled: true,
         };
         setItems((prev) => [...prev, newItem]);
     }, []);
@@ -312,6 +363,7 @@ export default function LinksSection({ links, onSave }: LinksSectionProps) {
                                 <SortableLinkRow
                                     key={item.id}
                                     item={item}
+                                    onToggle={handleToggle}
                                     onUrlChange={handleUrlChange}
                                     onLabelChange={handleLabelChange}
                                     onRemove={item.isPreset ? undefined : handleRemoveCustom}
