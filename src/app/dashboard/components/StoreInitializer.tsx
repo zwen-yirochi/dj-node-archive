@@ -5,7 +5,7 @@ import { useLayoutEffect, useRef } from 'react';
 
 import type { EditorData } from '@/lib/services/user.service';
 
-import { useEntries, useUserQuery } from '../hooks/use-editor-data';
+import { useEntries, usePageMeta, useUserQuery } from '../hooks/use-editor-data';
 import { useDashboardStore } from '../stores/dashboardStore';
 
 interface StoreInitializerProps {
@@ -18,6 +18,7 @@ export default function StoreInitializer({ initialData }: StoreInitializerProps)
     // TanStack Query hydration: inject SSR data into separate caches
     useEntries(initialData.contentEntries);
     useUserQuery(initialData.user);
+    usePageMeta({ pageId: initialData.pageId, pageSettings: initialData.pageSettings });
 
     // UI Store initialization + pageId setup
     useLayoutEffect(() => {
