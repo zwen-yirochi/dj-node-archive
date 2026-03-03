@@ -5,8 +5,15 @@ import dynamic from 'next/dynamic';
 
 import { Loader2 } from 'lucide-react';
 
-import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
+import {
+    selectContentView,
+    selectIsSettingsOpen,
+    selectSetSettingsOpen,
+    selectSetView,
+    useDashboardStore,
+} from '../../stores/dashboardStore';
 import ErrorBoundaryWithQueryReset from '../ErrorBoundary';
+import SettingsModal from '../SettingsModal';
 import PageListView from './PageListView';
 
 function LoadingSkeleton() {
@@ -32,6 +39,8 @@ const EntryDetailView = dynamic(() => import('./EntryDetailView'), {
 export default function ContentPanel() {
     const view = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
+    const isSettingsOpen = useDashboardStore(selectIsSettingsOpen);
+    const setSettingsOpen = useDashboardStore(selectSetSettingsOpen);
 
     const content = (() => {
         switch (view.kind) {
@@ -76,8 +85,11 @@ export default function ContentPanel() {
     })();
 
     return (
-        <div key={view.kind} className="h-full animate-fade-in-view">
-            {content}
-        </div>
+        <>
+            <div key={view.kind} className="h-full animate-fade-in-view">
+                {content}
+            </div>
+            <SettingsModal open={isSettingsOpen} onOpenChange={setSettingsOpen} />
+        </>
     );
 }

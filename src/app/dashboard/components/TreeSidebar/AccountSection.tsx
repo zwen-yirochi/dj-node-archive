@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { ChevronUp, ExternalLink, LogOut, Settings } from 'lucide-react';
 
 import { createClient } from '@/lib/supabase/client';
@@ -9,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 
 import { useUser } from '../../hooks';
-import SettingsModal from '../SettingsModal';
+import { selectSetSettingsOpen, useDashboardStore } from '../../stores/dashboardStore';
 
 interface AccountSectionProps {
     username: string;
@@ -17,7 +15,7 @@ interface AccountSectionProps {
 
 export default function AccountSection({ username }: AccountSectionProps) {
     const user = useUser();
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const setSettingsOpen = useDashboardStore(selectSetSettingsOpen);
 
     const getInitials = (name: string) =>
         name
@@ -34,7 +32,7 @@ export default function AccountSection({ username }: AccountSectionProps) {
     };
 
     const accountMenuItems: DropdownMenuItemConfig[] = [
-        { label: 'Settings', onClick: () => setIsSettingsOpen(true), icon: Settings },
+        { label: 'Settings', onClick: () => setSettingsOpen(true), icon: Settings },
         { label: 'View my page', href: `/${username}`, icon: ExternalLink, external: true },
         { type: 'separator' },
         { label: 'Sign out', onClick: handleLogout, icon: LogOut, variant: 'danger' },
@@ -75,8 +73,6 @@ export default function AccountSection({ username }: AccountSectionProps) {
                     contentClassName="w-56"
                 />
             </div>
-
-            <SettingsModal open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
         </>
     );
 }

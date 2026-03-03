@@ -2,70 +2,49 @@
 
 import { useState } from 'react';
 
-import { useQueryClient } from '@tanstack/react-query';
+import { ChevronDown, ChevronRight, MoreHorizontal, Pencil } from 'lucide-react';
 
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import type { ProfileLink } from '@/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 
-import type { ProfileLink, User } from '@/types';
-import { useDebounce } from '@/hooks/useDebounce';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-
-import { useUser, useUserMutations } from '../../hooks';
-import { usePageMeta, userKeys } from '../../hooks/use-editor-data';
+import { useUser } from '../../hooks';
+import { usePageMeta } from '../../hooks/use-editor-data';
 import { usePageMutations } from '../../hooks/use-page';
-import { selectPageId, useDashboardStore } from '../../stores/dashboardStore';
-import AvatarUpload from './AvatarUpload';
+import {
+    selectPageId,
+    selectSetSettingsOpen,
+    useDashboardStore,
+} from '../../stores/dashboardStore';
 import HeaderStyleSection from './HeaderStyleSection';
 import LinksSection from './LinksSection';
 
 export default function BioDesignPanel() {
     const user = useUser();
-    const { updateProfile, uploadAvatar, deleteAvatar } = useUserMutations();
     const { data: pageMeta } = usePageMeta();
     const { updateHeaderStyle, updateLinks } = usePageMutations();
     const pageId = useDashboardStore(selectPageId);
-    const queryClient = useQueryClient();
+    const setSettingsOpen = useDashboardStore(selectSetSettingsOpen);
 
     const [isProfileOpen, setIsProfileOpen] = useState(true);
-
-    // Debounced save — sync to server while typing
-    const debouncedSave = useDebounce((updates: { displayName?: string; bio?: string }) => {
-        updateProfile.mutate({ userId: user.id, updates });
-    }, 500);
-
-    const handleUploadAvatar = (formData: FormData) => {
-        uploadAvatar.mutate(
-            { userId: user.id, formData },
-            {
-                onError: () => alert('Image upload failed.'),
-            }
-        );
-    };
-
-    const handleDeleteAvatar = () => {
-        deleteAvatar.mutate(
-            { userId: user.id },
-            {
-                onError: () => console.error('Avatar delete error'),
-            }
-        );
-    };
-
-    const handleProfileChange = (field: 'displayName' | 'bio', value: string) => {
-        // Immediately update TQ cache (reflect typing)
-        queryClient.setQueryData<User>(userKeys.all, (prev) =>
-            prev ? { ...prev, [field]: value } : prev
-        );
-        // Debounced server sync
-        debouncedSave({ [field]: value });
-    };
 
     const handleLinksChange = (links: ProfileLink[]) => {
         if (pageId) {
             updateLinks.mutate({ pageId, links });
         }
     };
+
+    const profileMenuItems: DropdownMenuItemConfig[] = [
+        { label: 'Edit Profile', onClick: () => setSettingsOpen(true), icon: Pencil },
+    ];
+
+    const getInitials = (name: string) =>
+        name
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
 
     return (
         <div className="flex h-full flex-col">
@@ -80,57 +59,68 @@ export default function BioDesignPanel() {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
                 <div className="space-y-6">
-                    {/* Profile Section - Collapsible */}
+                    {/* Profile Section - Read Only */}
                     <section>
-                        <button
-                            onClick={() => setIsProfileOpen(!isProfileOpen)}
-                            className="flex w-full items-center gap-2 text-left"
-                        >
-                            {isProfileOpen ? (
-                                <ChevronDown className="h-4 w-4 text-dashboard-text-muted" />
-                            ) : (
-                                <ChevronRight className="h-4 w-4 text-dashboard-text-muted" />
-                            )}
-                            <h3 className="text-sm font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                                Profile
-                            </h3>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                className="flex items-center gap-2 text-left"
+                            >
+                                {isProfileOpen ? (
+                                    <ChevronDown className="h-4 w-4 text-dashboard-text-muted" />
+                                ) : (
+                                    <ChevronRight className="h-4 w-4 text-dashboard-text-muted" />
+                                )}
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
+                                    Profile
+                                </h3>
+                            </button>
+
+                            <div className="ml-auto">
+                                <SimpleDropdown
+                                    trigger={
+                                        <button
+                                            type="button"
+                                            className="rounded p-1 text-dashboard-text-muted hover:bg-dashboard-bg-hover hover:text-dashboard-text"
+                                        >
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </button>
+                                    }
+                                    items={profileMenuItems}
+                                    align="end"
+                                />
+                            </div>
+                        </div>
 
                         {isProfileOpen && (
-                            <div className="mt-4 space-y-4">
-                                {/* Avatar + Name Row */}
+                            <div className="mt-4 space-y-3">
                                 <div className="flex items-center gap-4">
-                                    <AvatarUpload
-                                        avatarUrl={user.avatarUrl}
-                                        displayName={user.displayName}
-                                        username={user.username}
-                                        isPending={uploadAvatar.isPending || deleteAvatar.isPending}
-                                        onUpload={handleUploadAvatar}
-                                        onDelete={handleDeleteAvatar}
-                                    />
-
-                                    {/* Name Input */}
-                                    <div className="flex-1">
-                                        <Input
-                                            type="text"
-                                            value={user.displayName || ''}
-                                            onChange={(e) =>
-                                                handleProfileChange('displayName', e.target.value)
-                                            }
-                                            placeholder="Name"
-                                            className="border-dashboard-border bg-transparent text-dashboard-text placeholder:text-dashboard-text-placeholder"
+                                    <Avatar className="h-12 w-12 border border-dashboard-border">
+                                        <AvatarImage
+                                            src={user.avatarUrl}
+                                            alt={user.displayName}
+                                            className="object-cover"
                                         />
+                                        <AvatarFallback className="bg-dashboard-bg-active text-xs font-medium text-dashboard-text-secondary">
+                                            {getInitials(user.displayName || user.username)}
+                                        </AvatarFallback>
+                                    </Avatar>
+
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium text-dashboard-text">
+                                            {user.displayName || user.username}
+                                        </p>
+                                        <p className="truncate text-xs text-dashboard-text-muted">
+                                            @{user.username}
+                                        </p>
                                     </div>
                                 </div>
 
-                                {/* Bio */}
-                                <Textarea
-                                    value={user.bio || ''}
-                                    onChange={(e) => handleProfileChange('bio', e.target.value)}
-                                    placeholder="Bio"
-                                    rows={3}
-                                    className="resize-none border-dashboard-border bg-transparent text-dashboard-text placeholder:text-dashboard-text-placeholder"
-                                />
+                                {user.bio && (
+                                    <p className="text-xs leading-relaxed text-dashboard-text-muted">
+                                        {user.bio}
+                                    </p>
+                                )}
                             </div>
                         )}
                     </section>
