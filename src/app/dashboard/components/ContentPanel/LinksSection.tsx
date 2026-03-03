@@ -1,24 +1,28 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import {
+    closestCenter,
+    DndContext,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-
-import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, GripVertical, Plus, X } from 'lucide-react';
 
 import type { ProfileLink, ProfileLinkType } from '@/types';
-import {
-    profileLinkSchema,
-    type ProfileLinkFormData,
-} from '@/lib/validations/profile-link.schemas';
+import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 
 import {
@@ -26,6 +30,67 @@ import {
     getPlatformPlaceholder,
     PLATFORM_PRESETS,
 } from '../../config/profileLinksConfig';
+
+// ============================================
+// Types
+// ============================================
+
+/** Internal representation — presets always exist, active = has URL */
+interface LinkItem {
+    id: string; // stable ID for dnd-kit
+    type: ProfileLinkType;
+    url: string;
+    label?: string;
+    isPreset: boolean;
+}
+
+// Preset types (always visible, cannot be deleted)
+const PRESET_TYPES = PLATFORM_PRESETS.filter((p) => p.type !== 'custom').map((p) => p.type);
+
+// ============================================
+// Helpers: ProfileLink[] <-> LinkItem[]
+// ============================================
+
+function buildLinkItems(links: ProfileLink[]): LinkItem[] {
+    const items: LinkItem[] = [];
+
+    // Add active presets and custom links in their saved order
+    for (const link of links) {
+        const isPreset = PRESET_TYPES.includes(link.type);
+        items.push({
+            id: isPreset ? `preset-${link.type}` : `custom-${Date.now()}-${Math.random()}`,
+            type: link.type,
+            url: link.url,
+            label: link.label,
+            isPreset,
+        });
+    }
+
+    // Append inactive presets (not in saved links) at the end
+    for (const presetType of PRESET_TYPES) {
+        if (!links.some((l) => l.type === presetType)) {
+            items.push({
+                id: `preset-${presetType}`,
+                type: presetType,
+                url: '',
+                isPreset: true,
+            });
+        }
+    }
+
+    return items;
+}
+
+function toProfileLinks(items: LinkItem[]): ProfileLink[] {
+    // Only export items that have a URL (active presets + custom links with URL)
+    return items
+        .filter((item) => item.url.trim() !== '')
+        .map((item) => ({
+            type: item.type,
+            url: item.url,
+            ...(item.type === 'custom' && item.label ? { label: item.label } : {}),
+        }));
+}
 
 // ============================================
 // Props
@@ -37,156 +102,182 @@ interface LinksSectionProps {
 }
 
 // ============================================
-// LinkRow — single link with RHF validation
+// SortableLinkRow
 // ============================================
 
-interface LinkRowProps {
-    link: ProfileLink;
-    index: number;
-    onChange: (index: number, updated: ProfileLink) => void;
-    onDelete: (index: number) => void;
-    autoFocusUrl?: boolean;
+interface SortableLinkRowProps {
+    item: LinkItem;
+    onUrlChange: (id: string, url: string) => void;
+    onLabelChange: (id: string, label: string) => void;
+    onRemove?: (id: string) => void;
 }
 
-function LinkRow({ link, index, onChange, onDelete, autoFocusUrl }: LinkRowProps) {
-    const urlRef = useRef<HTMLInputElement | null>(null);
-
-    const {
-        register,
-        watch,
-        formState: { errors },
-    } = useForm<ProfileLinkFormData>({
-        resolver: zodResolver(profileLinkSchema),
-        defaultValues: {
-            type: link.type,
-            url: link.url,
-            label: link.label ?? '',
-        },
-        mode: 'onChange',
+function SortableLinkRow({ item, onUrlChange, onLabelChange, onRemove }: SortableLinkRowProps) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: item.id,
     });
 
-    // Auto-focus URL input when newly added
-    useEffect(() => {
-        if (autoFocusUrl && urlRef.current) {
-            urlRef.current.focus();
-        }
-    }, [autoFocusUrl]);
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
 
-    // Watch fields and propagate validated changes upward
-    const url = watch('url');
-    const label = watch('label');
-
-    useEffect(() => {
-        // Only propagate if value actually changed
-        if (url !== link.url || label !== (link.label ?? '')) {
-            const updated: ProfileLink = {
-                type: link.type,
-                url,
-                ...(link.type === 'custom' && label ? { label } : {}),
-            };
-            onChange(index, updated);
-        }
-    }, [url, label]); // Only re-run when watched values change
-
-    const { ref: urlRegRef, ...urlRegRest } = register('url');
+    const isActive = item.url.trim() !== '';
+    const isCustom = item.type === 'custom';
 
     return (
-        <div className="space-y-1">
-            <div className="flex items-center gap-2">
-                {/* Platform label */}
-                <span className="w-20 shrink-0 text-xs font-medium text-dashboard-text-muted">
-                    {getPlatformLabel(link.type)}
-                </span>
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={cn(
+                'flex items-center gap-2 border-b border-dashboard-border px-3 py-2 last:border-b-0',
+                isDragging && 'z-10 bg-dashboard-bg-surface shadow-md',
+                !isActive && item.isPreset && 'opacity-50'
+            )}
+        >
+            {/* Drag handle */}
+            <button
+                type="button"
+                className="shrink-0 cursor-grab touch-none text-dashboard-text-muted hover:text-dashboard-text active:cursor-grabbing"
+                {...attributes}
+                {...listeners}
+            >
+                <GripVertical className="h-3.5 w-3.5" />
+            </button>
 
-                {/* URL input */}
-                <Input
-                    {...urlRegRest}
-                    ref={(el) => {
-                        urlRegRef(el);
-                        urlRef.current = el;
-                    }}
-                    placeholder={getPlatformPlaceholder(link.type)}
-                    className="flex-1 border-dashboard-border bg-transparent text-sm text-dashboard-text placeholder:text-dashboard-text-placeholder"
-                />
+            {/* Platform label */}
+            <span
+                className={cn(
+                    'w-20 shrink-0 text-xs font-medium',
+                    isActive ? 'text-dashboard-text' : 'text-dashboard-text-muted'
+                )}
+            >
+                {isCustom ? item.label || 'Custom' : getPlatformLabel(item.type)}
+            </span>
 
-                {/* Delete button */}
-                <button
-                    type="button"
-                    onClick={() => onDelete(index)}
-                    className="shrink-0 rounded p-1 text-dashboard-text-muted hover:text-dashboard-text"
-                >
-                    <X className="h-3.5 w-3.5" />
-                </button>
-            </div>
+            {/* URL input */}
+            <Input
+                value={item.url}
+                onChange={(e) => onUrlChange(item.id, e.target.value)}
+                placeholder={getPlatformPlaceholder(item.type)}
+                className="h-7 flex-1 border-0 bg-transparent px-2 text-xs text-dashboard-text shadow-none placeholder:text-dashboard-text-placeholder focus-visible:ring-0"
+            />
 
             {/* Custom label input */}
-            {link.type === 'custom' && (
-                <div className="ml-[88px] mr-8">
-                    <Input
-                        {...register('label')}
-                        placeholder="Label"
-                        className="h-7 border-dashboard-border bg-transparent text-xs text-dashboard-text placeholder:text-dashboard-text-placeholder"
-                    />
-                    {errors.label && (
-                        <p className="mt-0.5 text-xs text-red-500">{errors.label.message}</p>
-                    )}
-                </div>
+            {isCustom && (
+                <Input
+                    value={item.label || ''}
+                    onChange={(e) => onLabelChange(item.id, e.target.value)}
+                    placeholder="Label"
+                    className="h-7 w-20 border-0 bg-transparent px-2 text-xs text-dashboard-text shadow-none placeholder:text-dashboard-text-placeholder focus-visible:ring-0"
+                />
             )}
 
-            {/* URL validation error */}
-            {errors.url && <p className="ml-[88px] text-xs text-red-500">{errors.url.message}</p>}
+            {/* Remove button (custom only) */}
+            {isCustom && onRemove && (
+                <button
+                    type="button"
+                    onClick={() => onRemove(item.id)}
+                    className="shrink-0 rounded p-0.5 text-dashboard-text-muted hover:text-dashboard-text"
+                >
+                    <X className="h-3 w-3" />
+                </button>
+            )}
         </div>
     );
 }
 
 // ============================================
-// LinksSection — collapsible section
+// LinksSection
 // ============================================
 
 export default function LinksSection({ links, onSave }: LinksSectionProps) {
     const [isOpen, setIsOpen] = useState(true);
-    const [localLinks, setLocalLinks] = useState<ProfileLink[]>(links);
-    const [focusIndex, setFocusIndex] = useState<number | null>(null);
+    const [items, setItems] = useState<LinkItem[]>(() => buildLinkItems(links));
+    const dndId = useId();
+    const customCounter = useRef(0);
 
-    // Sync from parent when links prop changes (e.g. server reconciliation)
+    // Sync from parent when links prop changes
     useEffect(() => {
-        setLocalLinks(links);
+        setItems(buildLinkItems(links));
     }, [links]);
 
-    // Debounced save to server
-    const debouncedSave = useDebounce((updatedLinks: ProfileLink[]) => {
-        onSave(updatedLinks);
+    const debouncedSave = useDebounce((updated: LinkItem[]) => {
+        onSave(toProfileLinks(updated));
     }, 500);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
 
     // ---- Handlers ----
 
-    const handleAddLink = (type: ProfileLinkType) => {
-        const newLink: ProfileLink = {
-            type,
+    const handleDragEnd = useCallback(
+        (event: DragEndEvent) => {
+            const { active, over } = event;
+            if (!over || active.id === over.id) return;
+
+            setItems((prev) => {
+                const oldIdx = prev.findIndex((i) => i.id === active.id);
+                const newIdx = prev.findIndex((i) => i.id === over.id);
+                if (oldIdx === -1 || newIdx === -1) return prev;
+
+                const next = [...prev];
+                const [moved] = next.splice(oldIdx, 1);
+                next.splice(newIdx, 0, moved);
+
+                // Immediate save on reorder (order matters)
+                onSave(toProfileLinks(next));
+                return next;
+            });
+        },
+        [onSave]
+    );
+
+    const handleUrlChange = useCallback(
+        (id: string, url: string) => {
+            setItems((prev) => {
+                const next = prev.map((item) => (item.id === id ? { ...item, url } : item));
+                debouncedSave(next);
+                return next;
+            });
+        },
+        [debouncedSave]
+    );
+
+    const handleLabelChange = useCallback(
+        (id: string, label: string) => {
+            setItems((prev) => {
+                const next = prev.map((item) => (item.id === id ? { ...item, label } : item));
+                debouncedSave(next);
+                return next;
+            });
+        },
+        [debouncedSave]
+    );
+
+    const handleAddCustom = useCallback(() => {
+        customCounter.current += 1;
+        const newItem: LinkItem = {
+            id: `custom-${Date.now()}-${customCounter.current}`,
+            type: 'custom',
             url: '',
-            ...(type === 'custom' ? { label: '' } : {}),
+            label: '',
+            isPreset: false,
         };
-        const updated = [...localLinks, newLink];
-        setLocalLinks(updated);
-        setFocusIndex(updated.length - 1);
-    };
+        setItems((prev) => [...prev, newItem]);
+    }, []);
 
-    const handleChange = (index: number, updated: ProfileLink) => {
-        const next = localLinks.map((l, i) => (i === index ? updated : l));
-        setLocalLinks(next);
-        debouncedSave(next);
-    };
-
-    const handleDelete = (index: number) => {
-        const next = localLinks.filter((_, i) => i !== index);
-        setLocalLinks(next);
-        onSave(next); // Immediate save on delete
-    };
-
-    // Filter out already-added preset platforms (custom is always available)
-    const availablePlatforms = PLATFORM_PRESETS.filter(
-        (preset) =>
-            preset.type === 'custom' || !localLinks.some((link) => link.type === preset.type)
+    const handleRemoveCustom = useCallback(
+        (id: string) => {
+            setItems((prev) => {
+                const next = prev.filter((item) => item.id !== id);
+                onSave(toProfileLinks(next));
+                return next;
+            });
+        },
+        [onSave]
     );
 
     return (
@@ -206,43 +297,38 @@ export default function LinksSection({ links, onSave }: LinksSectionProps) {
             </button>
 
             {isOpen && (
-                <div className="mt-4 space-y-3">
-                    {/* Existing links */}
-                    {localLinks.map((link, i) => (
-                        <LinkRow
-                            key={`${link.type}-${i}`}
-                            link={link}
-                            index={i}
-                            onChange={handleChange}
-                            onDelete={handleDelete}
-                            autoFocusUrl={i === focusIndex}
-                        />
-                    ))}
+                <div className="mt-4 overflow-hidden rounded-lg border border-dashboard-border">
+                    <DndContext
+                        id={dndId}
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={items.map((i) => i.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {items.map((item) => (
+                                <SortableLinkRow
+                                    key={item.id}
+                                    item={item}
+                                    onUrlChange={handleUrlChange}
+                                    onLabelChange={handleLabelChange}
+                                    onRemove={item.isPreset ? undefined : handleRemoveCustom}
+                                />
+                            ))}
+                        </SortableContext>
+                    </DndContext>
 
-                    {/* Add link button with dropdown */}
-                    {availablePlatforms.length > 0 && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button
-                                    type="button"
-                                    className="flex items-center gap-1.5 text-xs text-dashboard-text-muted hover:text-dashboard-text"
-                                >
-                                    <Plus className="h-3.5 w-3.5" />
-                                    <span>링크 추가</span>
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start">
-                                {availablePlatforms.map((preset) => (
-                                    <DropdownMenuItem
-                                        key={preset.type}
-                                        onSelect={() => handleAddLink(preset.type)}
-                                    >
-                                        {preset.label}
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
+                    {/* Add Custom Link */}
+                    <button
+                        type="button"
+                        onClick={handleAddCustom}
+                        className="flex w-full items-center gap-1.5 border-t border-dashboard-border px-3 py-2 text-xs text-dashboard-text-muted hover:bg-dashboard-bg-hover hover:text-dashboard-text"
+                    >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>커스텀 링크 추가</span>
+                    </button>
                 </div>
             )}
         </section>
