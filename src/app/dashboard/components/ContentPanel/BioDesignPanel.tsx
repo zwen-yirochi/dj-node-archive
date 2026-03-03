@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
-import type { User } from '@/types';
+import type { ProfileLink, User } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,12 +17,13 @@ import { usePageMutations } from '../../hooks/use-page';
 import { selectPageId, useDashboardStore } from '../../stores/dashboardStore';
 import AvatarUpload from './AvatarUpload';
 import HeaderStyleSection from './HeaderStyleSection';
+import LinksSection from './LinksSection';
 
 export default function BioDesignPanel() {
     const user = useUser();
     const { updateProfile, uploadAvatar, deleteAvatar } = useUserMutations();
     const { data: pageMeta } = usePageMeta();
-    const { updateHeaderStyle } = usePageMutations();
+    const { updateHeaderStyle, updateLinks } = usePageMutations();
     const pageId = useDashboardStore(selectPageId);
     const queryClient = useQueryClient();
 
@@ -58,6 +59,12 @@ export default function BioDesignPanel() {
         );
         // Debounced server sync
         debouncedSave({ [field]: value });
+    };
+
+    const handleLinksChange = (links: ProfileLink[]) => {
+        if (pageId) {
+            updateLinks.mutate({ pageId, links });
+        }
     };
 
     return (
@@ -127,6 +134,9 @@ export default function BioDesignPanel() {
                             </div>
                         )}
                     </section>
+
+                    {/* Links Section */}
+                    <LinksSection links={pageMeta.pageSettings.links} onSave={handleLinksChange} />
 
                     {/* Header Style Section */}
                     <HeaderStyleSection
