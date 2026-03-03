@@ -1,26 +1,32 @@
-import type { ContentEntry, EventEntry, User } from '@/types/domain';
-import { isEventEntry, isPublicEventEntry } from '@/types/domain';
-import { formatEventDate, venueCode } from '@/lib/formatters';
 import Link from 'next/link';
-import { DnaPageShell } from '@/components/dna/DnaPageShell';
-import { SectionLabel } from '@/components/dna/SectionLabel';
-import { NodeLabel } from '@/components/dna/NodeLabel';
-import { ExternalLinks } from '@/components/dna/ExternalLinks';
-import { StatsRow } from '@/components/dna/StatsRow';
-import { MetaTable } from '@/components/dna/MetaTable';
-import { Timeline } from '@/components/dna/Timeline';
+
+import {
+    isEventEntry,
+    isPublicEventEntry,
+    type ContentEntry,
+    type EventEntry,
+    type HeaderStyle,
+    type User,
+} from '@/types/domain';
+import { formatEventDate, venueCode } from '@/lib/formatters';
 import { AsciiDivider } from '@/components/dna/AsciiDivider';
+import { DnaPageShell } from '@/components/dna/DnaPageShell';
 import { EntryCard } from '@/components/dna/EntryCard';
+import { headerRenderers } from '@/components/dna/headers';
 import { ImageFrame } from '@/components/dna/ImageFrame';
+import { MetaTable } from '@/components/dna/MetaTable';
+import { SectionLabel } from '@/components/dna/SectionLabel';
+import { StatsRow } from '@/components/dna/StatsRow';
+import { Timeline } from '@/components/dna/Timeline';
 import { VenueLink } from '@/components/dna/VenueLink';
-import ShareButton from '@/components/dna/ShareButton';
 
 interface Props {
     user: User;
     entries: ContentEntry[];
+    headerStyle?: HeaderStyle;
 }
 
-export default function UserPageContent({ user, entries }: Props) {
+export default function UserPageContent({ user, entries, headerStyle = 'minimal' }: Props) {
     const eventEntries = entries.filter((e) => e.type === 'event') as EventEntry[];
     const otherEntries = entries.filter((e) => e.type !== 'event');
 
@@ -31,6 +37,8 @@ export default function UserPageContent({ user, entries }: Props) {
 
     const uniqueVenues = new Set(eventEntries.map((e) => e.venue?.name).filter(Boolean));
 
+    const HeaderComponent = headerRenderers[headerStyle];
+
     return (
         <DnaPageShell
             pathBar={{
@@ -40,81 +48,7 @@ export default function UserPageContent({ user, entries }: Props) {
             footerMeta={[`DJ-NODE-ARCHIVE // NODE: ${user.username.toUpperCase()}`]}
         >
             {/* ── Profile Header ── */}
-            <section className="pb-6 pt-6 md:pt-8">
-                <div className="flex flex-col items-center text-center md:flex-row md:items-start md:text-left">
-                    {user.avatarUrl && (
-                        <div className="mb-4 h-20 w-20 flex-shrink-0 overflow-hidden border border-dna-ink-faint md:mb-0 md:mr-6 md:h-24 md:w-24">
-                            <img
-                                src={user.avatarUrl}
-                                alt={user.displayName}
-                                className="h-full w-full object-cover"
-                            />
-                        </div>
-                    )}
-
-                    <div className="flex-1">
-                        <NodeLabel>Artist Node</NodeLabel>
-                        <h1 className="dna-heading-page md:mt-2">{user.displayName}</h1>
-                        <div className="mt-1 text-dna-meta-val tracking-dna-detail text-dna-ink-light">
-                            @{user.username}
-                        </div>
-                        {user.bio && (
-                            <p className="dna-text-body mt-3 md:mt-4 md:max-w-[520px]">
-                                {user.bio}
-                            </p>
-                        )}
-
-                        {/* Tags (static — no onClick) */}
-                        <div className="my-3.5 flex flex-wrap gap-1.5">
-                            {[
-                                { label: 'DJ', active: true },
-                                ...(eventEntries.length > 0 ? [{ label: 'Events' }] : []),
-                                ...(otherEntries.some((e) => e.type === 'mixset')
-                                    ? [{ label: 'Mixset' }]
-                                    : []),
-                            ].map((tag) => (
-                                <span
-                                    key={tag.label}
-                                    className={`border px-2.5 py-1 text-dna-label uppercase tracking-dna-system ${
-                                        tag.active
-                                            ? 'border-dna-ink bg-dna-ink text-dna-bg'
-                                            : 'border-dna-ink-faint text-dna-ink-mid'
-                                    }`}
-                                >
-                                    {tag.label}
-                                </span>
-                            ))}
-                        </div>
-
-                        {/* Social links */}
-                        <ExternalLinks
-                            links={[
-                                ...(user.instagram
-                                    ? [
-                                          {
-                                              label: 'Instagram',
-                                              href: `https://instagram.com/${user.instagram.replace('@', '')}`,
-                                          },
-                                      ]
-                                    : []),
-                                ...(user.soundcloud
-                                    ? [
-                                          {
-                                              label: 'SoundCloud',
-                                              href: `https://soundcloud.com/${user.soundcloud}`,
-                                          },
-                                      ]
-                                    : []),
-                            ]}
-                            className="mt-2 justify-center md:justify-start"
-                        />
-
-                        <div className="mt-3 md:mt-4">
-                            <ShareButton />
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <HeaderComponent user={user} entries={entries} />
 
             {/* ── Stats ── */}
             <StatsRow

@@ -1,5 +1,7 @@
-import { getPublicPageData } from '@/lib/services/user.service';
 import { notFound } from 'next/navigation';
+
+import { getPublicPageData } from '@/lib/services/user.service';
+
 import UserPageContent from './components/UserPageContent';
 
 interface PageProps {
@@ -17,7 +19,13 @@ export default async function Page({ params }: PageProps) {
         throw new Error(result.error.message);
     }
 
-    const { user: userData, components } = result.data;
+    const { user: userData, components, pageSettings } = result.data;
 
-    return <UserPageContent user={userData} entries={components} />;
+    return (
+        <UserPageContent
+            user={userData}
+            entries={components}
+            headerStyle={pageSettings.headerStyle}
+        />
+    );
 }
