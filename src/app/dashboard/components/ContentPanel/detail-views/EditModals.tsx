@@ -7,14 +7,14 @@ import Image from 'next/image';
 import { ImagePlus, Loader2 } from 'lucide-react';
 
 import { uploadPoster } from '@/app/dashboard/actions/upload';
-import { Button } from '@/components/ui/button';
 import {
+    DashboardDialogContent,
     Dialog,
-    DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/app/dashboard/components/ui/DashboardDialog';
+import { Button } from '@/components/ui/button';
 
 // ============================================
 // ImageEditModal — Shared by Event (poster) + Mixset (cover)
@@ -73,7 +73,7 @@ export function ImageEditModal({
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="border-dashboard-border bg-dashboard-bg-card sm:max-w-md">
+            <DashboardDialogContent>
                 <DialogHeader>
                     <DialogTitle className="text-dashboard-text">{title}</DialogTitle>
                     <DialogDescription className="text-dashboard-text-muted">
@@ -136,7 +136,7 @@ export function ImageEditModal({
                         </Button>
                     </div>
                 </div>
-            </DialogContent>
+            </DashboardDialogContent>
         </Dialog>
     );
 }
@@ -166,7 +166,7 @@ export function TitleEditModal({
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="border-dashboard-border bg-dashboard-bg-card sm:max-w-md">
+            <DashboardDialogContent>
                 <DialogHeader>
                     <DialogTitle className="text-dashboard-text">Edit title</DialogTitle>
                     <DialogDescription className="text-dashboard-text-muted">
@@ -204,7 +204,7 @@ export function TitleEditModal({
                         </Button>
                     </div>
                 </div>
-            </DialogContent>
+            </DashboardDialogContent>
         </Dialog>
     );
 }

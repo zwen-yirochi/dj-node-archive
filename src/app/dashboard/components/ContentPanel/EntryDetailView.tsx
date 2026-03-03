@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryDetail, useEntryMutations } from '../../hooks';
+import { DashboardConfirmDialog } from '../ui/DashboardDialog';
 import EventDetailView from './detail-views/EventDetailView';
 import LinkDetailView from './detail-views/LinkDetailView';
 import MixsetDetailView from './detail-views/MixsetDetailView';
@@ -103,6 +104,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     localEntryRef.current = localEntry;
 
     const [editingField, setEditingField] = useState<'title' | 'image' | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     // Save handler — pass changedFields to mutation for preview trigger decision
     const handleSave = useCallback(
@@ -127,6 +129,8 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         await deleteMutation.mutateAsync(entry.id);
         onBack?.();
     };
+
+    const handleDeleteClick = () => setIsDeleteDialogOpen(true);
 
     // Field-level save — always reference latest localEntry via ref
     const handleFieldSave = useCallback(
@@ -159,7 +163,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     // "..." menu items — config-driven + declarative action resolution
     const menuItems = resolveMenuItems(EDITOR_MENU_CONFIG[localEntry.type], {
         setEditingField,
-        onDelete: handleDelete,
+        onDelete: handleDeleteClick,
     });
 
     const handleEditingDone = () => setEditingField(null);
@@ -216,6 +220,17 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                     onEditingDone={handleEditingDone}
                 />
             </div>
+
+            <DashboardConfirmDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                title="항목을 삭제할까요?"
+                description="삭제된 항목은 복구할 수 없습니다."
+                confirmText="삭제"
+                cancelText="취소"
+                destructive
+                onConfirm={handleDelete}
+            />
         </div>
     );
 }
