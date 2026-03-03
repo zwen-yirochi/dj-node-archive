@@ -43,49 +43,49 @@ export default function ViewSection({
     return (
         <div
             ref={setNodeRef}
-            className={cn(
-                'overflow-hidden transition-all duration-200',
-                shouldShow ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-            )}
+            className="grid transition-[grid-template-rows] duration-200 ease-out"
+            style={{ gridTemplateRows: shouldShow ? '1fr' : '0fr' }}
         >
-            <div
-                className={cn(
-                    'min-h-[32px] rounded-md transition-colors',
-                    showDropIndicator &&
-                        'ring-dashed bg-dashboard-bg-active ring-1 ring-dashboard-border-hover'
-                )}
-            >
-                <SortableContext
-                    items={displayedEntries.map((entry) => `view-${entry.id}`)}
-                    strategy={verticalListSortingStrategy}
+            <div className="overflow-hidden">
+                <div
+                    className={cn(
+                        'min-h-[32px] rounded-md transition-colors',
+                        showDropIndicator &&
+                            'ring-dashed bg-dashboard-bg-active ring-1 ring-dashboard-border-hover'
+                    )}
                 >
-                    <div className="relative py-0.5">
-                        {/* Tree Line - vertical line */}
-                        {displayedEntries.length > 0 && (
-                            <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
-                        )}
-                        {displayedEntries.map((entry) => (
-                            <TreeItem
-                                key={`view-${entry.id}`}
-                                entry={entry}
-                                isInViewSection
-                                isVisible={entry.isVisible}
-                                onDelete={() => handleRemoveFromView(entry.id)}
-                            />
-                        ))}
+                    <SortableContext
+                        items={displayedEntries.map((entry) => `view-${entry.id}`)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        <div className="relative py-0.5">
+                            {/* Tree Line - vertical line */}
+                            {displayedEntries.length > 0 && (
+                                <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
+                            )}
+                            {displayedEntries.map((entry) => (
+                                <TreeItem
+                                    key={`view-${entry.id}`}
+                                    entry={entry}
+                                    isInViewSection
+                                    isVisible={entry.isVisible}
+                                    onDelete={() => handleRemoveFromView(entry.id)}
+                                />
+                            ))}
 
-                        {displayedEntries.length === 0 && (
-                            <p
-                                className={cn(
-                                    'px-3 py-2 text-center text-xs text-dashboard-text-placeholder',
-                                    showDropIndicator && 'text-dashboard-text-secondary'
-                                )}
-                            >
-                                {showDropIndicator ? 'Drop here to add' : 'Drag to add'}
-                            </p>
-                        )}
-                    </div>
-                </SortableContext>
+                            {displayedEntries.length === 0 && (
+                                <p
+                                    className={cn(
+                                        'px-3 py-2 text-center text-xs text-dashboard-text-placeholder',
+                                        showDropIndicator && 'text-dashboard-text-secondary'
+                                    )}
+                                >
+                                    {showDropIndicator ? 'Drop here to add' : 'Drag to add'}
+                                </p>
+                            )}
+                        </div>
+                    </SortableContext>
+                </div>
             </div>
         </div>
     );

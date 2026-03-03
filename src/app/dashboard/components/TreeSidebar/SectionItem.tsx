@@ -4,8 +4,6 @@ import type { ReactNode } from 'react';
 
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
-
 import {
     selectSetView,
     selectSidebarSections,
@@ -85,14 +83,14 @@ export default function SectionItem({
 
             {/* Section Content */}
             <div
-                className={cn(
-                    'relative ml-2 overflow-hidden transition-all duration-200',
-                    isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'
-                )}
+                className="relative ml-2 grid transition-[grid-template-rows] duration-200 ease-out"
+                style={{ gridTemplateRows: isCollapsed ? '0fr' : '1fr' }}
             >
-                {/* Tree Line - vertical line */}
-                <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
-                {children}
+                <div className="overflow-hidden">
+                    {/* Tree Line - vertical line */}
+                    <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
+                    {children}
+                </div>
             </div>
         </div>
     );
