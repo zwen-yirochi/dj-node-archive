@@ -1,8 +1,9 @@
 'use client';
 
 import { Command } from 'cmdk';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { DialogDescription, DialogTitle } from '@radix-ui/react-dialog';
 import { Calendar, Link2, Music, Palette, Plus, Search } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
@@ -26,9 +27,10 @@ export function CommandPalette() {
         return () => document.removeEventListener('keydown', handler);
     }, []);
 
-    const events = entries.filter((e: ContentEntry) => e.type === 'event');
-    const mixsets = entries.filter((e: ContentEntry) => e.type === 'mixset');
-    const links = entries.filter((e: ContentEntry) => e.type === 'link');
+    const events = useMemo(() => entries.filter((e) => e.type === 'event'), [entries]);
+    const mixsets = useMemo(() => entries.filter((e) => e.type === 'mixset'), [entries]);
+    const links = useMemo(() => entries.filter((e) => e.type === 'link'), [entries]);
+    const hasEntries = events.length > 0 || mixsets.length > 0 || links.length > 0;
 
     const handleSelectEntry = (entryId: string) => {
         setView({ kind: 'detail', entryId });
@@ -84,114 +86,117 @@ export function CommandPalette() {
                 onOpenChange={setOpen}
                 label="Command palette"
                 className="fixed inset-0 z-50"
+                overlayClassName="fixed inset-0 bg-black/20"
+                contentClassName="fixed left-1/2 top-[20%] w-full max-w-lg -translate-x-1/2"
             >
-                {/* Backdrop */}
-                <div className="fixed inset-0 bg-black/20" onClick={() => setOpen(false)} />
+                <DialogTitle className="sr-only">Command palette</DialogTitle>
+                <DialogDescription className="sr-only">
+                    Search entries and run quick actions
+                </DialogDescription>
 
-                {/* Dialog */}
-                <div className="fixed left-1/2 top-[20%] w-full max-w-lg -translate-x-1/2">
-                    <div className="overflow-hidden rounded-xl border border-dashboard-border bg-white shadow-2xl">
-                        <Command.Input
-                            placeholder="Search entries..."
-                            className="w-full border-b border-dashboard-border bg-transparent px-4 py-3 text-sm text-dashboard-text outline-none placeholder:text-dashboard-text-placeholder"
-                        />
-                        <Command.List className="max-h-80 overflow-y-auto p-2">
-                            <Command.Empty className="px-4 py-6 text-center text-sm text-dashboard-text-muted">
-                                No results found.
-                            </Command.Empty>
+                <div className="overflow-hidden rounded-xl border border-dashboard-border bg-white shadow-2xl">
+                    <Command.Input
+                        placeholder="Search entries..."
+                        className="w-full border-b border-dashboard-border bg-transparent px-4 py-3 font-inter text-sm text-dashboard-text outline-none placeholder:text-dashboard-text-placeholder"
+                    />
+                    <Command.List className="max-h-80 overflow-y-auto p-1.5 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-dashboard-text-placeholder">
+                        <Command.Empty className="px-4 py-6 text-center text-sm text-dashboard-text-muted">
+                            No results found.
+                        </Command.Empty>
 
-                            {events.length > 0 && (
-                                <Command.Group heading="Events">
-                                    {events.map((entry) => (
-                                        <Command.Item
-                                            key={entry.id}
-                                            value={entry.title}
-                                            onSelect={() => handleSelectEntry(entry.id)}
-                                            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                                        >
-                                            {entryIcon('event')}
-                                            {entry.title || 'Untitled'}
-                                        </Command.Item>
-                                    ))}
-                                </Command.Group>
-                            )}
-
-                            {mixsets.length > 0 && (
-                                <Command.Group heading="Mixsets">
-                                    {mixsets.map((entry) => (
-                                        <Command.Item
-                                            key={entry.id}
-                                            value={entry.title}
-                                            onSelect={() => handleSelectEntry(entry.id)}
-                                            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                                        >
-                                            {entryIcon('mixset')}
-                                            {entry.title || 'Untitled'}
-                                        </Command.Item>
-                                    ))}
-                                </Command.Group>
-                            )}
-
-                            {links.length > 0 && (
-                                <Command.Group heading="Links">
-                                    {links.map((entry) => (
-                                        <Command.Item
-                                            key={entry.id}
-                                            value={entry.title}
-                                            onSelect={() => handleSelectEntry(entry.id)}
-                                            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                                        >
-                                            {entryIcon('link')}
-                                            {entry.title || 'Untitled'}
-                                        </Command.Item>
-                                    ))}
-                                </Command.Group>
-                            )}
-
-                            <Command.Separator className="my-1 h-px bg-dashboard-border" />
-
-                            <Command.Group heading="Actions">
-                                <Command.Item
-                                    value="Create new event"
-                                    onSelect={() => handleAction('create-event')}
-                                    className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                                >
-                                    <Plus className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
-                                    Create new event
-                                </Command.Item>
-                                <Command.Item
-                                    value="Create new mixset"
-                                    onSelect={() => handleAction('create-mixset')}
-                                    className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                                >
-                                    <Plus className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
-                                    Create new mixset
-                                </Command.Item>
-                                <Command.Item
-                                    value="Create new link"
-                                    onSelect={() => handleAction('create-link')}
-                                    className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                                >
-                                    <Plus className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
-                                    Create new link
-                                </Command.Item>
-                                <Command.Item
-                                    value="Edit bio and design"
-                                    onSelect={() => handleAction('bio')}
-                                    className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                                >
-                                    <Palette className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
-                                    Edit bio & design
-                                </Command.Item>
+                        {events.length > 0 && (
+                            <Command.Group heading="Events">
+                                {events.map((entry) => (
+                                    <Command.Item
+                                        key={entry.id}
+                                        value={`${entry.title} ${entry.id}`}
+                                        onSelect={() => handleSelectEntry(entry.id)}
+                                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
+                                    >
+                                        {entryIcon('event')}
+                                        {entry.title || 'Untitled'}
+                                    </Command.Item>
+                                ))}
                             </Command.Group>
-                        </Command.List>
+                        )}
 
-                        {/* Footer */}
-                        <div className="flex gap-4 border-t border-dashboard-border px-4 py-2 text-xs text-dashboard-text-placeholder">
-                            <span>↑↓ Navigate</span>
-                            <span>↵ Open</span>
-                            <span>esc Close</span>
-                        </div>
+                        {mixsets.length > 0 && (
+                            <Command.Group heading="Mixsets">
+                                {mixsets.map((entry) => (
+                                    <Command.Item
+                                        key={entry.id}
+                                        value={`${entry.title} ${entry.id}`}
+                                        onSelect={() => handleSelectEntry(entry.id)}
+                                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
+                                    >
+                                        {entryIcon('mixset')}
+                                        {entry.title || 'Untitled'}
+                                    </Command.Item>
+                                ))}
+                            </Command.Group>
+                        )}
+
+                        {links.length > 0 && (
+                            <Command.Group heading="Links">
+                                {links.map((entry) => (
+                                    <Command.Item
+                                        key={entry.id}
+                                        value={`${entry.title} ${entry.id}`}
+                                        onSelect={() => handleSelectEntry(entry.id)}
+                                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
+                                    >
+                                        {entryIcon('link')}
+                                        {entry.title || 'Untitled'}
+                                    </Command.Item>
+                                ))}
+                            </Command.Group>
+                        )}
+
+                        {hasEntries && (
+                            <Command.Separator className="my-1.5 h-px bg-dashboard-border" />
+                        )}
+
+                        <Command.Group heading="Actions">
+                            <Command.Item
+                                value="Create new event"
+                                onSelect={() => handleAction('create-event')}
+                                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
+                            >
+                                <Plus className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
+                                Create new event
+                            </Command.Item>
+                            <Command.Item
+                                value="Create new mixset"
+                                onSelect={() => handleAction('create-mixset')}
+                                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
+                            >
+                                <Plus className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
+                                Create new mixset
+                            </Command.Item>
+                            <Command.Item
+                                value="Create new link"
+                                onSelect={() => handleAction('create-link')}
+                                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
+                            >
+                                <Plus className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
+                                Create new link
+                            </Command.Item>
+                            <Command.Item
+                                value="Edit bio and design"
+                                onSelect={() => handleAction('bio')}
+                                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
+                            >
+                                <Palette className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
+                                Edit bio & design
+                            </Command.Item>
+                        </Command.Group>
+                    </Command.List>
+
+                    {/* Footer */}
+                    <div className="flex gap-4 border-t border-dashboard-border px-4 py-2 font-inter text-[11px] text-dashboard-text-placeholder">
+                        <span>↑↓ Navigate</span>
+                        <span>↵ Open</span>
+                        <span>esc Close</span>
                     </div>
                 </div>
             </Command.Dialog>
