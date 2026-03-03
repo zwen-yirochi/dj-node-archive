@@ -1,6 +1,10 @@
 'use client';
 
-import { useSortable } from '@dnd-kit/sortable';
+import {
+    defaultAnimateLayoutChanges,
+    useSortable,
+    type AnimateLayoutChanges,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
@@ -74,8 +78,16 @@ export default function TreeItem({
     // ViewSection uses 'view-{id}' format IDs (matches SortableContext)
     const sortableId = isInViewSection ? `view-${entry.id}` : entry.id;
 
+    const animateLayoutChanges: AnimateLayoutChanges = (args) => {
+        const { isSorting, wasDragging } = args;
+        if (wasDragging) return false;
+        if (isSorting) return true;
+        return defaultAnimateLayoutChanges(args);
+    };
+
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: sortableId,
+        animateLayoutChanges,
         data: {
             type: isInViewSection ? 'display-entry' : 'entry',
             entry,

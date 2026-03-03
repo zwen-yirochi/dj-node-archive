@@ -12,13 +12,17 @@ import {
     type DragStartEvent,
 } from '@dnd-kit/core';
 import {
+    defaultAnimateLayoutChanges,
     SortableContext,
     sortableKeyboardCoordinates,
     useSortable,
     verticalListSortingStrategy,
+    type AnimateLayoutChanges,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useId, useMemo, useState } from 'react';
+
+import { useQueryClient } from '@tanstack/react-query';
 
 import { Calendar, Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
 
@@ -29,6 +33,7 @@ import { TypeBadge } from '@/components/dna';
 
 import { useEntries, useEntryMutations } from '../../hooks';
 import { computeReorderedDisplay } from '../../hooks/entries.api';
+import { entryKeys } from '../../hooks/use-editor-data';
 
 interface SortableItemProps {
     id: string;
@@ -47,8 +52,15 @@ function SortableItem({
     onRemove,
     onSelect,
 }: SortableItemProps) {
+    const animateLayoutChanges: AnimateLayoutChanges = (args) => {
+        if (args.wasDragging) return false;
+        if (args.isSorting) return true;
+        return defaultAnimateLayoutChanges(args);
+    };
+
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id,
+        animateLayoutChanges,
     });
 
     const style = {
@@ -122,6 +134,7 @@ interface PageListViewProps {
 
 export default function PageListView({ onSelectDetail }: PageListViewProps) {
     // TanStack Query
+    const queryClient = useQueryClient();
     const { data: entries } = useEntries();
     const {
         toggleVisibility: toggleVisibilityMutation,
@@ -168,6 +181,14 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
         if (newIndex !== -1) {
             const updates = computeReorderedDisplay(entries, active.id as string, newIndex);
             if (updates) {
+                // Sync cache update before mutate to prevent flash
+                const orderMap = new Map(updates.map((u) => [u.id, u.displayOrder]));
+                queryClient.setQueryData<ContentEntry[]>(entryKeys.all, (prev) =>
+                    prev?.map((e) => {
+                        const newOrder = orderMap.get(e.id);
+                        return newOrder !== undefined ? { ...e, displayOrder: newOrder } : e;
+                    })
+                );
                 reorderDisplayMutation.mutate({ updates });
             }
         }
@@ -243,7 +264,7 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
                             </div>
                         </SortableContext>
 
-                        <DragOverlay>
+                        <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
                             {activeEntry && (
                                 <div className="flex items-center gap-3 rounded-lg border border-dashboard-border-hover bg-dashboard-bg-card p-3 shadow-xl">
                                     <div className="text-dashboard-text-placeholder">
