@@ -27,6 +27,7 @@ import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { canAddToView } from '@/app/dashboard/config/entryFieldConfig';
+import { SIDEBAR_SECTIONS } from '@/app/dashboard/config/sidebarConfig';
 import { TypeBadge } from '@/components/dna';
 
 import { useEntries, useEntryMutations, useUser } from '../../hooks';
@@ -75,21 +76,16 @@ export default function TreeSidebar() {
     const isPageActive = contentView.kind === 'page' || contentView.kind === 'page-detail';
     const selectedEntryId = contentView.kind === 'detail' ? contentView.entryId : null;
 
-    // Filter & sort
-    const events = useMemo(
-        () => entries.filter((e) => e.type === 'event').sort((a, b) => a.position - b.position),
-        [entries]
-    );
-
-    const mixsets = useMemo(
-        () => entries.filter((e) => e.type === 'mixset').sort((a, b) => a.position - b.position),
-        [entries]
-    );
-
-    const links = useMemo(
-        () => entries.filter((e) => e.type === 'link').sort((a, b) => a.position - b.position),
-        [entries]
-    );
+    // Filter & sort by type
+    const entriesByType = useMemo(() => {
+        const map: Record<string, ContentEntry[]> = {};
+        for (const cfg of SIDEBAR_SECTIONS) {
+            map[cfg.entryType] = entries
+                .filter((e) => e.type === cfg.entryType)
+                .sort((a, b) => a.position - b.position);
+        }
+        return map;
+    }, [entries]);
 
     const displayedEntries = useMemo(
         () =>
@@ -191,15 +187,7 @@ export default function TreeSidebar() {
 
             if (activeEntry.type === overEntry.type && active.id !== over.id) {
                 const sectionType = activeEntry.type as 'event' | 'mixset' | 'link';
-
-                let sectionEntries: ContentEntry[];
-                if (sectionType === 'event') {
-                    sectionEntries = events;
-                } else if (sectionType === 'mixset') {
-                    sectionEntries = mixsets;
-                } else {
-                    sectionEntries = links;
-                }
+                const sectionEntries = entriesByType[sectionType] ?? [];
 
                 const overIndex = sectionEntries.findIndex((e) => e.id === over.id);
                 if (overIndex !== -1) {
@@ -321,89 +309,39 @@ export default function TreeSidebar() {
                         Components
                     </p>
 
-                    {/* Events */}
-                    <SectionItem
-                        section="events"
-                        title="Events"
-                        icon={<TypeBadge type="EVT" size="sm" />}
-                        count={events.length}
-                        entryType="event"
-                    >
-                        <SortableContext
-                            items={events.map((e) => e.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <div className="py-0.5">
-                                {events.length === 0 ? (
-                                    <SectionEmptyHint label="event" />
-                                ) : (
-                                    events.map((entry) => (
-                                        <TreeItem
-                                            key={entry.id}
-                                            entry={entry}
-                                            onDelete={() => handleDelete(entry.id)}
-                                        />
-                                    ))
-                                )}
-                            </div>
-                        </SortableContext>
-                    </SectionItem>
-
-                    {/* Mixsets */}
-                    <SectionItem
-                        section="mixsets"
-                        title="Mixsets"
-                        icon={<TypeBadge type="MIX" size="sm" />}
-                        count={mixsets.length}
-                        entryType="mixset"
-                    >
-                        <SortableContext
-                            items={mixsets.map((e) => e.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <div className="py-0.5">
-                                {mixsets.length === 0 ? (
-                                    <SectionEmptyHint label="mixset" />
-                                ) : (
-                                    mixsets.map((entry) => (
-                                        <TreeItem
-                                            key={entry.id}
-                                            entry={entry}
-                                            onDelete={() => handleDelete(entry.id)}
-                                        />
-                                    ))
-                                )}
-                            </div>
-                        </SortableContext>
-                    </SectionItem>
-
-                    {/* Links */}
-                    <SectionItem
-                        section="links"
-                        title="Links"
-                        icon={<TypeBadge type="LNK" size="sm" />}
-                        count={links.length}
-                        entryType="link"
-                    >
-                        <SortableContext
-                            items={links.map((e) => e.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <div className="py-0.5">
-                                {links.length === 0 ? (
-                                    <SectionEmptyHint label="link" />
-                                ) : (
-                                    links.map((entry) => (
-                                        <TreeItem
-                                            key={entry.id}
-                                            entry={entry}
-                                            onDelete={() => handleDelete(entry.id)}
-                                        />
-                                    ))
-                                )}
-                            </div>
-                        </SortableContext>
-                    </SectionItem>
+                    {/* Entry Sections */}
+                    {SIDEBAR_SECTIONS.map((cfg) => {
+                        const items = entriesByType[cfg.entryType] ?? [];
+                        return (
+                            <SectionItem
+                                key={cfg.section}
+                                section={cfg.section}
+                                title={cfg.title}
+                                icon={<TypeBadge type={cfg.badgeType} size="sm" />}
+                                count={items.length}
+                                entryType={cfg.entryType}
+                            >
+                                <SortableContext
+                                    items={items.map((e) => e.id)}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    <div className="py-0.5">
+                                        {items.length === 0 ? (
+                                            <SectionEmptyHint label={cfg.emptyLabel} />
+                                        ) : (
+                                            items.map((entry) => (
+                                                <TreeItem
+                                                    key={entry.id}
+                                                    entry={entry}
+                                                    onDelete={() => handleDelete(entry.id)}
+                                                />
+                                            ))
+                                        )}
+                                    </div>
+                                </SortableContext>
+                            </SectionItem>
+                        );
+                    })}
                 </div>
 
                 {/* Account Section */}
