@@ -13,14 +13,23 @@ import {
 } from '@/lib/api';
 import { updatePage } from '@/lib/db/queries/page.queries';
 
+const VALID_HEADER_STYLES = ['minimal', 'banner', 'portrait', 'shapes'] as const;
+
 const updatePageSchema = z
     .object({
         theme: z.string().max(50).optional(),
         is_public: z.boolean().optional(),
+        header_style: z.enum(VALID_HEADER_STYLES).optional(),
     })
-    .refine((data) => data.theme !== undefined || data.is_public !== undefined, {
-        message: 'theme 또는 is_public 중 하나 이상 필요합니다',
-    });
+    .refine(
+        (data) =>
+            data.theme !== undefined ||
+            data.is_public !== undefined ||
+            data.header_style !== undefined,
+        {
+            message: 'theme, is_public, header_style 중 하나 이상 필요합니다',
+        }
+    );
 
 /**
  * PATCH /api/pages/[id]
@@ -51,10 +60,10 @@ export async function handleUpdatePage(
         return validationErrorResponse(parsed.error.issues[0]?.message ?? 'request body');
     }
 
-    const { theme, is_public } = parsed.data;
+    const { theme, is_public, header_style } = parsed.data;
 
     // 3. Database
-    const result = await updatePage(id, { theme, is_public });
+    const result = await updatePage(id, { theme, is_public, header_style });
     if (!isSuccess(result)) return internalErrorResponse(result.error.message);
 
     // 4. Response

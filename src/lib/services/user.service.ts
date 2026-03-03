@@ -1,14 +1,31 @@
 // lib/services/user.service.ts
 // 서버 전용 - 'use server' 없어도 됨 (기본이 서버)
+import { cache } from 'react';
+
+import type {
+    ContentEntry,
+    EventEntry,
+    HeaderStyle,
+    LinkEntry,
+    MixsetEntry,
+    PageSettings,
+    User,
+} from '@/types/domain';
+import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
 import {
     findUserWithPages,
-    findUserWithPagesById,
     findUserWithPagesByAuthId,
+    findUserWithPagesById,
 } from '@/lib/db/queries/user.queries';
 import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers';
-import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry, User } from '@/types/domain';
-import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
-import { cache } from 'react';
+
+const DEFAULT_PAGE_SETTINGS: PageSettings = { headerStyle: 'minimal' };
+
+function buildPageSettings(dbPage?: { header_style?: string }): PageSettings {
+    return {
+        headerStyle: (dbPage?.header_style as HeaderStyle) ?? 'minimal',
+    };
+}
 
 // 페이지와 엔트리를 포함한 도메인 타입
 export interface PageWithEntries {
@@ -19,6 +36,7 @@ export interface PageWithEntries {
     bio?: string;
     avatarUrl?: string;
     themeColor?: string;
+    pageSettings: PageSettings;
     entries: ContentEntry[];
 }
 
@@ -26,6 +44,7 @@ export interface EditorData {
     user: User;
     contentEntries: ContentEntry[];
     pageId: string | null;
+    pageSettings: PageSettings;
 }
 
 export interface ComponentsByType {
@@ -77,6 +96,7 @@ export const getUserPage = cache(async (username: string): Promise<Result<PageWi
         bio: dbPage.bio ?? undefined,
         avatarUrl: dbPage.avatar_url ?? undefined,
         themeColor: dbPage.theme_color ?? undefined,
+        pageSettings: buildPageSettings(dbPage),
         entries,
     });
 });
@@ -97,6 +117,7 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
             user,
             contentEntries: [],
             pageId: null,
+            pageSettings: DEFAULT_PAGE_SETTINGS,
         });
     }
 
@@ -108,6 +129,7 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
         user,
         contentEntries,
         pageId: page.id,
+        pageSettings: buildPageSettings(page),
     });
 });
 
@@ -146,6 +168,7 @@ export const getEditorDataByAuthUserId = cache(
                 user,
                 contentEntries: [],
                 pageId: null,
+                pageSettings: DEFAULT_PAGE_SETTINGS,
             });
         }
 
@@ -157,6 +180,7 @@ export const getEditorDataByAuthUserId = cache(
             user,
             contentEntries,
             pageId: page.id,
+            pageSettings: buildPageSettings(page),
         });
     }
 );
@@ -165,6 +189,7 @@ export const getEditorDataByAuthUserId = cache(
 export interface PublicPageData {
     user: User;
     components: ContentEntry[];
+    pageSettings: PageSettings;
 }
 
 export const getPublicPageData = cache(
@@ -183,6 +208,7 @@ export const getPublicPageData = cache(
             return success({
                 user,
                 components: [],
+                pageSettings: DEFAULT_PAGE_SETTINGS,
             });
         }
 
@@ -195,6 +221,7 @@ export const getPublicPageData = cache(
         return success({
             user,
             components,
+            pageSettings: buildPageSettings(page),
         });
     }
 );
