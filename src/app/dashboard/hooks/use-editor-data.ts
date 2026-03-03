@@ -57,7 +57,7 @@ async function fetchPageMeta(): Promise<PageMeta> {
     const json = await res.json();
     return {
         pageId: json.data.pageId,
-        pageSettings: json.data.pageSettings ?? { headerStyle: 'minimal' },
+        pageSettings: json.data.pageSettings ?? { headerStyle: 'minimal', links: [] },
     };
 }
 

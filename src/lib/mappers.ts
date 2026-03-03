@@ -36,8 +36,6 @@ export function mapUserToDomain(dbUser: DBUser): User {
         displayName: dbUser.display_name || dbUser.username,
         avatarUrl: dbUser.avatar_url,
         bio: dbUser.bio,
-        instagram: dbUser.instagram,
-        soundcloud: dbUser.soundcloud,
     };
 }
 
@@ -47,8 +45,6 @@ export function mapUserToDatabase(user: Partial<User>): Partial<DBUser> {
         display_name: user.displayName,
         avatar_url: user.avatarUrl,
         bio: user.bio,
-        instagram: user.instagram,
-        soundcloud: user.soundcloud,
     };
 }
 

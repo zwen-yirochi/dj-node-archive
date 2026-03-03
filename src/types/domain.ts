@@ -4,9 +4,26 @@
 // Header Style
 export type HeaderStyle = 'minimal' | 'banner' | 'portrait' | 'shapes';
 
+// Profile Links
+export type ProfileLinkType =
+    | 'instagram'
+    | 'bandcamp'
+    | 'spotify'
+    | 'apple_music'
+    | 'soundcloud'
+    | 'region'
+    | 'custom';
+
+export interface ProfileLink {
+    type: ProfileLinkType;
+    url: string;
+    label?: string;
+}
+
 // Page Settings
 export interface PageSettings {
     headerStyle: HeaderStyle;
+    links: ProfileLink[];
 }
 
 // User & Page
@@ -16,8 +33,6 @@ export interface User {
     displayName: string;
     avatarUrl: string;
     bio?: string;
-    instagram?: string;
-    soundcloud?: string;
 }
 
 export interface Page {
@@ -29,6 +44,7 @@ export interface Page {
     avatarUrl?: string;
     themeColor?: string;
     headerStyle?: HeaderStyle;
+    links: ProfileLink[];
 }
 
 // ============================================

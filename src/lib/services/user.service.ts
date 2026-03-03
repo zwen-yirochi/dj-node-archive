@@ -9,6 +9,7 @@ import type {
     LinkEntry,
     MixsetEntry,
     PageSettings,
+    ProfileLink,
     User,
 } from '@/types/domain';
 import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
@@ -19,11 +20,12 @@ import {
 } from '@/lib/db/queries/user.queries';
 import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers';
 
-const DEFAULT_PAGE_SETTINGS: PageSettings = { headerStyle: 'minimal' };
+const DEFAULT_PAGE_SETTINGS: PageSettings = { headerStyle: 'minimal', links: [] };
 
-function buildPageSettings(dbPage?: { header_style?: string }): PageSettings {
+function buildPageSettings(dbPage?: { header_style?: string; links?: unknown[] }): PageSettings {
     return {
         headerStyle: (dbPage?.header_style as HeaderStyle) ?? 'minimal',
+        links: (dbPage?.links as ProfileLink[]) ?? [],
     };
 }
 

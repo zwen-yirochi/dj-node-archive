@@ -8,7 +8,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import type { HeaderStyle } from '@/types';
+import type { HeaderStyle, ProfileLink } from '@/types';
 
 import { pageKeys, usePageMeta, type PageMeta } from './use-editor-data';
 
@@ -16,7 +16,10 @@ import { pageKeys, usePageMeta, type PageMeta } from './use-editor-data';
 // API Functions
 // ============================================
 
-async function patchPage(pageId: string, updates: { header_style?: HeaderStyle }): Promise<void> {
+async function patchPage(
+    pageId: string,
+    updates: { header_style?: HeaderStyle; links?: ProfileLink[] }
+): Promise<void> {
     const res = await fetch(`/api/pages/${pageId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -53,7 +56,28 @@ export function usePageMutations() {
         },
     });
 
-    return { updateHeaderStyle };
+    const updateLinks = useMutation({
+        mutationFn: ({ pageId, links }: { pageId: string; links: ProfileLink[] }) =>
+            patchPage(pageId, { links }),
+        onMutate: async ({ links }) => {
+            await queryClient.cancelQueries({ queryKey: pageKeys.all });
+            const previous = queryClient.getQueryData<PageMeta>(pageKeys.all);
+            if (previous) {
+                queryClient.setQueryData<PageMeta>(pageKeys.all, {
+                    ...previous,
+                    pageSettings: { ...previous.pageSettings, links },
+                });
+            }
+            return { previous };
+        },
+        onError: (_err, _vars, ctx) => {
+            if (ctx?.previous) {
+                queryClient.setQueryData(pageKeys.all, ctx.previous);
+            }
+        },
+    });
+
+    return { updateHeaderStyle, updateLinks };
 }
 
 // Re-export for convenience

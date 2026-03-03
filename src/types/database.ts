@@ -14,10 +14,14 @@ export interface User {
     display_name?: string;
     avatar_url: string;
     bio?: string;
-    instagram?: string;
-    soundcloud?: string;
     created_at: ISODateString;
     updated_at: ISODateString;
+}
+
+export interface ProfileLinkData {
+    type: string;
+    url: string;
+    label?: string;
 }
 
 export interface Page {
@@ -29,6 +33,7 @@ export interface Page {
     avatar_url?: string;
     theme_color?: string;
     header_style?: string;
+    links?: ProfileLinkData[];
     created_at: ISODateString;
     updated_at: ISODateString;
 }

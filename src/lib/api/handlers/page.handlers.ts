@@ -12,6 +12,7 @@ import {
     type AuthContext,
 } from '@/lib/api';
 import { updatePage } from '@/lib/db/queries/page.queries';
+import { profileLinksArraySchema } from '@/lib/validations/profile-link.schemas';
 
 const VALID_HEADER_STYLES = ['minimal', 'banner', 'portrait', 'shapes'] as const;
 
@@ -20,14 +21,16 @@ const updatePageSchema = z
         theme: z.string().max(50).optional(),
         is_public: z.boolean().optional(),
         header_style: z.enum(VALID_HEADER_STYLES).optional(),
+        links: profileLinksArraySchema.optional(),
     })
     .refine(
         (data) =>
             data.theme !== undefined ||
             data.is_public !== undefined ||
-            data.header_style !== undefined,
+            data.header_style !== undefined ||
+            data.links !== undefined,
         {
-            message: 'theme, is_public, header_style 중 하나 이상 필요합니다',
+            message: 'theme, is_public, header_style, links 중 하나 이상 필요합니다',
         }
     );
 
@@ -60,10 +63,10 @@ export async function handleUpdatePage(
         return validationErrorResponse(parsed.error.issues[0]?.message ?? 'request body');
     }
 
-    const { theme, is_public, header_style } = parsed.data;
+    const { theme, is_public, header_style, links } = parsed.data;
 
     // 3. Database
-    const result = await updatePage(id, { theme, is_public, header_style });
+    const result = await updatePage(id, { theme, is_public, header_style, links });
     if (!isSuccess(result)) return internalErrorResponse(result.error.message);
 
     // 4. Response

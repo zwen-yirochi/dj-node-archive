@@ -20,6 +20,9 @@ export type {
     Mixset,
     MixsetEntry,
     Page,
+    // Profile Links
+    ProfileLink,
+    ProfileLinkType,
     PublicEventEntry,
     TracklistItem,
     // User & Page
