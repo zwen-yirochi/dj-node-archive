@@ -85,9 +85,8 @@ export function CommandPalette() {
                 open={open}
                 onOpenChange={setOpen}
                 label="Command palette"
-                className="fixed inset-0 z-50"
-                overlayClassName="fixed inset-0 bg-black/20"
-                contentClassName="fixed left-1/2 top-[20%] w-full max-w-lg -translate-x-1/2"
+                overlayClassName="fixed inset-0 z-50 bg-black/20"
+                contentClassName="fixed left-1/2 top-[20%] z-50 w-full max-w-lg -translate-x-1/2"
             >
                 <DialogTitle className="sr-only">Command palette</DialogTitle>
                 <DialogDescription className="sr-only">
