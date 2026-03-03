@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 
-import type { ContentEntry, User } from '@/types';
+import type { ContentEntry, ProfileLink, User } from '@/types';
 import type { HeaderStyle } from '@/types/domain';
 
 import { BannerHeader } from './BannerHeader';
@@ -11,6 +11,7 @@ import { ShapesHeader } from './ShapesHeader';
 export interface HeaderProps {
     user: User;
     entries: ContentEntry[];
+    links: ProfileLink[];
 }
 
 export const headerRenderers: Record<HeaderStyle, ComponentType<HeaderProps>> = {

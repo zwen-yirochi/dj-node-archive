@@ -6,6 +6,7 @@ import {
     type ContentEntry,
     type EventEntry,
     type HeaderStyle,
+    type ProfileLink,
     type User,
 } from '@/types/domain';
 import { formatEventDate, venueCode } from '@/lib/formatters';
@@ -24,9 +25,15 @@ interface Props {
     user: User;
     entries: ContentEntry[];
     headerStyle?: HeaderStyle;
+    links?: ProfileLink[];
 }
 
-export default function UserPageContent({ user, entries, headerStyle = 'minimal' }: Props) {
+export default function UserPageContent({
+    user,
+    entries,
+    headerStyle = 'minimal',
+    links = [],
+}: Props) {
     const eventEntries = entries.filter((e) => e.type === 'event') as EventEntry[];
     const otherEntries = entries.filter((e) => e.type !== 'event');
 
@@ -48,7 +55,7 @@ export default function UserPageContent({ user, entries, headerStyle = 'minimal'
             footerMeta={[`DJ-NODE-ARCHIVE // NODE: ${user.username.toUpperCase()}`]}
         >
             {/* ── Profile Header ── */}
-            <HeaderComponent user={user} entries={entries} />
+            <HeaderComponent user={user} entries={entries} links={links} />
 
             {/* ── Stats ── */}
             <StatsRow
@@ -68,14 +75,7 @@ export default function UserPageContent({ user, entries, headerStyle = 'minimal'
                         items={[
                             { key: 'Username', value: user.username },
                             { key: 'Display Name', value: user.displayName },
-                            {
-                                key: 'Instagram',
-                                value: user.instagram || 'NULL',
-                            },
-                            {
-                                key: 'SoundCloud',
-                                value: user.soundcloud || 'NULL',
-                            },
+                            { key: 'Links', value: String(links.length) },
                             { key: 'Entries', value: String(entries.length) },
                             { key: 'Status', value: 'ACTIVE' },
                         ]}

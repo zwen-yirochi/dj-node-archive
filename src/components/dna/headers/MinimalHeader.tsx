@@ -1,4 +1,4 @@
-import type { EventEntry } from '@/types/domain';
+import type { EventEntry, ProfileLink } from '@/types/domain';
 import { ExternalLinks } from '@/components/dna/ExternalLinks';
 import { NodeLabel } from '@/components/dna/NodeLabel';
 import ShareButton from '@/components/dna/ShareButton';
@@ -6,7 +6,7 @@ import ShareButton from '@/components/dna/ShareButton';
 import type { HeaderProps } from '.';
 
 /** Minimal — clean centered/left layout with avatar and bio (default) */
-export function MinimalHeader({ user, entries }: HeaderProps) {
+export function MinimalHeader({ user, entries, links }: HeaderProps) {
     const eventEntries = entries.filter((e) => e.type === 'event') as EventEntry[];
     const otherEntries = entries.filter((e) => e.type !== 'event');
 
@@ -38,7 +38,7 @@ export function MinimalHeader({ user, entries }: HeaderProps) {
                         hasMixsets={otherEntries.some((e) => e.type === 'mixset')}
                     />
 
-                    <SocialLinks instagram={user.instagram} soundcloud={user.soundcloud} />
+                    <SocialLinks links={links} />
 
                     <div className="mt-3 md:mt-4">
                         <ShareButton />
@@ -76,34 +76,33 @@ export function HeaderTags({ hasEvents, hasMixsets }: { hasEvents: boolean; hasM
     );
 }
 
-export function SocialLinks({
-    instagram,
-    soundcloud,
-    className,
-}: {
-    instagram?: string;
-    soundcloud?: string;
-    className?: string;
-}) {
-    const links = [
-        ...(instagram
-            ? [
-                  {
-                      label: 'Instagram',
-                      href: `https://instagram.com/${instagram.replace('@', '')}`,
-                  },
-              ]
-            : []),
-        ...(soundcloud
-            ? [{ label: 'SoundCloud', href: `https://soundcloud.com/${soundcloud}` }]
-            : []),
-    ];
+const PLATFORM_LABELS: Record<string, string> = {
+    instagram: 'Instagram',
+    bandcamp: 'Bandcamp',
+    spotify: 'Spotify',
+    apple_music: 'Apple Music',
+    soundcloud: 'SoundCloud',
+    region: 'Region',
+};
 
+export function SocialLinks({ links, className }: { links: ProfileLink[]; className?: string }) {
     if (links.length === 0) return null;
+
+    const externalLinks = links
+        .filter((link) => link.url)
+        .map((link) => ({
+            label:
+                link.type === 'custom'
+                    ? link.label || 'Link'
+                    : (PLATFORM_LABELS[link.type] ?? link.type),
+            href: link.url,
+        }));
+
+    if (externalLinks.length === 0) return null;
 
     return (
         <ExternalLinks
-            links={links}
+            links={externalLinks}
             className={className ?? 'mt-2 justify-center md:justify-start'}
         />
     );

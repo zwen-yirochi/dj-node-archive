@@ -5,7 +5,7 @@ import type { HeaderProps } from '.';
 import { HeaderTags, SocialLinks } from './MinimalHeader';
 
 /** Banner — wide banner area with side-by-side layout */
-export function BannerHeader({ user, entries }: HeaderProps) {
+export function BannerHeader({ user, entries, links }: HeaderProps) {
     const hasEvents = entries.some((e) => e.type === 'event');
     const hasMixsets = entries.some((e) => e.type === 'mixset');
 
@@ -59,7 +59,7 @@ export function BannerHeader({ user, entries }: HeaderProps) {
                     </div>
                     {user.bio && <p className="dna-text-body mt-3 md:max-w-[520px]">{user.bio}</p>}
                     <HeaderTags hasEvents={hasEvents} hasMixsets={hasMixsets} />
-                    <SocialLinks instagram={user.instagram} soundcloud={user.soundcloud} />
+                    <SocialLinks links={links} />
                     <div className="mt-3 md:mt-4">
                         <ShareButton />
                     </div>

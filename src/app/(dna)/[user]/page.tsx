@@ -26,6 +26,7 @@ export default async function Page({ params }: PageProps) {
             user={userData}
             entries={components}
             headerStyle={pageSettings.headerStyle}
+            links={pageSettings.links}
         />
     );
 }

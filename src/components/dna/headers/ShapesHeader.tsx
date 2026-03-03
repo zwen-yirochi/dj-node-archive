@@ -5,7 +5,7 @@ import type { HeaderProps } from '.';
 import { HeaderTags, SocialLinks } from './MinimalHeader';
 
 /** Shapes — geometric decorative header with grid pattern */
-export function ShapesHeader({ user, entries }: HeaderProps) {
+export function ShapesHeader({ user, entries, links }: HeaderProps) {
     const hasEvents = entries.some((e) => e.type === 'event');
     const hasMixsets = entries.some((e) => e.type === 'mixset');
 
@@ -69,7 +69,7 @@ export function ShapesHeader({ user, entries }: HeaderProps) {
             {/* Tags, links, share below the box */}
             <div className="flex flex-col items-center text-center md:items-start md:text-left">
                 <HeaderTags hasEvents={hasEvents} hasMixsets={hasMixsets} />
-                <SocialLinks instagram={user.instagram} soundcloud={user.soundcloud} />
+                <SocialLinks links={links} />
                 <div className="mt-3 md:mt-4">
                     <ShareButton />
                 </div>

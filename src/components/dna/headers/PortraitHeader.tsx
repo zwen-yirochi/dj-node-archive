@@ -5,7 +5,7 @@ import type { HeaderProps } from '.';
 import { HeaderTags, SocialLinks } from './MinimalHeader';
 
 /** Portrait — large centered portrait with profile info below */
-export function PortraitHeader({ user, entries }: HeaderProps) {
+export function PortraitHeader({ user, entries, links }: HeaderProps) {
     const hasEvents = entries.some((e) => e.type === 'event');
     const hasMixsets = entries.some((e) => e.type === 'mixset');
 
@@ -49,11 +49,7 @@ export function PortraitHeader({ user, entries }: HeaderProps) {
                 )}
 
                 <HeaderTags hasEvents={hasEvents} hasMixsets={hasMixsets} />
-                <SocialLinks
-                    instagram={user.instagram}
-                    soundcloud={user.soundcloud}
-                    className="mt-2 justify-center"
-                />
+                <SocialLinks links={links} className="mt-2 justify-center" />
                 <div className="mt-3 md:mt-4">
                     <ShareButton />
                 </div>
