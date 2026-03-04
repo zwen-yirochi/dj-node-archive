@@ -25,7 +25,7 @@ import { selectContentView, selectSetView, useDashboardStore } from '../../store
 
 interface TreeItemProps {
     entry: ContentEntry;
-    isInViewSection?: boolean;
+    isInPageDisplay?: boolean;
     isVisible?: boolean;
     onToggleVisibility?: () => void;
     onEdit?: () => void;
@@ -56,7 +56,7 @@ function StatusIcon({
 
 export default function TreeItem({
     entry,
-    isInViewSection = false,
+    isInPageDisplay = false,
     isVisible = true,
     onToggleVisibility,
     onEdit,
@@ -75,8 +75,8 @@ export default function TreeItem({
     const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
     const config = ENTRY_TYPE_CONFIG[entry.type];
 
-    // ViewSection uses 'view-{id}' format IDs (matches SortableContext)
-    const sortableId = isInViewSection ? `view-${entry.id}` : entry.id;
+    // PageDisplayList uses 'view-{id}' format IDs (matches SortableContext)
+    const sortableId = isInPageDisplay ? `view-${entry.id}` : entry.id;
 
     const animateLayoutChanges: AnimateLayoutChanges = (args) => {
         const { isSorting, wasDragging } = args;
@@ -89,7 +89,7 @@ export default function TreeItem({
         id: sortableId,
         animateLayoutChanges,
         data: {
-            type: isInViewSection ? 'display-entry' : 'entry',
+            type: isInPageDisplay ? 'display-entry' : 'entry',
             entry,
         },
     });
@@ -153,15 +153,15 @@ export default function TreeItem({
             onClick={handleClick}
         >
             {/* Type Badge - only shown in Page section */}
-            {isInViewSection && <TypeBadge type={config.badgeType} size="sm" />}
+            {isInPageDisplay && <TypeBadge type={config.badgeType} size="sm" />}
 
             {/* Title */}
-            <span className={cn('ml-2 min-w-0 flex-1 truncate text-sm', isInViewSection && 'ml-2')}>
+            <span className={cn('ml-2 min-w-0 flex-1 truncate text-sm', isInPageDisplay && 'ml-2')}>
                 {entry.title || 'Untitled'}
             </span>
 
             {/* Right Side - View Section: Menu */}
-            {isInViewSection ? (
+            {isInPageDisplay ? (
                 <SimpleDropdown
                     trigger={
                         <button
