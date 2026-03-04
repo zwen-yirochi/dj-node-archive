@@ -17,6 +17,7 @@ import type {
 } from '@/lib/validations/entry.schemas';
 
 import type { CreateEntryFormConfig } from '../hooks/use-create-entry-form';
+import type { EntryType } from './entryConfig';
 
 export const EVENT_FORM_CONFIG: CreateEntryFormConfig<CreateEventData> = {
     type: 'event',
@@ -70,4 +71,13 @@ export const LINK_FORM_CONFIG: CreateEntryFormConfig<CreateLinkFormData> = {
             url: formData.url.trim(),
         }) as LinkEntry,
     errorFieldMap: { title: 'title', url: 'url' },
+};
+
+/** Record 기반 — 새 EntryType 추가 시 누락하면 컴파일 에러 */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const FORM_CONFIGS: Record<EntryType, CreateEntryFormConfig<any> | null> = {
+    event: EVENT_FORM_CONFIG,
+    mixset: MIXSET_FORM_CONFIG,
+    link: LINK_FORM_CONFIG,
+    custom: null, // custom uses CustomAutoCreate
 };

@@ -19,6 +19,8 @@ import UrlBlock from '@/app/dashboard/components/ContentPanel/detail-views/block
 import VenueBlock from '@/app/dashboard/components/ContentPanel/detail-views/blocks/VenueBlock';
 import type { FieldBlockConfig } from '@/app/dashboard/components/ContentPanel/detail-views/types';
 
+import type { EntryType } from './entryConfig';
+
 export const EVENT_FIELD_BLOCKS: FieldBlockConfig[] = [
     {
         key: 'date',
@@ -87,3 +89,11 @@ export const LINK_FIELD_BLOCKS: FieldBlockConfig[] = [
         component: DescriptionBlock,
     },
 ];
+
+/** Record 기반 — 새 EntryType 추가 시 누락하면 컴파일 에러 */
+export const FIELD_BLOCKS: Record<EntryType, FieldBlockConfig[]> = {
+    event: EVENT_FIELD_BLOCKS,
+    mixset: MIXSET_FIELD_BLOCKS,
+    link: LINK_FIELD_BLOCKS,
+    custom: [], // custom uses SECTION_BLOCK_CONFIG
+};
