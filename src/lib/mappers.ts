@@ -435,6 +435,9 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): 
                 title: '',
                 url: '',
                 icon: 'globe',
+                description: '',
+                createdAt: '',
+                updatedAt: '',
             } as LinkEntry;
 
         case 'custom':
