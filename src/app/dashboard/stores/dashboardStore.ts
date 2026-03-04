@@ -24,7 +24,6 @@ export type SectionKey = keyof SidebarSections;
 export type ContentView =
     | { kind: 'bio' }
     | { kind: 'page' }
-    | { kind: 'page-detail'; entryId: string }
     | { kind: 'create'; entryType: EntryType }
     | { kind: 'detail'; entryId: string };
 
@@ -59,7 +58,7 @@ const DEFAULT_STATE = {
 };
 
 export const useDashboardStore = create<DashboardStore>()(
-    devtools(
+    devtools<DashboardStore>(
         (set) => ({
             ...DEFAULT_STATE,
 

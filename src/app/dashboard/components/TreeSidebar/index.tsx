@@ -77,7 +77,7 @@ export default function TreeSidebar() {
 
     // Derive sidebar highlight state from contentView
     const isBioActive = contentView.kind === 'bio';
-    const isPageActive = contentView.kind === 'page' || contentView.kind === 'page-detail';
+    const isPageActive = contentView.kind === 'page';
     const selectedEntryId = contentView.kind === 'detail' ? contentView.entryId : null;
 
     // Filter & sort by type
@@ -246,6 +246,11 @@ export default function TreeSidebar() {
     };
 
     const handleDelete = async (id: string) => {
+        // 현재 보고 있는 entry 삭제 시 page로 전환 (404 방지)
+        const cv = useDashboardStore.getState().contentView;
+        if (cv.kind === 'detail' && cv.entryId === id) {
+            setView({ kind: 'page' });
+        }
         await deleteEntryMutation.mutateAsync(id);
     };
 
