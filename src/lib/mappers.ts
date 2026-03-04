@@ -137,6 +137,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                 title: (data.title as string) || '',
                 url: (data.url as string) || '',
                 icon: data.icon as string | undefined,
+                description: data.description as string | undefined,
             } as LinkEntry;
         }
 
@@ -249,6 +250,7 @@ export function mapEntryToDatabase(
                     title: linkEntry.title,
                     url: linkEntry.url,
                     icon: linkEntry.icon || undefined,
+                    description: linkEntry.description || undefined,
                 },
             };
         }
@@ -397,7 +399,7 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): 
                 displayOrder: null, // Page에 미표시
                 isVisible: true,
                 title: '',
-                date: new Date().toISOString().split('T')[0],
+                date: '',
                 venue: { name: '' },
                 lineup: [],
                 posterUrl: '',
