@@ -10,6 +10,7 @@ export type {
     // Entries
     ContentEntry,
     ContentEntryType,
+    CustomEntry,
     Event,
     EventEntry,
     ExternalLink,
@@ -24,6 +25,10 @@ export type {
     ProfileLink,
     ProfileLinkType,
     PublicEventEntry,
+    // Custom Block Types
+    SectionBlock,
+    SectionBlockDataMap,
+    SectionBlockType,
     TracklistItem,
     // User & Page
     User,
@@ -36,7 +41,13 @@ export type {
 export type { CreateEventData, CreateMixsetFormData } from '@/lib/validations/entry.schemas';
 
 // Type guards
-export { isEventEntry, isLinkEntry, isMixsetEntry, isPublicEventEntry } from './domain';
+export {
+    isCustomEntry,
+    isEventEntry,
+    isLinkEntry,
+    isMixsetEntry,
+    isPublicEventEntry,
+} from './domain';
 
 // Helper functions for display state
 export { isDisplayed, isVisibleOnPage } from './domain';

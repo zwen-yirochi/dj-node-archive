@@ -84,8 +84,23 @@ export interface MixsetSelfData {
 
 export type MixsetEntryData = MixsetReferenceData | MixsetSelfData;
 
-export type EntryType = 'link' | 'event' | 'mixset';
-export type EntryData = LinkEntryData | EventReferenceData | EventSelfData | MixsetEntryData;
+/** type='custom' - 커스텀 블록 엔트리 */
+export interface CustomEntryData {
+    title: string;
+    blocks: {
+        id: string;
+        type: string;
+        data: Record<string, unknown>;
+    }[];
+}
+
+export type EntryType = 'link' | 'event' | 'mixset' | 'custom';
+export type EntryData =
+    | LinkEntryData
+    | EventReferenceData
+    | EventSelfData
+    | MixsetEntryData
+    | CustomEntryData;
 
 // ============================================
 // Entry
