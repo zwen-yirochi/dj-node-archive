@@ -48,6 +48,7 @@ export interface LinkEntryData {
     title: string;
     url: string;
     icon?: string;
+    description?: string;
 }
 
 /** type='event' 참조형 - events 테이블 참조 */

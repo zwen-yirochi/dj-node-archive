@@ -27,6 +27,7 @@ import { ChevronDown, ChevronRight, FileText, Palette } from 'lucide-react';
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { type EntryType } from '@/app/dashboard/config/entryConfig';
 import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
 import { COMPONENT_GROUPS } from '@/app/dashboard/config/sidebarConfig';
 import { TypeBadge } from '@/components/dna';
@@ -203,7 +204,7 @@ export default function TreeSidebar() {
             const overEntry = overData.entry;
 
             if (activeEntry.type === overEntry.type && active.id !== over.id) {
-                const sectionType = activeEntry.type as 'event' | 'mixset' | 'link' | 'custom';
+                const sectionType = activeEntry.type as EntryType;
                 const sectionEntries = entriesByType[sectionType] ?? [];
 
                 const overIndex = sectionEntries.findIndex((e) => e.id === over.id);
