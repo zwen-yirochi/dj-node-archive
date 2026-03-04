@@ -15,6 +15,7 @@ export type SidebarSections = {
     events: SidebarSectionState;
     mixsets: SidebarSectionState;
     links: SidebarSectionState;
+    custom: SidebarSectionState;
 };
 
 export type SectionKey = keyof SidebarSections;
@@ -47,6 +48,7 @@ const initialSidebarSections: SidebarSections = {
     events: { collapsed: false },
     mixsets: { collapsed: false },
     links: { collapsed: false },
+    custom: { collapsed: false },
 };
 
 const DEFAULT_STATE = {

@@ -27,4 +27,11 @@ export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
         emptyLabel: 'mixset',
     },
     { section: 'links', title: 'Links', badgeType: 'LNK', entryType: 'link', emptyLabel: 'link' },
+    {
+        section: 'custom',
+        title: 'Custom',
+        badgeType: 'BLK',
+        entryType: 'custom',
+        emptyLabel: 'custom entry',
+    },
 ];

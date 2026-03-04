@@ -20,6 +20,11 @@ export const ENTRY_TYPE_CONFIG = {
         label: 'Link',
         titlePlaceholder: 'Enter link title',
     },
+    custom: {
+        badgeType: 'BLK' as BadgeType,
+        label: 'Custom',
+        titlePlaceholder: 'Enter custom entry title',
+    },
 } as const;
 
 export type EntryType = keyof typeof ENTRY_TYPE_CONFIG;

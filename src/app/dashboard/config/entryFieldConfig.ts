@@ -10,9 +10,11 @@ import type { ZodSchema } from 'zod';
 
 import type { ContentEntry } from '@/types';
 import {
+    draftCustomSchema,
     draftEventSchema,
     draftLinkSchema,
     draftMixsetSchema,
+    publishCustomSchema,
     publishEventSchema,
     publishLinkSchema,
     publishMixsetSchema,
@@ -52,6 +54,10 @@ export const FIELD_CONFIG: Record<EntryType, FieldConfig[]> = {
         { key: 'url', label: 'URL', triggersPreview: true },
         { key: 'icon', label: 'Icon', triggersPreview: true },
     ],
+    custom: [
+        { key: 'title', label: 'Title', triggersPreview: true },
+        { key: 'blocks', label: 'Blocks', triggersPreview: true },
+    ],
 };
 
 // ============================================
@@ -62,6 +68,7 @@ export const ENTRY_SCHEMAS: Record<EntryType, { create: ZodSchema; view: ZodSche
     event: { create: draftEventSchema, view: publishEventSchema },
     mixset: { create: draftMixsetSchema, view: publishMixsetSchema },
     link: { create: draftLinkSchema, view: publishLinkSchema },
+    custom: { create: draftCustomSchema, view: publishCustomSchema },
 };
 
 // ============================================

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-export type BadgeType = 'VEN' | 'ART' | 'EVT' | 'MIX' | 'LNK';
+export type BadgeType = 'VEN' | 'ART' | 'EVT' | 'MIX' | 'LNK' | 'BLK';
 
 const sizeStyles = {
     default: 'min-w-[32px] px-[5px] py-0.5 text-dna-system tracking-dna-system',
