@@ -24,7 +24,6 @@ export type SectionKey = keyof SidebarSections;
 export type ContentView =
     | { kind: 'bio' }
     | { kind: 'page' }
-    | { kind: 'page-detail'; entryId: string }
     | { kind: 'create'; entryType: EntryType }
     | { kind: 'detail'; entryId: string };
 
@@ -32,11 +31,13 @@ export type ContentView =
 // Zustand selectors already prevent unnecessary re-renders.
 interface DashboardStore {
     contentView: ContentView;
+    previousView: ContentView | null;
     sidebarSections: SidebarSections;
     pageId: string | null;
     isSettingsOpen: boolean;
 
-    setView: (view: ContentView) => void;
+    setView: (view: ContentView, options?: { replace?: boolean }) => void;
+    goBack: () => void;
     toggleSection: (section: SectionKey) => void;
     setPageId: (pageId: string | null) => void;
     setSettingsOpen: (open: boolean) => void;
@@ -53,17 +54,36 @@ const initialSidebarSections: SidebarSections = {
 
 const DEFAULT_STATE = {
     contentView: { kind: 'page' } as ContentView,
+    previousView: null as ContentView | null,
     sidebarSections: initialSidebarSections,
     pageId: null as string | null,
     isSettingsOpen: false,
 };
 
 export const useDashboardStore = create<DashboardStore>()(
-    devtools(
+    devtools<DashboardStore>(
         (set) => ({
             ...DEFAULT_STATE,
 
-            setView: (view) => set({ contentView: view }, undefined, 'setView'),
+            setView: (view, options) =>
+                set(
+                    (state) => ({
+                        contentView: view,
+                        previousView: options?.replace ? state.previousView : state.contentView,
+                    }),
+                    undefined,
+                    'setView'
+                ),
+
+            goBack: () =>
+                set(
+                    (state) => ({
+                        contentView: state.previousView ?? { kind: 'page' },
+                        previousView: null,
+                    }),
+                    undefined,
+                    'goBack'
+                ),
 
             setPageId: (pageId) => set({ pageId }, undefined, 'setPageId'),
 
@@ -95,6 +115,7 @@ export const useDashboardStore = create<DashboardStore>()(
 
 export const selectContentView = (s: DashboardStore) => s.contentView;
 export const selectSetView = (s: DashboardStore) => s.setView;
+export const selectGoBack = (s: DashboardStore) => s.goBack;
 export const selectSidebarSections = (s: DashboardStore) => s.sidebarSections;
 export const selectToggleSection = (s: DashboardStore) => s.toggleSection;
 export const selectPageId = (s: DashboardStore) => s.pageId;

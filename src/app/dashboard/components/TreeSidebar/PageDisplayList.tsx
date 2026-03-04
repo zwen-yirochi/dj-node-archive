@@ -8,36 +8,22 @@ import { cn } from '@/lib/utils';
 
 import TreeItem from './TreeItem';
 
-interface ViewSectionProps {
+interface PageDisplayListProps {
     entries: ContentEntry[];
-    isDraggingOver?: boolean;
     isDragging?: boolean;
     isCollapsed?: boolean;
-    onDeleteEntry?: (id: string) => void;
-    removeFromDisplay?: (id: string) => void;
 }
 
-export default function ViewSection({
+export default function PageDisplayList({
     entries,
-    isDraggingOver = false,
     isDragging = false,
     isCollapsed = false,
-    onDeleteEntry,
-    removeFromDisplay,
-}: ViewSectionProps) {
+}: PageDisplayListProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: 'view-drop-zone',
     });
 
-    const displayedEntries = entries
-        .filter((e) => typeof e.displayOrder === 'number')
-        .sort((a, b) => a.displayOrder! - b.displayOrder!);
-
-    const showDropIndicator = isDraggingOver || isOver;
-
-    const handleRemoveFromView = (entryId: string) => {
-        if (removeFromDisplay) removeFromDisplay(entryId);
-    };
+    const showDropIndicator = isOver;
 
     // Show even when collapsed if dragging over
     const shouldShow = !isCollapsed || showDropIndicator || isDragging;
@@ -61,28 +47,22 @@ export default function ViewSection({
                     )}
                 >
                     <SortableContext
-                        items={displayedEntries.map((entry) => `view-${entry.id}`)}
+                        items={entries.map((entry) => `view-${entry.id}`)}
                         strategy={verticalListSortingStrategy}
                     >
                         <div className="relative py-0.5">
                             {/* Tree Line - vertical line */}
-                            {displayedEntries.length > 0 && (
+                            {entries.length > 0 && (
                                 <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
                             )}
-                            {displayedEntries.map((entry) => (
-                                <TreeItem
-                                    key={`view-${entry.id}`}
-                                    entry={entry}
-                                    isInViewSection
-                                    isVisible={entry.isVisible}
-                                    onDelete={() => handleRemoveFromView(entry.id)}
-                                />
+                            {entries.map((entry) => (
+                                <TreeItem key={`view-${entry.id}`} entry={entry} isInPageDisplay />
                             ))}
 
                             <div
                                 className={cn(
                                     'grid transition-[grid-template-rows,opacity] duration-200 ease-out',
-                                    displayedEntries.length === 0 || isDragging
+                                    entries.length === 0 || isDragging
                                         ? 'grid-rows-[1fr] opacity-100'
                                         : 'grid-rows-[0fr] opacity-0'
                                 )}

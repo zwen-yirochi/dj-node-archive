@@ -13,7 +13,7 @@ import {
     type SectionKey,
 } from '../../stores/dashboardStore';
 
-interface SectionItemProps {
+interface ComponentGroupProps {
     section: SectionKey;
     title: string;
     icon?: ReactNode;
@@ -22,14 +22,14 @@ interface SectionItemProps {
     children: ReactNode;
 }
 
-export default function SectionItem({
+export default function ComponentGroup({
     section,
     title,
     icon,
     count,
     entryType,
     children,
-}: SectionItemProps) {
+}: ComponentGroupProps) {
     const sidebarSections = useDashboardStore(selectSidebarSections);
     const toggleSection = useDashboardStore(selectToggleSection);
     const setView = useDashboardStore(selectSetView);

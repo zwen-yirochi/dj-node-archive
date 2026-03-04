@@ -10,7 +10,6 @@ import {
     useSensor,
     useSensors,
     type DragEndEvent,
-    type DragOverEvent,
     type DragStartEvent,
 } from '@dnd-kit/core';
 import {
@@ -29,7 +28,7 @@ import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
-import { SIDEBAR_SECTIONS } from '@/app/dashboard/config/sidebarConfig';
+import { COMPONENT_GROUPS } from '@/app/dashboard/config/sidebarConfig';
 import { TypeBadge } from '@/components/dna';
 
 import { useEntries, useEntryMutations, useUser } from '../../hooks';
@@ -44,9 +43,9 @@ import {
 } from '../../stores/dashboardStore';
 import { CommandPalette } from '../CommandPalette';
 import AccountSection from './AccountSection';
-import SectionItem from './SectionItem';
+import ComponentGroup from './ComponentGroup';
+import PageDisplayList from './PageDisplayList';
 import TreeItem from './TreeItem';
-import ViewSection from './ViewSection';
 
 /** dnd-kit data type — declares the structure of active.data.current */
 interface DragData {
@@ -63,7 +62,6 @@ export default function TreeSidebar() {
 
     // TanStack Query Mutations
     const {
-        remove: deleteEntryMutation,
         reorder: reorderEntriesMutation,
         addToDisplay: addToDisplayMutation,
         reorderDisplay: reorderDisplayMutation,
@@ -77,13 +75,13 @@ export default function TreeSidebar() {
 
     // Derive sidebar highlight state from contentView
     const isBioActive = contentView.kind === 'bio';
-    const isPageActive = contentView.kind === 'page' || contentView.kind === 'page-detail';
+    const isPageActive = contentView.kind === 'page';
     const selectedEntryId = contentView.kind === 'detail' ? contentView.entryId : null;
 
     // Filter & sort by type
     const entriesByType = useMemo(() => {
         const map: Record<string, ContentEntry[]> = {};
-        for (const cfg of SIDEBAR_SECTIONS) {
+        for (const cfg of COMPONENT_GROUPS) {
             map[cfg.entryType] = entries
                 .filter((e) => e.type === cfg.entryType)
                 .sort((a, b) => a.position - b.position);
@@ -107,7 +105,6 @@ export default function TreeSidebar() {
         displayEntryId?: string;
     } | null>(null);
 
-    const [isDraggingOverView, setIsDraggingOverView] = useState(false);
     const isDraggingEntry = activeItem !== null && !activeItem.isDisplayEntry;
 
     const sensors = useSensors(
@@ -134,15 +131,9 @@ export default function TreeSidebar() {
         }
     };
 
-    const handleDragOver = (event: DragOverEvent) => {
-        const { over } = event;
-        setIsDraggingOverView(over?.id === 'view-drop-zone');
-    };
-
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveItem(null);
-        setIsDraggingOverView(false);
 
         if (!over) return;
 
@@ -245,10 +236,6 @@ export default function TreeSidebar() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        await deleteEntryMutation.mutateAsync(id);
-    };
-
     const isPageCollapsed = sidebarSections?.page?.collapsed ?? false;
 
     const handlePageClick = () => {
@@ -266,7 +253,6 @@ export default function TreeSidebar() {
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
             <aside className="flex h-full w-64 shrink-0 flex-col bg-dashboard-bg-muted">
@@ -325,14 +311,12 @@ export default function TreeSidebar() {
                         </button>
                     </div>
 
-                    {/* View Section */}
+                    {/* Page Display List */}
                     <div className="mb-3 ml-3">
-                        <ViewSection
+                        <PageDisplayList
                             entries={displayedEntries}
-                            isDraggingOver={isDraggingOverView}
                             isDragging={isDraggingEntry}
                             isCollapsed={isPageCollapsed}
-                            onDeleteEntry={handleDelete}
                         />
                     </div>
 
@@ -345,10 +329,10 @@ export default function TreeSidebar() {
                     </p>
 
                     {/* Entry Sections */}
-                    {SIDEBAR_SECTIONS.map((cfg) => {
+                    {COMPONENT_GROUPS.map((cfg) => {
                         const items = entriesByType[cfg.entryType] ?? [];
                         return (
-                            <SectionItem
+                            <ComponentGroup
                                 key={cfg.section}
                                 section={cfg.section}
                                 title={cfg.title}
@@ -365,16 +349,12 @@ export default function TreeSidebar() {
                                             <SectionEmptyHint label={cfg.emptyLabel} />
                                         ) : (
                                             items.map((entry) => (
-                                                <TreeItem
-                                                    key={entry.id}
-                                                    entry={entry}
-                                                    onDelete={() => handleDelete(entry.id)}
-                                                />
+                                                <TreeItem key={entry.id} entry={entry} />
                                             ))
                                         )}
                                     </div>
                                 </SortableContext>
-                            </SectionItem>
+                            </ComponentGroup>
                         );
                     })}
                 </div>

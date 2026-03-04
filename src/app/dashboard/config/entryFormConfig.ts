@@ -8,9 +8,13 @@
  * - draftSchema.safeParse -> canCreate
  */
 
-import type { EventEntry, MixsetEntry } from '@/types/domain';
+import type { EventEntry, LinkEntry, MixsetEntry } from '@/types/domain';
 import { createEmptyEntry } from '@/lib/mappers';
-import type { CreateEventData, CreateMixsetFormData } from '@/lib/validations/entry.schemas';
+import type {
+    CreateEventData,
+    CreateLinkFormData,
+    CreateMixsetFormData,
+} from '@/lib/validations/entry.schemas';
 
 import type { CreateEntryFormConfig } from '../hooks/use-create-entry-form';
 
@@ -51,4 +55,19 @@ export const MIXSET_FORM_CONFIG: CreateEntryFormConfig<CreateMixsetFormData> = {
             url: formData.url || '',
         }) as MixsetEntry,
     errorFieldMap: { title: 'title' },
+};
+
+export const LINK_FORM_CONFIG: CreateEntryFormConfig<CreateLinkFormData> = {
+    type: 'link',
+    defaultValues: {
+        title: '',
+        url: '',
+    },
+    toEntry: (formData) =>
+        ({
+            ...createEmptyEntry('link'),
+            title: formData.title.trim(),
+            url: formData.url.trim(),
+        }) as LinkEntry,
+    errorFieldMap: { title: 'title', url: 'url' },
 };

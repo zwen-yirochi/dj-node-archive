@@ -3,7 +3,7 @@ import type { BadgeType } from '@/components/dna/TypeBadge';
 import type { SectionKey } from '../stores/dashboardStore';
 import type { EntryType } from './entryConfig';
 
-export interface SidebarSectionConfig {
+export interface ComponentGroupConfig {
     section: SectionKey;
     title: string;
     badgeType: BadgeType;
@@ -11,7 +11,7 @@ export interface SidebarSectionConfig {
     emptyLabel: string;
 }
 
-export const SIDEBAR_SECTIONS: SidebarSectionConfig[] = [
+export const COMPONENT_GROUPS: ComponentGroupConfig[] = [
     {
         section: 'events',
         title: 'Events',
