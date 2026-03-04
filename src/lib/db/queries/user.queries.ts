@@ -1,14 +1,14 @@
 // lib/db/queries/user.queries.ts
 // 서버 전용 - 순수 DB 쿼리
-import { createClient } from '@/lib/supabase/server';
 import type { User, UserWithPages } from '@/types/database';
 import {
-    type Result,
-    success,
-    failure,
     createDatabaseError,
     createNotFoundError,
+    failure,
+    success,
+    type Result,
 } from '@/types/result';
+import { createClient } from '@/lib/supabase/server';
 
 export async function findUserByUsername(username: string): Promise<Result<User>> {
     try {
@@ -250,6 +250,7 @@ export async function updateUser(
         display_name?: string;
         bio?: string;
         avatar_url?: string;
+        region?: string;
     }
 ): Promise<Result<User>> {
     try {

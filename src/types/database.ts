@@ -14,6 +14,7 @@ export interface User {
     display_name?: string;
     avatar_url: string;
     bio?: string;
+    region?: string;
     created_at: ISODateString;
     updated_at: ISODateString;
 }

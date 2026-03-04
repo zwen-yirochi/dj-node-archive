@@ -47,7 +47,7 @@ export async function handleUpdateProfile(
     { user, params }: AuthContext & { params: { id: string } }
 ) {
     // 1. Parse
-    let body: { displayName?: string; bio?: string };
+    let body: { displayName?: string; bio?: string; region?: string };
     try {
         body = await request.json();
     } catch {
@@ -59,9 +59,10 @@ export async function handleUpdateProfile(
     if (!ownership.ok) return forbiddenResponse();
 
     // 3. DB update
-    const updates: { display_name?: string; bio?: string } = {};
+    const updates: { display_name?: string; bio?: string; region?: string } = {};
     if (body.displayName !== undefined) updates.display_name = body.displayName;
     if (body.bio !== undefined) updates.bio = body.bio;
+    if (body.region !== undefined) updates.region = body.region;
 
     const result = await updateUser(params.id, updates);
     if (!isSuccess(result)) return internalErrorResponse(result.error.message);
