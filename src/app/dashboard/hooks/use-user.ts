@@ -56,6 +56,29 @@ async function removeAvatar(userId: string) {
     if (!res.ok) throw new Error('Failed to delete avatar');
 }
 
+async function patchUsername(userId: string, username: string) {
+    const res = await fetch(`/api/users/${userId}/username`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+    });
+    if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error?.message || 'Failed to update username');
+    }
+    const json = await res.json();
+    return json.data as User;
+}
+
+export async function checkUsernameAvailable(username: string, excludeId?: string) {
+    const params = new URLSearchParams({ username });
+    if (excludeId) params.set('excludeId', excludeId);
+    const res = await fetch(`/api/users/check-username?${params}`);
+    if (!res.ok) throw new Error('Failed to check username');
+    const json = await res.json();
+    return json.data as { available: boolean; reason?: string };
+}
+
 // ============================================
 // Mutation Hook
 // ============================================
@@ -131,5 +154,16 @@ export function useUserMutations() {
         },
     });
 
-    return { updateProfile, uploadAvatar, deleteAvatar };
+    const updateUsernameMutation = useMutation({
+        mutationFn: ({ userId, username }: { userId: string; username: string }) =>
+            patchUsername(userId, username),
+        onSuccess: (serverUser) => {
+            queryClient.setQueryData<User>(userKeys.all, serverUser);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: userKeys.all });
+        },
+    });
+
+    return { updateProfile, uploadAvatar, deleteAvatar, updateUsername: updateUsernameMutation };
 }

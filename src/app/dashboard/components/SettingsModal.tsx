@@ -1,8 +1,8 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Camera, Loader2, LogOut, Trash2, User as UserIcon } from 'lucide-react';
+import { Camera, Check, Loader2, LogOut, Trash2, User as UserIcon, X } from 'lucide-react';
 
 import type { User } from '@/types';
 import { createClient } from '@/lib/supabase/client';
@@ -14,7 +14,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 import { useUser, useUserMutations } from '../hooks';
+import { checkUsernameAvailable } from '../hooks/use-user';
 import { DashboardDialogContent, Dialog, DialogHeader, DialogTitle } from './ui/DashboardDialog';
+
+const USERNAME_REGEX = /^[a-z0-9_-]{3,30}$/;
 
 // ---------------------------------------------------------------------------
 // Settings section config
@@ -85,11 +88,50 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
 
 function ProfileSection({ onClose }: { onClose: () => void }) {
     const user = useUser();
-    const { updateProfile, uploadAvatar, deleteAvatar } = useUserMutations();
+    const { updateProfile, uploadAvatar, deleteAvatar, updateUsername } = useUserMutations();
 
     const [tempUser, setTempUser] = useState<User>(user);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Username editing state
+    const [tempUsername, setTempUsername] = useState(user.username);
+    const [usernameStatus, setUsernameStatus] = useState<
+        'idle' | 'checking' | 'available' | 'taken' | 'invalid'
+    >('idle');
+    const usernameTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const checkUsername = useCallback(
+        (value: string) => {
+            if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
+
+            if (value === user.username) {
+                setUsernameStatus('idle');
+                return;
+            }
+            if (!USERNAME_REGEX.test(value)) {
+                setUsernameStatus('invalid');
+                return;
+            }
+
+            setUsernameStatus('checking');
+            usernameTimerRef.current = setTimeout(async () => {
+                try {
+                    const result = await checkUsernameAvailable(value, user.id);
+                    setUsernameStatus(result.available ? 'available' : 'taken');
+                } catch {
+                    setUsernameStatus('idle');
+                }
+            }, 500);
+        },
+        [user.username, user.id]
+    );
+
+    useEffect(() => {
+        return () => {
+            if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
+        };
+    }, []);
 
     const getInitials = (name: string) =>
         name
@@ -100,6 +142,16 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
             .slice(0, 2);
 
     const handleSave = () => {
+        // Save username if changed and valid
+        if (tempUsername !== user.username && usernameStatus === 'available') {
+            updateUsername.mutate(
+                { userId: user.id, username: tempUsername },
+                {
+                    onError: (err) => toast({ variant: 'destructive', title: err.message }),
+                }
+            );
+        }
+
         updateProfile.mutate(
             {
                 userId: user.id,
@@ -115,6 +167,9 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
         );
         onClose();
     };
+
+    const canSave =
+        usernameStatus !== 'taken' && usernameStatus !== 'invalid' && usernameStatus !== 'checking';
 
     const handleAvatarClick = () => fileInputRef.current?.click();
 
@@ -221,6 +276,58 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
                 />
             </div>
 
+            {/* Username */}
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-dashboard-text-secondary">
+                    Username
+                </label>
+                <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-dashboard-text-placeholder">
+                        @
+                    </span>
+                    <Input
+                        value={tempUsername}
+                        onChange={(e) => {
+                            const val = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+                            setTempUsername(val);
+                            checkUsername(val);
+                        }}
+                        placeholder="username"
+                        className="border-dashboard-border bg-dashboard-bg-card pl-7 text-dashboard-text placeholder:text-dashboard-text-placeholder"
+                    />
+                    {usernameStatus !== 'idle' && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {usernameStatus === 'checking' && (
+                                <Loader2 className="h-4 w-4 animate-spin text-dashboard-text-muted" />
+                            )}
+                            {usernameStatus === 'available' && (
+                                <Check className="h-4 w-4 text-dashboard-success" />
+                            )}
+                            {usernameStatus === 'taken' && (
+                                <X className="h-4 w-4 text-dashboard-danger" />
+                            )}
+                            {usernameStatus === 'invalid' && (
+                                <X className="h-4 w-4 text-dashboard-danger" />
+                            )}
+                        </span>
+                    )}
+                </div>
+                {usernameStatus === 'taken' && (
+                    <p className="text-xs text-dashboard-danger">이미 사용 중인 username입니다.</p>
+                )}
+                {usernameStatus === 'invalid' && (
+                    <p className="text-xs text-dashboard-danger">
+                        영소문자, 숫자, -, _ 만 가능 (3~30자)
+                    </p>
+                )}
+                {usernameStatus === 'available' && (
+                    <p className="text-xs text-dashboard-success">사용 가능한 username입니다.</p>
+                )}
+                <p className="text-xs text-dashboard-text-placeholder">
+                    사이트 주소와 태그에 사용됩니다: /{tempUsername}
+                </p>
+            </div>
+
             {/* Display Name */}
             <div className="space-y-2">
                 <label className="text-sm font-medium text-dashboard-text-secondary">
@@ -269,7 +376,7 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
                 </Button>
                 <Button
                     onClick={handleSave}
-                    disabled={isUploading}
+                    disabled={isUploading || !canSave}
                     className="bg-dashboard-text text-white hover:bg-dashboard-text/90"
                 >
                     Save
