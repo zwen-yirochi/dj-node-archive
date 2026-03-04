@@ -87,6 +87,9 @@ export function useUserMutations() {
                 queryClient.setQueryData(userKeys.all, ctx.previous);
             }
         },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: userKeys.all });
+        },
     });
 
     const uploadAvatar = useMutation({
@@ -96,6 +99,9 @@ export function useUserMutations() {
             queryClient.setQueryData<User>(userKeys.all, (prev) =>
                 prev ? { ...prev, avatarUrl: data.avatarUrl } : prev
             );
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: userKeys.all });
         },
     });
 
@@ -116,6 +122,9 @@ export function useUserMutations() {
             if (ctx?.previous) {
                 queryClient.setQueryData(userKeys.all, ctx.previous);
             }
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: userKeys.all });
         },
     });
 

@@ -1,14 +1,14 @@
 // lib/db/queries/entry.queries.ts
 // 서버 전용 - Entry DB 쿼리
-import { createClient } from '@/lib/supabase/server';
-import type { Entry, EntryType, EntryData } from '@/types/database';
+import type { Entry, EntryData, EntryType } from '@/types/database';
 import {
-    type Result,
-    success,
-    failure,
     createDatabaseError,
     createNotFoundError,
+    failure,
+    success,
+    type Result,
 } from '@/types/result';
+import { createClient } from '@/lib/supabase/server';
 
 export interface CreateEntryInput {
     page_id: string;
@@ -134,7 +134,7 @@ export async function updateEntryPositions(
 ): Promise<Result<void>> {
     try {
         const supabase = await createClient();
-        // 트랜잭션으로 처리하기 위해 Promise.all 사용
+        // 개별 update를 병렬 실행 (트랜잭션 아님 — partial failure 가능)
         const results = await Promise.all(
             updates.map(({ id, position }) =>
                 supabase
