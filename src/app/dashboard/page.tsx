@@ -7,6 +7,7 @@ import { getEditorDataByAuthUserId } from '@/lib/services/user.service';
 import { getUser } from '@/app/actions/auth';
 
 import ContentPanel from './components/ContentPanel';
+import DashboardSettingsModal from './components/DashboardSettingsModal';
 import PreviewPanel from './components/PreviewPanel';
 import StoreInitializer from './components/StoreInitializer';
 import TreeSidebar from './components/TreeSidebar';
@@ -42,6 +43,7 @@ export default async function DashboardPage() {
     return (
         <>
             <StoreInitializer initialData={initialData} />
+            <DashboardSettingsModal />
 
             <div className="flex h-screen overflow-hidden p-3">
                 <div className="flex flex-1 overflow-hidden rounded-2xl bg-white shadow-lg">

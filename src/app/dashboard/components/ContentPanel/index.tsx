@@ -7,13 +7,11 @@ import { Loader2 } from 'lucide-react';
 
 import {
     selectContentView,
-    selectIsSettingsOpen,
-    selectSetSettingsOpen,
+    selectGoBack,
     selectSetView,
     useDashboardStore,
 } from '../../stores/dashboardStore';
 import ErrorBoundaryWithQueryReset from '../ErrorBoundary';
-import SettingsModal from '../SettingsModal';
 import PageListView from './PageListView';
 
 function LoadingSkeleton() {
@@ -39,8 +37,7 @@ const EntryDetailView = dynamic(() => import('./EntryDetailView'), {
 export default function ContentPanel() {
     const view = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
-    const isSettingsOpen = useDashboardStore(selectIsSettingsOpen);
-    const setSettingsOpen = useDashboardStore(selectSetSettingsOpen);
+    const goBack = useDashboardStore(selectGoBack);
 
     const content = (() => {
         switch (view.kind) {
@@ -65,10 +62,7 @@ export default function ContentPanel() {
                     <div className="h-full overflow-hidden rounded-2xl">
                         <ErrorBoundaryWithQueryReset>
                             <Suspense fallback={<LoadingSkeleton />}>
-                                <EntryDetailView
-                                    entryId={view.entryId}
-                                    onBack={() => setView({ kind: 'page' })}
-                                />
+                                <EntryDetailView entryId={view.entryId} onBack={goBack} />
                             </Suspense>
                         </ErrorBoundaryWithQueryReset>
                     </div>
@@ -97,7 +91,6 @@ export default function ContentPanel() {
             >
                 {content}
             </div>
-            <SettingsModal open={isSettingsOpen} onOpenChange={setSettingsOpen} />
         </>
     );
 }
