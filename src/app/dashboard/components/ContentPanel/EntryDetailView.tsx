@@ -218,14 +218,22 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
             {/* Detail View Content */}
             <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
                 {localEntry.type === 'custom' ? (
-                    <CustomEntryEditor
-                        entry={localEntry as CustomEntry}
-                        onBlocksChange={(blocks) => {
-                            const updated = { ...localEntry, blocks } as CustomEntry;
-                            setLocalEntry(updated as ContentEntry);
-                            debouncedSave(updated as ContentEntry, ['blocks']);
-                        }}
-                    />
+                    <>
+                        <input
+                            value={localEntry.title}
+                            onChange={(e) => handleFieldSave('title', e.target.value)}
+                            placeholder="Untitled"
+                            className="mb-6 w-full bg-transparent text-xl font-semibold text-dashboard-text outline-none placeholder:text-dashboard-text-placeholder"
+                        />
+                        <CustomEntryEditor
+                            entry={localEntry as CustomEntry}
+                            onBlocksChange={(blocks) => {
+                                const updated = { ...localEntry, blocks } as CustomEntry;
+                                setLocalEntry(updated as ContentEntry);
+                                debouncedSave(updated as ContentEntry, ['blocks']);
+                            }}
+                        />
+                    </>
                 ) : DetailView ? (
                     <DetailView
                         entry={localEntry}
