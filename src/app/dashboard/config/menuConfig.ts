@@ -1,15 +1,23 @@
 /**
  * Menu system configuration
  *
- * 통합 패턴: actionKey(string) + handler map
- * - config는 "무엇을 보여줄지"만 선언 (actionKey, label, variant)
+ * 통합 패턴: actionKey(string) + handler map + confirm strategy
+ * - config는 "무엇을 보여줄지"와 "확인 전략"을 선언
  * - 소비자가 "actionKey → 콜백" 매핑을 제공
- * - 새 액션 추가 = config에 항목 추가 + 소비자에 handler 추가 (2곳)
+ * - confirm이 있으면 모달 확인 후 handler 실행
  */
 
 import type { DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 
 import type { EntryType } from './entryConfig';
+
+// ============================================
+// Confirm strategy
+// ============================================
+
+export type ConfirmStrategy =
+    | { type: 'simple'; title: string; description: string }
+    | { type: 'type-to-confirm'; title: string; description: string; matchField: string };
 
 // ============================================
 // 공통 메뉴 아이템 타입
@@ -21,6 +29,8 @@ export interface MenuItemConfig {
     variant?: 'danger';
     /** 렌더 시점에 label을 동적으로 결정 (예: isVisible → "Hide"/"Show") */
     dynamicLabel?: (ctx: Record<string, unknown>) => string;
+    /** 액션 실행 전 확인 모달 전략. 없으면 즉시 실행 */
+    confirm?: ConfirmStrategy;
 }
 
 export interface MenuSeparatorConfig {
@@ -49,24 +59,58 @@ export function resolveMenuItems(
     });
 }
 
+/** config에서 confirm이 있는 MenuItemConfig만 추출 */
+export function getConfirmableItems(items: MenuConfig): MenuItemConfig[] {
+    return items.filter((item): item is MenuItemConfig => !('type' in item) && !!item.confirm);
+}
+
+// ============================================
+// Confirm presets
+// ============================================
+
+const SIMPLE_DELETE_CONFIRM: ConfirmStrategy = {
+    type: 'simple',
+    title: 'Delete this entry?',
+    description: 'This action cannot be undone.',
+};
+
+const TYPE_TO_CONFIRM_DELETE: ConfirmStrategy = {
+    type: 'type-to-confirm',
+    title: 'Delete this event?',
+    description: 'Type the event title to confirm deletion.',
+    matchField: 'title',
+};
+
 // ============================================
 // Editor menu item constants
 // ============================================
 
 const EDIT_TITLE: MenuItemConfig = { actionKey: 'edit-title', label: 'Edit title' };
 const EDIT_IMAGE: MenuItemConfig = { actionKey: 'edit-image', label: 'Edit image' };
-const DELETE: MenuItemConfig = { actionKey: 'delete', label: 'Delete', variant: 'danger' };
 const SEPARATOR: MenuSeparatorConfig = { type: 'separator' };
+
+const DELETE_SIMPLE: MenuItemConfig = {
+    actionKey: 'delete',
+    label: 'Delete',
+    variant: 'danger',
+    confirm: SIMPLE_DELETE_CONFIRM,
+};
+const DELETE_TYPE_CONFIRM: MenuItemConfig = {
+    actionKey: 'delete',
+    label: 'Delete',
+    variant: 'danger',
+    confirm: TYPE_TO_CONFIRM_DELETE,
+};
 
 // ============================================
 // Per-type editor menu composition
 // ============================================
 
 export const EDITOR_MENU_CONFIG: Record<EntryType, MenuConfig> = {
-    event: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE],
-    mixset: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE],
-    link: [EDIT_TITLE, SEPARATOR, DELETE],
-    custom: [EDIT_TITLE, SEPARATOR, DELETE],
+    event: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE_TYPE_CONFIRM],
+    mixset: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE_SIMPLE],
+    link: [EDIT_TITLE, SEPARATOR, DELETE_SIMPLE],
+    custom: [EDIT_TITLE, SEPARATOR, DELETE_SIMPLE],
 };
 
 // ============================================
@@ -74,7 +118,12 @@ export const EDITOR_MENU_CONFIG: Record<EntryType, MenuConfig> = {
 // ============================================
 
 const TREE_EDIT: MenuItemConfig = { actionKey: 'edit', label: 'Edit' };
-const TREE_DELETE: MenuItemConfig = { actionKey: 'delete', label: 'Delete', variant: 'danger' };
+const TREE_DELETE: MenuItemConfig = {
+    actionKey: 'delete',
+    label: 'Delete',
+    variant: 'danger',
+    confirm: SIMPLE_DELETE_CONFIRM,
+};
 const TREE_TOGGLE_VISIBILITY: MenuItemConfig = {
     actionKey: 'toggle-visibility',
     label: 'Hide',
@@ -83,7 +132,6 @@ const TREE_TOGGLE_VISIBILITY: MenuItemConfig = {
 const TREE_REMOVE_FROM_PAGE: MenuItemConfig = {
     actionKey: 'remove-from-page',
     label: 'Remove from Page',
-    variant: 'danger',
 };
 
 /** Component section: Edit / Delete */
@@ -93,6 +141,7 @@ export const TREE_ENTRY_MENU: MenuConfig = [TREE_EDIT, SEPARATOR, TREE_DELETE];
 export const TREE_PAGE_DISPLAY_MENU: MenuConfig = [
     TREE_EDIT,
     TREE_TOGGLE_VISIBILITY,
-    SEPARATOR,
     TREE_REMOVE_FROM_PAGE,
+    SEPARATOR,
+    TREE_DELETE,
 ];
