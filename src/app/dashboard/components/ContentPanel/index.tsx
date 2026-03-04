@@ -55,12 +55,11 @@ export default function ContentPanel() {
                 return (
                     <div className="h-full overflow-hidden rounded-2xl">
                         <PageListView
-                            onSelectDetail={(id) => setView({ kind: 'page-detail', entryId: id })}
+                            onSelectDetail={(id) => setView({ kind: 'detail', entryId: id })}
                         />
                     </div>
                 );
 
-            case 'page-detail':
             case 'detail':
                 return (
                     <div className="h-full overflow-hidden rounded-2xl">
@@ -86,7 +85,16 @@ export default function ContentPanel() {
 
     return (
         <>
-            <div key={view.kind} className="h-full animate-fade-in-view">
+            <div
+                key={
+                    view.kind === 'detail'
+                        ? `detail-${view.entryId}`
+                        : view.kind === 'create'
+                          ? `create-${view.entryType}`
+                          : view.kind
+                }
+                className="h-full animate-fade-in-view"
+            >
                 {content}
             </div>
             <SettingsModal open={isSettingsOpen} onOpenChange={setSettingsOpen} />
