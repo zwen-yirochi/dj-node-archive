@@ -12,13 +12,17 @@ import {
     type DragStartEvent,
 } from '@dnd-kit/core';
 import {
+    defaultAnimateLayoutChanges,
     SortableContext,
     sortableKeyboardCoordinates,
     useSortable,
     verticalListSortingStrategy,
+    type AnimateLayoutChanges,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useId, useMemo, useState } from 'react';
+
+import { useQueryClient } from '@tanstack/react-query';
 
 import { Calendar, Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
 
@@ -29,6 +33,7 @@ import { TypeBadge } from '@/components/dna';
 
 import { useEntries, useEntryMutations } from '../../hooks';
 import { computeReorderedDisplay } from '../../hooks/entries.api';
+import { entryKeys } from '../../hooks/use-editor-data';
 
 interface SortableItemProps {
     id: string;
@@ -47,8 +52,15 @@ function SortableItem({
     onRemove,
     onSelect,
 }: SortableItemProps) {
+    const animateLayoutChanges: AnimateLayoutChanges = (args) => {
+        if (args.wasDragging) return false;
+        if (args.isSorting) return true;
+        return defaultAnimateLayoutChanges(args);
+    };
+
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id,
+        animateLayoutChanges,
     });
 
     const style = {
@@ -65,8 +77,8 @@ function SortableItem({
             className={cn(
                 'group flex items-center gap-3 rounded-lg border p-3 transition-all',
                 isDragging
-                    ? 'border-dashboard-border-hover shadow-lg'
-                    : 'border-dashboard-border hover:border-dashboard-border-hover',
+                    ? 'shadow-panel-hover border-dashboard-border-hover'
+                    : 'hover:shadow-panel border-dashboard-border/60 hover:border-dashboard-border-hover',
                 !isVisible && 'opacity-60'
             )}
         >
@@ -106,7 +118,7 @@ function SortableItem({
                 </button>
                 <button
                     onClick={onRemove}
-                    className="rounded-md p-2 text-dashboard-text-placeholder transition-colors hover:bg-red-50 hover:text-red-600"
+                    className="rounded-md p-2 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-danger-bg hover:text-dashboard-danger"
                     title="Remove from Page"
                 >
                     <Trash2 className="h-4 w-4" />
@@ -122,6 +134,7 @@ interface PageListViewProps {
 
 export default function PageListView({ onSelectDetail }: PageListViewProps) {
     // TanStack Query
+    const queryClient = useQueryClient();
     const { data: entries } = useEntries();
     const {
         toggleVisibility: toggleVisibilityMutation,
@@ -168,6 +181,14 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
         if (newIndex !== -1) {
             const updates = computeReorderedDisplay(entries, active.id as string, newIndex);
             if (updates) {
+                // Sync cache update before mutate to prevent flash
+                const orderMap = new Map(updates.map((u) => [u.id, u.displayOrder]));
+                queryClient.setQueryData<ContentEntry[]>(entryKeys.all, (prev) =>
+                    prev?.map((e) => {
+                        const newOrder = orderMap.get(e.id);
+                        return newOrder !== undefined ? { ...e, displayOrder: newOrder } : e;
+                    })
+                );
                 reorderDisplayMutation.mutate({ updates });
             }
         }
@@ -189,8 +210,8 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="border-b bg-dashboard-bg-muted px-6 py-4">
-                <h2 className="text-lg font-semibold text-dashboard-text">Page layout</h2>
+            <div className="border-b border-dashboard-border/50 px-6 py-5">
+                <h2 className="text-lg font-medium text-dashboard-text">Page layout</h2>
                 <p className="mt-1 text-sm text-dashboard-text-muted">
                     Manage entries displayed on your public page. Drag to reorder.
                 </p>
@@ -201,12 +222,12 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="scrollbar-thin flex-1 overflow-y-auto p-4">
                 {displayedEntries.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                         <div className="text-center">
-                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-dashboard-bg-muted">
-                                <Calendar className="h-8 w-8 text-dashboard-text-placeholder" />
+                            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-dashboard-bg-hover/40">
+                                <Calendar className="h-6 w-6 text-dashboard-text-placeholder" />
                             </div>
                             <p className="text-sm font-medium text-dashboard-text-secondary">
                                 Page is empty
@@ -243,7 +264,7 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
                             </div>
                         </SortableContext>
 
-                        <DragOverlay>
+                        <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
                             {activeEntry && (
                                 <div className="flex items-center gap-3 rounded-lg border border-dashboard-border-hover bg-dashboard-bg-card p-3 shadow-xl">
                                     <div className="text-dashboard-text-placeholder">

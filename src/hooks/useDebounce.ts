@@ -1,13 +1,17 @@
 'use client';
 
+import * as React from 'react';
 import { useCallback, useRef } from 'react';
 
 /**
  * 디바운스 훅 - 함수 호출을 지연시킵니다.
  *
+ * callback을 ref로 감싸 반환 함수의 참조가 안정적으로 유지됩니다.
+ * cancel() 메서드로 대기 중인 호출을 취소할 수 있습니다.
+ *
  * @param callback - 디바운스할 함수
  * @param delay - 지연 시간 (ms)
- * @returns 디바운스된 함수
+ * @returns 디바운스된 함수 (cancel 메서드 포함)
  *
  * @example
  * const debouncedSave = useDebounce(async (data) => {
@@ -16,24 +20,39 @@ import { useCallback, useRef } from 'react';
  *
  * // 호출할 때마다 타이머가 리셋됨
  * debouncedSave(newData);
+ *
+ * // 대기 중인 호출 취소
+ * debouncedSave.cancel();
  */
-export function useDebounce<T extends (...args: Parameters<T>) => void>(
+export type DebouncedFn<T extends (...args: any[]) => void> = T & { cancel: () => void };
+
+export function useDebounce<T extends (...args: any[]) => void>(
     callback: T,
     delay: number
-): T {
+): DebouncedFn<T> {
+    const callbackRef = useRef(callback);
+    callbackRef.current = callback;
+
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    return useCallback(
+    const cancel = useCallback(() => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+    }, []);
+
+    const debounced = useCallback(
         ((...args: Parameters<T>) => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
+            cancel();
             timeoutRef.current = setTimeout(() => {
-                callback(...args);
+                callbackRef.current(...args);
             }, delay);
         }) as T,
-        [callback, delay]
+        [delay, cancel]
     );
+
+    return Object.assign(debounced, { cancel }) as DebouncedFn<T>;
 }
 
 /**
@@ -58,5 +77,3 @@ export function useDebouncedValue<T>(value: T, delay: number): T {
 
     return debouncedValue;
 }
-
-import * as React from 'react';

@@ -5,8 +5,15 @@ import dynamic from 'next/dynamic';
 
 import { Loader2 } from 'lucide-react';
 
-import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
+import {
+    selectContentView,
+    selectIsSettingsOpen,
+    selectSetSettingsOpen,
+    selectSetView,
+    useDashboardStore,
+} from '../../stores/dashboardStore';
 import ErrorBoundaryWithQueryReset from '../ErrorBoundary';
+import SettingsModal from '../SettingsModal';
 import PageListView from './PageListView';
 
 function LoadingSkeleton() {
@@ -32,44 +39,57 @@ const EntryDetailView = dynamic(() => import('./EntryDetailView'), {
 export default function ContentPanel() {
     const view = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
+    const isSettingsOpen = useDashboardStore(selectIsSettingsOpen);
+    const setSettingsOpen = useDashboardStore(selectSetSettingsOpen);
 
-    switch (view.kind) {
-        case 'bio':
-            return (
-                <div className="h-full overflow-hidden rounded-2xl">
-                    <BioDesignPanel />
-                </div>
-            );
+    const content = (() => {
+        switch (view.kind) {
+            case 'bio':
+                return (
+                    <div className="h-full overflow-hidden rounded-2xl">
+                        <BioDesignPanel />
+                    </div>
+                );
 
-        case 'page':
-            return (
-                <div className="h-full overflow-hidden rounded-2xl">
-                    <PageListView
-                        onSelectDetail={(id) => setView({ kind: 'page-detail', entryId: id })}
-                    />
-                </div>
-            );
+            case 'page':
+                return (
+                    <div className="h-full overflow-hidden rounded-2xl">
+                        <PageListView
+                            onSelectDetail={(id) => setView({ kind: 'page-detail', entryId: id })}
+                        />
+                    </div>
+                );
 
-        case 'page-detail':
-        case 'detail':
-            return (
-                <div className="h-full overflow-hidden rounded-2xl border border-dashboard-border">
-                    <ErrorBoundaryWithQueryReset>
-                        <Suspense fallback={<LoadingSkeleton />}>
-                            <EntryDetailView
-                                entryId={view.entryId}
-                                onBack={() => setView({ kind: 'page' })}
-                            />
-                        </Suspense>
-                    </ErrorBoundaryWithQueryReset>
-                </div>
-            );
+            case 'page-detail':
+            case 'detail':
+                return (
+                    <div className="h-full overflow-hidden rounded-2xl">
+                        <ErrorBoundaryWithQueryReset>
+                            <Suspense fallback={<LoadingSkeleton />}>
+                                <EntryDetailView
+                                    entryId={view.entryId}
+                                    onBack={() => setView({ kind: 'page' })}
+                                />
+                            </Suspense>
+                        </ErrorBoundaryWithQueryReset>
+                    </div>
+                );
 
-        case 'create':
-            return (
-                <div className="h-full overflow-hidden rounded-2xl border border-dashboard-border shadow-xl">
-                    <CreateEntryPanel type={view.entryType} />
-                </div>
-            );
-    }
+            case 'create':
+                return (
+                    <div className="h-full overflow-hidden rounded-2xl">
+                        <CreateEntryPanel type={view.entryType} />
+                    </div>
+                );
+        }
+    })();
+
+    return (
+        <>
+            <div key={view.kind} className="h-full animate-fade-in-view">
+                {content}
+            </div>
+            <SettingsModal open={isSettingsOpen} onOpenChange={setSettingsOpen} />
+        </>
+    );
 }

@@ -170,6 +170,26 @@ export const linkFieldSchemas = {
 };
 
 // ============================================
+// Custom Entry Schemas
+// ============================================
+
+const sectionBlockSchema = z.object({
+    id: z.string().uuid(),
+    type: z.enum(['header', 'richtext', 'image', 'embed', 'keyvalue', 'list']),
+    data: z.record(z.unknown()),
+});
+
+export const draftCustomSchema = z.object({
+    title: z.string().min(1, 'Title is required').max(100).trim(),
+    blocks: z.array(sectionBlockSchema).default([]),
+});
+
+export const publishCustomSchema = z.object({
+    title: z.string().min(1, 'Title is required').max(100).trim(),
+    blocks: z.array(sectionBlockSchema).min(1, 'At least one block is required'),
+});
+
+// ============================================
 // API Request Schemas
 // ============================================
 
@@ -184,7 +204,7 @@ export const createEntryRequestSchema = z.object({
     entry: z
         .object({
             id: z.string().uuid(),
-            type: z.enum(['event', 'mixset', 'link']),
+            type: z.enum(['event', 'mixset', 'link', 'custom']),
         })
         .passthrough(),
     publishOption: z.enum(['publish', 'private']).default('private'),
@@ -201,7 +221,7 @@ export const updateEntryRequestSchema = z
         entry: z
             .object({
                 id: z.string().uuid(),
-                type: z.enum(['event', 'mixset', 'link']),
+                type: z.enum(['event', 'mixset', 'link', 'custom']),
             })
             .passthrough()
             .optional(),

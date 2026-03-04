@@ -18,7 +18,7 @@ export default function LinkDetailView({
     const title = entry.title;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {/* Header — Icon + title */}
             <div className="space-y-3 text-center">
                 <IconBlock entry={entry} onSave={onSave} disabled={disabled} />

@@ -4,8 +4,6 @@ import type { ReactNode } from 'react';
 
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
-
 import {
     selectSetView,
     selectSidebarSections,
@@ -42,7 +40,7 @@ export default function SectionItem({
         <div className="mb-1">
             {/* Section Header */}
             <div
-                className="group flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 transition-colors hover:bg-dashboard-bg-hover"
+                className="group flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 transition-colors hover:bg-dashboard-bg-hover/70"
                 onClick={() => toggleSection(section)}
             >
                 {/* Collapse Arrow */}
@@ -58,13 +56,11 @@ export default function SectionItem({
                 {icon && <span className="text-dashboard-text-muted">{icon}</span>}
 
                 {/* Title */}
-                <span className="flex-1 text-sm font-medium text-dashboard-text-secondary">
-                    {title}
-                </span>
+                <span className="flex-1 text-sm text-dashboard-text-secondary">{title}</span>
 
                 {/* Count Badge */}
                 {count !== undefined && count > 0 && (
-                    <span className="rounded bg-dashboard-bg-active px-1.5 py-0.5 text-[10px] font-medium text-dashboard-text-muted">
+                    <span className="rounded-full bg-dashboard-bg-muted px-1.5 py-0.5 text-[10px] font-normal text-dashboard-text-placeholder">
                         {count}
                     </span>
                 )}
@@ -85,14 +81,14 @@ export default function SectionItem({
 
             {/* Section Content */}
             <div
-                className={cn(
-                    'relative ml-2 overflow-hidden transition-all duration-200',
-                    isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'
-                )}
+                className="relative ml-2 grid transition-[grid-template-rows] duration-200 ease-out"
+                style={{ gridTemplateRows: isCollapsed ? '0fr' : '1fr' }}
             >
-                {/* Tree Line - vertical line */}
-                <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
-                {children}
+                <div className="overflow-hidden">
+                    {/* Tree Line - vertical line */}
+                    <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
+                    {children}
+                </div>
             </div>
         </div>
     );

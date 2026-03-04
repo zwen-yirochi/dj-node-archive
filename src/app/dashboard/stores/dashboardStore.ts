@@ -15,6 +15,7 @@ export type SidebarSections = {
     events: SidebarSectionState;
     mixsets: SidebarSectionState;
     links: SidebarSectionState;
+    custom: SidebarSectionState;
 };
 
 export type SectionKey = keyof SidebarSections;
@@ -33,10 +34,12 @@ interface DashboardStore {
     contentView: ContentView;
     sidebarSections: SidebarSections;
     pageId: string | null;
+    isSettingsOpen: boolean;
 
     setView: (view: ContentView) => void;
     toggleSection: (section: SectionKey) => void;
     setPageId: (pageId: string | null) => void;
+    setSettingsOpen: (open: boolean) => void;
     reset: () => void;
 }
 
@@ -45,12 +48,14 @@ const initialSidebarSections: SidebarSections = {
     events: { collapsed: false },
     mixsets: { collapsed: false },
     links: { collapsed: false },
+    custom: { collapsed: false },
 };
 
 const DEFAULT_STATE = {
     contentView: { kind: 'page' } as ContentView,
     sidebarSections: initialSidebarSections,
     pageId: null as string | null,
+    isSettingsOpen: false,
 };
 
 export const useDashboardStore = create<DashboardStore>()(
@@ -61,6 +66,8 @@ export const useDashboardStore = create<DashboardStore>()(
             setView: (view) => set({ contentView: view }, undefined, 'setView'),
 
             setPageId: (pageId) => set({ pageId }, undefined, 'setPageId'),
+
+            setSettingsOpen: (open) => set({ isSettingsOpen: open }, undefined, 'setSettingsOpen'),
 
             toggleSection: (section) =>
                 set(
@@ -91,3 +98,5 @@ export const selectSetView = (s: DashboardStore) => s.setView;
 export const selectSidebarSections = (s: DashboardStore) => s.sidebarSections;
 export const selectToggleSection = (s: DashboardStore) => s.toggleSection;
 export const selectPageId = (s: DashboardStore) => s.pageId;
+export const selectIsSettingsOpen = (s: DashboardStore) => s.isSettingsOpen;
+export const selectSetSettingsOpen = (s: DashboardStore) => s.setSettingsOpen;

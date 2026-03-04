@@ -14,12 +14,14 @@ import type {
 import {
     isPublicEventEntry,
     type ContentEntry,
+    type CustomEntry,
     type Event,
     type EventEntry,
     type EventStack,
     type LinkEntry,
     type MixsetEntry,
     type PublicEventEntry,
+    type SectionBlock,
     type User,
     type Venue,
 } from '@/types/domain';
@@ -36,8 +38,6 @@ export function mapUserToDomain(dbUser: DBUser): User {
         displayName: dbUser.display_name || dbUser.username,
         avatarUrl: dbUser.avatar_url,
         bio: dbUser.bio,
-        instagram: dbUser.instagram,
-        soundcloud: dbUser.soundcloud,
     };
 }
 
@@ -47,8 +47,6 @@ export function mapUserToDatabase(user: Partial<User>): Partial<DBUser> {
         display_name: user.displayName,
         avatar_url: user.avatarUrl,
         bio: user.bio,
-        instagram: user.instagram,
-        soundcloud: user.soundcloud,
     };
 }
 
@@ -140,6 +138,16 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                 url: (data.url as string) || '',
                 icon: data.icon as string | undefined,
             } as LinkEntry;
+        }
+
+        case 'custom': {
+            const data = dbEntry.data as unknown as Record<string, unknown>;
+            return {
+                ...base,
+                type: 'custom',
+                title: (data.title as string) || '',
+                blocks: (data.blocks as SectionBlock[]) || [],
+            } as CustomEntry;
         }
 
         default:
@@ -241,6 +249,24 @@ export function mapEntryToDatabase(
                     title: linkEntry.title,
                     url: linkEntry.url,
                     icon: linkEntry.icon || undefined,
+                },
+            };
+        }
+
+        case 'custom': {
+            const customEntry = entry as CustomEntry;
+            return {
+                type: 'custom',
+                position,
+                display_order: customEntry.displayOrder,
+                is_visible: customEntry.isVisible,
+                data: {
+                    title: customEntry.title,
+                    blocks: (customEntry.blocks || []).map((b) => ({
+                        id: b.id,
+                        type: b.type,
+                        data: b.data as unknown as Record<string, unknown>,
+                    })),
                 },
             };
         }
@@ -359,7 +385,7 @@ export function mapVenueToString(venue: DBVenue): string {
 // Factory Functions
 // ============================================
 
-export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntry {
+export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): ContentEntry {
     const id = uuidv4();
 
     switch (type) {
@@ -408,6 +434,19 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link'): ContentEntr
                 url: '',
                 icon: 'globe',
             } as LinkEntry;
+
+        case 'custom':
+            return {
+                id,
+                type: 'custom',
+                position: 0,
+                displayOrder: null,
+                isVisible: true,
+                title: '',
+                blocks: [],
+                createdAt: '',
+                updatedAt: '',
+            } as CustomEntry;
     }
 }
 

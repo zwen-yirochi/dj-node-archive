@@ -97,4 +97,5 @@ export const EDITOR_MENU_CONFIG: Record<EntryType, EditorMenuItemConfig[]> = {
     event: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE],
     mixset: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE],
     link: [EDIT_TITLE, SEPARATOR, DELETE],
+    custom: [EDIT_TITLE, SEPARATOR, DELETE],
 };

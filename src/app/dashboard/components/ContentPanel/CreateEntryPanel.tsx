@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, type ComponentType } from 'react';
+import { useEffect, useRef, useState, type ComponentType } from 'react';
+
+import { useQueryClient } from '@tanstack/react-query';
 
 import { Loader2 } from 'lucide-react';
 
@@ -12,10 +14,53 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-import { useEntryMutations } from '../../hooks';
+import { entryKeys, useEntryMutations } from '../../hooks';
 import { selectPageId, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 import CreateMixsetForm from './CreateMixsetForm';
 import EventCreateSection from './EventCreateSection';
+
+// ============================================
+// CustomAutoCreate: create immediately and navigate to editor (no loading)
+// ============================================
+function CustomAutoCreate() {
+    const pageId = useDashboardStore(selectPageId);
+    const setView = useDashboardStore(selectSetView);
+    const { create: createMutation } = useEntryMutations();
+    const queryClient = useQueryClient();
+    const hasCreated = useRef(false);
+
+    useEffect(() => {
+        if (hasCreated.current || !pageId) return;
+        hasCreated.current = true;
+
+        const entry = createEmptyEntry('custom');
+        entry.title = 'Untitled';
+
+        // Pre-populate detail cache so EntryDetailView renders instantly
+        queryClient.setQueryData(entryKeys.detail(entry.id), entry);
+
+        // Fire mutation in background (handles entries list + API call)
+        createMutation.mutate(
+            { pageId, entry },
+            {
+                onError: () => {
+                    queryClient.removeQueries({ queryKey: entryKeys.detail(entry.id) });
+                    toast({
+                        variant: 'destructive',
+                        title: 'Creation failed',
+                        description: 'Failed to create custom entry.',
+                    });
+                    setView({ kind: 'page' });
+                },
+            }
+        );
+
+        // Navigate immediately — entry is already in detail cache
+        setView({ kind: 'detail', entryId: entry.id });
+    }, [pageId, createMutation, setView, queryClient]);
+
+    return null;
+}
 
 // ============================================
 // Registry: EntryType -> dedicated form component
@@ -24,6 +69,7 @@ import EventCreateSection from './EventCreateSection';
 const FORM_REGISTRY: Partial<Record<EntryType, ComponentType>> = {
     event: EventCreateSection,
     mixset: CreateMixsetForm,
+    custom: CustomAutoCreate,
 };
 
 // ============================================
@@ -86,7 +132,7 @@ function DefaultCreateForm({ type }: { type: EntryType }) {
     return (
         <>
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
                 <div className="space-y-2">
                     <Label htmlFor="title" className="text-dashboard-text-secondary">
                         Title
@@ -105,7 +151,7 @@ function DefaultCreateForm({ type }: { type: EntryType }) {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 border-t border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
+            <div className="flex items-center justify-end gap-3 border-t border-dashboard-border/50 px-6 py-4">
                 <Button
                     onClick={handleCancel}
                     variant="ghost"
@@ -141,12 +187,10 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
     return (
         <div className="flex h-full flex-col bg-dashboard-bg-card">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-dashboard-border bg-dashboard-bg-muted px-6 py-4">
+            <div className="flex items-center justify-between border-b border-dashboard-border/50 px-6 py-5">
                 <div className="flex items-center gap-3">
                     <TypeBadge type={config.badgeType} size="sm" />
-                    <h2 className="text-xl font-semibold text-dashboard-text">
-                        New {config.label}
-                    </h2>
+                    <h2 className="text-lg font-medium text-dashboard-text">New {config.label}</h2>
                 </div>
                 {DedicatedForm && (
                     <Button
@@ -162,7 +206,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
 
             {/* Content: Registry lookup -> dedicated form or default form */}
             {DedicatedForm ? (
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
                     <div className="space-y-6">
                         <DedicatedForm />
                     </div>

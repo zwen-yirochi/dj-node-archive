@@ -11,6 +11,7 @@ import TreeItem from './TreeItem';
 interface ViewSectionProps {
     entries: ContentEntry[];
     isDraggingOver?: boolean;
+    isDragging?: boolean;
     isCollapsed?: boolean;
     onDeleteEntry?: (id: string) => void;
     removeFromDisplay?: (id: string) => void;
@@ -19,6 +20,7 @@ interface ViewSectionProps {
 export default function ViewSection({
     entries,
     isDraggingOver = false,
+    isDragging = false,
     isCollapsed = false,
     onDeleteEntry,
     removeFromDisplay,
@@ -38,54 +40,75 @@ export default function ViewSection({
     };
 
     // Show even when collapsed if dragging over
-    const shouldShow = !isCollapsed || showDropIndicator;
+    const shouldShow = !isCollapsed || showDropIndicator || isDragging;
 
     return (
         <div
             ref={setNodeRef}
-            className={cn(
-                'overflow-hidden transition-all duration-200',
-                shouldShow ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-            )}
+            className="grid transition-[grid-template-rows] duration-200 ease-out"
+            style={{ gridTemplateRows: shouldShow ? '1fr' : '0fr' }}
         >
-            <div
-                className={cn(
-                    'min-h-[32px] rounded-md transition-colors',
-                    showDropIndicator &&
-                        'ring-dashed bg-dashboard-bg-active ring-1 ring-dashboard-border-hover'
-                )}
-            >
-                <SortableContext
-                    items={displayedEntries.map((entry) => `view-${entry.id}`)}
-                    strategy={verticalListSortingStrategy}
+            <div className="overflow-hidden">
+                <div
+                    className={cn(
+                        'rounded-md transition-all duration-200',
+                        isDragging || showDropIndicator ? 'min-h-[48px] py-1' : 'min-h-[32px]',
+                        isDragging &&
+                            !showDropIndicator &&
+                            'border border-dashed border-dashboard-border-hover bg-dashboard-bg-hover/50',
+                        showDropIndicator &&
+                            'border border-dashed border-dashboard-text-muted bg-dashboard-bg-active'
+                    )}
                 >
-                    <div className="relative py-0.5">
-                        {/* Tree Line - vertical line */}
-                        {displayedEntries.length > 0 && (
-                            <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
-                        )}
-                        {displayedEntries.map((entry) => (
-                            <TreeItem
-                                key={`view-${entry.id}`}
-                                entry={entry}
-                                isInViewSection
-                                isVisible={entry.isVisible}
-                                onDelete={() => handleRemoveFromView(entry.id)}
-                            />
-                        ))}
+                    <SortableContext
+                        items={displayedEntries.map((entry) => `view-${entry.id}`)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        <div className="relative py-0.5">
+                            {/* Tree Line - vertical line */}
+                            {displayedEntries.length > 0 && (
+                                <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
+                            )}
+                            {displayedEntries.map((entry) => (
+                                <TreeItem
+                                    key={`view-${entry.id}`}
+                                    entry={entry}
+                                    isInViewSection
+                                    isVisible={entry.isVisible}
+                                    onDelete={() => handleRemoveFromView(entry.id)}
+                                />
+                            ))}
 
-                        {displayedEntries.length === 0 && (
-                            <p
+                            <div
                                 className={cn(
-                                    'px-3 py-2 text-center text-xs text-dashboard-text-placeholder',
-                                    showDropIndicator && 'text-dashboard-text-secondary'
+                                    'grid transition-[grid-template-rows,opacity] duration-200 ease-out',
+                                    displayedEntries.length === 0 || isDragging
+                                        ? 'grid-rows-[1fr] opacity-100'
+                                        : 'grid-rows-[0fr] opacity-0'
                                 )}
                             >
-                                {showDropIndicator ? 'Drop here to add' : 'Drag to add'}
-                            </p>
-                        )}
-                    </div>
-                </SortableContext>
+                                <div className="overflow-hidden">
+                                    <p
+                                        className={cn(
+                                            'px-3 py-2 text-center text-xs',
+                                            showDropIndicator
+                                                ? 'font-medium text-dashboard-text-secondary'
+                                                : isDragging
+                                                  ? 'text-dashboard-text-muted'
+                                                  : 'text-dashboard-text-placeholder'
+                                        )}
+                                    >
+                                        {showDropIndicator
+                                            ? 'Drop to add to Page'
+                                            : isDragging
+                                              ? 'Drop here to add to Page'
+                                              : 'Drag to add'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </SortableContext>
+                </div>
             </div>
         </div>
     );

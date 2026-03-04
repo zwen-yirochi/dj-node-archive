@@ -14,10 +14,15 @@ export interface User {
     display_name?: string;
     avatar_url: string;
     bio?: string;
-    instagram?: string;
-    soundcloud?: string;
     created_at: ISODateString;
     updated_at: ISODateString;
+}
+
+export interface ProfileLinkData {
+    type: string;
+    url: string;
+    label?: string;
+    enabled?: boolean;
 }
 
 export interface Page {
@@ -28,6 +33,8 @@ export interface Page {
     bio?: string;
     avatar_url?: string;
     theme_color?: string;
+    header_style?: string;
+    links?: ProfileLinkData[];
     created_at: ISODateString;
     updated_at: ISODateString;
 }
@@ -77,8 +84,23 @@ export interface MixsetSelfData {
 
 export type MixsetEntryData = MixsetReferenceData | MixsetSelfData;
 
-export type EntryType = 'link' | 'event' | 'mixset';
-export type EntryData = LinkEntryData | EventReferenceData | EventSelfData | MixsetEntryData;
+/** type='custom' - 커스텀 블록 엔트리 */
+export interface CustomEntryData {
+    title: string;
+    blocks: {
+        id: string;
+        type: string;
+        data: Record<string, unknown>;
+    }[];
+}
+
+export type EntryType = 'link' | 'event' | 'mixset' | 'custom';
+export type EntryData =
+    | LinkEntryData
+    | EventReferenceData
+    | EventSelfData
+    | MixsetEntryData
+    | CustomEntryData;
 
 // ============================================
 // Entry

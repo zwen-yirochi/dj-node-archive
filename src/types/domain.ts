@@ -1,6 +1,31 @@
 // types/domain.ts
 // camelCase, 화면 표시에 최적화
 
+// Header Style
+export type HeaderStyle = 'minimal' | 'banner' | 'portrait' | 'shapes';
+
+// Profile Links
+export type ProfileLinkType =
+    | 'instagram'
+    | 'bandcamp'
+    | 'spotify'
+    | 'apple_music'
+    | 'soundcloud'
+    | 'custom';
+
+export interface ProfileLink {
+    type: ProfileLinkType;
+    url: string;
+    label?: string;
+    enabled?: boolean;
+}
+
+// Page Settings
+export interface PageSettings {
+    headerStyle: HeaderStyle;
+    links: ProfileLink[];
+}
+
 // User & Page
 export interface User {
     id: string;
@@ -8,8 +33,6 @@ export interface User {
     displayName: string;
     avatarUrl: string;
     bio?: string;
-    instagram?: string;
-    soundcloud?: string;
 }
 
 export interface Page {
@@ -20,6 +43,8 @@ export interface Page {
     bio?: string;
     avatarUrl?: string;
     themeColor?: string;
+    headerStyle?: HeaderStyle;
+    links: ProfileLink[];
 }
 
 // ============================================
@@ -29,6 +54,50 @@ export type VenueReference = { id?: string; name: string };
 export type ArtistReference = { id?: string; name: string };
 export type ExternalLink = { title: string; url: string };
 export type TracklistItem = { track: string; artist: string; time: string };
+
+// ============================================
+// Custom Block Types
+// ============================================
+export type SectionBlockType = 'header' | 'richtext' | 'image' | 'embed' | 'keyvalue' | 'list';
+
+export interface HeaderBlockData {
+    title: string;
+    subtitle?: string;
+}
+export interface RichTextBlockData {
+    content: string;
+}
+export interface ImageBlockData {
+    url: string;
+    alt?: string;
+    caption?: string;
+}
+export interface EmbedBlockData {
+    url: string;
+    provider?: string;
+}
+export interface KeyValueBlockData {
+    items: { key: string; value: string }[];
+}
+export interface ListBlockData {
+    items: string[];
+    style?: 'bullet' | 'numbered' | 'plain';
+}
+
+export interface SectionBlockDataMap {
+    header: HeaderBlockData;
+    richtext: RichTextBlockData;
+    image: ImageBlockData;
+    embed: EmbedBlockData;
+    keyvalue: KeyValueBlockData;
+    list: ListBlockData;
+}
+
+export interface SectionBlock<T extends SectionBlockType = SectionBlockType> {
+    id: string;
+    type: T;
+    data: SectionBlockDataMap[T];
+}
 
 /**
  * Entry 공통 필드
@@ -87,8 +156,15 @@ export interface LinkEntry extends EntryBase {
     description?: string;
 }
 
+/** Custom Block Entry */
+export interface CustomEntry extends EntryBase {
+    type: 'custom';
+    title: string;
+    blocks: SectionBlock[];
+}
+
 /** Entry 유니온 */
-export type ContentEntry = EventEntry | PublicEventEntry | MixsetEntry | LinkEntry;
+export type ContentEntry = EventEntry | PublicEventEntry | MixsetEntry | LinkEntry | CustomEntry;
 export type ContentEntryType = ContentEntry['type'];
 
 // ============================================
@@ -193,6 +269,10 @@ export function isMixsetEntry(entry: ContentEntry): entry is MixsetEntry {
 
 export function isLinkEntry(entry: ContentEntry): entry is LinkEntry {
     return entry.type === 'link';
+}
+
+export function isCustomEntry(entry: ContentEntry): entry is CustomEntry {
+    return entry.type === 'custom';
 }
 
 // ============================================

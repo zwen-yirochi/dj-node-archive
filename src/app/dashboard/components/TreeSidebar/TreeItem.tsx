@@ -1,6 +1,10 @@
 'use client';
 
-import { useSortable } from '@dnd-kit/sortable';
+import {
+    defaultAnimateLayoutChanges,
+    useSortable,
+    type AnimateLayoutChanges,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
@@ -38,11 +42,11 @@ function StatusIcon({
 }) {
     switch (status) {
         case 'inView':
-            return <Check className="h-3.5 w-3.5 text-dashboard-type-link" />;
+            return <Check className="h-3.5 w-3.5 text-dashboard-success" />;
         case 'warning':
             return (
                 <span title={`Required to add to Page: ${missingFields.join(', ')}`}>
-                    <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                    <AlertCircle className="h-3.5 w-3.5 text-dashboard-warning" />
                 </span>
             );
         default:
@@ -74,8 +78,16 @@ export default function TreeItem({
     // ViewSection uses 'view-{id}' format IDs (matches SortableContext)
     const sortableId = isInViewSection ? `view-${entry.id}` : entry.id;
 
+    const animateLayoutChanges: AnimateLayoutChanges = (args) => {
+        const { isSorting, wasDragging } = args;
+        if (wasDragging) return false;
+        if (isSorting) return true;
+        return defaultAnimateLayoutChanges(args);
+    };
+
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: sortableId,
+        animateLayoutChanges,
         data: {
             type: isInViewSection ? 'display-entry' : 'entry',
             entry,
@@ -131,7 +143,7 @@ export default function TreeItem({
             {...attributes}
             {...listeners}
             className={cn(
-                'group relative flex cursor-pointer touch-none items-center rounded-md py-1.5 pl-5 pr-2 transition-colors',
+                'group relative flex cursor-pointer touch-none items-center rounded-md py-1 pl-5 pr-2 transition-colors',
                 isSelected
                     ? 'bg-dashboard-bg-active text-dashboard-text'
                     : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover hover:text-dashboard-text',

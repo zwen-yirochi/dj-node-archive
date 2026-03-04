@@ -1,8 +1,8 @@
 // lib/db/queries/page.queries.ts
 // 서버 전용 - 순수 DB 쿼리
+import type { Page, ProfileLinkData } from '@/types/database';
+import { createDatabaseError, failure, success, type Result } from '@/types/result';
 import { createClient } from '@/lib/supabase/server';
-import type { Page } from '@/types/database';
-import { type Result, success, failure, createDatabaseError } from '@/types/result';
 
 export async function createDefaultPage(userId: string, slug: string): Promise<Result<Page>> {
     try {
@@ -35,6 +35,8 @@ export async function createDefaultPage(userId: string, slug: string): Promise<R
 export interface UpdatePageInput {
     theme?: string;
     is_public?: boolean;
+    header_style?: string;
+    links?: ProfileLinkData[];
 }
 
 export async function updatePage(pageId: string, input: UpdatePageInput): Promise<Result<Page>> {
@@ -45,6 +47,8 @@ export async function updatePage(pageId: string, input: UpdatePageInput): Promis
         };
         if (input.theme !== undefined) updateData.theme = input.theme;
         if (input.is_public !== undefined) updateData.is_public = input.is_public;
+        if (input.header_style !== undefined) updateData.header_style = input.header_style;
+        if (input.links !== undefined) updateData.links = input.links;
 
         const { data, error } = await supabase
             .from('pages')

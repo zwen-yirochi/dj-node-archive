@@ -22,9 +22,7 @@ export default function TracklistBlock({ entry, onSave, disabled }: FieldBlockPr
 
     return (
         <div>
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                Tracklist
-            </h3>
+            <h3 className="mb-4 text-sm font-semibold text-dashboard-text">Tracklist</h3>
             <div className="space-y-2">
                 {tracklist.map((track, i) => (
                     <div key={keys[i]} className="flex items-baseline gap-3 text-sm">
@@ -54,7 +52,7 @@ export default function TracklistBlock({ entry, onSave, disabled }: FieldBlockPr
                         {!disabled && (
                             <button
                                 onClick={() => remove(i)}
-                                className="p-1 text-dashboard-text-placeholder hover:text-red-500"
+                                className="p-1 text-dashboard-text-placeholder hover:text-dashboard-danger"
                             >
                                 <X className="h-3.5 w-3.5" />
                             </button>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ComponentType } from 're
 
 import { AlertCircle, ArrowLeft, MoreHorizontal } from 'lucide-react';
 
-import type { ContentEntry } from '@/types';
+import type { ContentEntry, CustomEntry } from '@/types';
 import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
 import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
 import { EDITOR_MENU_CONFIG, resolveMenuItems } from '@/app/dashboard/config/menuConfig';
@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryDetail, useEntryMutations } from '../../hooks';
+import { DashboardConfirmDialog } from '../ui/DashboardDialog';
+import CustomEntryEditor from './CustomEntryEditor';
 import EventDetailView from './detail-views/EventDetailView';
 import LinkDetailView from './detail-views/LinkDetailView';
 import MixsetDetailView from './detail-views/MixsetDetailView';
@@ -22,7 +24,7 @@ import type { DetailViewProps } from './detail-views/types';
 // Detail View Registry
 // ============================================
 
-const DETAIL_VIEW_REGISTRY: Record<EntryType, ComponentType<DetailViewProps>> = {
+const DETAIL_VIEW_REGISTRY: Record<Exclude<EntryType, 'custom'>, ComponentType<DetailViewProps>> = {
     event: EventDetailView,
     mixset: MixsetDetailView,
     link: LinkDetailView,
@@ -103,6 +105,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     localEntryRef.current = localEntry;
 
     const [editingField, setEditingField] = useState<'title' | 'image' | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     // Save handler — pass changedFields to mutation for preview trigger decision
     const handleSave = useCallback(
@@ -127,6 +130,8 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         await deleteMutation.mutateAsync(entry.id);
         onBack?.();
     };
+
+    const handleDeleteClick = () => setIsDeleteDialogOpen(true);
 
     // Field-level save — always reference latest localEntry via ref
     const handleFieldSave = useCallback(
@@ -159,17 +164,20 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     // "..." menu items — config-driven + declarative action resolution
     const menuItems = resolveMenuItems(EDITOR_MENU_CONFIG[localEntry.type], {
         setEditingField,
-        onDelete: handleDelete,
+        onDelete: handleDeleteClick,
     });
 
     const handleEditingDone = () => setEditingField(null);
-    const DetailView = DETAIL_VIEW_REGISTRY[localEntry.type];
+    const DetailView =
+        localEntry.type !== 'custom'
+            ? DETAIL_VIEW_REGISTRY[localEntry.type as keyof typeof DETAIL_VIEW_REGISTRY]
+            : null;
 
     return (
         <div className="flex h-full flex-col">
             {/* Back button (optional) */}
             {onBack && (
-                <div className="border-b border-dashboard-border px-4 py-3">
+                <div className="border-b border-dashboard-border/50 px-4 py-3">
                     <button
                         onClick={onBack}
                         className="flex items-center gap-2 text-sm text-dashboard-text-muted transition-colors hover:text-dashboard-text"
@@ -181,7 +189,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
             )}
 
             {/* Editor Header */}
-            <div className="flex items-center justify-between border-b border-dashboard-border px-6 py-4">
+            <div className="flex items-center justify-between border-b border-dashboard-border/50 px-6 py-4">
                 <div className="flex items-center gap-3">
                     <TypeBadge type={config.badgeType} size="sm" />
                     {saveStatus && (
@@ -192,8 +200,8 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                             title={`Required to add to Page: ${missingFields.join(', ')}`}
                             className="flex items-center gap-1.5"
                         >
-                            <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
-                            <span className="text-xs text-amber-500">Incomplete</span>
+                            <AlertCircle className="h-3.5 w-3.5 text-dashboard-warning" />
+                            <span className="text-xs text-dashboard-warning">Incomplete</span>
                         </span>
                     )}
                 </div>
@@ -208,14 +216,44 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
             </div>
 
             {/* Detail View Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-                <DetailView
-                    entry={localEntry}
-                    onSave={handleFieldSave}
-                    editingField={editingField}
-                    onEditingDone={handleEditingDone}
-                />
+            <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
+                {localEntry.type === 'custom' ? (
+                    <>
+                        <input
+                            value={localEntry.title}
+                            onChange={(e) => handleFieldSave('title', e.target.value)}
+                            placeholder="Untitled"
+                            className="mb-6 w-full bg-transparent text-xl font-semibold text-dashboard-text outline-none placeholder:text-dashboard-text-placeholder"
+                        />
+                        <CustomEntryEditor
+                            entry={localEntry as CustomEntry}
+                            onBlocksChange={(blocks) => {
+                                const updated = { ...localEntry, blocks } as CustomEntry;
+                                setLocalEntry(updated as ContentEntry);
+                                debouncedSave(updated as ContentEntry, ['blocks']);
+                            }}
+                        />
+                    </>
+                ) : DetailView ? (
+                    <DetailView
+                        entry={localEntry}
+                        onSave={handleFieldSave}
+                        editingField={editingField}
+                        onEditingDone={handleEditingDone}
+                    />
+                ) : null}
             </div>
+
+            <DashboardConfirmDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                title="항목을 삭제할까요?"
+                description="삭제된 항목은 복구할 수 없습니다."
+                confirmText="삭제"
+                cancelText="취소"
+                destructive
+                onConfirm={handleDelete}
+            />
         </div>
     );
 }

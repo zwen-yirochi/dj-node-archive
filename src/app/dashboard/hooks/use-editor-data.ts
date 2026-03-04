@@ -9,7 +9,7 @@
 
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 
-import type { ContentEntry, User } from '@/types';
+import type { ContentEntry, PageSettings, User } from '@/types';
 
 // ============================================
 // Query Keys
@@ -23,6 +23,15 @@ export const entryKeys = {
     all: ['entries'] as const,
     detail: (id: string) => ['entries', id] as const,
 };
+
+export const pageKeys = {
+    all: ['page'] as const,
+};
+
+export interface PageMeta {
+    pageId: string | null;
+    pageSettings: PageSettings;
+}
 
 // ============================================
 // API Functions
@@ -40,6 +49,16 @@ async function fetchUser(): Promise<User> {
     if (!res.ok) throw new Error(`Failed to fetch user: ${res.status}`);
     const json = await res.json();
     return json.data.user;
+}
+
+async function fetchPageMeta(): Promise<PageMeta> {
+    const res = await fetch('/api/editor/data');
+    if (!res.ok) throw new Error(`Failed to fetch page meta: ${res.status}`);
+    const json = await res.json();
+    return {
+        pageId: json.data.pageId,
+        pageSettings: json.data.pageSettings ?? { headerStyle: 'minimal', links: [] },
+    };
 }
 
 async function fetchEntryDetail(id: string): Promise<ContentEntry> {
@@ -70,6 +89,16 @@ export function useUserQuery(initialUser?: User) {
         initialData: initialUser,
         initialDataUpdatedAt: initialUser ? Date.now() : undefined,
         staleTime: 5 * 60_000,
+    });
+}
+
+export function usePageMeta(initialPageMeta?: PageMeta) {
+    return useSuspenseQuery({
+        queryKey: pageKeys.all,
+        queryFn: fetchPageMeta,
+        initialData: initialPageMeta,
+        initialDataUpdatedAt: initialPageMeta ? Date.now() : undefined,
+        staleTime: 60_000,
     });
 }
 

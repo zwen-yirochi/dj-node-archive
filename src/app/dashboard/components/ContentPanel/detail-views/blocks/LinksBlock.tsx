@@ -24,9 +24,7 @@ export default function LinksBlock({ entry, onSave, disabled }: FieldBlockProps)
 
     return (
         <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-dashboard-text-placeholder">
-                Related links
-            </p>
+            <p className="text-sm font-semibold text-dashboard-text">Related links</p>
             {links.map((link, i) => (
                 <div
                     key={keys[i]}
@@ -50,7 +48,7 @@ export default function LinksBlock({ entry, onSave, disabled }: FieldBlockProps)
                     {!disabled && (
                         <button
                             onClick={() => remove(i)}
-                            className="p-1 text-dashboard-text-placeholder hover:text-red-500"
+                            className="p-1 text-dashboard-text-placeholder hover:text-dashboard-danger"
                         >
                             <X className="h-3.5 w-3.5" />
                         </button>
