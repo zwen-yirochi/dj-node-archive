@@ -61,7 +61,12 @@ export function useConfirmAction(): UseConfirmActionReturn {
                 const originalHandler = handlers[item.actionKey];
                 if (!originalHandler) continue;
 
-                const strategy = item.confirm;
+                // confirm이 함수면 entry 컨텍스트로 전략 resolve
+                const strategy =
+                    typeof item.confirm === 'function' ? item.confirm(entry ?? {}) : item.confirm;
+
+                // 전략이 undefined면 즉시 실행 (조건부 confirm)
+                if (!strategy) continue;
 
                 // type-to-confirm: matchField에서 실제 값을 resolve
                 if (strategy.type === 'type-to-confirm' && entry) {

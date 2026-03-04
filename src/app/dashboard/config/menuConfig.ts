@@ -29,8 +29,8 @@ export interface MenuItemConfig {
     variant?: 'danger';
     /** 렌더 시점에 label을 동적으로 결정 (예: isVisible → "Hide"/"Show") */
     dynamicLabel?: (ctx: Record<string, unknown>) => string;
-    /** 액션 실행 전 확인 모달 전략. 없으면 즉시 실행 */
-    confirm?: ConfirmStrategy;
+    /** 액션 실행 전 확인 모달 전략. 함수면 entry 상태에 따라 동적 결정. 없으면 즉시 실행 */
+    confirm?: ConfirmStrategy | ((ctx: Record<string, unknown>) => ConfirmStrategy | undefined);
 }
 
 export interface MenuSeparatorConfig {
@@ -95,11 +95,11 @@ const DELETE_SIMPLE: MenuItemConfig = {
     variant: 'danger',
     confirm: SIMPLE_DELETE_CONFIRM,
 };
-const DELETE_TYPE_CONFIRM: MenuItemConfig = {
+const DELETE_EVENT: MenuItemConfig = {
     actionKey: 'delete',
     label: 'Delete',
     variant: 'danger',
-    confirm: TYPE_TO_CONFIRM_DELETE,
+    confirm: (ctx) => (ctx.eventId ? TYPE_TO_CONFIRM_DELETE : SIMPLE_DELETE_CONFIRM),
 };
 
 // ============================================
@@ -107,7 +107,7 @@ const DELETE_TYPE_CONFIRM: MenuItemConfig = {
 // ============================================
 
 export const EDITOR_MENU_CONFIG: Record<EntryType, MenuConfig> = {
-    event: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE_TYPE_CONFIRM],
+    event: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE_EVENT],
     mixset: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE_SIMPLE],
     link: [EDIT_TITLE, SEPARATOR, DELETE_SIMPLE],
     custom: [EDIT_TITLE, SEPARATOR, DELETE_SIMPLE],
@@ -122,7 +122,7 @@ const TREE_DELETE: MenuItemConfig = {
     actionKey: 'delete',
     label: 'Delete',
     variant: 'danger',
-    confirm: SIMPLE_DELETE_CONFIRM,
+    confirm: (ctx) => (ctx.eventId ? TYPE_TO_CONFIRM_DELETE : SIMPLE_DELETE_CONFIRM),
 };
 const TREE_TOGGLE_VISIBILITY: MenuItemConfig = {
     actionKey: 'toggle-visibility',
