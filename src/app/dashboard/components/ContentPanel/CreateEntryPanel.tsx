@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState, type ComponentType } from 'react';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import { Loader2 } from 'lucide-react';
 
 import { createEmptyEntry } from '@/lib/mappers';
@@ -14,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-import { entryKeys, useEntryMutations } from '../../hooks';
+import { useEntryMutations } from '../../hooks';
 import {
     selectGoBack,
     selectPageId,
@@ -30,8 +28,8 @@ import EventCreateSection from './EventCreateSection';
 function CustomAutoCreate() {
     const pageId = useDashboardStore(selectPageId);
     const setView = useDashboardStore(selectSetView);
+    const goBack = useDashboardStore(selectGoBack);
     const { create: createMutation } = useEntryMutations();
-    const queryClient = useQueryClient();
     const hasCreated = useRef(false);
 
     useEffect(() => {
@@ -41,28 +39,25 @@ function CustomAutoCreate() {
         const entry = createEmptyEntry('custom');
         entry.title = 'Untitled';
 
-        // Pre-populate detail cache so EntryDetailView renders instantly
-        queryClient.setQueryData(entryKeys.detail(entry.id), entry);
-
-        // Fire mutation in background (handles entries list + API call)
+        // Optimistic update handles entries.all cache — no detail cache needed
         createMutation.mutate(
             { pageId, entry },
             {
                 onError: () => {
-                    queryClient.removeQueries({ queryKey: entryKeys.detail(entry.id) });
                     toast({
                         variant: 'destructive',
                         title: 'Creation failed',
                         description: 'Failed to create custom entry.',
                     });
-                    setView({ kind: 'page' });
+                    goBack();
                 },
             }
         );
 
-        // Navigate immediately — entry is already in detail cache
-        setView({ kind: 'detail', entryId: entry.id });
-    }, [pageId, createMutation, setView, queryClient]);
+        // Navigate immediately — optimistic update already added to entries.all
+        // replace: true → previousView stays as pre-create view, not the create view itself
+        setView({ kind: 'detail', entryId: entry.id }, { replace: true });
+    }, [pageId, createMutation, setView, goBack]);
 
     return null;
 }

@@ -29,10 +29,7 @@ export default function PageDisplayList({
         id: 'view-drop-zone',
     });
 
-    const displayedEntries = entries
-        .filter((e) => typeof e.displayOrder === 'number')
-        .sort((a, b) => a.displayOrder! - b.displayOrder!);
-
+    // entries is already filtered & sorted by parent (TreeSidebar)
     const showDropIndicator = isDraggingOver || isOver;
 
     const handleRemoveFromView = (entryId: string) => {
@@ -61,15 +58,15 @@ export default function PageDisplayList({
                     )}
                 >
                     <SortableContext
-                        items={displayedEntries.map((entry) => `view-${entry.id}`)}
+                        items={entries.map((entry) => `view-${entry.id}`)}
                         strategy={verticalListSortingStrategy}
                     >
                         <div className="relative py-0.5">
                             {/* Tree Line - vertical line */}
-                            {displayedEntries.length > 0 && (
+                            {entries.length > 0 && (
                                 <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
                             )}
-                            {displayedEntries.map((entry) => (
+                            {entries.map((entry) => (
                                 <TreeItem
                                     key={`view-${entry.id}`}
                                     entry={entry}
@@ -82,7 +79,7 @@ export default function PageDisplayList({
                             <div
                                 className={cn(
                                     'grid transition-[grid-template-rows,opacity] duration-200 ease-out',
-                                    displayedEntries.length === 0 || isDragging
+                                    entries.length === 0 || isDragging
                                         ? 'grid-rows-[1fr] opacity-100'
                                         : 'grid-rows-[0fr] opacity-0'
                                 )}

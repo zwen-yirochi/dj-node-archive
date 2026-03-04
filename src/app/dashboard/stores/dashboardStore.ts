@@ -36,7 +36,7 @@ interface DashboardStore {
     pageId: string | null;
     isSettingsOpen: boolean;
 
-    setView: (view: ContentView) => void;
+    setView: (view: ContentView, options?: { replace?: boolean }) => void;
     goBack: () => void;
     toggleSection: (section: SectionKey) => void;
     setPageId: (pageId: string | null) => void;
@@ -65,9 +65,12 @@ export const useDashboardStore = create<DashboardStore>()(
         (set) => ({
             ...DEFAULT_STATE,
 
-            setView: (view) =>
+            setView: (view, options) =>
                 set(
-                    (state) => ({ contentView: view, previousView: state.contentView }),
+                    (state) => ({
+                        contentView: view,
+                        previousView: options?.replace ? state.previousView : state.contentView,
+                    }),
                     undefined,
                     'setView'
                 ),
