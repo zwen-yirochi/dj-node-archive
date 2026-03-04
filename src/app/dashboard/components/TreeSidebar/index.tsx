@@ -10,7 +10,6 @@ import {
     useSensor,
     useSensors,
     type DragEndEvent,
-    type DragOverEvent,
     type DragStartEvent,
 } from '@dnd-kit/core';
 import {
@@ -107,7 +106,6 @@ export default function TreeSidebar() {
         displayEntryId?: string;
     } | null>(null);
 
-    const [isDraggingOverView, setIsDraggingOverView] = useState(false);
     const isDraggingEntry = activeItem !== null && !activeItem.isDisplayEntry;
 
     const sensors = useSensors(
@@ -134,15 +132,9 @@ export default function TreeSidebar() {
         }
     };
 
-    const handleDragOver = (event: DragOverEvent) => {
-        const { over } = event;
-        setIsDraggingOverView(over?.id === 'view-drop-zone');
-    };
-
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveItem(null);
-        setIsDraggingOverView(false);
 
         if (!over) return;
 
@@ -271,7 +263,6 @@ export default function TreeSidebar() {
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
             <aside className="flex h-full w-64 shrink-0 flex-col bg-dashboard-bg-muted">
@@ -334,10 +325,8 @@ export default function TreeSidebar() {
                     <div className="mb-3 ml-3">
                         <PageDisplayList
                             entries={displayedEntries}
-                            isDraggingOver={isDraggingOverView}
                             isDragging={isDraggingEntry}
                             isCollapsed={isPageCollapsed}
-                            onDeleteEntry={handleDelete}
                         />
                     </div>
 
