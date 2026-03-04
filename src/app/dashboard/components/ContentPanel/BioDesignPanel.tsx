@@ -121,6 +121,11 @@ export default function BioDesignPanel() {
                                         {user.bio}
                                     </p>
                                 )}
+                                {user.region && (
+                                    <p className="text-xs text-dashboard-text-placeholder">
+                                        {user.region}
+                                    </p>
+                                )}
                             </div>
                         )}
                     </section>

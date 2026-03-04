@@ -25,7 +25,10 @@ export function useUser(): User {
 // API Functions
 // ============================================
 
-async function patchProfile(userId: string, updates: Partial<Pick<User, 'displayName' | 'bio'>>) {
+async function patchProfile(
+    userId: string,
+    updates: Partial<Pick<User, 'displayName' | 'bio' | 'region'>>
+) {
     const res = await fetch(`/api/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -66,7 +69,7 @@ export function useUserMutations() {
             updates,
         }: {
             userId: string;
-            updates: Partial<Pick<User, 'displayName' | 'bio'>>;
+            updates: Partial<Pick<User, 'displayName' | 'bio' | 'region'>>;
         }) => patchProfile(userId, updates),
         onMutate: async ({ updates }) => {
             await queryClient.cancelQueries({ queryKey: userKeys.all });

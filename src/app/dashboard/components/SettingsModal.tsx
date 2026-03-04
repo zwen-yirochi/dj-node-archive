@@ -106,6 +106,7 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
                 updates: {
                     displayName: tempUser.displayName,
                     bio: tempUser.bio,
+                    region: tempUser.region,
                 },
             },
             {
@@ -243,6 +244,17 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
                     placeholder="Write a short bio"
                     rows={3}
                     className="resize-none border-dashboard-border bg-dashboard-bg-card text-dashboard-text placeholder:text-dashboard-text-placeholder"
+                />
+            </div>
+
+            {/* Region */}
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-dashboard-text-secondary">Region</label>
+                <Input
+                    value={tempUser.region || ''}
+                    onChange={(e) => setTempUser({ ...tempUser, region: e.target.value })}
+                    placeholder="e.g. Seoul, South Korea"
+                    className="border-dashboard-border bg-dashboard-bg-card text-dashboard-text placeholder:text-dashboard-text-placeholder"
                 />
             </div>
 
