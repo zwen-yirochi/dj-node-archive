@@ -10,31 +10,22 @@ import TreeItem from './TreeItem';
 
 interface PageDisplayListProps {
     entries: ContentEntry[];
-    isDraggingOver?: boolean;
     isDragging?: boolean;
     isCollapsed?: boolean;
-    onDeleteEntry?: (id: string) => void;
-    removeFromDisplay?: (id: string) => void;
+    onRemoveFromDisplay?: (id: string) => void;
 }
 
 export default function PageDisplayList({
     entries,
-    isDraggingOver = false,
     isDragging = false,
     isCollapsed = false,
-    onDeleteEntry,
-    removeFromDisplay,
+    onRemoveFromDisplay,
 }: PageDisplayListProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: 'view-drop-zone',
     });
 
-    // entries is already filtered & sorted by parent (TreeSidebar)
-    const showDropIndicator = isDraggingOver || isOver;
-
-    const handleRemoveFromView = (entryId: string) => {
-        if (removeFromDisplay) removeFromDisplay(entryId);
-    };
+    const showDropIndicator = isOver;
 
     // Show even when collapsed if dragging over
     const shouldShow = !isCollapsed || showDropIndicator || isDragging;
@@ -72,7 +63,7 @@ export default function PageDisplayList({
                                     entry={entry}
                                     isInPageDisplay
                                     isVisible={entry.isVisible}
-                                    onDelete={() => handleRemoveFromView(entry.id)}
+                                    onDelete={() => onRemoveFromDisplay?.(entry.id)}
                                 />
                             ))}
 

@@ -7,7 +7,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { AlertCircle, Check, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
@@ -18,8 +18,14 @@ import {
     getTreeItemStatus,
     type TreeItemStatus,
 } from '@/app/dashboard/config/entryFieldConfig';
+import {
+    resolveTreeMenuItems,
+    TREE_ENTRY_MENU,
+    TREE_PAGE_DISPLAY_MENU,
+    type TreeMenuActionContext,
+} from '@/app/dashboard/config/menuConfig';
 import { TypeBadge } from '@/components/dna';
-import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
+import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 
@@ -103,38 +109,22 @@ export default function TreeItem({
         setView({ kind: 'detail', entryId: entry.id });
     };
 
-    const handleVisibilityClick = (e?: React.MouseEvent) => {
-        e?.stopPropagation();
-        onToggleVisibility?.();
-    };
-
-    const handleEdit = () => {
-        setView({ kind: 'detail', entryId: entry.id });
-        onEdit?.();
-    };
-
-    const handleDelete = () => {
-        onDelete?.();
-    };
-
-    // Entry section menu items
-    const entryMenuItems: DropdownMenuItemConfig[] = [
-        { label: 'Edit', onClick: handleEdit, icon: Pencil },
-        { type: 'separator' },
-        { label: 'Delete', onClick: handleDelete, icon: Trash2, variant: 'danger' },
-    ];
-
-    // Page section menu items
-    const viewMenuItems: DropdownMenuItemConfig[] = [
-        { label: 'Edit', onClick: handleEdit, icon: Pencil },
-        {
-            label: isVisible ? 'Hide' : 'Show',
-            onClick: () => handleVisibilityClick(),
-            icon: isVisible ? Eye : EyeOff,
+    // Resolve menu from config
+    const menuActionCtx: TreeMenuActionContext = {
+        onEdit: () => {
+            setView({ kind: 'detail', entryId: entry.id });
+            onEdit?.();
         },
-        { type: 'separator' },
-        { label: 'Remove from Page', onClick: handleDelete, icon: Trash2, variant: 'danger' },
-    ];
+        onDelete: () => onDelete?.(),
+        onRemoveFromPage: () => onDelete?.(),
+        onToggleVisibility: () => onToggleVisibility?.(),
+        isVisible,
+    };
+
+    const menuItems = resolveTreeMenuItems(
+        isInPageDisplay ? TREE_PAGE_DISPLAY_MENU : TREE_ENTRY_MENU,
+        menuActionCtx
+    );
 
     return (
         <div
@@ -160,42 +150,31 @@ export default function TreeItem({
                 {entry.title || 'Untitled'}
             </span>
 
-            {/* Right Side - View Section: Menu */}
-            {isInPageDisplay ? (
+            {/* Right Side */}
+            <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
+                {/* Status icon (entry section only) - hidden on hover */}
+                {!isInPageDisplay && (
+                    <div className="absolute transition-opacity group-hover:opacity-0">
+                        <StatusIcon status={status} missingFields={missingFields} />
+                    </div>
+                )}
+                {/* More menu */}
                 <SimpleDropdown
                     trigger={
                         <button
                             onClick={(e) => e.stopPropagation()}
-                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
+                            className={cn(
+                                'flex h-5 w-5 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100',
+                                !isInPageDisplay && 'absolute'
+                            )}
                         >
                             <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
                         </button>
                     }
-                    items={viewMenuItems}
-                    contentClassName="w-36"
+                    items={menuItems}
+                    contentClassName="w-44"
                 />
-            ) : (
-                /* Right Side - Entry Section: Status Icon + Menu (same position) */
-                <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
-                    {/* Status icon - hidden on hover */}
-                    <div className="absolute transition-opacity group-hover:opacity-0">
-                        <StatusIcon status={status} missingFields={missingFields} />
-                    </div>
-                    {/* More menu - shown on hover */}
-                    <SimpleDropdown
-                        trigger={
-                            <button
-                                onClick={(e) => e.stopPropagation()}
-                                className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
-                            >
-                                <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
-                            </button>
-                        }
-                        items={entryMenuItems}
-                        contentClassName="w-36"
-                    />
-                </div>
-            )}
+            </div>
         </div>
     );
 }
