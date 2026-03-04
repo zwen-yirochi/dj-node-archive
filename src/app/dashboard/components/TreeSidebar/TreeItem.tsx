@@ -27,7 +27,9 @@ import { TypeBadge } from '@/components/dna';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryMutations } from '../../hooks';
+import { useConfirmAction } from '../../hooks/use-confirm-action';
 import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface TreeItemProps {
     entry: ContentEntry;
@@ -60,6 +62,9 @@ export default function TreeItem({ entry, isInPageDisplay = false }: TreeItemPro
     // Dashboard Store
     const contentView = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
+
+    // Confirm action (config-driven)
+    const confirmAction = useConfirmAction();
 
     // Mutations
     const { remove, removeFromDisplay, toggleVisibility } = useEntryMutations();
@@ -101,13 +106,13 @@ export default function TreeItem({ entry, isInPageDisplay = false }: TreeItemPro
         setView({ kind: 'detail', entryId: entry.id });
     };
 
-    // Config-driven menu: action type → mutation mapping
-    const menuItems = resolveMenuItems(
-        isInPageDisplay ? TREE_PAGE_DISPLAY_MENU : TREE_ENTRY_MENU,
+    // Config-driven menu: confirm strategy auto-applied
+    const menuConfig = isInPageDisplay ? TREE_PAGE_DISPLAY_MENU : TREE_ENTRY_MENU;
+    const handlers = confirmAction.wrapHandlers(
+        menuConfig,
         {
             edit: () => setView({ kind: 'detail', entryId: entry.id }),
             delete: () => {
-                // 보고 있는 entry 삭제 시 page로 이동 (404 방지)
                 const cv = useDashboardStore.getState().contentView;
                 if (cv.kind === 'detail' && cv.entryId === entry.id) {
                     setView({ kind: 'page' });
@@ -117,8 +122,11 @@ export default function TreeItem({ entry, isInPageDisplay = false }: TreeItemPro
             'remove-from-page': () => removeFromDisplay.mutate(entry.id),
             'toggle-visibility': () => toggleVisibility.mutate(entry.id),
         },
-        { isVisible: entry.isVisible ?? true }
+        entry as unknown as Record<string, unknown>
     );
+    const menuItems = resolveMenuItems(menuConfig, handlers, {
+        isVisible: entry.isVisible ?? true,
+    });
 
     return (
         <div
@@ -169,6 +177,13 @@ export default function TreeItem({ entry, isInPageDisplay = false }: TreeItemPro
                     contentClassName="w-44"
                 />
             </div>
+
+            <ConfirmDialog
+                pending={confirmAction.pending}
+                matchValue={confirmAction.matchValue}
+                onConfirm={confirmAction.confirm}
+                onClose={confirmAction.close}
+            />
         </div>
     );
 }

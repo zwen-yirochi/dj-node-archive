@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryDetail, useEntryMutations } from '../../hooks';
-import { DashboardConfirmDialog } from '../ui/DashboardDialog';
+import { useConfirmAction } from '../../hooks/use-confirm-action';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import CustomEntryEditor from './CustomEntryEditor';
 import EventDetailView from './detail-views/EventDetailView';
 import LinkDetailView from './detail-views/LinkDetailView';
@@ -105,7 +106,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     localEntryRef.current = localEntry;
 
     const [editingField, setEditingField] = useState<'title' | 'image' | null>(null);
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const confirmAction = useConfirmAction();
 
     // Save handler — pass changedFields to mutation for preview trigger decision
     const handleSave = useCallback(
@@ -130,8 +131,6 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         await deleteMutation.mutateAsync(entry.id);
         onBack?.();
     };
-
-    const handleDeleteClick = () => setIsDeleteDialogOpen(true);
 
     // Field-level save — always reference latest localEntry via ref
     const handleFieldSave = useCallback(
@@ -161,12 +160,18 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     const isViewReady = canAddToView(localEntry);
     const missingFields = isViewReady ? [] : getMissingFieldLabels(localEntry, 'create');
 
-    // "..." menu items — config-driven + declarative action resolution
-    const menuItems = resolveMenuItems(EDITOR_MENU_CONFIG[localEntry.type], {
-        'edit-title': () => setEditingField('title'),
-        'edit-image': () => setEditingField('image'),
-        delete: handleDeleteClick,
-    });
+    // "..." menu items — config-driven + confirm strategy
+    const menuConfig = EDITOR_MENU_CONFIG[localEntry.type];
+    const handlers = confirmAction.wrapHandlers(
+        menuConfig,
+        {
+            'edit-title': () => setEditingField('title'),
+            'edit-image': () => setEditingField('image'),
+            delete: handleDelete,
+        },
+        localEntry as unknown as Record<string, unknown>
+    );
+    const menuItems = resolveMenuItems(menuConfig, handlers);
 
     const handleEditingDone = () => setEditingField(null);
     const DetailView =
@@ -245,15 +250,11 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                 ) : null}
             </div>
 
-            <DashboardConfirmDialog
-                open={isDeleteDialogOpen}
-                onOpenChange={setIsDeleteDialogOpen}
-                title="Delete this entry?"
-                description="This action cannot be undone."
-                confirmText="Delete"
-                cancelText="Cancel"
-                destructive
-                onConfirm={handleDelete}
+            <ConfirmDialog
+                pending={confirmAction.pending}
+                matchValue={confirmAction.matchValue}
+                onConfirm={confirmAction.confirm}
+                onClose={confirmAction.close}
             />
         </div>
     );
