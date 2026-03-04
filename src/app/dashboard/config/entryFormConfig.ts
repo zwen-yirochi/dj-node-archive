@@ -8,14 +8,12 @@
  * - draftSchema.safeParse -> canCreate
  */
 
-import type { z } from 'zod';
-
 import type { EventEntry, LinkEntry, MixsetEntry } from '@/types/domain';
 import { createEmptyEntry } from '@/lib/mappers';
-import {
-    draftLinkSchema,
-    type CreateEventData,
-    type CreateMixsetFormData,
+import type {
+    CreateEventData,
+    CreateLinkFormData,
+    CreateMixsetFormData,
 } from '@/lib/validations/entry.schemas';
 
 import type { CreateEntryFormConfig } from '../hooks/use-create-entry-form';
@@ -58,8 +56,6 @@ export const MIXSET_FORM_CONFIG: CreateEntryFormConfig<CreateMixsetFormData> = {
         }) as MixsetEntry,
     errorFieldMap: { title: 'title' },
 };
-
-type CreateLinkFormData = z.infer<typeof draftLinkSchema>;
 
 export const LINK_FORM_CONFIG: CreateEntryFormConfig<CreateLinkFormData> = {
     type: 'link',
