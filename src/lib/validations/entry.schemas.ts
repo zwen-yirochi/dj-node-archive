@@ -75,6 +75,7 @@ export const publishEventSchema = z.object({
 /** Form data types inferred from schemas (single source of truth) */
 export type CreateEventData = z.infer<typeof publishEventSchema>;
 export type CreateMixsetFormData = z.infer<typeof draftMixsetSchema>;
+export type CreateLinkFormData = z.infer<typeof draftLinkSchema>;
 
 // ============================================
 // Event Field Schemas (for block components — per-field validation)
