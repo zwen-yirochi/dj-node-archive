@@ -116,6 +116,7 @@ export const useDashboardStore = create<DashboardStore>()(
 export const selectContentView = (s: DashboardStore) => s.contentView;
 export const selectSetView = (s: DashboardStore) => s.setView;
 export const selectGoBack = (s: DashboardStore) => s.goBack;
+export const selectHasPreviousView = (s: DashboardStore) => s.previousView !== null;
 export const selectSidebarSections = (s: DashboardStore) => s.sidebarSections;
 export const selectToggleSection = (s: DashboardStore) => s.toggleSection;
 export const selectPageId = (s: DashboardStore) => s.pageId;

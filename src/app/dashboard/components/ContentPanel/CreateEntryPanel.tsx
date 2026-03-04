@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, type ComponentType } from 'react';
 
+import { ArrowLeft } from 'lucide-react';
+
 import { createEmptyEntry } from '@/lib/mappers';
 import { toast } from '@/hooks/use-toast';
 import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
@@ -10,6 +12,7 @@ import { TypeBadge } from '@/components/dna';
 import { useEntryMutations } from '../../hooks';
 import {
     selectGoBack,
+    selectHasPreviousView,
     selectPageId,
     selectSetView,
     useDashboardStore,
@@ -80,6 +83,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
 
     const config = ENTRY_TYPE_CONFIG[type];
     const goBack = useDashboardStore(selectGoBack);
+    const hasPreviousView = useDashboardStore(selectHasPreviousView);
     const DedicatedForm = FORM_REGISTRY[type];
 
     return (
@@ -87,15 +91,15 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-dashboard-border/50 px-6 py-5">
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5 text-sm">
+                    {hasPreviousView && (
                         <button
                             onClick={goBack}
-                            className="text-dashboard-text-muted transition-colors hover:text-dashboard-text"
+                            className="flex items-center gap-1.5 text-sm text-dashboard-text-muted transition-colors hover:text-dashboard-text"
                         >
-                            Page
+                            <ArrowLeft className="h-4 w-4" />
+                            Back
                         </button>
-                        <span className="text-dashboard-text-placeholder">/</span>
-                    </div>
+                    )}
                     <TypeBadge type={config.badgeType} size="sm" />
                     <h2 className="text-lg font-medium text-dashboard-text">New {config.label}</h2>
                 </div>
