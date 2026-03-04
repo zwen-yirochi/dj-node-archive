@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 import TreeItem from './TreeItem';
 
-interface ViewSectionProps {
+interface PageDisplayListProps {
     entries: ContentEntry[];
     isDraggingOver?: boolean;
     isDragging?: boolean;
@@ -17,14 +17,14 @@ interface ViewSectionProps {
     removeFromDisplay?: (id: string) => void;
 }
 
-export default function ViewSection({
+export default function PageDisplayList({
     entries,
     isDraggingOver = false,
     isDragging = false,
     isCollapsed = false,
     onDeleteEntry,
     removeFromDisplay,
-}: ViewSectionProps) {
+}: PageDisplayListProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: 'view-drop-zone',
     });
@@ -73,7 +73,7 @@ export default function ViewSection({
                                 <TreeItem
                                     key={`view-${entry.id}`}
                                     entry={entry}
-                                    isInViewSection
+                                    isInPageDisplay
                                     isVisible={entry.isVisible}
                                     onDelete={() => handleRemoveFromView(entry.id)}
                                 />

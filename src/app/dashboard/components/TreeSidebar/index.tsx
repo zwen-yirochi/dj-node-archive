@@ -29,7 +29,7 @@ import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
-import { SIDEBAR_SECTIONS } from '@/app/dashboard/config/sidebarConfig';
+import { COMPONENT_GROUPS } from '@/app/dashboard/config/sidebarConfig';
 import { TypeBadge } from '@/components/dna';
 
 import { useEntries, useEntryMutations, useUser } from '../../hooks';
@@ -44,9 +44,9 @@ import {
 } from '../../stores/dashboardStore';
 import { CommandPalette } from '../CommandPalette';
 import AccountSection from './AccountSection';
-import SectionItem from './SectionItem';
+import ComponentGroup from './ComponentGroup';
+import PageDisplayList from './PageDisplayList';
 import TreeItem from './TreeItem';
-import ViewSection from './ViewSection';
 
 /** dnd-kit data type — declares the structure of active.data.current */
 interface DragData {
@@ -83,7 +83,7 @@ export default function TreeSidebar() {
     // Filter & sort by type
     const entriesByType = useMemo(() => {
         const map: Record<string, ContentEntry[]> = {};
-        for (const cfg of SIDEBAR_SECTIONS) {
+        for (const cfg of COMPONENT_GROUPS) {
             map[cfg.entryType] = entries
                 .filter((e) => e.type === cfg.entryType)
                 .sort((a, b) => a.position - b.position);
@@ -330,9 +330,9 @@ export default function TreeSidebar() {
                         </button>
                     </div>
 
-                    {/* View Section */}
+                    {/* Page Display List */}
                     <div className="mb-3 ml-3">
-                        <ViewSection
+                        <PageDisplayList
                             entries={displayedEntries}
                             isDraggingOver={isDraggingOverView}
                             isDragging={isDraggingEntry}
@@ -350,10 +350,10 @@ export default function TreeSidebar() {
                     </p>
 
                     {/* Entry Sections */}
-                    {SIDEBAR_SECTIONS.map((cfg) => {
+                    {COMPONENT_GROUPS.map((cfg) => {
                         const items = entriesByType[cfg.entryType] ?? [];
                         return (
-                            <SectionItem
+                            <ComponentGroup
                                 key={cfg.section}
                                 section={cfg.section}
                                 title={cfg.title}
@@ -379,7 +379,7 @@ export default function TreeSidebar() {
                                         )}
                                     </div>
                                 </SortableContext>
-                            </SectionItem>
+                            </ComponentGroup>
                         );
                     })}
                 </div>
