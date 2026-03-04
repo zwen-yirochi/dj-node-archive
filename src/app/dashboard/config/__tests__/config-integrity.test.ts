@@ -16,8 +16,10 @@ import {
 
 import { ENTRY_TYPE_CONFIG, type EntryType } from '../entryConfig';
 import { ENTRY_SCHEMAS, FIELD_CONFIG } from '../entryFieldConfig';
+import { FORM_CONFIGS } from '../entryFormConfig';
+import { FIELD_BLOCKS } from '../fieldBlockConfig';
 import { EDITOR_MENU_CONFIG } from '../menuConfig';
-import { COMPONENT_GROUPS } from '../sidebarConfig';
+import { COMPONENT_GROUPS, SIDEBAR_CONFIG } from '../sidebarConfig';
 
 // EntryType 전체 목록 — entryConfig에서 파생
 const ALL_TYPES = Object.keys(ENTRY_TYPE_CONFIG) as EntryType[];
@@ -237,5 +239,29 @@ describe('draftSchema 기본값 ↔ createEmptyEntry 기본값 일치', () => {
         const factory = createEmptyEntry('custom') as CustomEntry;
 
         expect(factory.blocks).toEqual(schemaDefaults.blocks); // [] === []
+    });
+});
+
+// ============================================
+// Registry Record<EntryType> 완결성
+// ============================================
+
+describe('Config Registry: Record<EntryType> completeness', () => {
+    it('SIDEBAR_CONFIG에 모든 타입 존재', () => {
+        for (const type of ALL_TYPES) {
+            expect(SIDEBAR_CONFIG[type], `SIDEBAR_CONFIG['${type}'] 누락`).toBeDefined();
+        }
+    });
+
+    it('FIELD_BLOCKS에 모든 타입 존재', () => {
+        for (const type of ALL_TYPES) {
+            expect(FIELD_BLOCKS[type], `FIELD_BLOCKS['${type}'] 누락`).toBeDefined();
+        }
+    });
+
+    it('FORM_CONFIGS에 모든 타입 존재 (null 허용)', () => {
+        for (const type of ALL_TYPES) {
+            expect(type in FORM_CONFIGS, `FORM_CONFIGS['${type}'] 누락`).toBe(true);
+        }
     });
 });
