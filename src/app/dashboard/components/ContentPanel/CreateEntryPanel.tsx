@@ -6,7 +6,6 @@ import { createEmptyEntry } from '@/lib/mappers';
 import { toast } from '@/hooks/use-toast';
 import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
 import { TypeBadge } from '@/components/dna';
-import { Button } from '@/components/ui/button';
 
 import { useEntryMutations } from '../../hooks';
 import {
@@ -88,17 +87,18 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-dashboard-border/50 px-6 py-5">
                 <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 text-sm">
+                        <button
+                            onClick={goBack}
+                            className="text-dashboard-text-muted transition-colors hover:text-dashboard-text"
+                        >
+                            Page
+                        </button>
+                        <span className="text-dashboard-text-placeholder">/</span>
+                    </div>
                     <TypeBadge type={config.badgeType} size="sm" />
                     <h2 className="text-lg font-medium text-dashboard-text">New {config.label}</h2>
                 </div>
-                <Button
-                    onClick={goBack}
-                    variant="ghost"
-                    size="sm"
-                    className="text-dashboard-text-secondary hover:bg-dashboard-bg-muted hover:text-dashboard-text"
-                >
-                    Cancel
-                </Button>
             </div>
 
             {/* Content */}

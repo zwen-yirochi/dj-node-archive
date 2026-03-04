@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 
-import { AlertCircle, ArrowLeft, MoreHorizontal } from 'lucide-react';
+import { AlertCircle, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry, CustomEntry } from '@/types';
 import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
@@ -181,22 +181,20 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
 
     return (
         <div className="flex h-full flex-col">
-            {/* Back button (optional) */}
-            {onBack && (
-                <div className="border-b border-dashboard-border/50 px-4 py-3">
-                    <button
-                        onClick={onBack}
-                        className="flex items-center gap-2 text-sm text-dashboard-text-muted transition-colors hover:text-dashboard-text"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
-                    </button>
-                </div>
-            )}
-
             {/* Editor Header */}
             <div className="flex items-center justify-between border-b border-dashboard-border/50 px-6 py-4">
                 <div className="flex items-center gap-3">
+                    {onBack && (
+                        <div className="flex items-center gap-1.5 text-sm">
+                            <button
+                                onClick={onBack}
+                                className="text-dashboard-text-muted transition-colors hover:text-dashboard-text"
+                            >
+                                Page
+                            </button>
+                            <span className="text-dashboard-text-placeholder">/</span>
+                        </div>
+                    )}
                     <TypeBadge type={config.badgeType} size="sm" />
                     {saveStatus && (
                         <span className="text-xs text-dashboard-text-muted">{saveStatus}</span>
