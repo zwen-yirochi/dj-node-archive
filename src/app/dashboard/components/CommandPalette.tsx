@@ -4,12 +4,17 @@ import { Command } from 'cmdk';
 import { useEffect, useMemo, useState } from 'react';
 
 import { DialogDescription, DialogTitle } from '@radix-ui/react-dialog';
-import { Calendar, Link2, Music, Palette, Plus, Search } from 'lucide-react';
+import { Palette, Plus, Search } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
 
+import { ENTRY_TYPE_CONFIG, type EntryType } from '../config/entryConfig';
+import { COMPONENT_GROUPS } from '../config/sidebarConfig';
 import { useEntries } from '../hooks/use-editor-data';
 import { selectSetView, useDashboardStore } from '../stores/dashboardStore';
+
+/** Creatable entry types — custom auto-creates, so include all types */
+const CREATABLE_TYPES = COMPONENT_GROUPS.map((g) => g.entryType);
 
 export function CommandPalette() {
     const [open, setOpen] = useState(false);
@@ -27,43 +32,28 @@ export function CommandPalette() {
         return () => document.removeEventListener('keydown', handler);
     }, []);
 
-    const events = useMemo(() => entries.filter((e) => e.type === 'event'), [entries]);
-    const mixsets = useMemo(() => entries.filter((e) => e.type === 'mixset'), [entries]);
-    const links = useMemo(() => entries.filter((e) => e.type === 'link'), [entries]);
-    const hasEntries = events.length > 0 || mixsets.length > 0 || links.length > 0;
+    // Group entries by type using COMPONENT_GROUPS config
+    const entriesByType = useMemo(() => {
+        const map = new Map<EntryType, ContentEntry[]>();
+        for (const group of COMPONENT_GROUPS) {
+            map.set(
+                group.entryType,
+                entries.filter((e) => e.type === group.entryType)
+            );
+        }
+        return map;
+    }, [entries]);
+
+    const hasEntries = Array.from(entriesByType.values()).some((arr) => arr.length > 0);
 
     const handleSelectEntry = (entryId: string) => {
         setView({ kind: 'detail', entryId });
         setOpen(false);
     };
 
-    const handleAction = (action: string) => {
-        switch (action) {
-            case 'create-event':
-                setView({ kind: 'create', entryType: 'event' });
-                break;
-            case 'create-mixset':
-                setView({ kind: 'create', entryType: 'mixset' });
-                break;
-            case 'create-link':
-                setView({ kind: 'create', entryType: 'link' });
-                break;
-            case 'bio':
-                setView({ kind: 'bio' });
-                break;
-        }
+    const handleCreate = (type: EntryType) => {
+        setView({ kind: 'create', entryType: type });
         setOpen(false);
-    };
-
-    const entryIcon = (type: ContentEntry['type']) => {
-        switch (type) {
-            case 'event':
-                return <Calendar className="h-3.5 w-3.5 text-dashboard-text-placeholder" />;
-            case 'mixset':
-                return <Music className="h-3.5 w-3.5 text-dashboard-text-placeholder" />;
-            case 'link':
-                return <Link2 className="h-3.5 w-3.5 text-dashboard-text-placeholder" />;
-        }
     };
 
     return (
@@ -103,86 +93,55 @@ export function CommandPalette() {
                             No results found.
                         </Command.Empty>
 
-                        {events.length > 0 && (
-                            <Command.Group heading="Events">
-                                {events.map((entry) => (
-                                    <Command.Item
-                                        key={entry.id}
-                                        value={`${entry.title} ${entry.id}`}
-                                        onSelect={() => handleSelectEntry(entry.id)}
-                                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                                    >
-                                        {entryIcon('event')}
-                                        {entry.title || 'Untitled'}
-                                    </Command.Item>
-                                ))}
-                            </Command.Group>
-                        )}
+                        {/* Entry search groups — driven by COMPONENT_GROUPS */}
+                        {COMPONENT_GROUPS.map((group) => {
+                            const groupEntries = entriesByType.get(group.entryType) ?? [];
+                            if (groupEntries.length === 0) return null;
 
-                        {mixsets.length > 0 && (
-                            <Command.Group heading="Mixsets">
-                                {mixsets.map((entry) => (
-                                    <Command.Item
-                                        key={entry.id}
-                                        value={`${entry.title} ${entry.id}`}
-                                        onSelect={() => handleSelectEntry(entry.id)}
-                                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                                    >
-                                        {entryIcon('mixset')}
-                                        {entry.title || 'Untitled'}
-                                    </Command.Item>
-                                ))}
-                            </Command.Group>
-                        )}
-
-                        {links.length > 0 && (
-                            <Command.Group heading="Links">
-                                {links.map((entry) => (
-                                    <Command.Item
-                                        key={entry.id}
-                                        value={`${entry.title} ${entry.id}`}
-                                        onSelect={() => handleSelectEntry(entry.id)}
-                                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                                    >
-                                        {entryIcon('link')}
-                                        {entry.title || 'Untitled'}
-                                    </Command.Item>
-                                ))}
-                            </Command.Group>
-                        )}
+                            const Icon = ENTRY_TYPE_CONFIG[group.entryType].icon;
+                            return (
+                                <Command.Group key={group.entryType} heading={group.title}>
+                                    {groupEntries.map((entry) => (
+                                        <Command.Item
+                                            key={entry.id}
+                                            value={`${entry.title} ${entry.id}`}
+                                            onSelect={() => handleSelectEntry(entry.id)}
+                                            className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
+                                        >
+                                            <Icon className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
+                                            {entry.title || 'Untitled'}
+                                        </Command.Item>
+                                    ))}
+                                </Command.Group>
+                            );
+                        })}
 
                         {hasEntries && (
                             <Command.Separator className="my-1.5 h-px bg-dashboard-border" />
                         )}
 
+                        {/* Actions — driven by CREATABLE_TYPES */}
                         <Command.Group heading="Actions">
-                            <Command.Item
-                                value="Create new event"
-                                onSelect={() => handleAction('create-event')}
-                                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                            >
-                                <Plus className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
-                                Create new event
-                            </Command.Item>
-                            <Command.Item
-                                value="Create new mixset"
-                                onSelect={() => handleAction('create-mixset')}
-                                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                            >
-                                <Plus className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
-                                Create new mixset
-                            </Command.Item>
-                            <Command.Item
-                                value="Create new link"
-                                onSelect={() => handleAction('create-link')}
-                                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
-                            >
-                                <Plus className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
-                                Create new link
-                            </Command.Item>
+                            {CREATABLE_TYPES.map((type) => {
+                                const config = ENTRY_TYPE_CONFIG[type];
+                                return (
+                                    <Command.Item
+                                        key={type}
+                                        value={`Create new ${config.label}`}
+                                        onSelect={() => handleCreate(type)}
+                                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
+                                    >
+                                        <Plus className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
+                                        Create new {config.label.toLowerCase()}
+                                    </Command.Item>
+                                );
+                            })}
                             <Command.Item
                                 value="Edit bio and design"
-                                onSelect={() => handleAction('bio')}
+                                onSelect={() => {
+                                    setView({ kind: 'bio' });
+                                    setOpen(false);
+                                }}
                                 className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
                             >
                                 <Palette className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
