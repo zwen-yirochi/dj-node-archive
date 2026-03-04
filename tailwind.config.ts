@@ -86,6 +86,7 @@ const config: Config = {
                         hover: 'rgb(229 229 229 / 0.5)', // neutral-200/50
                         active: 'rgb(229 229 229)', // neutral-200
                         muted: 'rgb(245 245 245)', // neutral-100
+                        base: 'rgb(255 255 255 / 0.85)', // main container — subtle glass
                     },
                     // Text colors
                     text: {

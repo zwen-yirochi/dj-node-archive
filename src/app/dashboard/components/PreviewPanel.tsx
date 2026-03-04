@@ -114,7 +114,7 @@ export default function PreviewPanel() {
 
                     {/* Screen area */}
                     <div
-                        className="relative overflow-hidden rounded-[27px] bg-white"
+                        className="relative overflow-hidden rounded-[27px] bg-dashboard-bg-base"
                         style={{
                             width: `${scaledWidth}px`,
                             height: `${scaledHeight}px`,
