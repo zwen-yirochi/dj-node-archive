@@ -51,9 +51,7 @@ export default function ContentPanel() {
             case 'page':
                 return (
                     <div className="h-full overflow-hidden rounded-2xl">
-                        <PageListView
-                            onSelectDetail={(id) => setView({ kind: 'detail', entryId: id })}
-                        />
+                        <PageListView />
                     </div>
                 );
 

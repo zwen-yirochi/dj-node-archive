@@ -24,34 +24,32 @@ import { useId, useMemo, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { Calendar, Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
+import { Calendar, GripVertical, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
+import { resolveMenuItems, TREE_PAGE_DISPLAY_MENU } from '@/app/dashboard/config/menuConfig';
 import { TypeBadge } from '@/components/dna';
+import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntries, useEntryMutations } from '../../hooks';
 import { computeReorderedDisplay } from '../../hooks/entries.api';
+import { useConfirmAction } from '../../hooks/use-confirm-action';
 import { entryKeys } from '../../hooks/use-editor-data';
+import { selectSetView, useDashboardStore } from '../../stores/dashboardStore';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface SortableItemProps {
     id: string;
     entry: ContentEntry;
-    isVisible: boolean;
-    onToggleVisibility: () => void;
-    onRemove: () => void;
-    onSelect: () => void;
 }
 
-function SortableItem({
-    id,
-    entry,
-    isVisible,
-    onToggleVisibility,
-    onRemove,
-    onSelect,
-}: SortableItemProps) {
+function SortableItem({ id, entry }: SortableItemProps) {
+    const setView = useDashboardStore(selectSetView);
+    const confirmAction = useConfirmAction();
+    const { remove, removeFromDisplay, toggleVisibility } = useEntryMutations();
+
     const animateLayoutChanges: AnimateLayoutChanges = (args) => {
         if (args.wasDragging) return false;
         if (args.isSorting) return true;
@@ -70,6 +68,27 @@ function SortableItem({
 
     const config = ENTRY_TYPE_CONFIG[entry.type];
 
+    // Config-driven menu + confirm strategy
+    const handlers = confirmAction.wrapHandlers(
+        TREE_PAGE_DISPLAY_MENU,
+        {
+            edit: () => setView({ kind: 'detail', entryId: entry.id }),
+            delete: () => {
+                const cv = useDashboardStore.getState().contentView;
+                if (cv.kind === 'detail' && cv.entryId === entry.id) {
+                    setView({ kind: 'page' });
+                }
+                remove.mutate(entry.id);
+            },
+            'remove-from-page': () => removeFromDisplay.mutate(entry.id),
+            'toggle-visibility': () => toggleVisibility.mutate(entry.id),
+        },
+        entry as unknown as Record<string, unknown>
+    );
+    const menuItems = resolveMenuItems(TREE_PAGE_DISPLAY_MENU, handlers, {
+        isVisible: entry.isVisible ?? true,
+    });
+
     return (
         <div
             ref={setNodeRef}
@@ -79,7 +98,7 @@ function SortableItem({
                 isDragging
                     ? 'shadow-panel-hover border-dashboard-border-hover'
                     : 'hover:shadow-panel border-dashboard-border/60 hover:border-dashboard-border-hover',
-                !isVisible && 'opacity-60'
+                entry.isVisible === false && 'opacity-60'
             )}
         >
             {/* Drag Handle */}
@@ -95,52 +114,45 @@ function SortableItem({
             <TypeBadge type={config.badgeType} size="sm" />
 
             {/* Content */}
-            <div className="min-w-0 flex-1 cursor-pointer" onClick={onSelect}>
+            <div
+                className="min-w-0 flex-1 cursor-pointer"
+                onClick={() => setView({ kind: 'detail', entryId: entry.id })}
+            >
                 <p className="truncate text-sm font-medium text-dashboard-text">
                     {entry.title || 'Untitled'}
                 </p>
                 <p className="text-xs text-dashboard-text-muted">{config.label}</p>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-1">
-                <button
-                    onClick={onToggleVisibility}
-                    className={cn(
-                        'rounded-md p-2 transition-colors',
-                        isVisible
-                            ? 'text-dashboard-text-muted hover:bg-dashboard-bg-muted hover:text-dashboard-text-secondary'
-                            : 'text-dashboard-text-placeholder hover:bg-dashboard-bg-muted hover:text-dashboard-text-secondary'
-                    )}
-                    title={isVisible ? 'Hide' : 'Show'}
-                >
-                    {isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                </button>
-                <button
-                    onClick={onRemove}
-                    className="rounded-md p-2 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-danger-bg hover:text-dashboard-danger"
-                    title="Remove from Page"
-                >
-                    <Trash2 className="h-4 w-4" />
-                </button>
-            </div>
+            {/* More menu */}
+            <SimpleDropdown
+                trigger={
+                    <button
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex h-8 w-8 items-center justify-center rounded-md opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
+                    >
+                        <MoreHorizontal className="h-4 w-4 text-dashboard-text-muted" />
+                    </button>
+                }
+                items={menuItems}
+                contentClassName="w-44"
+            />
+
+            <ConfirmDialog
+                pending={confirmAction.pending}
+                matchValue={confirmAction.matchValue}
+                onConfirm={confirmAction.confirm}
+                onClose={confirmAction.close}
+            />
         </div>
     );
 }
 
-interface PageListViewProps {
-    onSelectDetail: (id: string) => void;
-}
-
-export default function PageListView({ onSelectDetail }: PageListViewProps) {
+export default function PageListView() {
     // TanStack Query
     const queryClient = useQueryClient();
     const { data: entries } = useEntries();
-    const {
-        toggleVisibility: toggleVisibilityMutation,
-        removeFromDisplay: removeFromDisplayMutation,
-        reorderDisplay: reorderDisplayMutation,
-    } = useEntryMutations();
+    const { reorderDisplay: reorderDisplayMutation } = useEntryMutations();
 
     const dndId = useId();
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -194,14 +206,6 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
         }
     };
 
-    const handleToggleVisibility = (entryId: string) => {
-        toggleVisibilityMutation.mutate(entryId);
-    };
-
-    const handleRemoveFromDisplay = (entryId: string) => {
-        removeFromDisplayMutation.mutate(entryId);
-    };
-
     const activeEntry = activeId ? displayedEntries.find((e) => e.id === activeId) : null;
 
     // Count of publicly visible entries (displayOrder !== null && isVisible)
@@ -251,15 +255,7 @@ export default function PageListView({ onSelectDetail }: PageListViewProps) {
                         >
                             <div className="space-y-2">
                                 {displayedEntries.map((entry) => (
-                                    <SortableItem
-                                        key={entry.id}
-                                        id={entry.id}
-                                        entry={entry}
-                                        isVisible={entry.isVisible}
-                                        onToggleVisibility={() => handleToggleVisibility(entry.id)}
-                                        onRemove={() => handleRemoveFromDisplay(entry.id)}
-                                        onSelect={() => onSelectDetail(entry.id)}
-                                    />
+                                    <SortableItem key={entry.id} id={entry.id} entry={entry} />
                                 ))}
                             </div>
                         </SortableContext>
