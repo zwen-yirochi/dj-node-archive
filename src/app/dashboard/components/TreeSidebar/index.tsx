@@ -212,7 +212,7 @@ export default function TreeSidebar() {
             const overEntry = overData.entry;
 
             if (activeEntry.type === overEntry.type && active.id !== over.id) {
-                const sectionType = activeEntry.type as 'event' | 'mixset' | 'link';
+                const sectionType = activeEntry.type as 'event' | 'mixset' | 'link' | 'custom';
                 const sectionEntries = entriesByType[sectionType] ?? [];
 
                 const overIndex = sectionEntries.findIndex((e) => e.id === over.id);

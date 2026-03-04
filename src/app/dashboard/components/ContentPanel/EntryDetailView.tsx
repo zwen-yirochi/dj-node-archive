@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ComponentType } from 're
 
 import { AlertCircle, ArrowLeft, MoreHorizontal } from 'lucide-react';
 
-import type { ContentEntry } from '@/types';
+import type { ContentEntry, CustomEntry } from '@/types';
 import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
 import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
 import { EDITOR_MENU_CONFIG, resolveMenuItems } from '@/app/dashboard/config/menuConfig';
@@ -14,6 +14,7 @@ import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryDetail, useEntryMutations } from '../../hooks';
 import { DashboardConfirmDialog } from '../ui/DashboardDialog';
+import CustomEntryEditor from './CustomEntryEditor';
 import EventDetailView from './detail-views/EventDetailView';
 import LinkDetailView from './detail-views/LinkDetailView';
 import MixsetDetailView from './detail-views/MixsetDetailView';
@@ -23,7 +24,7 @@ import type { DetailViewProps } from './detail-views/types';
 // Detail View Registry
 // ============================================
 
-const DETAIL_VIEW_REGISTRY: Record<EntryType, ComponentType<DetailViewProps>> = {
+const DETAIL_VIEW_REGISTRY: Record<Exclude<EntryType, 'custom'>, ComponentType<DetailViewProps>> = {
     event: EventDetailView,
     mixset: MixsetDetailView,
     link: LinkDetailView,
@@ -167,7 +168,10 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     });
 
     const handleEditingDone = () => setEditingField(null);
-    const DetailView = DETAIL_VIEW_REGISTRY[localEntry.type];
+    const DetailView =
+        localEntry.type !== 'custom'
+            ? DETAIL_VIEW_REGISTRY[localEntry.type as keyof typeof DETAIL_VIEW_REGISTRY]
+            : null;
 
     return (
         <div className="flex h-full flex-col">
@@ -213,12 +217,23 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
 
             {/* Detail View Content */}
             <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
-                <DetailView
-                    entry={localEntry}
-                    onSave={handleFieldSave}
-                    editingField={editingField}
-                    onEditingDone={handleEditingDone}
-                />
+                {localEntry.type === 'custom' ? (
+                    <CustomEntryEditor
+                        entry={localEntry as CustomEntry}
+                        onBlocksChange={(blocks) => {
+                            const updated = { ...localEntry, blocks } as CustomEntry;
+                            setLocalEntry(updated as ContentEntry);
+                            debouncedSave(updated as ContentEntry, ['blocks']);
+                        }}
+                    />
+                ) : DetailView ? (
+                    <DetailView
+                        entry={localEntry}
+                        onSave={handleFieldSave}
+                        editingField={editingField}
+                        onEditingDone={handleEditingDone}
+                    />
+                ) : null}
             </div>
 
             <DashboardConfirmDialog
