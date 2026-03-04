@@ -12,14 +12,12 @@ interface PageDisplayListProps {
     entries: ContentEntry[];
     isDragging?: boolean;
     isCollapsed?: boolean;
-    onRemoveFromDisplay?: (id: string) => void;
 }
 
 export default function PageDisplayList({
     entries,
     isDragging = false,
     isCollapsed = false,
-    onRemoveFromDisplay,
 }: PageDisplayListProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: 'view-drop-zone',
@@ -58,13 +56,7 @@ export default function PageDisplayList({
                                 <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
                             )}
                             {entries.map((entry) => (
-                                <TreeItem
-                                    key={`view-${entry.id}`}
-                                    entry={entry}
-                                    isInPageDisplay
-                                    isVisible={entry.isVisible}
-                                    onDelete={() => onRemoveFromDisplay?.(entry.id)}
-                                />
+                                <TreeItem key={`view-${entry.id}`} entry={entry} isInPageDisplay />
                             ))}
 
                             <div

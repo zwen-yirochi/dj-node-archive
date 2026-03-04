@@ -22,20 +22,16 @@ import {
     resolveTreeMenuItems,
     TREE_ENTRY_MENU,
     TREE_PAGE_DISPLAY_MENU,
-    type TreeMenuActionContext,
 } from '@/app/dashboard/config/menuConfig';
 import { TypeBadge } from '@/components/dna';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
+import { useEntryMutations } from '../../hooks';
 import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 
 interface TreeItemProps {
     entry: ContentEntry;
     isInPageDisplay?: boolean;
-    isVisible?: boolean;
-    onToggleVisibility?: () => void;
-    onEdit?: () => void;
-    onDelete?: () => void;
 }
 
 /** Status icon component */
@@ -60,17 +56,13 @@ function StatusIcon({
     }
 }
 
-export default function TreeItem({
-    entry,
-    isInPageDisplay = false,
-    isVisible = true,
-    onToggleVisibility,
-    onEdit,
-    onDelete,
-}: TreeItemProps) {
+export default function TreeItem({ entry, isInPageDisplay = false }: TreeItemProps) {
     // Dashboard Store
     const contentView = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
+
+    // Mutations
+    const { remove, removeFromDisplay, toggleVisibility } = useEntryMutations();
 
     // Compute status - numeric displayOrder means it's in the Page
     const isInView = typeof entry.displayOrder === 'number';
@@ -109,21 +101,23 @@ export default function TreeItem({
         setView({ kind: 'detail', entryId: entry.id });
     };
 
-    // Resolve menu from config
-    const menuActionCtx: TreeMenuActionContext = {
-        onEdit: () => {
-            setView({ kind: 'detail', entryId: entry.id });
-            onEdit?.();
-        },
-        onDelete: () => onDelete?.(),
-        onRemoveFromPage: () => onDelete?.(),
-        onToggleVisibility: () => onToggleVisibility?.(),
-        isVisible,
-    };
-
+    // Config-driven menu: action type → mutation mapping
     const menuItems = resolveTreeMenuItems(
         isInPageDisplay ? TREE_PAGE_DISPLAY_MENU : TREE_ENTRY_MENU,
-        menuActionCtx
+        {
+            onEdit: () => setView({ kind: 'detail', entryId: entry.id }),
+            onDelete: () => {
+                // 보고 있는 entry 삭제 시 page로 이동 (404 방지)
+                const cv = useDashboardStore.getState().contentView;
+                if (cv.kind === 'detail' && cv.entryId === entry.id) {
+                    setView({ kind: 'page' });
+                }
+                remove.mutate(entry.id);
+            },
+            onRemoveFromPage: () => removeFromDisplay.mutate(entry.id),
+            onToggleVisibility: () => toggleVisibility.mutate(entry.id),
+            isVisible: entry.isVisible ?? true,
+        }
     );
 
     return (
@@ -138,7 +132,7 @@ export default function TreeItem({
                     ? 'bg-dashboard-bg-active text-dashboard-text'
                     : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover hover:text-dashboard-text',
                 isDragging && 'opacity-50',
-                !isVisible && 'opacity-50'
+                entry.isVisible === false && 'opacity-50'
             )}
             onClick={handleClick}
         >

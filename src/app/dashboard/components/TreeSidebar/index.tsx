@@ -62,7 +62,6 @@ export default function TreeSidebar() {
 
     // TanStack Query Mutations
     const {
-        remove: deleteEntryMutation,
         reorder: reorderEntriesMutation,
         addToDisplay: addToDisplayMutation,
         reorderDisplay: reorderDisplayMutation,
@@ -237,15 +236,6 @@ export default function TreeSidebar() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        // 현재 보고 있는 entry 삭제 시 page로 전환 (404 방지)
-        const cv = useDashboardStore.getState().contentView;
-        if (cv.kind === 'detail' && cv.entryId === id) {
-            setView({ kind: 'page' });
-        }
-        await deleteEntryMutation.mutateAsync(id);
-    };
-
     const isPageCollapsed = sidebarSections?.page?.collapsed ?? false;
 
     const handlePageClick = () => {
@@ -359,11 +349,7 @@ export default function TreeSidebar() {
                                             <SectionEmptyHint label={cfg.emptyLabel} />
                                         ) : (
                                             items.map((entry) => (
-                                                <TreeItem
-                                                    key={entry.id}
-                                                    entry={entry}
-                                                    onDelete={() => handleDelete(entry.id)}
-                                                />
+                                                <TreeItem key={entry.id} entry={entry} />
                                             ))
                                         )}
                                     </div>
