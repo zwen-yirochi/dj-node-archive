@@ -43,12 +43,11 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 interface SortableItemProps {
     id: string;
     entry: ContentEntry;
+    actionHandlers: Record<string, () => void>;
 }
 
-function SortableItem({ id, entry }: SortableItemProps) {
-    const setView = useDashboardStore(selectSetView);
+function SortableItem({ id, entry, actionHandlers }: SortableItemProps) {
     const confirmAction = useConfirmAction();
-    const { remove, removeFromDisplay, toggleVisibility } = useEntryMutations();
 
     const animateLayoutChanges: AnimateLayoutChanges = (args) => {
         if (args.wasDragging) return false;
@@ -71,18 +70,7 @@ function SortableItem({ id, entry }: SortableItemProps) {
     // Config-driven menu + confirm strategy
     const handlers = confirmAction.wrapHandlers(
         TREE_PAGE_DISPLAY_MENU,
-        {
-            edit: () => setView({ kind: 'detail', entryId: entry.id }),
-            delete: () => {
-                const cv = useDashboardStore.getState().contentView;
-                if (cv.kind === 'detail' && cv.entryId === entry.id) {
-                    setView({ kind: 'page' });
-                }
-                remove.mutate(entry.id);
-            },
-            'remove-from-page': () => removeFromDisplay.mutate(entry.id),
-            'toggle-visibility': () => toggleVisibility.mutate(entry.id),
-        },
+        actionHandlers,
         entry as unknown as Record<string, unknown>
     );
     const menuItems = resolveMenuItems(TREE_PAGE_DISPLAY_MENU, handlers, {
@@ -114,10 +102,7 @@ function SortableItem({ id, entry }: SortableItemProps) {
             <TypeBadge type={config.badgeType} size="sm" />
 
             {/* Content */}
-            <div
-                className="min-w-0 flex-1 cursor-pointer"
-                onClick={() => setView({ kind: 'detail', entryId: entry.id })}
-            >
+            <div className="min-w-0 flex-1 cursor-pointer" onClick={actionHandlers.edit}>
                 <p className="truncate text-sm font-medium text-dashboard-text">
                     {entry.title || 'Untitled'}
                 </p>
@@ -152,7 +137,13 @@ export default function PageListView() {
     // TanStack Query
     const queryClient = useQueryClient();
     const { data: entries } = useEntries();
-    const { reorderDisplay: reorderDisplayMutation } = useEntryMutations();
+    const {
+        remove,
+        removeFromDisplay,
+        toggleVisibility,
+        reorderDisplay: reorderDisplayMutation,
+    } = useEntryMutations();
+    const setView = useDashboardStore(selectSetView);
 
     const dndId = useId();
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -255,7 +246,29 @@ export default function PageListView() {
                         >
                             <div className="space-y-2">
                                 {displayedEntries.map((entry) => (
-                                    <SortableItem key={entry.id} id={entry.id} entry={entry} />
+                                    <SortableItem
+                                        key={entry.id}
+                                        id={entry.id}
+                                        entry={entry}
+                                        actionHandlers={{
+                                            edit: () =>
+                                                setView({ kind: 'detail', entryId: entry.id }),
+                                            delete: () => {
+                                                const cv = useDashboardStore.getState().contentView;
+                                                if (
+                                                    cv.kind === 'detail' &&
+                                                    cv.entryId === entry.id
+                                                ) {
+                                                    setView({ kind: 'page' });
+                                                }
+                                                remove.mutate(entry.id);
+                                            },
+                                            'remove-from-page': () =>
+                                                removeFromDisplay.mutate(entry.id),
+                                            'toggle-visibility': () =>
+                                                toggleVisibility.mutate(entry.id),
+                                        }}
+                                    />
                                 ))}
                             </div>
                         </SortableContext>

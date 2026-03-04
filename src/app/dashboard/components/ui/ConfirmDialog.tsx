@@ -38,18 +38,31 @@ export function ConfirmDialog({ pending, matchValue, onConfirm, onClose }: Confi
                 {strategy.type === 'type-to-confirm' ? (
                     <TypeToConfirmBody
                         matchValue={matchValue}
+                        confirmLabel={strategy.confirmLabel}
                         onConfirm={onConfirm}
                         onClose={onClose}
                     />
                 ) : (
-                    <SimpleConfirmBody onConfirm={onConfirm} onClose={onClose} />
+                    <SimpleConfirmBody
+                        confirmLabel={strategy.confirmLabel}
+                        onConfirm={onConfirm}
+                        onClose={onClose}
+                    />
                 )}
             </DashboardDialogContent>
         </DialogPrimitive.Root>
     );
 }
 
-function SimpleConfirmBody({ onConfirm, onClose }: { onConfirm: () => void; onClose: () => void }) {
+function SimpleConfirmBody({
+    confirmLabel = 'Delete',
+    onConfirm,
+    onClose,
+}: {
+    confirmLabel?: string;
+    onConfirm: () => void;
+    onClose: () => void;
+}) {
     return (
         <div className="flex justify-end gap-2 pt-2">
             <Button
@@ -65,7 +78,7 @@ function SimpleConfirmBody({ onConfirm, onClose }: { onConfirm: () => void; onCl
                 onClick={onConfirm}
                 className="bg-dashboard-danger-emphasis text-white hover:bg-dashboard-danger-emphasis-hover"
             >
-                Delete
+                {confirmLabel}
             </Button>
         </div>
     );
@@ -73,10 +86,12 @@ function SimpleConfirmBody({ onConfirm, onClose }: { onConfirm: () => void; onCl
 
 function TypeToConfirmBody({
     matchValue,
+    confirmLabel = 'Delete',
     onConfirm,
     onClose,
 }: {
     matchValue: string;
+    confirmLabel?: string;
     onConfirm: () => void;
     onClose: () => void;
 }) {
@@ -113,7 +128,7 @@ function TypeToConfirmBody({
                     onClick={onConfirm}
                     className="bg-dashboard-danger-emphasis text-white hover:bg-dashboard-danger-emphasis-hover disabled:opacity-50"
                 >
-                    Delete
+                    {confirmLabel}
                 </Button>
             </div>
         </div>

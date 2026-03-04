@@ -16,8 +16,14 @@ import type { EntryType } from './entryConfig';
 // ============================================
 
 export type ConfirmStrategy =
-    | { type: 'simple'; title: string; description: string }
-    | { type: 'type-to-confirm'; title: string; description: string; matchField: string };
+    | { type: 'simple'; title: string; description: string; confirmLabel?: string }
+    | {
+          type: 'type-to-confirm';
+          title: string;
+          description: string;
+          matchField: string;
+          confirmLabel?: string;
+      };
 
 // ============================================
 // 공통 메뉴 아이템 타입
@@ -81,6 +87,10 @@ const TYPE_TO_CONFIRM_DELETE: ConfirmStrategy = {
     matchField: 'title',
 };
 
+/** Public event → type-to-confirm, otherwise simple */
+const EVENT_DELETE_CONFIRM = (ctx: Record<string, unknown>) =>
+    ctx.eventId ? TYPE_TO_CONFIRM_DELETE : SIMPLE_DELETE_CONFIRM;
+
 // ============================================
 // Editor menu item constants
 // ============================================
@@ -99,7 +109,7 @@ const DELETE_EVENT: MenuItemConfig = {
     actionKey: 'delete',
     label: 'Delete',
     variant: 'danger',
-    confirm: (ctx) => (ctx.eventId ? TYPE_TO_CONFIRM_DELETE : SIMPLE_DELETE_CONFIRM),
+    confirm: EVENT_DELETE_CONFIRM,
 };
 
 // ============================================
@@ -122,7 +132,7 @@ const TREE_DELETE: MenuItemConfig = {
     actionKey: 'delete',
     label: 'Delete',
     variant: 'danger',
-    confirm: (ctx) => (ctx.eventId ? TYPE_TO_CONFIRM_DELETE : SIMPLE_DELETE_CONFIRM),
+    confirm: EVENT_DELETE_CONFIRM,
 };
 const TREE_TOGGLE_VISIBILITY: MenuItemConfig = {
     actionKey: 'toggle-visibility',
