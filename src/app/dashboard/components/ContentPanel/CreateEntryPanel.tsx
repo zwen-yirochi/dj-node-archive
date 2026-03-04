@@ -15,7 +15,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { entryKeys, useEntryMutations } from '../../hooks';
-import { selectPageId, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
+import {
+    selectGoBack,
+    selectPageId,
+    selectSetView,
+    useDashboardStore,
+} from '../../stores/dashboardStore';
 import CreateMixsetForm from './CreateMixsetForm';
 import EventCreateSection from './EventCreateSection';
 
@@ -83,6 +88,7 @@ function DefaultCreateForm({ type }: { type: EntryType }) {
     const pageId = useDashboardStore(selectPageId);
     const { create: createEntryMutation } = useEntryMutations();
     const setView = useDashboardStore(selectSetView);
+    const goBack = useDashboardStore(selectGoBack);
 
     const handleCreate = async () => {
         if (!title.trim()) {
@@ -120,7 +126,7 @@ function DefaultCreateForm({ type }: { type: EntryType }) {
         }
     };
 
-    const handleCancel = () => setView({ kind: 'page' });
+    const handleCancel = () => goBack();
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -181,7 +187,7 @@ interface CreateEntryPanelProps {
 
 export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
     const config = ENTRY_TYPE_CONFIG[type];
-    const setView = useDashboardStore(selectSetView);
+    const goBack = useDashboardStore(selectGoBack);
     const DedicatedForm = FORM_REGISTRY[type];
 
     return (
@@ -194,7 +200,7 @@ export default function CreateEntryPanel({ type }: CreateEntryPanelProps) {
                 </div>
                 {DedicatedForm && (
                     <Button
-                        onClick={() => setView({ kind: 'page' })}
+                        onClick={goBack}
                         variant="ghost"
                         size="sm"
                         className="text-dashboard-text-secondary hover:bg-dashboard-bg-muted hover:text-dashboard-text"
