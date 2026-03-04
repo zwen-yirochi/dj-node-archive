@@ -163,8 +163,9 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
 
     // "..." menu items — config-driven + declarative action resolution
     const menuItems = resolveMenuItems(EDITOR_MENU_CONFIG[localEntry.type], {
-        setEditingField,
-        onDelete: handleDeleteClick,
+        'edit-title': () => setEditingField('title'),
+        'edit-image': () => setEditingField('image'),
+        delete: handleDeleteClick,
     });
 
     const handleEditingDone = () => setEditingField(null);
@@ -247,10 +248,10 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
             <DashboardConfirmDialog
                 open={isDeleteDialogOpen}
                 onOpenChange={setIsDeleteDialogOpen}
-                title="항목을 삭제할까요?"
-                description="삭제된 항목은 복구할 수 없습니다."
-                confirmText="삭제"
-                cancelText="취소"
+                title="Delete this entry?"
+                description="This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
                 destructive
                 onConfirm={handleDelete}
             />

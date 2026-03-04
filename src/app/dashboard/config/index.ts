@@ -19,12 +19,8 @@ export {
     TREE_ENTRY_MENU,
     TREE_PAGE_DISPLAY_MENU,
     resolveMenuItems,
-    resolveTreeMenuItems,
-    type MenuAction,
-    type MenuActionContext,
-    type EditorMenuItemConfig,
-    type TreeMenuItemConfig,
-    type TreeMenuActionContext,
+    type MenuItemConfig,
+    type MenuConfig,
 } from './menuConfig';
 
 // === Field metadata & validation ===

@@ -1,8 +1,10 @@
 /**
  * Menu system configuration
- * - Declarative menu action types + resolver
- * - Per-type editor menu composition
- * - Tree item (sidebar) menu composition
+ *
+ * 통합 패턴: actionKey(string) + handler map
+ * - config는 "무엇을 보여줄지"만 선언 (actionKey, label, variant)
+ * - 소비자가 "actionKey → 콜백" 매핑을 제공
+ * - 새 액션 추가 = config에 항목 추가 + 소비자에 handler 추가 (2곳)
  */
 
 import type { DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
@@ -10,56 +12,39 @@ import type { DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 import type { EntryType } from './entryConfig';
 
 // ============================================
-// Editor menu action types
+// 공통 메뉴 아이템 타입
 // ============================================
 
-/** Declarative menu action — extend the union and add a case to resolveAction when adding variants */
-export type MenuAction =
-    | { type: 'set-editing-field'; field: 'title' | 'image' }
-    | { type: 'delete' };
-
-export interface MenuActionItem {
-    action: MenuAction;
+export interface MenuItemConfig {
+    actionKey: string;
     label: string;
     variant?: 'danger';
+    /** 렌더 시점에 label을 동적으로 결정 (예: isVisible → "Hide"/"Show") */
+    dynamicLabel?: (ctx: Record<string, unknown>) => string;
 }
 
 export interface MenuSeparatorConfig {
     type: 'separator';
 }
 
-export type EditorMenuItemConfig = MenuActionItem | MenuSeparatorConfig;
+export type MenuConfig = (MenuItemConfig | MenuSeparatorConfig)[];
 
 // ============================================
-// Editor menu action resolution
+// 공통 리졸버
 // ============================================
 
-/** Action context provided by the component */
-export interface MenuActionContext {
-    setEditingField: (field: 'title' | 'image' | null) => void;
-    onDelete: () => void;
-}
-
-function resolveAction(action: MenuAction, ctx: MenuActionContext): () => void {
-    switch (action.type) {
-        case 'set-editing-field':
-            return () => ctx.setEditingField(action.field);
-        case 'delete':
-            return () => ctx.onDelete();
-    }
-}
-
-/** Convert config-driven menu items to DropdownMenuItemConfig */
+/** handler map에서 actionKey로 콜백을 찾아 DropdownMenuItemConfig로 변환 */
 export function resolveMenuItems(
-    items: EditorMenuItemConfig[],
-    ctx: MenuActionContext
+    items: MenuConfig,
+    handlers: Record<string, () => void>,
+    ctx?: Record<string, unknown>
 ): DropdownMenuItemConfig[] {
     return items.map((item) => {
         if ('type' in item) return item;
         return {
-            label: item.label,
+            label: (ctx && item.dynamicLabel?.(ctx)) ?? item.label,
             variant: item.variant,
-            onClick: resolveAction(item.action, ctx),
+            onClick: handlers[item.actionKey],
         };
     });
 }
@@ -68,26 +53,16 @@ export function resolveMenuItems(
 // Editor menu item constants
 // ============================================
 
-const EDIT_TITLE: EditorMenuItemConfig = {
-    action: { type: 'set-editing-field', field: 'title' },
-    label: 'Edit title',
-};
-const EDIT_IMAGE: EditorMenuItemConfig = {
-    action: { type: 'set-editing-field', field: 'image' },
-    label: 'Edit image',
-};
-const SEPARATOR: EditorMenuItemConfig = { type: 'separator' };
-const DELETE: EditorMenuItemConfig = {
-    action: { type: 'delete' },
-    label: 'Delete',
-    variant: 'danger',
-};
+const EDIT_TITLE: MenuItemConfig = { actionKey: 'edit-title', label: 'Edit title' };
+const EDIT_IMAGE: MenuItemConfig = { actionKey: 'edit-image', label: 'Edit image' };
+const DELETE: MenuItemConfig = { actionKey: 'delete', label: 'Delete', variant: 'danger' };
+const SEPARATOR: MenuSeparatorConfig = { type: 'separator' };
 
 // ============================================
 // Per-type editor menu composition
 // ============================================
 
-export const EDITOR_MENU_CONFIG: Record<EntryType, EditorMenuItemConfig[]> = {
+export const EDITOR_MENU_CONFIG: Record<EntryType, MenuConfig> = {
     event: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE],
     mixset: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE],
     link: [EDIT_TITLE, SEPARATOR, DELETE],
@@ -95,83 +70,27 @@ export const EDITOR_MENU_CONFIG: Record<EntryType, EditorMenuItemConfig[]> = {
 };
 
 // ============================================
-// Tree item menu system (sidebar)
+// Tree item menu constants
 // ============================================
 
-export type TreeMenuAction =
-    | { type: 'edit' }
-    | { type: 'delete' }
-    | { type: 'remove-from-page' }
-    | { type: 'toggle-visibility' };
-
-export interface TreeMenuActionItem {
-    action: TreeMenuAction;
-    label: string;
-    variant?: 'danger';
-    /** Dynamic label resolved at render time */
-    dynamicLabel?: (ctx: TreeMenuActionContext) => string;
-}
-
-export type TreeMenuItemConfig = TreeMenuActionItem | MenuSeparatorConfig;
-
-export interface TreeMenuActionContext {
-    onEdit: () => void;
-    onDelete: () => void;
-    onRemoveFromPage: () => void;
-    onToggleVisibility: () => void;
-    isVisible: boolean;
-}
-
-function resolveTreeAction(action: TreeMenuAction, ctx: TreeMenuActionContext): () => void {
-    switch (action.type) {
-        case 'edit':
-            return () => ctx.onEdit();
-        case 'delete':
-            return () => ctx.onDelete();
-        case 'remove-from-page':
-            return () => ctx.onRemoveFromPage();
-        case 'toggle-visibility':
-            return () => ctx.onToggleVisibility();
-    }
-}
-
-export function resolveTreeMenuItems(
-    items: TreeMenuItemConfig[],
-    ctx: TreeMenuActionContext
-): DropdownMenuItemConfig[] {
-    return items.map((item): DropdownMenuItemConfig => {
-        if ('type' in item) return item;
-        return {
-            label: item.dynamicLabel?.(ctx) ?? item.label,
-            variant: item.variant,
-            onClick: resolveTreeAction(item.action, ctx),
-        };
-    });
-}
-
-// Tree menu item constants
-const TREE_EDIT: TreeMenuItemConfig = { action: { type: 'edit' }, label: 'Edit' };
-const TREE_DELETE: TreeMenuItemConfig = {
-    action: { type: 'delete' },
-    label: 'Delete',
-    variant: 'danger',
-};
-const TREE_TOGGLE_VISIBILITY: TreeMenuItemConfig = {
-    action: { type: 'toggle-visibility' },
+const TREE_EDIT: MenuItemConfig = { actionKey: 'edit', label: 'Edit' };
+const TREE_DELETE: MenuItemConfig = { actionKey: 'delete', label: 'Delete', variant: 'danger' };
+const TREE_TOGGLE_VISIBILITY: MenuItemConfig = {
+    actionKey: 'toggle-visibility',
     label: 'Hide',
     dynamicLabel: (ctx) => (ctx.isVisible ? 'Hide' : 'Show'),
 };
-const TREE_REMOVE_FROM_PAGE: TreeMenuItemConfig = {
-    action: { type: 'remove-from-page' },
+const TREE_REMOVE_FROM_PAGE: MenuItemConfig = {
+    actionKey: 'remove-from-page',
     label: 'Remove from Page',
     variant: 'danger',
 };
 
 /** Component section: Edit / Delete */
-export const TREE_ENTRY_MENU: TreeMenuItemConfig[] = [TREE_EDIT, SEPARATOR, TREE_DELETE];
+export const TREE_ENTRY_MENU: MenuConfig = [TREE_EDIT, SEPARATOR, TREE_DELETE];
 
 /** Page display section: Edit / Hide / Remove from Page */
-export const TREE_PAGE_DISPLAY_MENU: TreeMenuItemConfig[] = [
+export const TREE_PAGE_DISPLAY_MENU: MenuConfig = [
     TREE_EDIT,
     TREE_TOGGLE_VISIBILITY,
     SEPARATOR,

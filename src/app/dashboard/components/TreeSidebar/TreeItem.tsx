@@ -19,7 +19,7 @@ import {
     type TreeItemStatus,
 } from '@/app/dashboard/config/entryFieldConfig';
 import {
-    resolveTreeMenuItems,
+    resolveMenuItems,
     TREE_ENTRY_MENU,
     TREE_PAGE_DISPLAY_MENU,
 } from '@/app/dashboard/config/menuConfig';
@@ -102,11 +102,11 @@ export default function TreeItem({ entry, isInPageDisplay = false }: TreeItemPro
     };
 
     // Config-driven menu: action type → mutation mapping
-    const menuItems = resolveTreeMenuItems(
+    const menuItems = resolveMenuItems(
         isInPageDisplay ? TREE_PAGE_DISPLAY_MENU : TREE_ENTRY_MENU,
         {
-            onEdit: () => setView({ kind: 'detail', entryId: entry.id }),
-            onDelete: () => {
+            edit: () => setView({ kind: 'detail', entryId: entry.id }),
+            delete: () => {
                 // 보고 있는 entry 삭제 시 page로 이동 (404 방지)
                 const cv = useDashboardStore.getState().contentView;
                 if (cv.kind === 'detail' && cv.entryId === entry.id) {
@@ -114,10 +114,10 @@ export default function TreeItem({ entry, isInPageDisplay = false }: TreeItemPro
                 }
                 remove.mutate(entry.id);
             },
-            onRemoveFromPage: () => removeFromDisplay.mutate(entry.id),
-            onToggleVisibility: () => toggleVisibility.mutate(entry.id),
-            isVisible: entry.isVisible ?? true,
-        }
+            'remove-from-page': () => removeFromDisplay.mutate(entry.id),
+            'toggle-visibility': () => toggleVisibility.mutate(entry.id),
+        },
+        { isVisible: entry.isVisible ?? true }
     );
 
     return (
