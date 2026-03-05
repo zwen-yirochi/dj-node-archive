@@ -14,12 +14,14 @@ import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import type { ContentEntry } from '@/types';
 
 import { entryKeys } from './use-editor-data';
+import type { PreviewTarget } from './use-preview-actions';
 
 export interface OptimisticMutationConfig<TParams> {
     mutationFn: (params: TParams, entries: ContentEntry[] | undefined) => Promise<unknown>;
     optimisticUpdate: (params: TParams, entries: ContentEntry[]) => ContentEntry[];
     triggersPreview?: boolean | ((params: TParams, snapshot: ContentEntry[]) => boolean);
-    onPreviewTrigger?: () => void;
+    previewTarget?: PreviewTarget;
+    onPreviewTrigger?: (target: PreviewTarget) => void;
 }
 
 /**
@@ -55,7 +57,7 @@ export function makeOptimisticMutation<TParams>(
                     ? config.triggersPreview(params, snapshotRef.current!)
                     : true;
             if (shouldRefresh) {
-                config.onPreviewTrigger();
+                config.onPreviewTrigger(config.previewTarget ?? 'userpage');
             }
         },
         onError: (_err, _vars, ctx) => {

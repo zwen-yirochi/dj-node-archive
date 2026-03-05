@@ -1,12 +1,31 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 
 import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 
 import { useUser } from '../hooks';
-import { useRegisterPreviewRefresh } from '../hooks/use-preview-refresh';
+import {
+    useRegisterPreviewHandler,
+    type PreviewAction,
+    type PreviewTarget,
+} from '../hooks/use-preview-actions';
+import { selectContentView, useDashboardStore, type ContentView } from '../stores/dashboardStore';
+
+function viewToPreviewTarget(view: ContentView): PreviewTarget {
+    return view.kind === 'detail' ? 'entry-detail' : 'userpage';
+}
+
+function usePreviewUrl(username: string): string {
+    const contentView = useDashboardStore(selectContentView);
+    return useMemo(() => {
+        if (contentView.kind === 'detail') {
+            return `/${username}/${contentView.entryId}?preview=true`;
+        }
+        return `/${username}?preview=true`;
+    }, [username, contentView]);
+}
 
 export default function PreviewPanel() {
     const user = useUser();
@@ -16,6 +35,8 @@ export default function PreviewPanel() {
 
     const containerRef = useRef<HTMLDivElement>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
+
+    const previewUrl = usePreviewUrl(user.username);
 
     // Intersection Observer + 1-second fallback combined
     useEffect(() => {
@@ -42,16 +63,26 @@ export default function PreviewPanel() {
         };
     }, [isVisible]);
 
-    // iframe refresh
-    const refreshPreview = useCallback(() => {
-        if (iframeRef.current?.contentWindow && isVisible) {
-            setIsLoading(true);
-            iframeRef.current.contentWindow.location.reload();
-        }
-    }, [isVisible]);
+    const contentView = useDashboardStore(selectContentView);
 
-    // mutation onSuccess -> triggerPreviewRefresh() -> this callback executes
-    useRegisterPreviewRefresh(refreshPreview);
+    // Unified preview action handler — filters refresh by target
+    const handlePreviewAction = useCallback(
+        (action: PreviewAction) => {
+            if (!iframeRef.current?.contentWindow || !isVisible) return;
+
+            if (action.type === 'refresh') {
+                if (action.target !== viewToPreviewTarget(contentView)) return;
+                setIsLoading(true);
+                iframeRef.current.contentWindow.location.reload();
+            } else if (action.type === 'navigate') {
+                setIsLoading(true);
+                iframeRef.current.src = action.url;
+            }
+        },
+        [isVisible, contentView]
+    );
+
+    useRegisterPreviewHandler(handlePreviewAction);
 
     const handleIframeLoad = useCallback(() => {
         setIsLoading(false);
@@ -139,7 +170,7 @@ export default function PreviewPanel() {
                             {isVisible ? (
                                 <iframe
                                     ref={iframeRef}
-                                    src={`/${user.username}?preview=true`}
+                                    src={previewUrl}
                                     className="h-full w-full border-0"
                                     title="Page preview"
                                     onLoad={handleIframeLoad}

@@ -28,13 +28,13 @@ import {
     updateEntry,
 } from './entries.api';
 import { makeOptimisticMutation, type OptimisticMutationConfig } from './optimistic-mutation';
-import { triggerPreviewRefresh } from './use-preview-refresh';
+import { triggerPreviewRefresh, type PreviewTarget } from './use-preview-actions';
 
 export function useEntryMutations() {
     const queryClient = useQueryClient();
     const snapshotRef = useRef<ContentEntry[] | undefined>(undefined);
 
-    const onPreviewTrigger = () => triggerPreviewRefresh();
+    const onPreviewTrigger = (target: PreviewTarget) => triggerPreviewRefresh(target);
 
     const m = <T>(config: OptimisticMutationConfig<T>) =>
         makeOptimisticMutation(queryClient, snapshotRef, { ...config, onPreviewTrigger });
@@ -61,6 +61,7 @@ export function useEntryMutations() {
                 entries.map((e) => (e.id === entry.id ? entry : e)),
             triggersPreview: ({ entry, changedFields }) =>
                 hasPreviewField(entry.type, changedFields),
+            previewTarget: 'entry-detail',
         })
     );
 
