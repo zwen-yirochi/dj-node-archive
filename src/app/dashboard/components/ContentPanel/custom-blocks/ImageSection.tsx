@@ -1,14 +1,12 @@
 'use client';
 
-import { useImmediateSave } from '@/app/dashboard/hooks/use-immediate-save';
-
 import { EditFieldWrapper, ImageField } from '../shared-fields';
 import type { EditFieldConfig } from '../shared-fields/EditFieldWrapper';
 import type { ImageItem } from '../shared-fields/types';
 import type { SectionBlockEditorProps } from './types';
 
 const IMAGE_EDIT_CONFIG: EditFieldConfig<ImageItem[]> = {
-    useSave: useImmediateSave,
+    immediate: true,
 };
 
 export default function ImageSection({

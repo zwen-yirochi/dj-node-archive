@@ -1,16 +1,15 @@
 'use client';
 
 import { EVENT_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
-import { useImmediateSave } from '@/app/dashboard/hooks/use-immediate-save';
 
 import { EditFieldWrapper, ImageField } from '../shared-fields';
 import type { EditFieldConfig } from '../shared-fields/EditFieldWrapper';
 import type { ImageItem } from '../shared-fields/types';
 import { ImageEditModal, TitleEditModal } from './EditModals';
-import type { DetailViewProps } from './types';
+import type { DetailViewProps, SaveOptions } from './types';
 
 const IMAGE_EDIT_CONFIG: EditFieldConfig<ImageItem[]> = {
-    useSave: useImmediateSave,
+    immediate: true,
 };
 
 // ============================================
@@ -26,21 +25,28 @@ export default function EventDetailView({
 }: DetailViewProps) {
     if (entry.type !== 'event') return null;
 
-    const posterUrl = entry.posterUrl;
+    const posterUrls = entry.posterUrls;
     const title = entry.title;
 
-    // 단일 posterUrl ↔ ImageItem[] 변환
-    const imageItems: ImageItem[] = posterUrl ? [{ id: 'poster', url: posterUrl }] : [];
+    // posterUrls ↔ ImageItem[] 변환
+    const imageItems: ImageItem[] = posterUrls.map((url, i) => ({
+        id: `poster-${i}`,
+        url,
+    }));
 
-    const handleImageSave = (items: ImageItem[]) => {
-        onSave('posterUrl', items[0]?.url || '');
+    const handleImageSave = (items: ImageItem[], options?: SaveOptions) => {
+        onSave(
+            'posterUrls',
+            items.map((item) => item.url),
+            options
+        );
     };
 
     return (
         <div className="space-y-8">
             {/* Header — Image + title */}
             <div className="space-y-3">
-                <div className="mx-auto max-w-[200px]">
+                <div>
                     <EditFieldWrapper
                         config={IMAGE_EDIT_CONFIG}
                         value={imageItems}
@@ -51,7 +57,7 @@ export default function EventDetailView({
                                 value={value}
                                 onChange={onChange}
                                 aspectRatio="portrait"
-                                maxCount={1}
+                                maxCount={10}
                                 disabled={disabled}
                             />
                         )}
@@ -85,9 +91,11 @@ export default function EventDetailView({
             {/* Edit Modals — Triggered from "..." menu */}
             {editingField === 'image' && (
                 <ImageEditModal
-                    value={posterUrl || ''}
+                    value={posterUrls[0] || ''}
                     onSave={(url) => {
-                        onSave('posterUrl', url);
+                        const updated = [...posterUrls];
+                        updated[0] = url;
+                        onSave('posterUrls', updated.filter(Boolean));
                         onEditingDone();
                     }}
                     onClose={onEditingDone}

@@ -4,10 +4,16 @@ import type { ZodSchema } from 'zod';
 
 import type { ContentEntry } from '@/types';
 
+export interface SaveOptions {
+    immediate?: boolean;
+}
+
+export type FieldSaveFn = (fieldKey: string, value: unknown, options?: SaveOptions) => void;
+
 /** Common props for all field blocks */
 export interface FieldBlockProps {
     entry: ContentEntry;
-    onSave: (fieldKey: string, value: unknown) => void;
+    onSave: FieldSaveFn;
     disabled?: boolean;
 }
 
@@ -22,7 +28,7 @@ export interface FieldBlockConfig {
 /** Detail view component props */
 export interface DetailViewProps {
     entry: ContentEntry;
-    onSave: (fieldKey: string, value: unknown) => void;
+    onSave: FieldSaveFn;
     editingField: 'title' | 'image' | null;
     onEditingDone: () => void;
     disabled?: boolean;

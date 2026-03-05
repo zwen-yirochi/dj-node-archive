@@ -47,6 +47,22 @@ function useDebouncedSave(
 
     const pendingFieldsRef = useRef<Set<string>>(new Set());
 
+    const executeSave = useCallback(
+        async (entry: ContentEntry, fields: string[]) => {
+            setIsSaving(true);
+            try {
+                await onSave(entry, fields);
+                setLastSaved(new Date());
+            } catch (error) {
+                console.error('Save failed:', error);
+            } finally {
+                setIsSaving(false);
+            }
+        },
+        [onSave]
+    );
+
+    /** Debounced save — for continuous edits (text fields) */
     const debouncedSave = useCallback(
         (entry: ContentEntry, changedFields: string[]) => {
             for (const key of changedFields) pendingFieldsRef.current.add(key);
@@ -55,22 +71,29 @@ function useDebouncedSave(
                 clearTimeout(timeoutRef.current);
             }
 
-            timeoutRef.current = setTimeout(async () => {
+            timeoutRef.current = setTimeout(() => {
                 timeoutRef.current = null;
                 const fields = [...pendingFieldsRef.current];
                 pendingFieldsRef.current.clear();
-                setIsSaving(true);
-                try {
-                    await onSave(entry, fields);
-                    setLastSaved(new Date());
-                } catch (error) {
-                    console.error('Save failed:', error);
-                } finally {
-                    setIsSaving(false);
-                }
+                executeSave(entry, fields);
             }, delay);
         },
-        [onSave, delay]
+        [executeSave, delay]
+    );
+
+    /** Immediate save — for discrete actions (image upload/delete/reorder) */
+    const immediateSave = useCallback(
+        (entry: ContentEntry, changedFields: string[]) => {
+            // Flush any pending debounced fields
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+            }
+            const fields = [...pendingFieldsRef.current, ...changedFields];
+            pendingFieldsRef.current.clear();
+            executeSave(entry, fields);
+        },
+        [executeSave]
     );
 
     useEffect(() => {
@@ -81,7 +104,7 @@ function useDebouncedSave(
         };
     }, []);
 
-    return { debouncedSave, isSaving, lastSaved, hasPendingSave };
+    return { debouncedSave, immediateSave, isSaving, lastSaved, hasPendingSave };
 }
 
 // ============================================
@@ -95,7 +118,7 @@ interface EntryDetailViewProps {
 
 export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProps) {
     // Data
-    const { data: entry } = useEntryDetail(entryId);
+    const { data: entry, isFetching } = useEntryDetail(entryId);
 
     // Mutations
     const { update: updateMutation, remove: deleteMutation } = useEntryMutations();
@@ -116,15 +139,16 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         [updateMutation]
     );
 
-    const { debouncedSave, isSaving, lastSaved, hasPendingSave } = useDebouncedSave(handleSave);
+    const { debouncedSave, immediateSave, isSaving, lastSaved, hasPendingSave } =
+        useDebouncedSave(handleSave);
 
     // Sync external entry changes to local state — skip during pending/in-flight saves
-    // to prevent server refetch from overwriting edits in progress
+    // AND during refetch to prevent stale data from overwriting edits
     useEffect(() => {
-        if (!isSaving && !hasPendingSave()) {
+        if (!isSaving && !hasPendingSave() && !isFetching) {
             setLocalEntry(entry);
         }
-    }, [entry, isSaving, hasPendingSave]);
+    }, [entry, isSaving, hasPendingSave, isFetching]);
 
     // Delete handler — preview refresh is handled by the mutation factory
     const handleDelete = async () => {
@@ -133,13 +157,18 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     };
 
     // Field-level save — always reference latest localEntry via ref
+    // Callers pass { immediate: true } for discrete actions (image upload/reorder)
     const handleFieldSave = useCallback(
-        (fieldKey: string, value: unknown) => {
+        (fieldKey: string, value: unknown, options?: { immediate?: boolean }) => {
             const updated = { ...localEntryRef.current, [fieldKey]: value } as ContentEntry;
             setLocalEntry(updated);
-            debouncedSave(updated, [fieldKey]);
+            if (options?.immediate) {
+                immediateSave(updated, [fieldKey]);
+            } else {
+                debouncedSave(updated, [fieldKey]);
+            }
         },
-        [debouncedSave]
+        [debouncedSave, immediateSave]
     );
 
     const config = ENTRY_TYPE_CONFIG[localEntry.type];
