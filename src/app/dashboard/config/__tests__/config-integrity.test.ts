@@ -114,7 +114,7 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
             date: '2026-03-05',
             venue: { name: 'Club' },
             lineup: [{ name: 'DJ A' }],
-            posterUrl: 'https://example.com/poster.jpg',
+            posterUrls: ['https://example.com/poster.jpg'],
             description: 'A great event',
             links: [{ title: 'Tickets', url: 'https://tickets.com' }],
         };
@@ -127,7 +127,7 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
         expect(r.date).toBe(original.date);
         expect(r.venue.name).toBe(original.venue.name);
         expect(r.lineup).toHaveLength(1);
-        expect(r.posterUrl).toBe(original.posterUrl);
+        expect(r.posterUrls).toEqual(original.posterUrls);
         expect(r.description).toBe(original.description);
         expect(r.links).toHaveLength(1);
     });
@@ -209,10 +209,10 @@ describe('draftSchema 기본값 ↔ createEmptyEntry 기본값 일치', () => {
      */
 
     it('event: optional 필드 기본값 일치', () => {
-        // 필수 필드(title, posterUrl)에 유효한 더미값 → 나머지 default 추출
+        // 필수 필드(title, posterUrls)에 유효한 더미값 → 나머지 default 추출
         const schemaDefaults = draftEventSchema.parse({
             title: 'xx', // min 2
-            posterUrl: 'x', // min 1
+            posterUrls: ['x'], // min 1 item
         });
         const factory = createEmptyEntry('event') as EventEntry;
 

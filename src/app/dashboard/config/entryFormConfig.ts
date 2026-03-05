@@ -24,7 +24,7 @@ export const EVENT_FORM_CONFIG: CreateEntryFormConfig<CreateEventData> = {
     publishable: true,
     defaultValues: {
         title: '',
-        posterUrl: '',
+        posterUrls: [],
         date: '',
         venue: { name: '' },
         lineup: [],
@@ -38,7 +38,7 @@ export const EVENT_FORM_CONFIG: CreateEntryFormConfig<CreateEventData> = {
             date: formData.date || new Date().toISOString().split('T')[0],
             description: formData.description?.trim() || '',
         }) as EventEntry,
-    errorFieldMap: { title: 'title', poster: 'posterUrl' },
+    errorFieldMap: { title: 'title', poster: 'posterUrls' },
 };
 
 export const MIXSET_FORM_CONFIG: CreateEntryFormConfig<CreateMixsetFormData> = {
