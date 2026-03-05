@@ -78,7 +78,7 @@ export default function CreateEventForm() {
                 {/* Poster Upload (Required) */}
                 <FormField
                     control={control}
-                    name="posterUrl"
+                    name="posterUrls"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel className="text-dashboard-text-secondary">
@@ -86,8 +86,8 @@ export default function CreateEventForm() {
                             </FormLabel>
                             <FormControl>
                                 <ImageUpload
-                                    value={field.value}
-                                    onChange={field.onChange}
+                                    value={field.value?.[0] || ''}
+                                    onChange={(url) => field.onChange(url ? [url] : [])}
                                     aspectRatio="poster"
                                 />
                             </FormControl>

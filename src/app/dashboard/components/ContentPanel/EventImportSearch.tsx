@@ -18,7 +18,8 @@ interface EventSearchResult {
     title: string;
     date: string;
     venue: { name: string };
-    poster_url?: string;
+    poster_url?: string; // legacy
+    poster_urls?: string[]; // new
 }
 
 export default function EventImportSearch() {
@@ -147,9 +148,9 @@ export default function EventImportSearch() {
                                 className="flex items-center gap-3 rounded-lg border border-dashboard-border bg-dashboard-bg-muted p-3 transition-colors hover:border-dashboard-border-hover"
                             >
                                 {/* Poster thumbnail */}
-                                {event.poster_url ? (
+                                {event.poster_urls?.[0] || event.poster_url ? (
                                     <img
-                                        src={event.poster_url}
+                                        src={event.poster_urls?.[0] || event.poster_url!}
                                         alt=""
                                         className="h-16 w-12 rounded object-cover"
                                     />

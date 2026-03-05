@@ -1,18 +1,19 @@
-import { findEventById } from '@/lib/db/queries/event.queries';
-import { formatEventDate, venueCode } from '@/lib/formatters';
-import { mapEventToDomain } from '@/lib/mappers';
-import { isSuccess } from '@/types/result';
-import type { Event } from '@/types/domain';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { DnaPageShell } from '@/components/dna/DnaPageShell';
-import { SectionLabel } from '@/components/dna/SectionLabel';
-import { NodeLabel } from '@/components/dna/NodeLabel';
-import { MetaTable } from '@/components/dna/MetaTable';
-import { AsciiDivider } from '@/components/dna/AsciiDivider';
+
+import type { Event } from '@/types/domain';
+import { isSuccess } from '@/types/result';
+import { findEventById } from '@/lib/db/queries/event.queries';
+import { formatEventDate, venueCode } from '@/lib/formatters';
+import { mapEventToDomain } from '@/lib/mappers';
 import { AsciiBox } from '@/components/dna/AsciiBox';
+import { AsciiDivider } from '@/components/dna/AsciiDivider';
+import { DnaPageShell } from '@/components/dna/DnaPageShell';
 import { ImageFrame } from '@/components/dna/ImageFrame';
+import { MetaTable } from '@/components/dna/MetaTable';
+import { NodeLabel } from '@/components/dna/NodeLabel';
+import { SectionLabel } from '@/components/dna/SectionLabel';
 import { TypeBadge } from '@/components/dna/TypeBadge';
 import { VenueLink } from '@/components/dna/VenueLink';
 
@@ -58,10 +59,10 @@ export default async function EventPage({ params }: PageProps) {
         >
             {/* ── Poster ── */}
             <section className="pb-4 pt-6 md:pt-8">
-                {event.posterUrl ? (
+                {event.posterUrls?.[0] ? (
                     <div className="mx-auto w-full md:max-w-[480px]">
                         <ImageFrame
-                            src={event.posterUrl}
+                            src={event.posterUrls[0]}
                             alt={event.title}
                             className="aspect-[3/4]"
                             priority
@@ -112,7 +113,7 @@ export default async function EventPage({ params }: PageProps) {
                             { key: 'Public', value: event.isPublic ? 'YES' : 'NO' },
                             {
                                 key: 'Poster',
-                                value: event.posterUrl ? 'ATTACHED' : 'NULL',
+                                value: event.posterUrls?.length ? 'ATTACHED' : 'NULL',
                             },
                             {
                                 key: 'Description',
