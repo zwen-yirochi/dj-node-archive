@@ -53,6 +53,17 @@ export function mapUserToDatabase(user: Partial<User>): Partial<DBUser> {
 }
 
 // ============================================
+// Poster URL Migration Helper
+// ============================================
+
+/** Normalize legacy poster_url (string) and new poster_urls (string[]) to string[] */
+function normalizePosterUrls(data: Record<string, unknown>): string[] {
+    if (Array.isArray(data.poster_urls)) return data.poster_urls as string[];
+    if (typeof data.poster_url === 'string' && data.poster_url) return [data.poster_url];
+    return [];
+}
+
+// ============================================
 // Entry Mappers
 // ============================================
 
@@ -83,7 +94,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                 date: (data.date as string) || '',
                 venue: venue ? { id: venue.venue_id, name: venue.name } : { name: '' },
                 lineup: lineup?.map((p) => ({ id: p.artist_id, name: p.name })) || [],
-                posterUrl: (data.poster_url as string) || '',
+                posterUrls: normalizePosterUrls(data),
                 description: data.description as string | undefined,
                 links: data.links as { title: string; url: string }[] | undefined,
             };
@@ -201,7 +212,8 @@ export function mapEntryToDatabase(
                     lineup: eventEntry.lineup.map((p) =>
                         p.id ? { artist_id: p.id, name: p.name } : { name: p.name }
                     ),
-                    poster_url: eventEntry.posterUrl || undefined,
+                    poster_urls:
+                        eventEntry.posterUrls.length > 0 ? eventEntry.posterUrls : undefined,
                     description: eventEntry.description || undefined,
                     links: eventEntry.links || undefined,
                 },
@@ -293,7 +305,8 @@ export function mapEventToDomain(dbEvent: DBEvent): Event {
         lineup: dbEvent.lineup.map((p) =>
             p.artist_id ? { id: p.artist_id, name: p.name } : { name: p.name }
         ),
-        posterUrl: dbEvent.data.poster_url,
+        posterUrls:
+            normalizePosterUrls(dbEvent.data as unknown as Record<string, unknown>) || undefined,
         description: dbEvent.data.description,
         links: dbEvent.data.links,
         isPublic: dbEvent.is_public,
@@ -316,7 +329,7 @@ export function mapEventToEntry(dbEvent: DBEvent): EventEntry {
         lineup: dbEvent.lineup.map((p) =>
             p.artist_id ? { id: p.artist_id, name: p.name } : { name: p.name }
         ),
-        posterUrl: dbEvent.data?.poster_url || '',
+        posterUrls: normalizePosterUrls((dbEvent.data ?? {}) as unknown as Record<string, unknown>),
         description: dbEvent.data?.description,
         links: dbEvent.data?.links,
         createdAt: dbEvent.created_at,
@@ -339,7 +352,7 @@ export function mapEventToDatabase(
             p.id ? { artist_id: p.id, name: p.name } : { name: p.name }
         ),
         data: {
-            poster_url: event.posterUrl,
+            poster_urls: event.posterUrls?.length ? event.posterUrls : undefined,
             description: event.description,
             links: event.links,
         },
@@ -404,7 +417,7 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): 
                 date: '',
                 venue: { name: '' },
                 lineup: [],
-                posterUrl: '',
+                posterUrls: [],
                 description: '',
                 links: [],
                 createdAt: '',

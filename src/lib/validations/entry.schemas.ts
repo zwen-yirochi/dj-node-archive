@@ -42,12 +42,12 @@ const eventBaseFields = {
         .min(2, 'Title must be at least 2 characters')
         .max(100, 'Title must be 100 characters or less')
         .trim(),
-    posterUrl: z.string().min(1, 'Poster image is required').trim(),
+    posterUrls: z.array(z.string().min(1)).min(1, 'At least one poster image is required'),
     links: eventLinksBase,
 };
 
 /**
- * Draft event: only title and posterUrl are required (rest are optional/loose).
+ * Draft event: only title and posterUrls are required (rest are optional/loose).
  * Used as the default resolver in forms.
  */
 export const draftEventSchema = z.object({
