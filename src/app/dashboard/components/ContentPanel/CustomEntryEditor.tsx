@@ -19,7 +19,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useCallback, useId, useState, type ComponentType } from 'react';
 
-import { GripVertical, Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 import type { CustomEntry, SectionBlock, SectionBlockDataMap, SectionBlockType } from '@/types';
 import {
@@ -37,6 +37,7 @@ import {
     ListSection,
     RichTextSection,
 } from './custom-blocks';
+import BlockWrapper from './custom-blocks/BlockWrapper';
 import type { SectionBlockEditorProps } from './custom-blocks/types';
 
 // ============================================
@@ -75,46 +76,23 @@ function SortableBlock({ block, onUpdate, onRemove, disabled }: SortableBlockPro
 
     const config = SECTION_BLOCK_CONFIG[block.type];
     const BlockComponent = BLOCK_COMPONENT_MAP[block.type];
-    const Icon = config.icon;
 
     return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            className={`group relative rounded-lg border border-transparent p-3 transition-colors hover:border-dashboard-border/50 hover:bg-dashboard-bg-muted/30 ${
-                isDragging ? 'opacity-50' : ''
-            }`}
-        >
-            {/* Block Header */}
-            <div className="mb-2 flex items-center gap-2">
-                <button
-                    {...attributes}
-                    {...listeners}
-                    className="cursor-grab rounded p-0.5 opacity-0 transition-opacity hover:bg-dashboard-bg-muted active:cursor-grabbing group-hover:opacity-100"
-                >
-                    <GripVertical className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
-                </button>
-                <Icon className="h-3.5 w-3.5 text-dashboard-text-muted" />
-                <span className="text-xs font-medium text-dashboard-text-muted">
-                    {config.label}
-                </span>
-                <div className="flex-1" />
-                {!disabled && (
-                    <button
-                        onClick={() => onRemove(block.id)}
-                        className="rounded p-0.5 opacity-0 transition-opacity hover:bg-dashboard-bg-muted group-hover:opacity-100"
-                    >
-                        <Trash2 className="h-3.5 w-3.5 text-dashboard-text-muted hover:text-dashboard-danger" />
-                    </button>
-                )}
-            </div>
-
-            {/* Block Content */}
-            <BlockComponent
-                data={block.data as any}
-                onChange={(newData) => onUpdate(block.id, newData)}
+        <div ref={setNodeRef} style={style}>
+            <BlockWrapper
+                label={config.label}
+                icon={config.icon}
+                onDelete={() => onRemove(block.id)}
+                dragHandleProps={{ attributes, listeners }}
+                isDragging={isDragging}
                 disabled={disabled}
-            />
+            >
+                <BlockComponent
+                    data={block.data as any}
+                    onChange={(newData) => onUpdate(block.id, newData)}
+                    disabled={disabled}
+                />
+            </BlockWrapper>
         </div>
     );
 }

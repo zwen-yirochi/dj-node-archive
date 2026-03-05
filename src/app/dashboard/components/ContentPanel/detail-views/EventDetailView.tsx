@@ -1,11 +1,9 @@
 'use client';
 
-import Image from 'next/image';
-
-import { Music } from 'lucide-react';
-
 import { EVENT_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
 
+import { ImageField } from '../shared-fields';
+import type { ImageFieldValue } from '../shared-fields/types';
 import { ImageEditModal, TitleEditModal } from './EditModals';
 import type { DetailViewProps } from './types';
 
@@ -25,30 +23,24 @@ export default function EventDetailView({
     const posterUrl = entry.posterUrl;
     const title = entry.title;
 
+    const imageValue: ImageFieldValue = { url: posterUrl || '' };
+
+    const handleImageChange = (value: ImageFieldValue) => {
+        onSave('posterUrl', value.url);
+    };
+
     return (
         <div className="space-y-8">
-            {/* Header — Read-only image + title */}
+            {/* Header — Image + title */}
             <div className="space-y-3">
-                {posterUrl ? (
-                    <div className="relative mx-auto aspect-[3/4] max-w-[200px] overflow-hidden rounded-xl">
-                        <Image
-                            src={posterUrl}
-                            alt={title}
-                            fill
-                            className="object-cover"
-                            sizes="200px"
-                        />
-                    </div>
-                ) : (
-                    <div className="mx-auto flex aspect-[3/4] max-w-[200px] items-center justify-center rounded-xl border-2 border-dashed border-dashboard-border">
-                        <div className="text-center">
-                            <Music className="mx-auto mb-2 h-8 w-8 text-dashboard-text-placeholder" />
-                            <p className="text-xs text-dashboard-text-muted">
-                                Change image from &quot;...&quot; menu
-                            </p>
-                        </div>
-                    </div>
-                )}
+                <div className="mx-auto max-w-[200px]">
+                    <ImageField
+                        value={imageValue}
+                        onChange={handleImageChange}
+                        aspectRatio="portrait"
+                        disabled={disabled}
+                    />
+                </div>
                 <h2 className="text-center text-xl font-bold text-dashboard-text">{title}</h2>
             </div>
 

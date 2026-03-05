@@ -1,3 +1,4 @@
+export { default as BlockWrapper } from './BlockWrapper';
 export { default as HeaderSection } from './HeaderSection';
 export { default as RichTextSection } from './RichTextSection';
 export { default as ImageSection } from './ImageSection';
