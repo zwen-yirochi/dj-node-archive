@@ -7,8 +7,9 @@ export interface FieldComponentProps<T> {
     disabled?: boolean;
 }
 
-/** 이미지 필드 값 (ImageBlockData와 동일 구조) */
-export interface ImageFieldValue {
+/** 개별 이미지 항목 */
+export interface ImageItem {
+    id: string;
     url: string;
     alt?: string;
     caption?: string;
@@ -17,8 +18,9 @@ export interface ImageFieldValue {
 /** 이미지 필드 aspect ratio 옵션 */
 export type ImageAspectRatio = 'video' | 'square' | 'portrait';
 
-/** ImageField 전용 props */
-export interface ImageFieldProps extends FieldComponentProps<ImageFieldValue> {
+/** ImageField 전용 props — 멀티 이미지 지원 */
+export interface ImageFieldProps extends FieldComponentProps<ImageItem[]> {
+    maxCount?: number;
     aspectRatio?: ImageAspectRatio;
     placeholder?: {
         icon?: ComponentType<{ className?: string }>;

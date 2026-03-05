@@ -5,11 +5,11 @@ import { useImmediateSave } from '@/app/dashboard/hooks/use-immediate-save';
 
 import { EditFieldWrapper, ImageField } from '../shared-fields';
 import type { EditFieldConfig } from '../shared-fields/EditFieldWrapper';
-import type { ImageFieldValue } from '../shared-fields/types';
+import type { ImageItem } from '../shared-fields/types';
 import { ImageEditModal, TitleEditModal } from './EditModals';
 import type { DetailViewProps } from './types';
 
-const IMAGE_EDIT_CONFIG: EditFieldConfig<ImageFieldValue> = {
+const IMAGE_EDIT_CONFIG: EditFieldConfig<ImageItem[]> = {
     useSave: useImmediateSave,
 };
 
@@ -29,10 +29,11 @@ export default function EventDetailView({
     const posterUrl = entry.posterUrl;
     const title = entry.title;
 
-    const imageValue: ImageFieldValue = { url: posterUrl || '' };
+    // 단일 posterUrl ↔ ImageItem[] 변환
+    const imageItems: ImageItem[] = posterUrl ? [{ id: 'poster', url: posterUrl }] : [];
 
-    const handleImageSave = (value: ImageFieldValue) => {
-        onSave('posterUrl', value.url);
+    const handleImageSave = (items: ImageItem[]) => {
+        onSave('posterUrl', items[0]?.url || '');
     };
 
     return (
@@ -42,7 +43,7 @@ export default function EventDetailView({
                 <div className="mx-auto max-w-[200px]">
                     <EditFieldWrapper
                         config={IMAGE_EDIT_CONFIG}
-                        value={imageValue}
+                        value={imageItems}
                         onSave={handleImageSave}
                     >
                         {({ value, onChange }) => (
@@ -50,6 +51,7 @@ export default function EventDetailView({
                                 value={value}
                                 onChange={onChange}
                                 aspectRatio="portrait"
+                                maxCount={1}
                                 disabled={disabled}
                             />
                         )}
