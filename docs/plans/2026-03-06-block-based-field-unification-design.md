@@ -23,60 +23,81 @@
 ### 3-Layer 컴포넌트 구조
 
 ```
-Event (고정 순서, 직접 렌더링)          Custom (BlockWrapper)
-         │                                    │
-         │                              ┌─────▼──────┐
-         │                              │ BlockWrapper │ ← 삭제/드래그/리오더
-         │                              └─────┬──────┘
-         │                                    │
-         ▼                                    ▼
-   코어 필드 컴포넌트 (ImageField, DateField, ...)
-         │
-         └─ useFieldSync 훅 내장
-              ├─ 낙관적 로컬 상태
-              ├─ 디바운스 저장
-              ├─ 저장 상태 (idle | saving | saved | error)
-              └─ StatusIndicator 반환
+Event Edit                              Custom Edit
+  │                                       │
+  │                                 ┌─────▼──────┐
+  │                                 │ BlockWrapper │ ← 삭제/드래그/리오더
+  │                                 └─────┬──────┘
+  │                                       │
+  ▼                                       ▼
+EditFieldWrapper (검증 + 저장 전략 - 훅 주입)
+  │
+  ▼
+코어 필드 컴포넌트 (ImageField, DateField, ...)
+  └─ 순수 UI: value/onChange만. 저장/검증을 모름.
 ```
+
+Create Form에서는 RHF `FormField`이 `EditFieldWrapper`와 같은 역할.
 
 ### 1. 코어 필드 컴포넌트 (`shared-fields/`)
 
-순수 입력 UI. 블록인지, 필수인지 모름.
+순수 입력 UI. 블록인지, 필수인지, 저장 방식을 모름.
 
 ```typescript
 interface FieldComponentProps<T> {
     value: T;
-    onChange: (value: T) => void;
+    onChange: (value: T) => void; // "값이 바뀌었다" 신호. 저장을 의미하지 않음.
     disabled?: boolean;
 }
 
-// ImageField
 interface ImageFieldProps extends FieldComponentProps<ImageFieldValue> {
-    aspectRatio?: 'video' | 'square' | 'portrait'; // 16:9 | 1:1 | 3:4
+    aspectRatio?: 'video' | 'square' | 'portrait';
 }
 ```
 
-### 2. useFieldSync 훅
+### 2. EditFieldWrapper (검증 + 저장 래퍼)
 
-모든 코어 필드가 내부적으로 사용. 저장 피드백 + 낙관적 업데이트 통합.
+Edit 모드 전용. config에서 **저장 훅을 주입**받아 실행.
+
+```typescript
+// 저장 훅 인터페이스
+type UseSaveHook<T> = (value: T, onSave: (v: T) => void) => SaveSyncReturn<T>;
+
+// EditFieldWrapper — config.useSave로 저장 전략 실행, config.schema로 Zod 검증
+function EditFieldWrapper<T>({ config, value, onSave, children }) {
+    const { localValue, setLocalValue, saveStatus } = config.useSave(value, (v) => {
+        if (config.schema) {
+            const result = config.schema.safeParse(v);
+            if (!result.success) return;
+        }
+        onSave(v);
+    });
+    return children({ value: localValue, onChange: setLocalValue, saveStatus });
+}
+```
+
+저장 훅 구현체:
+
+- `useImmediateSave` — 이미지, 날짜, 토글 등 즉시 저장
+- `useDebouncedSave` — 텍스트 등 keystroke 디바운스 후 저장 (내부적으로 useFieldSync 사용)
+
+### 3. useFieldSync 훅 (useDebouncedSave 내부 도구)
 
 ```typescript
 interface FieldSyncOptions<T> {
-    value: T; // 서버 상태 (외부)
-    onSave: (value: T) => void; // 저장 콜백
-    fieldKey: string; // 필드 식별자
-    debounceMs?: number; // 디바운스 (기본 800ms)
+    value: T;
+    onSave: (value: T) => void;
+    debounceMs?: number;
 }
 
 interface FieldSyncReturn<T> {
-    localValue: T; // 낙관적 로컬 상태
-    setLocalValue: (v: T) => void; // 로컬 업데이트 (+ 디바운스 저장 트리거)
+    localValue: T;
+    setLocalValue: (v: T) => void;
     saveStatus: 'idle' | 'saving' | 'saved' | 'error';
-    StatusIndicator: ComponentType; // 시각적 피드백 UI
 }
 ```
 
-### 3. BlockWrapper (Custom 전용)
+### 4. BlockWrapper (Custom 전용)
 
 ```typescript
 interface BlockWrapperProps {
@@ -89,7 +110,7 @@ interface BlockWrapperProps {
 
 블록 크롬(삭제, 드래그 핸들, 테두리)만 제공.
 
-### 4. 엔트리 블록 템플릿 (`config/entryBlockTemplate.ts`)
+### 5. 엔트리 블록 템플릿 (`config/entryBlockTemplate.ts`)
 
 ```typescript
 interface BlockTemplate {

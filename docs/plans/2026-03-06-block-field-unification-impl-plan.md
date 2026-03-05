@@ -4,7 +4,7 @@
 
 **Goal:** ImageField 코어 컴포넌트를 만들어 Event(posterUrl)와 Custom(image block) 양쪽에서 공유하는 구조를 확립한다.
 
-**Architecture:** 3-Layer (코어 필드 + useFieldSync 훅 + BlockWrapper). 코어 필드는 블록/필수 여부를 모르는 순수 UI. Event는 직접 렌더링, Custom은 BlockWrapper로 감싸서 삭제/드래그 크롬을 추가.
+**Architecture:** 3-Layer (코어 필드 + onSave 주입 + BlockWrapper). 코어 필드는 블록/필수 여부를 모르는 순수 UI. 부모가 `onSave`를 주입하고, 필드가 적절한 시점에 직접 호출. Event는 직접 렌더링, Custom은 BlockWrapper로 감싸서 삭제/드래그 크롬을 추가. useFieldSync는 텍스트 계열 필드에서만 선택적 사용.
 
 **Tech Stack:** React, TypeScript, Next.js Image, dnd-kit, Zod
 
@@ -26,10 +26,10 @@
 // shared-fields/types.ts
 import type { ComponentType } from 'react';
 
-/** 모든 코어 필드 컴포넌트의 기본 props */
+/** 모든 코어 필드 컴포넌트의 기본 props — onSave 주입 모델 */
 export interface FieldComponentProps<T> {
     value: T;
-    onChange: (value: T) => void;
+    onSave: (value: T) => void;
     disabled?: boolean;
 }
 
@@ -179,76 +179,12 @@ feat(hooks): add useFieldSync hook for field-level optimistic sync (#108)
 
 **Step 1: ImageField 구현**
 
-기존 `ImageSection.tsx`의 UI를 기반으로, `FieldComponentProps<ImageFieldValue>` 인터페이스를 사용하는 순수 컴포넌트로 작성.
+기존 `ImageSection.tsx`의 UI를 기반으로, onSave 주입 모델을 사용하는 순수 컴포넌트로 작성. 로컬 편집 상태를 내부에서 관리하고, blur/Enter 확정 시 `onSave`를 호출한다.
 
 ```typescript
-// shared-fields/ImageField.tsx
-'use client';
-
-import Image from 'next/image';
-
-import { ImagePlus } from 'lucide-react';
-
-import { Input } from '@/components/ui/input';
-
-import type { ImageFieldProps } from './types';
-
-const ASPECT_RATIO_CLASS: Record<string, string> = {
-    video: 'aspect-video',
-    square: 'aspect-square',
-    portrait: 'aspect-[3/4]',
-};
-
-export default function ImageField({
-    value,
-    onChange,
-    disabled,
-    aspectRatio = 'video',
-    placeholder,
-}: ImageFieldProps) {
-    const ratioClass = ASPECT_RATIO_CLASS[aspectRatio] ?? 'aspect-video';
-    const PlaceholderIcon = placeholder?.icon ?? ImagePlus;
-    const placeholderText = placeholder?.text ?? 'Enter image URL below';
-
-    return (
-        <div className="space-y-2">
-            {value.url ? (
-                <div className={`relative ${ratioClass} w-full overflow-hidden rounded-lg`}>
-                    <Image
-                        src={value.url}
-                        alt={value.alt || ''}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 600px"
-                    />
-                </div>
-            ) : (
-                <div
-                    className={`flex ${ratioClass} w-full items-center justify-center rounded-lg border-2 border-dashed border-dashboard-border`}
-                >
-                    <div className="text-center">
-                        <PlaceholderIcon className="mx-auto mb-2 h-8 w-8 text-dashboard-text-placeholder" />
-                        <p className="text-xs text-dashboard-text-muted">{placeholderText}</p>
-                    </div>
-                </div>
-            )}
-            <Input
-                value={value.url}
-                onChange={(e) => onChange({ ...value, url: e.target.value })}
-                placeholder="Image URL"
-                disabled={disabled}
-                className="border-dashboard-border bg-dashboard-bg-muted text-sm text-dashboard-text placeholder:text-dashboard-text-placeholder"
-            />
-            <Input
-                value={value.caption || ''}
-                onChange={(e) => onChange({ ...value, caption: e.target.value || undefined })}
-                placeholder="Caption (optional)"
-                disabled={disabled}
-                className="border-none bg-transparent p-0 text-xs text-dashboard-text-muted placeholder:text-dashboard-text-placeholder focus-visible:ring-0"
-            />
-        </div>
-    );
-}
+// shared-fields/ImageField.tsx — onSave 주입 모델
+// 로컬 편집 상태 내부 관리, blur/Enter 시 onSave 호출
+// 실제 구현은 src/app/dashboard/components/ContentPanel/shared-fields/ImageField.tsx 참조
 ```
 
 **Step 2: index.ts 배럴 파일**
@@ -288,33 +224,24 @@ feat(shared-fields): add ImageField core component (#108)
 기존 `ImageSection`은 `SectionBlockEditorProps<'image'>` 인터페이스를 유지하되, 내부는 `ImageField`에 위임.
 
 ```typescript
-// custom-blocks/ImageSection.tsx
+// custom-blocks/ImageSection.tsx — onSave를 onChange로 브릿지
 'use client';
 
 import { ImageField } from '../shared-fields';
-import type { ImageFieldValue } from '../shared-fields/types';
-
 import type { SectionBlockEditorProps } from './types';
 
-export default function ImageSection({
-    data,
-    onChange,
-    disabled,
-}: SectionBlockEditorProps<'image'>) {
-    // ImageBlockData → ImageFieldValue (동일 구조이므로 직접 전달)
-    const handleChange = (value: ImageFieldValue) => {
-        onChange({ url: value.url, alt: value.alt, caption: value.caption });
-    };
-
+export default function ImageSection({ data, onChange, disabled }: SectionBlockEditorProps<'image'>) {
     return (
         <ImageField
             value={data}
-            onChange={handleChange}
+            onSave={(value) => onChange({ url: value.url, alt: value.alt, caption: value.caption })}
             disabled={disabled}
         />
     );
 }
 ```
+
+**참고:** Custom 블록 시스템은 `onChange`(부모의 `onBlocksChange`로 전파)를 사용하므로, ImageSection이 ImageField의 `onSave`를 Custom의 `onChange`로 브릿지한다.
 
 **Step 2: 타입 체크**
 
@@ -344,100 +271,26 @@ refactor(custom-blocks): delegate ImageSection to shared ImageField (#108)
 
 기존 읽기 전용 이미지 + Music placeholder를 `ImageField`로 교체. Event에서는 `portrait` aspect ratio 사용. 모달 편집은 그대로 유지 (선택적 래퍼).
 
+EventDetailView 핵심 변경 — 중간 래퍼 제거, `onSave` 직접 전달:
+
 ```typescript
-// detail-views/EventDetailView.tsx
-'use client';
+// 변경 전 (onChange 모델): 중간 변수 + 래퍼 함수 필요
+const imageValue: ImageFieldValue = { url: posterUrl || '' };
+const handleImageChange = (value: ImageFieldValue) => {
+    onSave('posterUrl', value.url);
+};
+<ImageField value={imageValue} onChange={handleImageChange} />
 
-import { EVENT_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
-
-import { ImageField } from '../shared-fields';
-import type { ImageFieldValue } from '../shared-fields/types';
-
-import { ImageEditModal, TitleEditModal } from './EditModals';
-import type { DetailViewProps } from './types';
-
-export default function EventDetailView({
-    entry,
-    onSave,
-    editingField,
-    onEditingDone,
-    disabled,
-}: DetailViewProps) {
-    if (entry.type !== 'event') return null;
-
-    const posterUrl = entry.posterUrl;
-    const title = entry.title;
-
-    const imageValue: ImageFieldValue = { url: posterUrl || '' };
-
-    const handleImageChange = (value: ImageFieldValue) => {
-        onSave('posterUrl', value.url);
-    };
-
-    return (
-        <div className="space-y-8">
-            {/* Header — Image + title */}
-            <div className="space-y-3">
-                <div className="mx-auto max-w-[200px]">
-                    <ImageField
-                        value={imageValue}
-                        onChange={handleImageChange}
-                        aspectRatio="portrait"
-                        disabled={disabled}
-                    />
-                </div>
-                <h2 className="text-center text-xl font-bold text-dashboard-text">{title}</h2>
-            </div>
-
-            {/* Info Grid */}
-            <div className="space-y-3">
-                {EVENT_FIELD_BLOCKS.slice(0, 3).map((block) => (
-                    <block.component
-                        key={block.key}
-                        entry={entry}
-                        onSave={onSave}
-                        disabled={disabled}
-                    />
-                ))}
-            </div>
-
-            {/* Content blocks */}
-            {EVENT_FIELD_BLOCKS.slice(3).map((block) => (
-                <block.component
-                    key={block.key}
-                    entry={entry}
-                    onSave={onSave}
-                    disabled={disabled}
-                />
-            ))}
-
-            {/* Edit Modals */}
-            {editingField === 'image' && (
-                <ImageEditModal
-                    value={posterUrl || ''}
-                    onSave={(url) => {
-                        onSave('posterUrl', url);
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                />
-            )}
-            {editingField === 'title' && (
-                <TitleEditModal
-                    value={title}
-                    onSave={(newTitle) => {
-                        onSave('title', newTitle);
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                />
-            )}
-        </div>
-    );
-}
+// 변경 후 (onSave 주입 모델): 인라인으로 직접 전달
+<ImageField
+    value={{ url: posterUrl || '' }}
+    onSave={(value) => onSave('posterUrl', value.url)}
+    aspectRatio="portrait"
+    disabled={disabled}
+/>
 ```
 
-**주의:** EventDetailView에서 `ImageField`는 URL 입력 + 프리뷰를 인라인으로 보여줌. 기존 읽기 전용 → 인라인 편집으로 변경됨. `ImageEditModal`은 파일 업로드용으로 유지.
+**주의:** `ImageEditModal`은 파일 업로드용으로 유지 (선택적 모달 래퍼).
 
 **Step 2: 타입 체크**
 
@@ -723,5 +576,14 @@ chore: clean up unused imports after field unification (#108)
 ## Phase 1에서 의도적으로 제외한 것
 
 - DB 매퍼 변경 (`syncBlocksToFlatFields`, `hydrateBlocksFromFlat`) — Phase 2에서 실제 블록 데이터 흐름 전환 시 구현
-- `useFieldSync`를 코어 컴포넌트 내부에 통합 — 현재는 훅만 생성. 실제 연결은 기존 `useDebouncedSave`와의 관계 정리 후 Phase 2에서
+- `useFieldSync`를 텍스트 계열 필드에 적용 — 현재는 훅만 생성. DescriptionField 등 Phase 2 필드에서 사용 예정
+- `useDebouncedSave`(EntryDetailView)와 `useFieldSync`의 관계 정리 — 필드 단위 저장으로 전환 시 EntryDetailView의 중앙 디바운스 구조 리팩터 필요
 - MixsetDetailView 변경 — Event와 동일 패턴이므로 Event 완료 후 별도 태스크로
+
+## Amendment: onSave 주입 모델 (2026-03-06)
+
+설계 변경: `FieldComponentProps`에서 `onChange` → `onSave`로 전환.
+상세: `docs/plans/2026-03-06-field-props-redesign.md` 참조.
+
+핵심: 필드가 "값 변경을 부모에게 알리는" 수동적 역할에서, "적절한 시점에 직접 저장을 호출하는" 능동적 역할로 전환.
+이미지/날짜 등 즉시 저장 필드는 `useFieldSync` 불필요, 텍스트 필드만 선택적 사용.
