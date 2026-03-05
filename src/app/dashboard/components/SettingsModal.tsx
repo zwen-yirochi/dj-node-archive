@@ -9,7 +9,6 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -44,23 +43,25 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DashboardDialogContent size="xl" className="gap-0 p-0">
-                <DialogHeader className="border-b border-dashboard-border/50 px-6 py-4">
-                    <DialogTitle className="text-dashboard-text">Settings</DialogTitle>
+            <DashboardDialogContent size="xl" className="gap-0 p-0 font-inter">
+                <DialogHeader className="border-b border-dashboard-border/50 px-6 py-3.5">
+                    <DialogTitle className="text-sm font-normal text-dashboard-text-secondary">
+                        Settings
+                    </DialogTitle>
                 </DialogHeader>
 
-                <div className="flex min-h-[400px]">
+                <div className="flex h-[720px]">
                     {/* Left nav */}
-                    <nav className="w-44 shrink-0 border-r border-dashboard-border/50 p-3">
+                    <nav className="w-40 shrink-0 border-r border-dashboard-border/50 p-3">
                         {SETTINGS_SECTIONS.map(({ key, label, icon: Icon }) => (
                             <button
                                 key={key}
                                 onClick={() => setActiveSection(key)}
                                 className={cn(
-                                    'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                                    'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] transition-colors',
                                     activeSection === key
-                                        ? 'bg-dashboard-bg-active font-medium text-dashboard-text'
-                                        : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
+                                        ? 'bg-dashboard-bg-active text-dashboard-text'
+                                        : 'text-dashboard-text-muted hover:bg-dashboard-bg-hover hover:text-dashboard-text-secondary'
                                 )}
                             >
                                 <Icon className="h-4 w-4" />
@@ -70,7 +71,7 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
                     </nav>
 
                     {/* Right content */}
-                    <div className="flex-1 p-6">
+                    <div className="flex-1 overflow-y-auto bg-dashboard-bg-surface/50 p-6">
                         {activeSection === 'profile' && (
                             <ProfileSection onClose={() => onOpenChange(false)} />
                         )}
@@ -141,17 +142,17 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
             .toUpperCase()
             .slice(0, 2);
 
-    const handleSave = () => {
-        // Save username if changed and valid
-        if (tempUsername !== user.username && usernameStatus === 'available') {
-            updateUsername.mutate(
-                { userId: user.id, username: tempUsername },
-                {
-                    onError: (err) => toast({ variant: 'destructive', title: err.message }),
-                }
-            );
-        }
+    const handleConfirmUsername = () => {
+        if (tempUsername === user.username || usernameStatus !== 'available') return;
+        updateUsername.mutate(
+            { userId: user.id, username: tempUsername },
+            {
+                onError: (err) => toast({ variant: 'destructive', title: err.message }),
+            }
+        );
+    };
 
+    const handleSave = () => {
         updateProfile.mutate(
             {
                 userId: user.id,
@@ -168,8 +169,7 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
         onClose();
     };
 
-    const canSave =
-        usernameStatus !== 'taken' && usernameStatus !== 'invalid' && usernameStatus !== 'checking';
+    const canSave = !isUploading;
 
     const handleAvatarClick = () => fileInputRef.current?.click();
 
@@ -256,16 +256,14 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
                     </div>
                 </button>
                 {tempUser.avatarUrl && (
-                    <Button
+                    <button
                         onClick={handleDeleteAvatar}
                         disabled={isUploading}
-                        variant="ghost"
-                        size="sm"
-                        className="text-dashboard-danger hover:bg-dashboard-danger-bg"
+                        className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-dashboard-danger transition-colors hover:bg-dashboard-danger-bg disabled:opacity-50"
                     >
-                        <Trash2 className="mr-1 h-4 w-4" />
-                        Remove photo
-                    </Button>
+                        <Trash2 className="h-3 w-3" />
+                        Remove
+                    </button>
                 )}
                 <input
                     ref={fileInputRef}
@@ -278,9 +276,7 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
 
             {/* Username */}
             <div className="space-y-2">
-                <label className="text-sm font-medium text-dashboard-text-secondary">
-                    Username
-                </label>
+                <label className="text-xs text-dashboard-text-muted">Username</label>
                 <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-dashboard-text-placeholder">
                         @
@@ -293,7 +289,7 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
                             checkUsername(val);
                         }}
                         placeholder="username"
-                        className="border-dashboard-border bg-dashboard-bg-card pl-7 text-dashboard-text placeholder:text-dashboard-text-placeholder"
+                        className="border-dashboard-border bg-dashboard-bg-card pl-7 pr-9 text-sm text-dashboard-text shadow-none placeholder:text-dashboard-text-placeholder focus-visible:ring-dashboard-border"
                     />
                     {usernameStatus !== 'idle' && (
                         <span className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -313,74 +309,81 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
                     )}
                 </div>
                 {usernameStatus === 'taken' && (
-                    <p className="text-xs text-dashboard-danger">이미 사용 중인 username입니다.</p>
+                    <p className="text-xs text-dashboard-danger">This username is already taken.</p>
                 )}
                 {usernameStatus === 'invalid' && (
                     <p className="text-xs text-dashboard-danger">
-                        영소문자, 숫자, -, _ 만 가능 (3~30자)
+                        Only lowercase letters, numbers, hyphens, and underscores (3–30 chars)
                     </p>
                 )}
                 {usernameStatus === 'available' && (
-                    <p className="text-xs text-dashboard-success">사용 가능한 username입니다.</p>
+                    <div className="flex items-center gap-1.5">
+                        <p className="text-xs text-dashboard-success">
+                            This username is available.
+                        </p>
+                        <button
+                            onClick={handleConfirmUsername}
+                            className="rounded px-1.5 py-0.5 text-[11px] font-medium text-dashboard-success underline-offset-2 hover:underline"
+                        >
+                            Confirm
+                        </button>
+                    </div>
                 )}
                 <p className="text-xs text-dashboard-text-placeholder">
-                    사이트 주소와 태그에 사용됩니다: /{tempUsername}
+                    Used for your site URL and tags: /{tempUsername}
                 </p>
             </div>
 
             {/* Display Name */}
             <div className="space-y-2">
-                <label className="text-sm font-medium text-dashboard-text-secondary">
-                    Display Name
-                </label>
+                <label className="text-xs text-dashboard-text-muted">Display Name</label>
                 <Input
                     type="text"
                     value={tempUser.displayName || ''}
                     onChange={(e) => setTempUser({ ...tempUser, displayName: e.target.value })}
                     placeholder="Display Name"
-                    className="border-dashboard-border bg-dashboard-bg-card text-dashboard-text placeholder:text-dashboard-text-placeholder"
+                    className="border-dashboard-border bg-dashboard-bg-card text-sm text-dashboard-text shadow-none placeholder:text-dashboard-text-placeholder focus-visible:ring-dashboard-border"
                 />
             </div>
 
             {/* Bio */}
             <div className="space-y-2">
-                <label className="text-sm font-medium text-dashboard-text-secondary">Bio</label>
+                <label className="text-xs text-dashboard-text-muted">Bio</label>
                 <Textarea
                     value={tempUser.bio || ''}
                     onChange={(e) => setTempUser({ ...tempUser, bio: e.target.value })}
                     placeholder="Write a short bio"
                     rows={3}
-                    className="resize-none border-dashboard-border bg-dashboard-bg-card text-dashboard-text placeholder:text-dashboard-text-placeholder"
+                    className="resize-none border-dashboard-border bg-dashboard-bg-card text-sm leading-relaxed text-dashboard-text shadow-none placeholder:text-dashboard-text-placeholder focus-visible:ring-dashboard-border"
                 />
             </div>
 
             {/* Region */}
             <div className="space-y-2">
-                <label className="text-sm font-medium text-dashboard-text-secondary">Region</label>
+                <label className="text-xs text-dashboard-text-muted">Region</label>
                 <Input
                     value={tempUser.region || ''}
                     onChange={(e) => setTempUser({ ...tempUser, region: e.target.value })}
                     placeholder="e.g. Seoul, South Korea"
-                    className="border-dashboard-border bg-dashboard-bg-card text-dashboard-text placeholder:text-dashboard-text-placeholder"
+                    className="border-dashboard-border bg-dashboard-bg-card text-sm text-dashboard-text shadow-none placeholder:text-dashboard-text-placeholder focus-visible:ring-dashboard-border"
                 />
             </div>
 
             {/* Actions */}
             <div className="flex justify-end gap-2">
-                <Button
+                <button
                     onClick={onClose}
-                    variant="ghost"
-                    className="text-dashboard-text-secondary hover:bg-dashboard-bg-muted hover:text-dashboard-text"
+                    className="rounded-lg px-3 py-1.5 text-[13px] text-dashboard-text-muted transition-colors hover:bg-dashboard-bg-hover hover:text-dashboard-text-secondary"
                 >
                     Cancel
-                </Button>
-                <Button
+                </button>
+                <button
                     onClick={handleSave}
-                    disabled={isUploading || !canSave}
-                    className="bg-dashboard-text text-white hover:bg-dashboard-text/90"
+                    disabled={!canSave}
+                    className="rounded-lg bg-dashboard-text px-3 py-1.5 text-[13px] text-white transition-colors hover:bg-dashboard-text/90 disabled:opacity-50"
                 >
                     Save
-                </Button>
+                </button>
             </div>
         </div>
     );
@@ -400,19 +403,17 @@ function AccountSettingsSection() {
     return (
         <div className="space-y-6">
             <div>
-                <h3 className="text-sm font-medium text-dashboard-text">Sign out</h3>
-                <p className="mt-1 text-sm text-dashboard-text-muted">
+                <h3 className="text-[13px] text-dashboard-text">Sign out</h3>
+                <p className="mt-1 text-xs text-dashboard-text-muted">
                     Sign out of your account on this device.
                 </p>
-                <Button
+                <button
                     onClick={handleLogout}
-                    variant="ghost"
-                    size="sm"
-                    className="mt-3 text-dashboard-danger hover:bg-dashboard-danger-bg"
+                    className="mt-3 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] text-dashboard-danger transition-colors hover:bg-dashboard-danger-bg"
                 >
-                    <LogOut className="mr-1.5 h-4 w-4" />
+                    <LogOut className="h-3.5 w-3.5" />
                     Sign out
-                </Button>
+                </button>
             </div>
         </div>
     );

@@ -91,7 +91,7 @@ export function SimpleDropdown({
                 align={align}
                 side={side}
                 className={cn(
-                    'w-40 border-white/20 bg-white/80 shadow-lg backdrop-blur-xl',
+                    'w-40 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl',
                     contentClassName
                 )}
             >
