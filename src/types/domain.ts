@@ -122,7 +122,7 @@ export interface EventEntry extends EntryBase {
     date: string;
     venue: VenueReference;
     lineup: ArtistReference[];
-    posterUrl: string;
+    posterUrls: string[];
     description?: string;
     links?: ExternalLink[];
 }
@@ -207,7 +207,7 @@ export interface Event {
     date: string;
     venue: { id?: string; name: string };
     lineup: { id?: string; name: string }[];
-    posterUrl?: string;
+    posterUrls?: string[];
     description?: string;
     links?: { title: string; url: string }[];
     isPublic: boolean;
