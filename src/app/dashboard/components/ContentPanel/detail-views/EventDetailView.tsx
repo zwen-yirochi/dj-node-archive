@@ -1,11 +1,17 @@
 'use client';
 
 import { EVENT_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
+import { useImmediateSave } from '@/app/dashboard/hooks/use-immediate-save';
 
-import { ImageField } from '../shared-fields';
+import { EditFieldWrapper, ImageField } from '../shared-fields';
+import type { EditFieldConfig } from '../shared-fields/EditFieldWrapper';
 import type { ImageFieldValue } from '../shared-fields/types';
 import { ImageEditModal, TitleEditModal } from './EditModals';
 import type { DetailViewProps } from './types';
+
+const IMAGE_EDIT_CONFIG: EditFieldConfig<ImageFieldValue> = {
+    useSave: useImmediateSave,
+};
 
 // ============================================
 // EventDetailView
@@ -25,7 +31,7 @@ export default function EventDetailView({
 
     const imageValue: ImageFieldValue = { url: posterUrl || '' };
 
-    const handleImageChange = (value: ImageFieldValue) => {
+    const handleImageSave = (value: ImageFieldValue) => {
         onSave('posterUrl', value.url);
     };
 
@@ -34,12 +40,20 @@ export default function EventDetailView({
             {/* Header — Image + title */}
             <div className="space-y-3">
                 <div className="mx-auto max-w-[200px]">
-                    <ImageField
+                    <EditFieldWrapper
+                        config={IMAGE_EDIT_CONFIG}
                         value={imageValue}
-                        onChange={handleImageChange}
-                        aspectRatio="portrait"
-                        disabled={disabled}
-                    />
+                        onSave={handleImageSave}
+                    >
+                        {({ value, onChange }) => (
+                            <ImageField
+                                value={value}
+                                onChange={onChange}
+                                aspectRatio="portrait"
+                                disabled={disabled}
+                            />
+                        )}
+                    </EditFieldWrapper>
                 </div>
                 <h2 className="text-center text-xl font-bold text-dashboard-text">{title}</h2>
             </div>
