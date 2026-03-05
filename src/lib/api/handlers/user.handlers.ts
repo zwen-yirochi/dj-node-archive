@@ -9,7 +9,12 @@ import {
     validationErrorResponse,
     type AuthContext,
 } from '@/lib/api';
-import { findUserByAuthId, updateUser } from '@/lib/db/queries/user.queries';
+import {
+    findUserByAuthId,
+    isUsernameTaken,
+    updateUser,
+    updateUsername,
+} from '@/lib/db/queries/user.queries';
 import { mapUserToDomain } from '@/lib/mappers';
 import { createClient } from '@/lib/supabase/server';
 
@@ -19,6 +24,7 @@ import { createClient } from '@/lib/supabase/server';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const USERNAME_REGEX = /^[a-z0-9_-]{3,30}$/;
 
 /**
  * Auth UUID로 앱 사용자를 조회하고 URL param id와 비교하여 ownership 검증
@@ -47,7 +53,7 @@ export async function handleUpdateProfile(
     { user, params }: AuthContext & { params: { id: string } }
 ) {
     // 1. Parse
-    let body: { displayName?: string; bio?: string };
+    let body: { displayName?: string; bio?: string; region?: string };
     try {
         body = await request.json();
     } catch {
@@ -59,9 +65,10 @@ export async function handleUpdateProfile(
     if (!ownership.ok) return forbiddenResponse();
 
     // 3. DB update
-    const updates: { display_name?: string; bio?: string } = {};
+    const updates: { display_name?: string; bio?: string; region?: string } = {};
     if (body.displayName !== undefined) updates.display_name = body.displayName;
     if (body.bio !== undefined) updates.bio = body.bio;
+    if (body.region !== undefined) updates.region = body.region;
 
     const result = await updateUser(params.id, updates);
     if (!isSuccess(result)) return internalErrorResponse(result.error.message);
@@ -176,4 +183,73 @@ export async function handleDeleteAvatar(
     } catch {
         return internalErrorResponse('아바타 삭제 중 오류가 발생했습니다');
     }
+}
+
+/**
+ * PATCH /api/users/[id]/username
+ * Username 변경 (유니크 검증 + page.slug 동기화)
+ */
+export async function handleUpdateUsername(
+    request: Request,
+    { user, params }: AuthContext & { params: { id: string } }
+) {
+    // 1. Parse
+    let body: { username: string };
+    try {
+        body = await request.json();
+    } catch {
+        return validationErrorResponse('request body');
+    }
+
+    if (!body.username) return validationErrorResponse('username');
+
+    // 2. Validate format
+    const username = body.username.toLowerCase();
+    if (!USERNAME_REGEX.test(username)) {
+        return Response.json(
+            { error: { code: 'INVALID_FORMAT', message: '영소문자, 숫자, -, _ 만 가능 (3~30자)' } },
+            { status: 400 }
+        );
+    }
+
+    // 3. Verify ownership
+    const ownership = await verifyUserOwnership(user.id, params.id);
+    if (!ownership.ok) return forbiddenResponse();
+
+    // 4. Check uniqueness
+    const takenResult = await isUsernameTaken(username, params.id);
+    if (!isSuccess(takenResult)) return internalErrorResponse(takenResult.error.message);
+    if (takenResult.data) {
+        return Response.json(
+            { error: { code: 'USERNAME_TAKEN', message: '이미 사용 중인 username입니다.' } },
+            { status: 409 }
+        );
+    }
+
+    // 5. Update username + sync page.slug
+    const result = await updateUsername(params.id, username);
+    if (!isSuccess(result)) return internalErrorResponse(result.error.message);
+
+    return successResponse(mapUserToDomain(result.data));
+}
+
+/**
+ * GET /api/users/check-username?username=xxx&excludeId=xxx
+ * Username 사용 가능 여부 확인
+ */
+export async function handleCheckUsername(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const username = searchParams.get('username')?.toLowerCase();
+    const excludeId = searchParams.get('excludeId') || undefined;
+
+    if (!username) return validationErrorResponse('username');
+
+    if (!USERNAME_REGEX.test(username)) {
+        return successResponse({ available: false, reason: 'invalid_format' });
+    }
+
+    const result = await isUsernameTaken(username, excludeId);
+    if (!isSuccess(result)) return internalErrorResponse(result.error.message);
+
+    return successResponse({ available: !result.data });
 }

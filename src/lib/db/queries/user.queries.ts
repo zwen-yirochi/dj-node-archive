@@ -1,14 +1,14 @@
 // lib/db/queries/user.queries.ts
 // 서버 전용 - 순수 DB 쿼리
-import { createClient } from '@/lib/supabase/server';
 import type { User, UserWithPages } from '@/types/database';
 import {
-    type Result,
-    success,
-    failure,
     createDatabaseError,
     createNotFoundError,
+    failure,
+    success,
+    type Result,
 } from '@/types/result';
+import { createClient } from '@/lib/supabase/server';
 
 export async function findUserByUsername(username: string): Promise<Result<User>> {
     try {
@@ -244,12 +244,66 @@ export async function createUser(userData: {
     }
 }
 
+export async function isUsernameTaken(
+    username: string,
+    excludeUserId?: string
+): Promise<Result<boolean>> {
+    try {
+        const supabase = await createClient();
+        let query = supabase.from('users').select('id').eq('username', username);
+        if (excludeUserId) query = query.neq('id', excludeUserId);
+        const { data, error } = await query.maybeSingle();
+        if (error) return failure(createDatabaseError(error.message, 'isUsernameTaken', error));
+        return success(!!data);
+    } catch (err) {
+        return failure(createDatabaseError('username 중복 확인 중 오류', 'isUsernameTaken', err));
+    }
+}
+
+export async function updateUsername(userId: string, newUsername: string): Promise<Result<User>> {
+    try {
+        const supabase = await createClient();
+
+        // 1. Update username
+        const { data: user, error: userError } = await supabase
+            .from('users')
+            .update({ username: newUsername, updated_at: new Date().toISOString() })
+            .eq('id', userId)
+            .select()
+            .single();
+
+        if (userError) {
+            if (userError.code === '23505') {
+                return failure(
+                    createDatabaseError('이미 사용 중인 username입니다.', 'updateUsername')
+                );
+            }
+            return failure(createDatabaseError(userError.message, 'updateUsername', userError));
+        }
+
+        // 2. Sync page slug
+        const { error: pageError } = await supabase
+            .from('pages')
+            .update({ slug: newUsername, updated_at: new Date().toISOString() })
+            .eq('user_id', userId);
+
+        if (pageError) {
+            console.error('page slug 동기화 실패:', pageError);
+        }
+
+        return success(user);
+    } catch (err) {
+        return failure(createDatabaseError('username 업데이트 중 오류', 'updateUsername', err));
+    }
+}
+
 export async function updateUser(
     userId: string,
     updates: {
         display_name?: string;
         bio?: string;
         avatar_url?: string;
+        region?: string;
     }
 ): Promise<Result<User>> {
     try {

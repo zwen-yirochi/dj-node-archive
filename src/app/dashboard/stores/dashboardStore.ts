@@ -32,11 +32,12 @@ export type ContentView =
 interface DashboardStore {
     contentView: ContentView;
     previousView: ContentView | null;
+    navigatedFromPageList: boolean;
     sidebarSections: SidebarSections;
     pageId: string | null;
     isSettingsOpen: boolean;
 
-    setView: (view: ContentView, options?: { replace?: boolean }) => void;
+    setView: (view: ContentView, options?: { replace?: boolean; fromPageList?: boolean }) => void;
     goBack: () => void;
     toggleSection: (section: SectionKey) => void;
     setPageId: (pageId: string | null) => void;
@@ -55,6 +56,7 @@ const initialSidebarSections: SidebarSections = {
 const DEFAULT_STATE = {
     contentView: { kind: 'page' } as ContentView,
     previousView: null as ContentView | null,
+    navigatedFromPageList: false,
     sidebarSections: initialSidebarSections,
     pageId: null as string | null,
     isSettingsOpen: false,
@@ -70,6 +72,7 @@ export const useDashboardStore = create<DashboardStore>()(
                     (state) => ({
                         contentView: view,
                         previousView: options?.replace ? state.previousView : state.contentView,
+                        navigatedFromPageList: !!options?.fromPageList,
                     }),
                     undefined,
                     'setView'
@@ -80,6 +83,7 @@ export const useDashboardStore = create<DashboardStore>()(
                     (state) => ({
                         contentView: state.previousView ?? { kind: 'page' },
                         previousView: null,
+                        navigatedFromPageList: false,
                     }),
                     undefined,
                     'goBack'
@@ -116,6 +120,7 @@ export const useDashboardStore = create<DashboardStore>()(
 export const selectContentView = (s: DashboardStore) => s.contentView;
 export const selectSetView = (s: DashboardStore) => s.setView;
 export const selectGoBack = (s: DashboardStore) => s.goBack;
+export const selectHasPreviousView = (s: DashboardStore) => s.navigatedFromPageList;
 export const selectSidebarSections = (s: DashboardStore) => s.sidebarSections;
 export const selectToggleSection = (s: DashboardStore) => s.toggleSection;
 export const selectPageId = (s: DashboardStore) => s.pageId;

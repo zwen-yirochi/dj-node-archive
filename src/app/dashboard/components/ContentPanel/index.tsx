@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import {
     selectContentView,
     selectGoBack,
+    selectHasPreviousView,
     selectSetView,
     useDashboardStore,
 } from '../../stores/dashboardStore';
@@ -38,6 +39,7 @@ export default function ContentPanel() {
     const view = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
     const goBack = useDashboardStore(selectGoBack);
+    const hasPreviousView = useDashboardStore(selectHasPreviousView);
 
     const content = (() => {
         switch (view.kind) {
@@ -60,7 +62,10 @@ export default function ContentPanel() {
                     <div className="h-full overflow-hidden rounded-2xl">
                         <ErrorBoundaryWithQueryReset>
                             <Suspense fallback={<LoadingSkeleton />}>
-                                <EntryDetailView entryId={view.entryId} onBack={goBack} />
+                                <EntryDetailView
+                                    entryId={view.entryId}
+                                    onBack={hasPreviousView ? goBack : undefined}
+                                />
                             </Suspense>
                         </ErrorBoundaryWithQueryReset>
                     </div>

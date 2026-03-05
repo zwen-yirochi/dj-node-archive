@@ -93,9 +93,9 @@ export default function BioDesignPanel() {
                         </div>
 
                         {isProfileOpen && (
-                            <div className="mt-4 space-y-3">
-                                <div className="flex items-center gap-4">
-                                    <Avatar className="h-12 w-12 border border-dashboard-border">
+                            <div className="mt-4 rounded-xl border border-dashboard-border/50 bg-dashboard-bg-surface p-4">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-12 w-12 shrink-0 border border-dashboard-border">
                                         <AvatarImage
                                             src={user.avatarUrl}
                                             alt={user.displayName}
@@ -112,12 +112,21 @@ export default function BioDesignPanel() {
                                         </p>
                                         <p className="truncate text-xs text-dashboard-text-muted">
                                             @{user.username}
+                                            {user.region && (
+                                                <>
+                                                    <span className="text-dashboard-text-placeholder">
+                                                        {' '}
+                                                        ·{' '}
+                                                    </span>
+                                                    {user.region}
+                                                </>
+                                            )}
                                         </p>
                                     </div>
                                 </div>
 
                                 {user.bio && (
-                                    <p className="text-xs leading-relaxed text-dashboard-text-muted">
+                                    <p className="mt-3 text-xs leading-relaxed text-dashboard-text-muted">
                                         {user.bio}
                                     </p>
                                 )}

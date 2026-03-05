@@ -17,6 +17,7 @@ import type { ContentEntry, PageSettings, User } from '@/types';
 
 export const userKeys = {
     all: ['user'] as const,
+    profile: (id: string) => ['user', 'profile', id] as const,
 };
 
 export const entryKeys = {

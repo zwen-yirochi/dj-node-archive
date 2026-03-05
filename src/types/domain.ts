@@ -33,6 +33,7 @@ export interface User {
     displayName: string;
     avatarUrl: string;
     bio?: string;
+    region?: string;
 }
 
 export interface Page {

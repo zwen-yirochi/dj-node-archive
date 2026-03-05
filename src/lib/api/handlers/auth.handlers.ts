@@ -1,15 +1,19 @@
 // lib/api/handlers/auth.handlers.ts
 // Auth 사용자 → 앱 DB 동기화 핸들러
-import { createDefaultPage, findPageByUserId } from '@/lib/db/queries/page.queries';
-import { createUser, findUserByAuthId } from '@/lib/db/queries/user.queries';
-import type { User } from '@/types/database';
-import { createDatabaseError, failure, isSuccess, type Result, success } from '@/types/result';
 import type { User as AuthUser } from '@supabase/supabase-js';
 
+import type { User } from '@/types/database';
+import { createDatabaseError, failure, isSuccess, success, type Result } from '@/types/result';
+import { createDefaultPage, findPageByUserId } from '@/lib/db/queries/page.queries';
+import { createUser, findUserByAuthId } from '@/lib/db/queries/user.queries';
+
 function generateUsername(email: string): string {
-    // const base = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-    // const suffix = Math.floor(Math.random() * 10000);
-    return email;
+    const base = email
+        .split('@')[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, '');
+    const suffix = Math.floor(Math.random() * 10000);
+    return base ? `${base}-${suffix}` : `user-${suffix}`;
 }
 
 function generateDisplayName(authUser: AuthUser): string {

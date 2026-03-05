@@ -7,6 +7,7 @@ import { DialogDescription, DialogTitle } from '@radix-ui/react-dialog';
 import { Palette, Plus, Search } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
+import { TypeBadge } from '@/components/dna';
 
 import { ENTRY_TYPE_CONFIG, type EntryType } from '../config/entryConfig';
 import { COMPONENT_GROUPS } from '../config/sidebarConfig';
@@ -83,7 +84,7 @@ export function CommandPalette() {
                     Search entries and run quick actions
                 </DialogDescription>
 
-                <div className="overflow-hidden rounded-2xl bg-white shadow-xl">
+                <div className="overflow-hidden rounded-2xl bg-white/80 shadow-xl backdrop-blur-xl">
                     <Command.Input
                         placeholder="Search entries..."
                         className="w-full border-b border-dashboard-border/50 bg-transparent px-4 py-3 font-inter text-sm text-dashboard-text outline-none placeholder:text-dashboard-text-placeholder"
@@ -98,7 +99,6 @@ export function CommandPalette() {
                             const groupEntries = entriesByType.get(group.entryType) ?? [];
                             if (groupEntries.length === 0) return null;
 
-                            const Icon = ENTRY_TYPE_CONFIG[group.entryType].icon;
                             return (
                                 <Command.Group key={group.entryType} heading={group.title}>
                                     {groupEntries.map((entry) => (
@@ -108,7 +108,10 @@ export function CommandPalette() {
                                             onSelect={() => handleSelectEntry(entry.id)}
                                             className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-inter text-sm text-dashboard-text-secondary data-[selected=true]:bg-dashboard-bg-active data-[selected=true]:text-dashboard-text"
                                         >
-                                            <Icon className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
+                                            <TypeBadge
+                                                type={ENTRY_TYPE_CONFIG[group.entryType].badgeType}
+                                                size="sm"
+                                            />
                                             {entry.title || 'Untitled'}
                                         </Command.Item>
                                     ))}

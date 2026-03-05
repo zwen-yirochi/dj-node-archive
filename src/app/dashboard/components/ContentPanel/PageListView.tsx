@@ -252,7 +252,10 @@ export default function PageListView() {
                                         entry={entry}
                                         actionHandlers={{
                                             edit: () =>
-                                                setView({ kind: 'detail', entryId: entry.id }),
+                                                setView(
+                                                    { kind: 'detail', entryId: entry.id },
+                                                    { fromPageList: true }
+                                                ),
                                             delete: () => {
                                                 const cv = useDashboardStore.getState().contentView;
                                                 if (

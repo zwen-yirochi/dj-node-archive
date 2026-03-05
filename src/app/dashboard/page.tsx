@@ -46,7 +46,7 @@ export default async function DashboardPage() {
             <DashboardSettingsModal />
 
             <div className="flex h-screen overflow-hidden p-3">
-                <div className="flex flex-1 overflow-hidden rounded-2xl bg-white shadow-lg">
+                <div className="flex flex-1 overflow-hidden rounded-2xl bg-dashboard-bg-base shadow-lg backdrop-blur-sm">
                     {/* TreeSidebar */}
                     <TreeSidebar />
 
