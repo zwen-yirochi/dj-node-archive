@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { EVENT_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
 
-import { EditFieldWrapper, IMAGE_FIELD_CONFIG, ImageField } from '../shared-fields';
+import { FieldSync, IMAGE_FIELD_CONFIG, ImageField } from '../shared-fields';
 import type { ImageItem } from '../shared-fields/types';
 import { TitleEditModal } from './EditModals';
 import type { DetailViewProps, SaveOptions } from './types';
@@ -53,7 +53,7 @@ export default function EventDetailView({
             {/* Header — Image + title */}
             <div className="space-y-3">
                 <div>
-                    <EditFieldWrapper
+                    <FieldSync
                         config={IMAGE_FIELD_CONFIG}
                         value={imageItems}
                         onSave={handleImageSave}
@@ -67,7 +67,7 @@ export default function EventDetailView({
                                 disabled={disabled}
                             />
                         )}
-                    </EditFieldWrapper>
+                    </FieldSync>
                 </div>
                 <h2 className="text-center text-xl font-bold text-dashboard-text">{title}</h2>
             </div>

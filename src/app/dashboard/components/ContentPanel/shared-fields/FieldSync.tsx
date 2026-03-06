@@ -8,7 +8,7 @@ import { useFieldSync, type SaveStatus } from '@/app/dashboard/hooks/use-field-s
 
 import type { SaveOptions } from '../detail-views/types';
 
-export interface EditFieldConfig<T> {
+export interface FieldSyncConfig<T> {
     /** true면 즉시 저장 (이미지, 토글 등), false/생략이면 디바운스 저장 (텍스트 등) */
     immediate?: boolean;
     schema?: ZodSchema;
@@ -16,8 +16,8 @@ export interface EditFieldConfig<T> {
     debounceMs?: number;
 }
 
-interface EditFieldWrapperProps<T> {
-    config: EditFieldConfig<T>;
+interface FieldSyncProps<T> {
+    config: FieldSyncConfig<T>;
     value: T;
     onSave: (value: T, options?: SaveOptions) => void;
     children: (renderProps: {
@@ -32,12 +32,7 @@ interface EditFieldWrapperProps<T> {
  * immediate: true → passthrough (로컬 상태 없음, 변경 즉시 onSave)
  * immediate: false → useFieldSync 디바운스 (로컬 상태 + 800ms 후 onSave)
  */
-export default function EditFieldWrapper<T>({
-    config,
-    value,
-    onSave,
-    children,
-}: EditFieldWrapperProps<T>) {
+export default function FieldSync<T>({ config, value, onSave, children }: FieldSyncProps<T>) {
     const immediate = config.immediate ?? false;
 
     const validate = (v: T): boolean => {
