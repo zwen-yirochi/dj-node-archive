@@ -1,16 +1,27 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { EVENT_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
 
 import { EditFieldWrapper, ImageField } from '../shared-fields';
 import type { EditFieldConfig } from '../shared-fields/EditFieldWrapper';
 import type { ImageItem } from '../shared-fields/types';
-import { ImageEditModal, TitleEditModal } from './EditModals';
+import { TitleEditModal } from './EditModals';
 import type { DetailViewProps, SaveOptions } from './types';
 
 const IMAGE_EDIT_CONFIG: EditFieldConfig<ImageItem[]> = {
     immediate: true,
 };
+
+/** URL → stable ID (short hash) */
+function urlToStableId(url: string): string {
+    let hash = 0;
+    for (let i = 0; i < url.length; i++) {
+        hash = ((hash << 5) - hash + url.charCodeAt(i)) | 0;
+    }
+    return `poster-${(hash >>> 0).toString(36)}`;
+}
 
 // ============================================
 // EventDetailView
@@ -28,11 +39,11 @@ export default function EventDetailView({
     const posterUrls = entry.posterUrls;
     const title = entry.title;
 
-    // posterUrls ↔ ImageItem[] 변환
-    const imageItems: ImageItem[] = posterUrls.map((url, i) => ({
-        id: `poster-${i}`,
-        url,
-    }));
+    // posterUrls ↔ ImageItem[] 변환 (URL 기반 안정 ID)
+    const imageItems: ImageItem[] = useMemo(
+        () => posterUrls.map((url) => ({ id: urlToStableId(url), url })),
+        [posterUrls]
+    );
 
     const handleImageSave = (items: ImageItem[], options?: SaveOptions) => {
         onSave(
@@ -88,19 +99,7 @@ export default function EventDetailView({
                 />
             ))}
 
-            {/* Edit Modals — Triggered from "..." menu */}
-            {editingField === 'image' && (
-                <ImageEditModal
-                    value={posterUrls[0] || ''}
-                    onSave={(url) => {
-                        const updated = [...posterUrls];
-                        updated[0] = url;
-                        onSave('posterUrls', updated.filter(Boolean));
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                />
-            )}
+            {/* Edit Modals */}
             {editingField === 'title' && (
                 <TitleEditModal
                     value={title}

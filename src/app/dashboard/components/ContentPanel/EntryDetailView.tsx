@@ -128,7 +128,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     const localEntryRef = useRef(localEntry);
     localEntryRef.current = localEntry;
 
-    const [editingField, setEditingField] = useState<'title' | 'image' | null>(null);
+    const [editingField, setEditingField] = useState<'title' | null>(null);
     const confirmAction = useConfirmAction();
 
     // Save handler — pass changedFields to mutation for preview trigger decision
@@ -195,7 +195,6 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
         menuConfig,
         {
             'edit-title': () => setEditingField('title'),
-            'edit-image': () => setEditingField('image'),
             delete: handleDelete,
         },
         localEntry as unknown as Record<string, unknown>

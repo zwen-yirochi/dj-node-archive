@@ -6,7 +6,7 @@ import { ImagePlus } from 'lucide-react';
 
 import { MIXSET_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
 
-import { ImageEditModal, TitleEditModal } from './EditModals';
+import { TitleEditModal } from './EditModals';
 import type { DetailViewProps } from './types';
 
 export default function MixsetDetailView({
@@ -67,18 +67,6 @@ export default function MixsetDetailView({
             </div>
 
             {/* Edit Modals */}
-            {editingField === 'image' && (
-                <ImageEditModal
-                    value={coverUrl || ''}
-                    onSave={(url) => {
-                        onSave('coverUrl', url);
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                    aspectRatio="1/1"
-                    title="Change cover image"
-                />
-            )}
             {editingField === 'title' && (
                 <TitleEditModal
                     value={title}

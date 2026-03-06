@@ -96,7 +96,6 @@ const EVENT_DELETE_CONFIRM = (ctx: Record<string, unknown>) =>
 // ============================================
 
 const EDIT_TITLE: MenuItemConfig = { actionKey: 'edit-title', label: 'Edit title' };
-const EDIT_IMAGE: MenuItemConfig = { actionKey: 'edit-image', label: 'Edit image' };
 const SEPARATOR: MenuSeparatorConfig = { type: 'separator' };
 
 const DELETE_SIMPLE: MenuItemConfig = {
@@ -117,8 +116,8 @@ const DELETE_EVENT: MenuItemConfig = {
 // ============================================
 
 export const EDITOR_MENU_CONFIG: Record<EntryType, MenuConfig> = {
-    event: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE_EVENT],
-    mixset: [EDIT_TITLE, EDIT_IMAGE, SEPARATOR, DELETE_SIMPLE],
+    event: [EDIT_TITLE, SEPARATOR, DELETE_EVENT],
+    mixset: [EDIT_TITLE, SEPARATOR, DELETE_SIMPLE],
     link: [EDIT_TITLE, SEPARATOR, DELETE_SIMPLE],
     custom: [EDIT_TITLE, SEPARATOR, DELETE_SIMPLE],
 };
