@@ -22,6 +22,7 @@ import { useCallback, useId, useState, type ReactNode } from 'react';
 import { Plus } from 'lucide-react';
 
 import type { CustomEntry, SectionBlock, SectionBlockDataMap, SectionBlockType } from '@/types';
+import { parseEmbedUrl } from '@/lib/embed';
 import { Button } from '@/components/ui/button';
 
 import {
@@ -129,7 +130,10 @@ const BLOCK_RENDERERS: Record<SectionBlockType, (props: BlockRenderProps) => Rea
             <SyncedField
                 config={URL_FIELD_CONFIG}
                 value={d.url}
-                onSave={(v) => onChange({ ...d, url: v })}
+                onSave={(v) => {
+                    const parsed = parseEmbedUrl(v);
+                    onChange({ url: v, provider: parsed?.provider });
+                }}
             >
                 <EmbedField disabled={disabled} />
             </SyncedField>
