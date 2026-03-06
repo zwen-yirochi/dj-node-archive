@@ -7,7 +7,7 @@ import type { FieldBlockProps } from '../types';
 
 type TrackItem = { track: string; artist: string; time: string };
 
-const TRACKLIST_CONFIG: FieldSyncConfig<TrackItem[]> = { immediate: true };
+const TRACKLIST_CONFIG: FieldSyncConfig<TrackItem[]> = { debounceMs: 800 };
 
 const TRACKLIST_COLUMNS: KeyValueColumn[] = [
     {
