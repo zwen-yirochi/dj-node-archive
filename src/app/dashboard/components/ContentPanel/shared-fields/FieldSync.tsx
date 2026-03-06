@@ -20,6 +20,8 @@ interface FieldSyncProps<T> {
     config: FieldSyncConfig<T>;
     value: T;
     onSave: (value: T, options?: SaveOptions) => void;
+    /** schema 검증 실패 시 호출 — UI 피드백용 (toast 등) */
+    onValidationError?: (value: T, error: string) => void;
     children: (renderProps: {
         value: T;
         onChange: (value: T) => void;
@@ -32,16 +34,23 @@ interface FieldSyncProps<T> {
  * immediate: true → passthrough (로컬 상태 없음, 변경 즉시 onSave)
  * immediate: false → useFieldSync 디바운스 (로컬 상태 + 800ms 후 onSave)
  */
-export default function FieldSync<T>({ config, value, onSave, children }: FieldSyncProps<T>) {
+export default function FieldSync<T>({
+    config,
+    value,
+    onSave,
+    onValidationError,
+    children,
+}: FieldSyncProps<T>) {
     const immediate = config.immediate ?? false;
 
-    const validate = (v: T): boolean => {
-        if (!config.schema) return true;
-        return config.schema.safeParse(v).success;
-    };
-
     const handleSave = (v: T) => {
-        if (!validate(v)) return;
+        if (config.schema) {
+            const result = config.schema.safeParse(v);
+            if (!result.success) {
+                onValidationError?.(v, result.error.issues[0]?.message ?? 'Validation failed');
+                return;
+            }
+        }
         onSave(v, { immediate });
     };
 

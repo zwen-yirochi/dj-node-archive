@@ -46,10 +46,12 @@ interface IconSlot {
 
 interface DescriptionSlot {
     field: 'description';
+    label: string;
 }
 
 interface TracklistSlot {
     field: 'tracklist';
+    label: string;
     columns: KeyValueColumn[];
     emptyItem: TracklistItem;
 }
@@ -76,15 +78,16 @@ export const DETAIL_VIEW_CONFIG: Record<'event' | 'mixset' | 'link', DetailField
         { field: 'date' },
         { field: 'venue' },
         { field: 'lineup' },
-        { field: 'description' },
+        { field: 'description', label: 'Description' },
     ],
     mixset: [
         { field: 'title', placeholder: 'Mixset title' },
         { field: 'image', aspectRatio: 'square', maxCount: 1 },
         { field: 'url' },
-        { field: 'description' },
+        { field: 'description', label: 'Description' },
         {
             field: 'tracklist',
+            label: 'Tracklist',
             columns: [
                 {
                     key: 'time',
@@ -107,6 +110,6 @@ export const DETAIL_VIEW_CONFIG: Record<'event' | 'mixset' | 'link', DetailField
         { field: 'title', placeholder: 'Link title' },
         { field: 'image', aspectRatio: 'video', maxCount: 1 },
         { field: 'url' },
-        { field: 'description' },
+        { field: 'description', label: 'Description' },
     ],
 };

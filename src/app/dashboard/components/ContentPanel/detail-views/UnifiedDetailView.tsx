@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import type { ArtistReference, TracklistItem, VenueReference } from '@/types';
+import type { EventEntry, LinkEntry, MixsetEntry } from '@/types';
 import { DETAIL_VIEW_CONFIG, type DetailFieldSlot } from '@/app/dashboard/config/detailViewConfig';
 
 import {
@@ -28,23 +28,27 @@ import type { ImageItem } from '../shared-fields/types';
 import type { DetailViewProps, SaveOptions } from './types';
 import { urlToStableId } from './utils';
 
+/** Entry types that UnifiedDetailView handles (excludes CustomEntry) */
+type DetailEntry = EventEntry | MixsetEntry | LinkEntry;
+
 // ============================================
-// Field renderer
+// Image slot — separate component for useMemo (issue #1)
 // ============================================
 
-interface FieldRendererProps {
-    slot: DetailFieldSlot;
-    entry: Record<string, unknown>;
+function ImageSlotRenderer({
+    entry,
+    slot,
+    onSave,
+    disabled,
+}: {
+    entry: DetailEntry;
+    slot: Extract<DetailFieldSlot, { field: 'image' }>;
     onSave: DetailViewProps['onSave'];
     disabled?: boolean;
-}
-
-function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps) {
-    // Image needs string[] → ImageItem[] conversion
-    const imageUrls = (entry.imageUrls as string[]) || [];
+}) {
     const imageItems: ImageItem[] = useMemo(
-        () => imageUrls.map((url) => ({ id: urlToStableId(url), url })),
-        [imageUrls]
+        () => entry.imageUrls.map((url) => ({ id: urlToStableId(url), url })),
+        [entry.imageUrls]
     );
 
     const handleImageSave = (items: ImageItem[], options?: SaveOptions) => {
@@ -55,12 +59,39 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
         );
     };
 
+    return (
+        <FieldSync config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleImageSave}>
+            {({ value, onChange }) => (
+                <ImageField
+                    value={value}
+                    onChange={onChange}
+                    aspectRatio={slot.aspectRatio}
+                    maxCount={slot.maxCount}
+                    disabled={disabled}
+                />
+            )}
+        </FieldSync>
+    );
+}
+
+// ============================================
+// Field slot renderer
+// ============================================
+
+interface FieldRendererProps {
+    slot: DetailFieldSlot;
+    entry: DetailEntry;
+    onSave: DetailViewProps['onSave'];
+    disabled?: boolean;
+}
+
+function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps) {
     switch (slot.field) {
         case 'title':
             return (
                 <FieldSync
                     config={TEXT_FIELD_CONFIG}
-                    value={(entry.title as string) || ''}
+                    value={entry.title}
                     onSave={(v) => onSave('title', v)}
                 >
                     {({ value, onChange }) => (
@@ -77,24 +108,15 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
 
         case 'image':
             return (
-                <FieldSync config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleImageSave}>
-                    {({ value, onChange }) => (
-                        <ImageField
-                            value={value}
-                            onChange={onChange}
-                            aspectRatio={slot.aspectRatio}
-                            maxCount={slot.maxCount}
-                            disabled={disabled}
-                        />
-                    )}
-                </FieldSync>
+                <ImageSlotRenderer entry={entry} slot={slot} onSave={onSave} disabled={disabled} />
             );
 
         case 'date':
+            if (entry.type !== 'event') return null;
             return (
                 <FieldSync
                     config={DATE_FIELD_CONFIG}
-                    value={(entry.date as string) || ''}
+                    value={entry.date}
                     onSave={(v) => onSave('date', v)}
                 >
                     {({ value, onChange }) => (
@@ -104,10 +126,11 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
             );
 
         case 'venue':
+            if (entry.type !== 'event') return null;
             return (
                 <FieldSync
                     config={VENUE_FIELD_CONFIG}
-                    value={(entry.venue as VenueReference) || { name: '' }}
+                    value={entry.venue}
                     onSave={(v) => onSave('venue', v)}
                 >
                     {({ value, onChange }) => (
@@ -117,10 +140,11 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
             );
 
         case 'lineup':
+            if (entry.type !== 'event') return null;
             return (
                 <FieldSync
                     config={LINEUP_FIELD_CONFIG}
-                    value={(entry.lineup as ArtistReference[]) || []}
+                    value={entry.lineup}
                     onSave={(v) => onSave('lineup', v)}
                 >
                     {({ value, onChange }) => (
@@ -130,10 +154,11 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
             );
 
         case 'url':
+            if (entry.type !== 'mixset' && entry.type !== 'link') return null;
             return (
                 <FieldSync
                     config={URL_FIELD_CONFIG}
-                    value={(entry.url as string) || ''}
+                    value={entry.url || ''}
                     onSave={(v) => onSave('url', v)}
                 >
                     {({ value, onChange }) => (
@@ -143,10 +168,11 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
             );
 
         case 'icon':
+            if (entry.type !== 'link') return null;
             return (
                 <FieldSync
                     config={ICON_FIELD_CONFIG}
-                    value={(entry.icon as string) || ''}
+                    value={entry.icon || ''}
                     onSave={(v) => onSave('icon', v)}
                 >
                     {({ value, onChange }) => (
@@ -158,10 +184,10 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
         case 'description':
             return (
                 <div>
-                    <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
+                    <p className="mb-3 text-sm font-semibold text-dashboard-text">{slot.label}</p>
                     <FieldSync
                         config={TEXT_FIELD_CONFIG}
-                        value={(entry.description as string) || ''}
+                        value={entry.description || ''}
                         onSave={(v) => onSave('description', v)}
                     >
                         {({ value, onChange }) => (
@@ -179,12 +205,13 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
             );
 
         case 'tracklist':
+            if (entry.type !== 'mixset') return null;
             return (
                 <div>
-                    <h3 className="mb-4 text-sm font-semibold text-dashboard-text">Tracklist</h3>
+                    <h3 className="mb-4 text-sm font-semibold text-dashboard-text">{slot.label}</h3>
                     <FieldSync
                         config={TRACKLIST_FIELD_CONFIG}
-                        value={(entry.tracklist as TracklistItem[]) || []}
+                        value={entry.tracklist || []}
                         onSave={(items) => onSave('tracklist', items)}
                     >
                         {({ value, onChange }) => (
@@ -210,7 +237,8 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
 export default function UnifiedDetailView({ entry, onSave, disabled }: DetailViewProps) {
     if (entry.type === 'custom') return null;
 
-    const slots = DETAIL_VIEW_CONFIG[entry.type];
+    const detailEntry = entry as DetailEntry;
+    const slots = DETAIL_VIEW_CONFIG[detailEntry.type];
 
     return (
         <div className="space-y-8">
@@ -218,7 +246,7 @@ export default function UnifiedDetailView({ entry, onSave, disabled }: DetailVie
                 <FieldSlotRenderer
                     key={slot.field}
                     slot={slot}
-                    entry={entry as unknown as Record<string, unknown>}
+                    entry={detailEntry}
                     onSave={onSave}
                     disabled={disabled}
                 />
