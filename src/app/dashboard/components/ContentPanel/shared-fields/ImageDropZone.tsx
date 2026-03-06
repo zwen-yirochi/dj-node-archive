@@ -4,10 +4,13 @@ import { useState } from 'react';
 
 import { ImagePlus, Loader2 } from 'lucide-react';
 
+const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
 interface ImageDropZoneProps {
     ratioClass: string;
     isUploading: boolean;
-    onFileDrop: (file: File) => void;
+    disabled?: boolean;
+    onFileDrop: (files: File[]) => void;
     onClickAdd: () => void;
     /** true면 w-full, false면 카드 사이즈 (w-28/sm:w-32) */
     fullWidth?: boolean;
@@ -16,26 +19,30 @@ interface ImageDropZoneProps {
 export default function ImageDropZone({
     ratioClass,
     isUploading,
+    disabled,
     onFileDrop,
     onClickAdd,
     fullWidth,
 }: ImageDropZoneProps) {
     const [isDragOver, setIsDragOver] = useState(false);
+    const isDisabled = disabled || isUploading;
 
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragOver(false);
-        if (isUploading) return;
+        if (isDisabled) return;
 
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
-            onFileDrop(file);
+        const imageFiles = Array.from(e.dataTransfer.files).filter((f) =>
+            ACCEPTED_TYPES.has(f.type)
+        );
+        if (imageFiles.length > 0) {
+            onFileDrop(imageFiles);
         }
     };
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
-        if (!isUploading) setIsDragOver(true);
+        if (!isDisabled) setIsDragOver(true);
     };
 
     const handleDragLeave = (e: React.DragEvent) => {
@@ -50,7 +57,7 @@ export default function ImageDropZone({
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            disabled={isUploading}
+            disabled={isDisabled}
             className={`flex ${ratioClass} ${fullWidth ? 'w-full' : 'w-28 sm:w-32'} flex-shrink-0 flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed transition-colors ${
                 isDragOver
                     ? 'border-dashboard-accent bg-dashboard-accent/5'

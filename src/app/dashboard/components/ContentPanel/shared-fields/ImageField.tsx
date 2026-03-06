@@ -52,7 +52,7 @@ export default function ImageField({
         error,
         canAdd,
         inputRef,
-        uploadFile,
+        uploadFiles,
         replaceFile,
         removeImage,
         handleFileSelect,
@@ -91,13 +91,16 @@ export default function ImageField({
                     ref={inputRef}
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    disabled={disabled}
                     onChange={handleFileSelect}
                     className="hidden"
                 />
                 <ImageDropZone
                     ratioClass={ratioClass}
                     isUploading={isUploading}
-                    onFileDrop={uploadFile}
+                    disabled={disabled}
+                    onFileDrop={uploadFiles}
                     onClickAdd={openFilePicker}
                     fullWidth
                 />
@@ -113,6 +116,7 @@ export default function ImageField({
                 ref={inputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
+                multiple
                 onChange={handleFileSelect}
                 className="hidden"
             />
@@ -148,57 +152,59 @@ export default function ImageField({
                 </div>
             )}
 
-            {/* Image strip */}
-            <div className="scrollbar-thin flex gap-2 overflow-x-auto pb-1">
-                <DndContext
-                    id={dndId}
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragStart={(e) => setActiveId(String(e.active.id))}
-                    onDragEnd={handleDragEnd}
-                >
-                    <SortableContext
-                        items={value.map((v) => v.id)}
-                        strategy={horizontalListSortingStrategy}
+            {/* Image strip — center when fits, scroll left when overflows */}
+            <div className="scrollbar-thin overflow-x-auto pb-1">
+                <div className="mx-auto flex w-fit gap-2">
+                    <DndContext
+                        id={dndId}
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={(e) => setActiveId(String(e.active.id))}
+                        onDragEnd={handleDragEnd}
                     >
-                        {value.map((item) => (
-                            <ImageCard
-                                key={item.id}
-                                item={item}
-                                ratioClass={ratioClass}
-                                isEditing={isEditing}
-                                onRemove={removeImage}
-                                onReplace={replaceFile}
-                            />
-                        ))}
-                    </SortableContext>
-
-                    <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
-                        {activeItem && (
-                            <div
-                                className={`relative ${ratioClass} border-dashboard-accent w-28 overflow-hidden rounded-lg border-2 shadow-lg sm:w-32`}
-                            >
-                                <Image
-                                    src={activeItem.url}
-                                    alt={activeItem.alt || ''}
-                                    fill
-                                    className="object-cover"
-                                    sizes="128px"
+                        <SortableContext
+                            items={value.map((v) => v.id)}
+                            strategy={horizontalListSortingStrategy}
+                        >
+                            {value.map((item) => (
+                                <ImageCard
+                                    key={item.id}
+                                    item={item}
+                                    ratioClass={ratioClass}
+                                    isEditing={isEditing}
+                                    onRemove={removeImage}
+                                    onReplace={replaceFile}
                                 />
-                            </div>
-                        )}
-                    </DragOverlay>
-                </DndContext>
+                            ))}
+                        </SortableContext>
 
-                {/* Add / drop zone (edit mode only) */}
-                {isEditing && canAdd && (
-                    <ImageDropZone
-                        ratioClass={ratioClass}
-                        isUploading={isUploading}
-                        onFileDrop={uploadFile}
-                        onClickAdd={openFilePicker}
-                    />
-                )}
+                        <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
+                            {activeItem && (
+                                <div
+                                    className={`relative ${ratioClass} border-dashboard-accent w-28 overflow-hidden rounded-lg border-2 shadow-lg sm:w-32`}
+                                >
+                                    <Image
+                                        src={activeItem.url}
+                                        alt={activeItem.alt || ''}
+                                        fill
+                                        className="object-cover"
+                                        sizes="128px"
+                                    />
+                                </div>
+                            )}
+                        </DragOverlay>
+                    </DndContext>
+
+                    {/* Add / drop zone (edit mode only) */}
+                    {isEditing && canAdd && (
+                        <ImageDropZone
+                            ratioClass={ratioClass}
+                            isUploading={isUploading}
+                            onFileDrop={uploadFiles}
+                            onClickAdd={openFilePicker}
+                        />
+                    )}
+                </div>
             </div>
 
             {error && <p className="text-xs text-red-500">{error}</p>}
