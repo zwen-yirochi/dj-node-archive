@@ -14,6 +14,8 @@ interface PageDisplayListProps {
     isCollapsed?: boolean;
 }
 
+const MAX_VISIBLE = 5;
+
 export default function PageDisplayList({
     entries,
     isDragging = false,
@@ -27,6 +29,9 @@ export default function PageDisplayList({
 
     // Show even when collapsed if dragging over
     const shouldShow = !isCollapsed || showDropIndicator || isDragging;
+
+    const visibleEntries = entries.slice(0, MAX_VISIBLE);
+    const hiddenCount = entries.length - visibleEntries.length;
 
     return (
         <div
@@ -55,9 +60,15 @@ export default function PageDisplayList({
                             {entries.length > 0 && (
                                 <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
                             )}
-                            {entries.map((entry) => (
+                            {visibleEntries.map((entry) => (
                                 <TreeItem key={`view-${entry.id}`} entry={entry} isInPageDisplay />
                             ))}
+
+                            {hiddenCount > 0 && (
+                                <p className="py-1 pl-7 text-xs text-dashboard-text-placeholder">
+                                    +{hiddenCount} more
+                                </p>
+                            )}
 
                             <div
                                 className={cn(
