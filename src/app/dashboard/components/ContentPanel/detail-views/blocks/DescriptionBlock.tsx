@@ -1,55 +1,34 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-
-import { eventFieldSchemas, type EventDescriptionForm } from '@/lib/validations/entry.schemas';
-
+import { FieldSync } from '../../shared-fields';
+import type { FieldSyncConfig } from '../../shared-fields/FieldSync';
+import TextField from '../../shared-fields/TextField';
 import type { FieldBlockProps } from '../types';
+
+const DESC_CONFIG: FieldSyncConfig<string> = { debounceMs: 800 };
 
 export default function DescriptionBlock({ entry, onSave, disabled }: FieldBlockProps) {
     const description = 'description' in entry ? (entry.description as string) || '' : '';
 
-    const prevValueRef = useRef(description);
-
-    const {
-        register,
-        watch,
-        formState: { isDirty },
-        reset,
-    } = useForm<EventDescriptionForm>({
-        resolver: zodResolver(eventFieldSchemas.description),
-        defaultValues: { description },
-        mode: 'onChange',
-    });
-
-    useEffect(() => {
-        if (!isDirty) {
-            reset({ description });
-            prevValueRef.current = description;
-        }
-    }, [description, isDirty, reset]);
-
-    const descriptionValue = watch('description');
-    useEffect(() => {
-        if (descriptionValue !== prevValueRef.current) {
-            prevValueRef.current = descriptionValue;
-            onSave('description', descriptionValue);
-        }
-    }, [descriptionValue]);
-
     return (
         <div>
             <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
-            <textarea
-                {...register('description')}
-                disabled={disabled}
-                placeholder="Add a description..."
-                rows={4}
-                className="w-full resize-none bg-transparent text-sm leading-relaxed text-dashboard-text-muted outline-none placeholder:text-dashboard-text-placeholder"
-            />
+            <FieldSync
+                config={DESC_CONFIG}
+                value={description}
+                onSave={(v) => onSave('description', v)}
+            >
+                {({ value, onChange }) => (
+                    <TextField
+                        value={value}
+                        onChange={onChange}
+                        disabled={disabled}
+                        variant="textarea"
+                        placeholder="Add a description..."
+                        className="text-sm leading-relaxed text-dashboard-text-muted"
+                    />
+                )}
+            </FieldSync>
         </div>
     );
 }

@@ -1,5 +1,6 @@
 export { default as FieldSync } from './FieldSync';
 export { default as ImageField } from './ImageField';
+export { default as TextField } from './TextField';
 export type { FieldSyncConfig } from './FieldSync';
 export type { FieldComponentProps, ImageFieldProps, ImageItem, ImageAspectRatio } from './types';
 
