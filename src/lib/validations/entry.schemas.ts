@@ -1,207 +1,114 @@
-// lib/validations/entry.schemas.ts
-// Zod schema definitions for entries
+/**
+ * Entry-level Zod schemas — draft/publish 조합
+ *
+ * atom은 field.atoms.ts에서 import하며,
+ * 이 파일은 entry 수준의 조합(draft 기본값, publish 필수값)만 담당한다.
+ */
 
 import { z } from 'zod';
 
-// ============================================
-// Sub-schemas (shared)
-// ============================================
-
-export const venueReferenceSchema = z.object({
-    id: z.string().uuid().optional(),
-    name: z.string().min(1).trim(),
-});
-
-export const artistReferenceSchema = z.object({
-    id: z.string().uuid().optional(),
-    name: z.string().min(1).trim(),
-});
-
-export const externalLinkSchema = z.object({
-    title: z.string().min(1).trim(),
-    url: z.string().url(),
-});
-
-// ============================================
-// Event Field Atoms (single source — per-field base validation rules)
-// ============================================
-
-const eventDateStrict = z.string().min(1, 'Date is required');
-const eventLineupBase = z.array(artistReferenceSchema);
-const eventDescriptionBase = z.string();
-const eventLinksBase = z.array(externalLinkSchema).optional();
+import {
+    blocksAtom,
+    dateStrictAtom,
+    descriptionAtom,
+    externalLinkSchema,
+    imageUrlsAtom,
+    lineupAtom,
+    titleAtom,
+    urlStrictAtom,
+    venueReferenceSchema,
+} from './field.atoms';
 
 // ============================================
 // Event Schemas
 // ============================================
 
-/** Fields shared between draft and publish */
 const eventBaseFields = {
-    title: z
-        .string()
-        .min(2, 'Title must be at least 2 characters')
-        .max(100, 'Title must be 100 characters or less')
-        .trim(),
-    imageUrls: z.array(z.string().min(1)).min(1, 'At least one image is required'),
-    links: eventLinksBase,
+    title: titleAtom.min(2, 'Title must be at least 2 characters'),
+    imageUrls: imageUrlsAtom.min(1, 'At least one image is required'),
+    links: z.array(externalLinkSchema).optional(),
 };
 
-/**
- * Draft event: only title and posterUrls are required (rest are optional/loose).
- * Used as the default resolver in forms.
- */
 export const draftEventSchema = z.object({
     ...eventBaseFields,
     date: z.string().default(''),
     venue: z
         .object({ id: z.string().uuid().optional(), name: z.string().default('') })
         .default({ name: '' }),
-    lineup: eventLineupBase.default([]),
-    description: eventDescriptionBase.default(''),
+    lineup: lineupAtom.default([]),
+    description: descriptionAtom.default(''),
 });
 
-/**
- * Publish event: strict validation on all fields.
- * Used for additional validation when the publish option is selected.
- */
 export const publishEventSchema = z.object({
     ...eventBaseFields,
-    date: eventDateStrict,
+    date: dateStrictAtom,
     venue: venueReferenceSchema,
-    lineup: eventLineupBase.min(1, 'At least one artist is required'),
-    description: eventDescriptionBase.min(1, 'Description is required').trim(),
+    lineup: lineupAtom.min(1, 'At least one artist is required'),
+    description: descriptionAtom.min(1, 'Description is required').trim(),
 });
-
-/** Form data types inferred from schemas (single source of truth) */
-export type CreateEventData = z.infer<typeof publishEventSchema>;
-export type CreateMixsetFormData = z.infer<typeof draftMixsetSchema>;
-export type CreateLinkFormData = z.infer<typeof draftLinkSchema>;
-
-// ============================================
-// Event Field Schemas (for block components — per-field validation)
-// ============================================
-
-export const eventFieldSchemas = {
-    date: z.object({ date: eventDateStrict }),
-    venue: z.object({ venue: venueReferenceSchema }),
-    lineup: z.object({ lineup: eventLineupBase }),
-    description: z.object({ description: eventDescriptionBase }),
-    links: z.object({ links: eventLinksBase }),
-};
-
-export type EventDateForm = z.infer<typeof eventFieldSchemas.date>;
-export type EventVenueForm = z.infer<typeof eventFieldSchemas.venue>;
-export type EventLineupForm = z.infer<typeof eventFieldSchemas.lineup>;
-export type EventDescriptionForm = z.infer<typeof eventFieldSchemas.description>;
-export type EventLinksForm = z.infer<typeof eventFieldSchemas.links>;
-
-// ============================================
-// Mixset Field Atoms
-// ============================================
-
-const mixsetUrlBase = z.string();
-const tracklistItemSchema = z.object({
-    track: z.string(),
-    artist: z.string(),
-    time: z.string(),
-});
-const mixsetTracklistBase = z.array(tracklistItemSchema);
 
 // ============================================
 // Mixset Schemas
 // ============================================
 
 const mixsetBase = z.object({
-    title: z.string().min(1).max(100).trim(),
+    title: titleAtom,
 });
 
 export const draftMixsetSchema = mixsetBase.extend({
-    imageUrls: z.array(z.string().min(1)).default([]),
-    url: mixsetUrlBase.url('Must be a valid URL'),
+    imageUrls: imageUrlsAtom.default([]),
+    url: urlStrictAtom,
 });
 
 export const publishMixsetSchema = mixsetBase.extend({
-    imageUrls: z.array(z.string().min(1)).min(1, 'At least one image is required'),
-    url: mixsetUrlBase.url('Must be a valid URL'),
+    imageUrls: imageUrlsAtom.min(1, 'At least one image is required'),
+    url: urlStrictAtom,
 });
-
-// ============================================
-// Mixset Field Schemas (for block components)
-// ============================================
-
-/** URL field schema — shared block component for Mixset + Link */
-export const urlFieldSchema = z.object({ url: z.string() });
-
-export const mixsetFieldSchemas = {
-    url: urlFieldSchema,
-    description: z.object({ description: eventDescriptionBase }),
-    tracklist: z.object({ tracklist: mixsetTracklistBase }),
-};
-
-// ============================================
-// Link Field Atoms
-// ============================================
-
-const linkIconBase = z.string().optional();
 
 // ============================================
 // Link Schemas
 // ============================================
 
 const linkBase = z.object({
-    title: z.string().min(1).max(100).trim(),
+    title: titleAtom,
 });
 
 export const draftLinkSchema = linkBase.extend({
     url: z.string().min(1).trim(),
-    imageUrls: z.array(z.string().min(1)).default([]),
+    imageUrls: imageUrlsAtom.default([]),
 });
 
 export const publishLinkSchema = linkBase.extend({
-    url: z.string().url('Must be a valid URL'),
-    imageUrls: z.array(z.string().min(1)).default([]),
+    url: urlStrictAtom,
+    imageUrls: imageUrlsAtom.default([]),
 });
-
-// ============================================
-// Link Field Schemas (for block components)
-// ============================================
-
-export const linkFieldSchemas = {
-    url: urlFieldSchema,
-    description: z.object({ description: z.string() }),
-    icon: z.object({ icon: linkIconBase }),
-};
 
 // ============================================
 // Custom Entry Schemas
 // ============================================
 
-const sectionBlockSchema = z.object({
-    id: z.string().uuid(),
-    type: z.enum(['header', 'richtext', 'image', 'embed', 'keyvalue']),
-    data: z.record(z.unknown()),
-});
-
 export const draftCustomSchema = z.object({
-    title: z.string().min(1, 'Title is required').max(100).trim(),
-    blocks: z.array(sectionBlockSchema).default([]),
+    title: titleAtom.min(1, 'Title is required'),
+    blocks: blocksAtom.default([]),
 });
 
 export const publishCustomSchema = z.object({
-    title: z.string().min(1, 'Title is required').max(100).trim(),
-    blocks: z.array(sectionBlockSchema).min(1, 'At least one block is required'),
+    title: titleAtom.min(1, 'Title is required'),
+    blocks: blocksAtom.min(1, 'At least one block is required'),
 });
+
+// ============================================
+// Form data types
+// ============================================
+
+export type CreateEventData = z.infer<typeof publishEventSchema>;
+export type CreateMixsetFormData = z.infer<typeof draftMixsetSchema>;
+export type CreateLinkFormData = z.infer<typeof draftLinkSchema>;
 
 // ============================================
 // API Request Schemas
 // ============================================
 
-/**
- * POST /api/entries - Create entry request
- *
- * The entry field uses .passthrough():
- * payload shape varies by type; detailed validation is performed in the handler.
- */
 export const createEntryRequestSchema = z.object({
     pageId: z.string().uuid('Invalid page ID'),
     entry: z
@@ -213,12 +120,6 @@ export const createEntryRequestSchema = z.object({
     publishOption: z.enum(['publish', 'private']).default('private'),
 });
 
-/**
- * PATCH /api/entries/[id] - Update entry request
- *
- * The entry field uses .passthrough():
- * payload shape varies by type; detailed validation is performed in the handler.
- */
 export const updateEntryRequestSchema = z
     .object({
         entry: z
@@ -239,9 +140,6 @@ export const updateEntryRequestSchema = z
         { message: 'At least one of entry, displayOrder, isVisible is required' }
     );
 
-/**
- * PATCH /api/entries/reorder - Reorder entries within a section
- */
 export const reorderEntriesRequestSchema = z.object({
     updates: z
         .array(
@@ -253,9 +151,6 @@ export const reorderEntriesRequestSchema = z.object({
         .min(1, 'At least one update is required'),
 });
 
-/**
- * PATCH /api/entries/reorder-display - Reorder entries within a page
- */
 export const reorderDisplayEntriesRequestSchema = z.object({
     updates: z
         .array(

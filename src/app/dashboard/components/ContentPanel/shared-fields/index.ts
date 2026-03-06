@@ -12,7 +12,16 @@ export { default as TextField } from './TextField';
 export { default as VenueField } from './VenueField';
 
 // Config
-export { IMAGE_FIELD_CONFIG } from './fieldConfigs';
+export {
+    DATE_FIELD_CONFIG,
+    ICON_FIELD_CONFIG,
+    IMAGE_FIELD_CONFIG,
+    LINEUP_FIELD_CONFIG,
+    TEXT_FIELD_CONFIG,
+    TRACKLIST_FIELD_CONFIG,
+    URL_FIELD_CONFIG,
+    VENUE_FIELD_CONFIG,
+} from './fieldConfigs';
 
 // Types
 export type { FieldSyncConfig } from './FieldSync';

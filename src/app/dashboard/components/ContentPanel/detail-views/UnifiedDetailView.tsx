@@ -5,27 +5,28 @@ import { useMemo } from 'react';
 import type { ArtistReference, TracklistItem, VenueReference } from '@/types';
 import { DETAIL_VIEW_CONFIG, type DetailFieldSlot } from '@/app/dashboard/config/detailViewConfig';
 
-import { FieldSync, IMAGE_FIELD_CONFIG, ImageField, TextField } from '../shared-fields';
-import DateField from '../shared-fields/DateField';
-import type { FieldSyncConfig } from '../shared-fields/FieldSync';
-import IconField from '../shared-fields/IconField';
-import KeyValueField from '../shared-fields/KeyValueField';
-import LineupField from '../shared-fields/LineupField';
-import LinkField from '../shared-fields/LinkField';
+import {
+    DATE_FIELD_CONFIG,
+    DateField,
+    FieldSync,
+    ICON_FIELD_CONFIG,
+    IconField,
+    IMAGE_FIELD_CONFIG,
+    ImageField,
+    KeyValueField,
+    LINEUP_FIELD_CONFIG,
+    LineupField,
+    LinkField,
+    TEXT_FIELD_CONFIG,
+    TextField,
+    TRACKLIST_FIELD_CONFIG,
+    URL_FIELD_CONFIG,
+    VENUE_FIELD_CONFIG,
+    VenueField,
+} from '../shared-fields';
 import type { ImageItem } from '../shared-fields/types';
-import VenueField from '../shared-fields/VenueField';
 import type { DetailViewProps, SaveOptions } from './types';
 import { urlToStableId } from './utils';
-
-// ============================================
-// Sync configs
-// ============================================
-
-const TEXT_DEBOUNCE: FieldSyncConfig<string> = { debounceMs: 800 };
-const IMMEDIATE_STRING: FieldSyncConfig<string> = { immediate: true };
-const VENUE_DEBOUNCE: FieldSyncConfig<VenueReference> = { debounceMs: 800 };
-const LINEUP_IMMEDIATE: FieldSyncConfig<ArtistReference[]> = { immediate: true };
-const TRACKLIST_DEBOUNCE: FieldSyncConfig<TracklistItem[]> = { debounceMs: 800 };
 
 // ============================================
 // Field renderer
@@ -58,7 +59,7 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
         case 'title':
             return (
                 <FieldSync
-                    config={TEXT_DEBOUNCE}
+                    config={TEXT_FIELD_CONFIG}
                     value={(entry.title as string) || ''}
                     onSave={(v) => onSave('title', v)}
                 >
@@ -92,7 +93,7 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
         case 'date':
             return (
                 <FieldSync
-                    config={IMMEDIATE_STRING}
+                    config={DATE_FIELD_CONFIG}
                     value={(entry.date as string) || ''}
                     onSave={(v) => onSave('date', v)}
                 >
@@ -105,7 +106,7 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
         case 'venue':
             return (
                 <FieldSync
-                    config={VENUE_DEBOUNCE}
+                    config={VENUE_FIELD_CONFIG}
                     value={(entry.venue as VenueReference) || { name: '' }}
                     onSave={(v) => onSave('venue', v)}
                 >
@@ -118,7 +119,7 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
         case 'lineup':
             return (
                 <FieldSync
-                    config={LINEUP_IMMEDIATE}
+                    config={LINEUP_FIELD_CONFIG}
                     value={(entry.lineup as ArtistReference[]) || []}
                     onSave={(v) => onSave('lineup', v)}
                 >
@@ -131,7 +132,7 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
         case 'url':
             return (
                 <FieldSync
-                    config={IMMEDIATE_STRING}
+                    config={URL_FIELD_CONFIG}
                     value={(entry.url as string) || ''}
                     onSave={(v) => onSave('url', v)}
                 >
@@ -144,7 +145,7 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
         case 'icon':
             return (
                 <FieldSync
-                    config={IMMEDIATE_STRING}
+                    config={ICON_FIELD_CONFIG}
                     value={(entry.icon as string) || ''}
                     onSave={(v) => onSave('icon', v)}
                 >
@@ -159,7 +160,7 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
                 <div>
                     <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
                     <FieldSync
-                        config={TEXT_DEBOUNCE}
+                        config={TEXT_FIELD_CONFIG}
                         value={(entry.description as string) || ''}
                         onSave={(v) => onSave('description', v)}
                     >
@@ -182,7 +183,7 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
                 <div>
                     <h3 className="mb-4 text-sm font-semibold text-dashboard-text">Tracklist</h3>
                     <FieldSync
-                        config={TRACKLIST_DEBOUNCE}
+                        config={TRACKLIST_FIELD_CONFIG}
                         value={(entry.tracklist as TracklistItem[]) || []}
                         onSave={(items) => onSave('tracklist', items)}
                     >
