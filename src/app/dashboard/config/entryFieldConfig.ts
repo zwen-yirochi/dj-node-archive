@@ -133,7 +133,7 @@ export function getMissingFieldLabels(
 }
 
 export function getTreeItemStatus(isInView: boolean, isValid: boolean): TreeItemStatus {
-    if (isInView) return 'inView';
     if (!isValid) return 'warning';
+    if (isInView) return 'inView';
     return 'normal';
 }

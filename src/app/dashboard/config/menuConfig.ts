@@ -142,8 +142,10 @@ const TREE_REMOVE_FROM_PAGE: MenuItemConfig = {
     label: 'Remove from Page',
 };
 
-/** Component section: Edit / Delete */
-export const TREE_ENTRY_MENU: MenuConfig = [TREE_EDIT, SEPARATOR, TREE_DELETE];
+const TREE_ADD_TO_PAGE: MenuItemConfig = { actionKey: 'add-to-page', label: 'Add to Page' };
+
+/** Component section: Add to Page / Delete */
+export const TREE_ENTRY_MENU: MenuConfig = [TREE_ADD_TO_PAGE, SEPARATOR, TREE_DELETE];
 
 /** Page display section: Edit / Hide / Remove from Page */
 export const TREE_PAGE_DISPLAY_MENU: MenuConfig = [

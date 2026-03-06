@@ -11,6 +11,7 @@ import { AlertCircle, Check, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
 import {
     canAddToView,
@@ -45,14 +46,14 @@ function StatusIcon({
     missingFields: string[];
 }) {
     switch (status) {
-        case 'inView':
-            return <Check className="h-3.5 w-3.5 text-dashboard-success" />;
         case 'warning':
             return (
                 <span title={`Required to add to Page: ${missingFields.join(', ')}`}>
                     <AlertCircle className="h-3.5 w-3.5 text-dashboard-warning" />
                 </span>
             );
+        case 'inView':
+            return <Check className="h-3.5 w-3.5 text-dashboard-success" />;
         default:
             return null;
     }
@@ -67,7 +68,7 @@ export default function TreeItem({ entry, isInPageDisplay = false }: TreeItemPro
     const confirmAction = useConfirmAction();
 
     // Mutations
-    const { remove, removeFromDisplay, toggleVisibility } = useEntryMutations();
+    const { remove, removeFromDisplay, toggleVisibility, addToDisplay } = useEntryMutations();
 
     // Compute status - numeric displayOrder means it's in the Page
     const isInView = typeof entry.displayOrder === 'number';
@@ -112,6 +113,25 @@ export default function TreeItem({ entry, isInPageDisplay = false }: TreeItemPro
         menuConfig,
         {
             edit: () => setView({ kind: 'detail', entryId: entry.id }),
+            'add-to-page': () => {
+                if (typeof entry.displayOrder === 'number') {
+                    toast({ variant: 'destructive', title: 'Already added to Page' });
+                    return;
+                }
+                if (!canAddToView(entry)) {
+                    const missing = getMissingFieldLabels(entry, 'create');
+                    toast({
+                        variant: 'destructive',
+                        title: 'Cannot add to Page',
+                        description:
+                            missing.length > 0
+                                ? `Missing: ${missing.join(', ')}`
+                                : 'Entry is incomplete',
+                    });
+                    return;
+                }
+                addToDisplay.mutate(entry.id);
+            },
             delete: () => {
                 const cv = useDashboardStore.getState().contentView;
                 if (cv.kind === 'detail' && cv.entryId === entry.id) {
