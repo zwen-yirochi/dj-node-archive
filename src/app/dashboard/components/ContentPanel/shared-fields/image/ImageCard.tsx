@@ -7,7 +7,7 @@ import Image from 'next/image';
 
 import { GripHorizontal, ImagePlus, Trash2 } from 'lucide-react';
 
-import type { ImageItem } from './types';
+import type { ImageItem } from '../types';
 
 interface ImageCardProps {
     item: ImageItem;

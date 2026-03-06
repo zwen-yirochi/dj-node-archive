@@ -9,9 +9,8 @@ import { z } from 'zod';
 
 import type { ArtistReference, TracklistItem, VenueReference } from '@/types';
 import { urlStrictAtom, venueReferenceSchema } from '@/lib/validations/field.atoms';
-
-import type { FieldSyncConfig } from './FieldSync';
-import type { ImageItem } from './types';
+import type { FieldSyncConfig } from '@/app/dashboard/components/ContentPanel/shared-fields/FieldSync';
+import type { ImageItem } from '@/app/dashboard/components/ContentPanel/shared-fields/types';
 
 // ============================================
 // Text fields (debounced)

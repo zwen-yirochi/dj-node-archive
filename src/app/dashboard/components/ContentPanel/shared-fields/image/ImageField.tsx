@@ -15,9 +15,9 @@ import Image from 'next/image';
 
 import { Pencil } from 'lucide-react';
 
+import type { ImageFieldProps } from '../types';
 import ImageCard from './ImageCard';
 import ImageDropZone from './ImageDropZone';
-import type { ImageFieldProps } from './types';
 import { useImageUpload } from './useImageUpload';
 
 // ============================================

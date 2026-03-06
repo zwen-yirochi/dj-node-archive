@@ -5,7 +5,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { deletePoster, uploadPoster } from '@/app/dashboard/actions/upload';
 
-import type { ImageItem } from './types';
+import type { ImageItem } from '../types';
 
 const COMPRESSION_OPTIONS = {
     maxSizeMB: 1,
