@@ -28,7 +28,11 @@ export default function CreateMixsetForm() {
 
     return (
         <Form {...form}>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form
+                onSubmit={handleSubmit}
+                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                className="space-y-6"
+            >
                 {errors.root && (
                     <div className="rounded-md bg-dashboard-danger-bg p-3 text-sm text-dashboard-danger">
                         {errors.root.message}

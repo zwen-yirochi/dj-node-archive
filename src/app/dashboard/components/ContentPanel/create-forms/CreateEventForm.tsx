@@ -44,7 +44,11 @@ export default function CreateEventForm() {
 
     return (
         <Form {...form}>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form
+                onSubmit={handleSubmit}
+                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                className="space-y-6"
+            >
                 {/* Root error display */}
                 {errors.root && (
                     <div className="rounded-md bg-dashboard-danger-bg p-3 text-sm text-dashboard-danger">
