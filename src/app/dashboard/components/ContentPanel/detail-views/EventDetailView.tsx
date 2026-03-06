@@ -2,9 +2,9 @@
 
 import { useMemo } from 'react';
 
-import { Calendar, MapPin, Users } from 'lucide-react';
+import { Calendar, Users } from 'lucide-react';
 
-import type { ArtistReference } from '@/types';
+import type { ArtistReference, VenueReference } from '@/types';
 
 import {
     FieldSync,
@@ -17,16 +17,9 @@ import DateField from '../shared-fields/DateField';
 import type { FieldSyncConfig } from '../shared-fields/FieldSync';
 import type { TagItem } from '../shared-fields/TagListField';
 import type { ImageItem } from '../shared-fields/types';
+import VenueField from '../shared-fields/VenueField';
 import type { DetailViewProps, SaveOptions } from './types';
-
-/** URL → stable ID (short hash) */
-function urlToStableId(url: string): string {
-    let hash = 0;
-    for (let i = 0; i < url.length; i++) {
-        hash = ((hash << 5) - hash + url.charCodeAt(i)) | 0;
-    }
-    return `poster-${(hash >>> 0).toString(36)}`;
-}
+import { urlToStableId } from './utils';
 
 // ============================================
 // Field configs
@@ -34,6 +27,7 @@ function urlToStableId(url: string): string {
 
 const TEXT_CONFIG: FieldSyncConfig<string> = { debounceMs: 800 };
 const DATE_CONFIG: FieldSyncConfig<string> = { immediate: true };
+const VENUE_CONFIG: FieldSyncConfig<VenueReference> = { debounceMs: 800 };
 const TAG_CONFIG: FieldSyncConfig<TagItem[]> = { immediate: true };
 
 const formatArtistTag = (name: string) => (name.startsWith('@') ? name : `@${name}`);
@@ -115,23 +109,16 @@ export default function EventDetailView({ entry, onSave, disabled }: DetailViewP
                 </div>
 
                 {/* Venue */}
-                <div className="flex items-center gap-3 text-sm">
-                    <MapPin className="h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
-                    <FieldSync
-                        config={TEXT_CONFIG}
-                        value={venue.name}
-                        onSave={(name) => onSave('venue', { ...venue, name })}
-                    >
-                        {({ value, onChange }) => (
-                            <TextField
-                                value={value}
-                                onChange={onChange}
-                                disabled={disabled}
-                                placeholder="Enter venue name"
-                            />
-                        )}
-                    </FieldSync>
-                </div>
+                <FieldSync config={VENUE_CONFIG} value={venue} onSave={(v) => onSave('venue', v)}>
+                    {({ value, onChange }) => (
+                        <VenueField
+                            value={value}
+                            onChange={onChange}
+                            disabled={disabled}
+                            className="flex-1"
+                        />
+                    )}
+                </FieldSync>
 
                 {/* Lineup */}
                 <div className="flex items-start gap-3 text-sm">

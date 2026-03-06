@@ -8,6 +8,7 @@ export { default as KeyValueField } from './KeyValueField';
 export { default as LinkField } from './LinkField';
 export { default as TagListField } from './TagListField';
 export { default as TextField } from './TextField';
+export { default as VenueField } from './VenueField';
 
 // Config
 export { IMAGE_FIELD_CONFIG } from './fieldConfigs';
