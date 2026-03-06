@@ -10,10 +10,11 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 
 import { useUser, useUserMutations } from '../../hooks';
 import { checkUsernameAvailable } from '../../hooks/use-user';
+import SyncedField from '../ContentPanel/shared-fields/SyncedField';
+import TextField from '../ContentPanel/shared-fields/TextField';
 import { DashboardDialogContent, Dialog, DialogHeader, DialogTitle } from './DashboardDialog';
 
 const USERNAME_REGEX = /^[a-z0-9_-]{3,30}$/;
@@ -72,9 +73,7 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
 
                     {/* Right content */}
                     <div className="flex-1 overflow-y-auto bg-dashboard-bg-surface/50 p-6">
-                        {activeSection === 'profile' && (
-                            <ProfileSection onClose={() => onOpenChange(false)} />
-                        )}
+                        {activeSection === 'profile' && <ProfileSection />}
                         {activeSection === 'account' && <AccountSettingsSection />}
                     </div>
                 </div>
@@ -87,13 +86,20 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
 // Profile Section
 // ---------------------------------------------------------------------------
 
-function ProfileSection({ onClose }: { onClose: () => void }) {
+function ProfileSection() {
     const user = useUser();
     const { updateProfile, uploadAvatar, deleteAvatar, updateUsername } = useUserMutations();
 
-    const [tempUser, setTempUser] = useState<User>(user);
     const [isUploading, setIsUploading] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const saveField = (
+        field: keyof Pick<User, 'displayName' | 'bio' | 'region'>,
+        value: string
+    ) => {
+        updateProfile.mutate({ userId: user.id, updates: { [field]: value } });
+    };
 
     // Username editing state
     const [tempUsername, setTempUsername] = useState(user.username);
@@ -152,25 +158,6 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
         );
     };
 
-    const handleSave = () => {
-        updateProfile.mutate(
-            {
-                userId: user.id,
-                updates: {
-                    displayName: tempUser.displayName,
-                    bio: tempUser.bio,
-                    region: tempUser.region,
-                },
-            },
-            {
-                onError: () => toast({ variant: 'destructive', title: 'Profile update failed.' }),
-            }
-        );
-        onClose();
-    };
-
-    const canSave = !isUploading;
-
     const handleAvatarClick = () => fileInputRef.current?.click();
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,7 +183,10 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
             { userId: user.id, formData },
             {
                 onSuccess: (data) => {
-                    setTempUser((prev) => ({ ...prev, avatarUrl: data.avatarUrl }));
+                    const img = new window.Image();
+                    img.src = data.avatarUrl;
+                    img.onload = () => setAvatarUrl(data.avatarUrl);
+                    img.onerror = () => setAvatarUrl(data.avatarUrl);
                 },
                 onError: () => toast({ variant: 'destructive', title: 'Image upload failed.' }),
                 onSettled: () => {
@@ -214,7 +204,7 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
             { userId: user.id },
             {
                 onSuccess: () => {
-                    setTempUser((prev) => ({ ...prev, avatarUrl: '' }));
+                    setAvatarUrl('');
                 },
                 onError: () => toast({ variant: 'destructive', title: 'Avatar delete failed.' }),
                 onSettled: () => setIsUploading(false),
@@ -233,13 +223,15 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
                     className="group relative"
                 >
                     <Avatar className="h-16 w-16 border border-dashboard-border">
-                        <AvatarImage
-                            src={tempUser.avatarUrl}
-                            alt={tempUser.displayName}
-                            className="object-cover"
-                        />
+                        {avatarUrl && (
+                            <AvatarImage
+                                src={avatarUrl}
+                                alt={user.displayName}
+                                className="object-cover"
+                            />
+                        )}
                         <AvatarFallback className="bg-dashboard-bg-active text-lg font-medium text-dashboard-text-secondary">
-                            {getInitials(tempUser.displayName || user.username)}
+                            {getInitials(user.displayName || user.username)}
                         </AvatarFallback>
                     </Avatar>
                     <div
@@ -255,7 +247,7 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
                         )}
                     </div>
                 </button>
-                {tempUser.avatarUrl && (
+                {avatarUrl && (
                     <button
                         onClick={handleDeleteAvatar}
                         disabled={isUploading}
@@ -337,53 +329,37 @@ function ProfileSection({ onClose }: { onClose: () => void }) {
             {/* Display Name */}
             <div className="space-y-2">
                 <label className="text-xs text-dashboard-text-muted">Display Name</label>
-                <Input
-                    type="text"
-                    value={tempUser.displayName || ''}
-                    onChange={(e) => setTempUser({ ...tempUser, displayName: e.target.value })}
-                    placeholder="Display Name"
-                    className="border-dashboard-border bg-dashboard-bg-card text-sm text-dashboard-text shadow-none placeholder:text-dashboard-text-placeholder focus-visible:ring-dashboard-border"
-                />
+                <SyncedField
+                    config={{ debounceMs: 800 }}
+                    value={user.displayName ?? ''}
+                    onSave={(v) => saveField('displayName', v)}
+                >
+                    <TextField placeholder="Display Name" />
+                </SyncedField>
             </div>
 
             {/* Bio */}
             <div className="space-y-2">
                 <label className="text-xs text-dashboard-text-muted">Bio</label>
-                <Textarea
-                    value={tempUser.bio || ''}
-                    onChange={(e) => setTempUser({ ...tempUser, bio: e.target.value })}
-                    placeholder="Write a short bio"
-                    rows={3}
-                    className="resize-none border-dashboard-border bg-dashboard-bg-card text-sm leading-relaxed text-dashboard-text shadow-none placeholder:text-dashboard-text-placeholder focus-visible:ring-dashboard-border"
-                />
+                <SyncedField
+                    config={{ debounceMs: 800 }}
+                    value={user.bio ?? ''}
+                    onSave={(v) => saveField('bio', v)}
+                >
+                    <TextField variant="textarea" placeholder="Write a short bio" rows={3} />
+                </SyncedField>
             </div>
 
             {/* Region */}
             <div className="space-y-2">
                 <label className="text-xs text-dashboard-text-muted">Region</label>
-                <Input
-                    value={tempUser.region || ''}
-                    onChange={(e) => setTempUser({ ...tempUser, region: e.target.value })}
-                    placeholder="e.g. Seoul, South Korea"
-                    className="border-dashboard-border bg-dashboard-bg-card text-sm text-dashboard-text shadow-none placeholder:text-dashboard-text-placeholder focus-visible:ring-dashboard-border"
-                />
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-end gap-2">
-                <button
-                    onClick={onClose}
-                    className="rounded-lg px-3 py-1.5 text-[13px] text-dashboard-text-muted transition-colors hover:bg-dashboard-bg-hover hover:text-dashboard-text-secondary"
+                <SyncedField
+                    config={{ debounceMs: 800 }}
+                    value={user.region ?? ''}
+                    onSave={(v) => saveField('region', v)}
                 >
-                    Cancel
-                </button>
-                <button
-                    onClick={handleSave}
-                    disabled={!canSave}
-                    className="rounded-lg bg-dashboard-text px-3 py-1.5 text-[13px] text-white transition-colors hover:bg-dashboard-text/90 disabled:opacity-50"
-                >
-                    Save
-                </button>
+                    <TextField placeholder="e.g. Seoul, South Korea" />
+                </SyncedField>
             </div>
         </div>
     );
