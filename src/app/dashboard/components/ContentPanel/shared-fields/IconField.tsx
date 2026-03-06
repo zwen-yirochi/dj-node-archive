@@ -37,18 +37,18 @@ export default function IconField({ value = '', onChange, disabled }: FieldCompo
     }, [showSelector]);
 
     return (
-        <div ref={popoverRef} className="relative mx-auto w-fit">
+        <div ref={popoverRef} className="relative w-9 overflow-visible">
             <button
                 onClick={() => !disabled && setShowSelector(!showSelector)}
                 disabled={disabled}
-                className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-dashboard-bg-muted transition-colors hover:bg-dashboard-bg-hover"
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-dashboard-bg-muted transition-colors hover:bg-dashboard-bg-hover"
                 title="Click to change icon"
             >
-                <IconComponent className="h-8 w-8 text-dashboard-text-secondary" />
+                <IconComponent className="h-5 w-5 text-dashboard-text-secondary" />
             </button>
             {showSelector && (
-                <div className="absolute left-1/2 z-10 mt-2 -translate-x-1/2 rounded-xl border border-dashboard-border bg-dashboard-bg-card p-3 shadow-lg">
-                    <div className="grid grid-cols-4 gap-2">
+                <div className="absolute left-0 top-full z-50 mt-1 w-max rounded-xl border border-dashboard-border bg-dashboard-bg-card p-2 shadow-lg">
+                    <div className="grid grid-cols-4 gap-1">
                         {ICON_OPTIONS.map((opt) => {
                             const Icon = iconComponents[opt] || Globe;
                             return (
@@ -59,14 +59,14 @@ export default function IconField({ value = '', onChange, disabled }: FieldCompo
                                         setShowSelector(false);
                                     }}
                                     className={cn(
-                                        'flex h-10 w-10 items-center justify-center rounded-lg border-2 transition-colors',
+                                        'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
                                         value === opt
-                                            ? 'border-dashboard-text bg-dashboard-bg-muted'
-                                            : 'border-transparent hover:bg-dashboard-bg-hover'
+                                            ? 'bg-dashboard-bg-muted text-dashboard-text'
+                                            : 'text-dashboard-text-muted hover:bg-dashboard-bg-hover hover:text-dashboard-text'
                                     )}
                                     title={opt}
                                 >
-                                    <Icon className="h-5 w-5" />
+                                    <Icon className="h-4 w-4" />
                                 </button>
                             );
                         })}
