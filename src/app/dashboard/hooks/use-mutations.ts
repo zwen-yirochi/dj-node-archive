@@ -65,6 +65,26 @@ export function useEntryMutations() {
         })
     );
 
+    const updateField = useMutation(
+        m<{ entryId: string; fieldKey: string; value: unknown }>({
+            mutationFn: ({ entryId, fieldKey, value }, entries) => {
+                const current = entries?.find((e) => e.id === entryId);
+                if (!current) throw new Error('Entry not found in cache');
+                const updated = { ...current, [fieldKey]: value } as ContentEntry;
+                return updateEntry({ id: entryId, entry: updated });
+            },
+            optimisticUpdate: ({ entryId, fieldKey, value }, entries) =>
+                entries.map((e) =>
+                    e.id === entryId ? ({ ...e, [fieldKey]: value } as ContentEntry) : e
+                ),
+            triggersPreview: ({ entryId, fieldKey }, snapshot) => {
+                const entry = snapshot.find((e) => e.id === entryId);
+                return entry ? hasPreviewField(entry.type, [fieldKey]) : false;
+            },
+            previewTarget: 'entry-detail',
+        })
+    );
+
     const remove = useMutation(
         m<string>({
             mutationFn: (id) => deleteEntry(id),
@@ -155,6 +175,7 @@ export function useEntryMutations() {
     return {
         create,
         update,
+        updateField,
         remove,
         addToDisplay,
         removeFromDisplay,
