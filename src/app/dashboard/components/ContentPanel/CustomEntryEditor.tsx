@@ -17,7 +17,7 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useCallback, useId, useState, type ComponentType } from 'react';
+import { useCallback, useId, useState, type ReactNode } from 'react';
 
 import { Plus } from 'lucide-react';
 
@@ -29,26 +29,134 @@ import {
 } from '@/app/dashboard/config/customBlockConfig';
 import { Button } from '@/components/ui/button';
 
-import {
-    EmbedSection,
-    HeaderSection,
-    ImageSection,
-    KeyValueSection,
-    RichTextSection,
-} from './custom-blocks';
 import BlockWrapper from './custom-blocks/BlockWrapper';
-import type { SectionBlockEditorProps } from './custom-blocks/types';
+import {
+    EmbedField,
+    IMAGE_FIELD_CONFIG,
+    ImageField,
+    KEYVALUE_FIELD_CONFIG,
+    KeyValueField,
+    SyncedField,
+    TEXT_FIELD_CONFIG,
+    TextField,
+    URL_FIELD_CONFIG,
+} from './shared-fields';
+import type { ImageItem } from './shared-fields/types';
 
 // ============================================
-// Block Component Registry
+// Block Renderers
 // ============================================
 
-const BLOCK_COMPONENT_MAP: Record<SectionBlockType, ComponentType<SectionBlockEditorProps<any>>> = {
-    header: HeaderSection,
-    richtext: RichTextSection,
-    image: ImageSection,
-    embed: EmbedSection,
-    keyvalue: KeyValueSection,
+interface BlockRenderProps {
+    data: SectionBlockDataMap[SectionBlockType];
+    onChange: (data: SectionBlockDataMap[SectionBlockType]) => void;
+    disabled?: boolean;
+}
+
+// url string → ImageItem[] conversion helper
+const toImageItems = (url: string): ImageItem[] => (url ? [{ id: 'block-img', url }] : []);
+
+const KV_COLUMNS = [
+    {
+        key: 'key',
+        placeholder: 'Label',
+        width: 'w-28 shrink-0',
+        className: 'font-medium text-dashboard-text-secondary',
+    },
+    { key: 'value', placeholder: 'Value', width: 'flex-1' },
+];
+const EMPTY_KV = { key: '', value: '' };
+
+const BLOCK_RENDERERS: Record<SectionBlockType, (props: BlockRenderProps) => ReactNode> = {
+    header: ({ data, onChange, disabled }) => {
+        const d = data as SectionBlockDataMap['header'];
+        return (
+            <div className="space-y-1">
+                <SyncedField
+                    config={TEXT_FIELD_CONFIG}
+                    value={d.title}
+                    onSave={(v) => onChange({ ...d, title: v })}
+                >
+                    <TextField
+                        disabled={disabled}
+                        placeholder="Heading"
+                        className="text-lg font-bold text-dashboard-text"
+                    />
+                </SyncedField>
+                <SyncedField
+                    config={TEXT_FIELD_CONFIG}
+                    value={d.subtitle || ''}
+                    onSave={(v) => onChange({ ...d, subtitle: v || undefined })}
+                >
+                    <TextField
+                        disabled={disabled}
+                        placeholder="Subtitle (optional)"
+                        className="text-sm text-dashboard-text-secondary"
+                    />
+                </SyncedField>
+            </div>
+        );
+    },
+    richtext: ({ data, onChange, disabled }) => {
+        const d = data as SectionBlockDataMap['richtext'];
+        return (
+            <SyncedField
+                config={TEXT_FIELD_CONFIG}
+                value={d.content}
+                onSave={(v) => onChange({ ...d, content: v })}
+            >
+                <TextField
+                    disabled={disabled}
+                    variant="textarea"
+                    placeholder="Write something..."
+                    rows={3}
+                    className="min-h-[80px] text-sm text-dashboard-text"
+                />
+            </SyncedField>
+        );
+    },
+    image: ({ data, onChange, disabled }) => {
+        const d = data as SectionBlockDataMap['image'];
+        return (
+            <SyncedField
+                config={IMAGE_FIELD_CONFIG}
+                value={toImageItems(d.url)}
+                onSave={(items) => onChange({ url: items[0]?.url || '' })}
+            >
+                <ImageField disabled={disabled} maxCount={1} />
+            </SyncedField>
+        );
+    },
+    embed: ({ data, onChange, disabled }) => {
+        const d = data as SectionBlockDataMap['embed'];
+        return (
+            <SyncedField
+                config={URL_FIELD_CONFIG}
+                value={d.url}
+                onSave={(v) => onChange({ ...d, url: v })}
+            >
+                <EmbedField disabled={disabled} />
+            </SyncedField>
+        );
+    },
+    keyvalue: ({ data, onChange, disabled }) => {
+        const d = data as SectionBlockDataMap['keyvalue'];
+        return (
+            <SyncedField
+                config={KEYVALUE_FIELD_CONFIG}
+                value={d.items}
+                onSave={(v) => onChange({ ...d, items: v })}
+                indicatorPosition="top-right"
+            >
+                <KeyValueField
+                    disabled={disabled}
+                    columns={[...KV_COLUMNS]}
+                    emptyItem={EMPTY_KV}
+                    addLabel="Add field"
+                />
+            </SyncedField>
+        );
+    },
 };
 
 // ============================================
@@ -73,9 +181,9 @@ function SortableBlock({ block, onUpdate, onRemove, disabled }: SortableBlockPro
     };
 
     const config = SECTION_BLOCK_CONFIG[block.type];
-    const BlockComponent = BLOCK_COMPONENT_MAP[block.type];
+    const render = BLOCK_RENDERERS[block.type];
 
-    if (!config || !BlockComponent) return null;
+    if (!config || !render) return null;
 
     return (
         <div ref={setNodeRef} style={style}>
@@ -87,11 +195,7 @@ function SortableBlock({ block, onUpdate, onRemove, disabled }: SortableBlockPro
                 isDragging={isDragging}
                 disabled={disabled}
             >
-                <BlockComponent
-                    data={block.data as any}
-                    onChange={(newData) => onUpdate(block.id, newData)}
-                    disabled={disabled}
-                />
+                {render({ data: block.data, onChange: (d) => onUpdate(block.id, d), disabled })}
             </BlockWrapper>
         </div>
     );
