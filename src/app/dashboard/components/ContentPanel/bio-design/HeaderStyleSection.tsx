@@ -2,7 +2,8 @@
 
 import type { HeaderStyle } from '@/types/domain';
 import { cn } from '@/lib/utils';
-import { headerStyles } from '@/app/dashboard/config/headerStyleConfig';
+
+import { headerStyles } from './header-style.config';
 
 interface HeaderStyleSectionProps {
     headerStyle: HeaderStyle;

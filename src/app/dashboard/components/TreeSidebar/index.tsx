@@ -28,9 +28,9 @@ import { ChevronDown, ChevronRight, FileText, Palette } from 'lucide-react';
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
-import { type EntryType } from '@/app/dashboard/config/entryConfig';
-import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
-import { COMPONENT_GROUPS } from '@/app/dashboard/config/sidebarConfig';
+import { type EntryType } from '@/app/dashboard/config/entry/entry-types';
+import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entry/entry-validation';
+import { COMPONENT_GROUPS } from '@/app/dashboard/config/ui/sidebar';
 import { TypeBadge } from '@/components/dna';
 
 import { useEntries, useEntryMutations, useUser } from '../../hooks';

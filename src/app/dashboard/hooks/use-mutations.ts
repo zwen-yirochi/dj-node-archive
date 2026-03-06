@@ -13,13 +13,10 @@ import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { ContentEntry } from '@/types';
-import {
-    canAddToView,
-    FIELD_CONFIG,
-    type FieldConfig,
-} from '@/app/dashboard/config/entryFieldConfig';
-import type { PublishOption } from '@/app/dashboard/config/workflowOptions';
+import { FIELD_CONFIG, type FieldConfig } from '@/app/dashboard/config/entry/entry-fields';
+import { canAddToView } from '@/app/dashboard/config/entry/entry-validation';
 
+import type { PublishOption } from '../components/ContentPanel/create-forms/workflow-options';
 import {
     createEntry,
     deleteEntry,

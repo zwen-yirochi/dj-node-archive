@@ -9,12 +9,8 @@ import { GripVertical, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
-import {
-    getPlatformIcon,
-    getPlatformLabel,
-    getPlatformPlaceholder,
-} from '../../../../config/profileLinksConfig';
 import type { LinkItem } from './links.utils';
+import { getPlatformIcon, getPlatformLabel, getPlatformPlaceholder } from './profile-links.config';
 
 interface SortableLinkRowProps {
     item: LinkItem;

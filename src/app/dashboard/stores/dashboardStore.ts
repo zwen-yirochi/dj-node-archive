@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import type { EntryType } from '../config/entryConfig';
+import type { EntryType } from '../config/entry/entry-types';
 
 export type { EntryType };
 

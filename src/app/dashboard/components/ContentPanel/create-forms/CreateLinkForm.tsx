@@ -2,6 +2,7 @@
 
 import { Loader2 } from 'lucide-react';
 
+import { LINK_FORM_CONFIG } from '@/app/dashboard/config/entry/entry-forms';
 import { Button } from '@/components/ui/button';
 import {
     Form,
@@ -13,7 +14,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
-import { LINK_FORM_CONFIG } from '../../../config/entryFormConfig';
 import { useCreateEntryForm } from '../../../hooks/use-create-entry-form';
 
 const inputClassName =

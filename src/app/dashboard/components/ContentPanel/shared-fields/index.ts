@@ -22,7 +22,7 @@ export {
     TRACKLIST_FIELD_CONFIG,
     URL_FIELD_CONFIG,
     VENUE_FIELD_CONFIG,
-} from '@/app/dashboard/config/fieldConfigs';
+} from '@/app/dashboard/config/entry/field-sync';
 
 // Types
 export type { FieldSyncConfig, SaveOptions } from './types';

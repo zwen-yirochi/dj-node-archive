@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 
 import { createEmptyEntry } from '@/lib/mappers';
 import { toast } from '@/hooks/use-toast';
-import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
+import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entry/entry-types';
 import { TypeBadge } from '@/components/dna';
 
 import { useEntryMutations } from '../../../hooks';

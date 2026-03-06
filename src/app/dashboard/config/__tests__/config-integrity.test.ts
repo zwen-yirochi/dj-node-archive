@@ -14,11 +14,12 @@ import {
     draftMixsetSchema,
 } from '@/lib/validations/entry.schemas';
 
-import { ENTRY_TYPE_CONFIG, type EntryType } from '../entryConfig';
-import { ENTRY_SCHEMAS, FIELD_CONFIG } from '../entryFieldConfig';
-import { FORM_CONFIGS } from '../entryFormConfig';
-import { EDITOR_MENU_CONFIG } from '../menuConfig';
-import { COMPONENT_GROUPS, SIDEBAR_CONFIG } from '../sidebarConfig';
+import { FIELD_CONFIG } from '../entry/entry-fields';
+import { FORM_CONFIGS } from '../entry/entry-forms';
+import { ENTRY_TYPE_CONFIG, type EntryType } from '../entry/entry-types';
+import { ENTRY_SCHEMAS } from '../entry/entry-validation';
+import { EDITOR_MENU_CONFIG } from '../ui/menu';
+import { COMPONENT_GROUPS, SIDEBAR_CONFIG } from '../ui/sidebar';
 
 // EntryType 전체 목록 — entryConfig에서 파생
 const ALL_TYPES = Object.keys(ENTRY_TYPE_CONFIG) as EntryType[];

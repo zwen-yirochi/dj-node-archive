@@ -1,6 +1,6 @@
 import type { ProfileLink, ProfileLinkType } from '@/types';
 
-import { PLATFORM_PRESETS } from '../../../../config/profileLinksConfig';
+import { PLATFORM_PRESETS } from './profile-links.config';
 
 /** Internal representation — presets always exist, toggled on/off */
 export interface LinkItem {

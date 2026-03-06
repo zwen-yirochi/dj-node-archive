@@ -1,7 +1,7 @@
 import type { BadgeType } from '@/components/dna/TypeBadge';
 
-import type { SectionKey } from '../stores/dashboardStore';
-import type { EntryType } from './entryConfig';
+import type { SectionKey } from '../../stores/dashboardStore';
+import type { EntryType } from '../entry/entry-types';
 
 export interface ComponentGroupConfig {
     section: SectionKey;

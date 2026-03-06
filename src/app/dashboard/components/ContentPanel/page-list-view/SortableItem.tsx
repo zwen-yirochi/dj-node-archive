@@ -12,8 +12,8 @@ import { GripVertical, MoreHorizontal } from 'lucide-react';
 import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry } from '@/types';
 import { formatDateCompact } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
-import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
-import { resolveMenuItems, TREE_PAGE_DISPLAY_MENU } from '@/app/dashboard/config/menuConfig';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
+import { resolveMenuItems, TREE_PAGE_DISPLAY_MENU } from '@/app/dashboard/config/ui/menu';
 import { TypeBadge } from '@/components/dna';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 

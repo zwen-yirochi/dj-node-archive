@@ -5,9 +5,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, ArrowLeft, Check, Loader2, MoreHorizontal } from 'lucide-react';
 
 import type { CustomEntry } from '@/types';
-import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
-import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
-import { EDITOR_MENU_CONFIG, resolveMenuItems } from '@/app/dashboard/config/menuConfig';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
+import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entry/entry-validation';
+import { EDITOR_MENU_CONFIG, resolveMenuItems } from '@/app/dashboard/config/ui/menu';
 import { TypeBadge } from '@/components/dna';
 import { Button } from '@/components/ui/button';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';

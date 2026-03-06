@@ -2,7 +2,7 @@
 
 import { Loader2 } from 'lucide-react';
 
-import { PUBLISH_OPTIONS } from '@/app/dashboard/config/workflowOptions';
+import { EVENT_FORM_CONFIG } from '@/app/dashboard/config/entry/entry-forms';
 import { searchArtists, searchVenues } from '@/app/dashboard/services/search';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,8 +21,8 @@ import SearchableInput from '@/components/ui/SearchableInput';
 import SearchableTagInput from '@/components/ui/SearchableTagInput';
 import { Textarea } from '@/components/ui/textarea';
 
-import { EVENT_FORM_CONFIG } from '../../../config/entryFormConfig';
 import { useCreateEntryForm } from '../../../hooks/use-create-entry-form';
+import { PUBLISH_OPTIONS } from './workflow-options';
 
 // Common Input styles
 const inputClassName =

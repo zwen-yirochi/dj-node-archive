@@ -23,7 +23,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Calendar, GripVertical } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
-import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { TypeBadge } from '@/components/dna';
 
 import { useEntries, useEntryMutations } from '../../../hooks';

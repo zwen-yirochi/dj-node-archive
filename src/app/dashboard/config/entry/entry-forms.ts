@@ -16,8 +16,8 @@ import type {
     CreateMixsetFormData,
 } from '@/lib/validations/entry.schemas';
 
-import type { CreateEntryFormConfig } from '../hooks/use-create-entry-form';
-import type { EntryType } from './entryConfig';
+import type { CreateEntryFormConfig } from '../../hooks/use-create-entry-form';
+import type { EntryType } from './entry-types';
 
 export const EVENT_FORM_CONFIG: CreateEntryFormConfig<CreateEventData> = {
     type: 'event',

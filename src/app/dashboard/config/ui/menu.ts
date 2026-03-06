@@ -9,7 +9,7 @@
 
 import type { DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 
-import type { EntryType } from './entryConfig';
+import type { EntryType } from '../entry/entry-types';
 
 // ============================================
 // Confirm strategy

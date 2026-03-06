@@ -12,18 +12,14 @@ import { AlertCircle, Check, MoreHorizontal } from 'lucide-react';
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
-import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
-import {
-    canAddToView,
-    getMissingFieldLabels,
-    getTreeItemStatus,
-    type TreeItemStatus,
-} from '@/app/dashboard/config/entryFieldConfig';
+import { getTreeItemStatus, type TreeItemStatus } from '@/app/dashboard/config/entry/entry-fields';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
+import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entry/entry-validation';
 import {
     resolveMenuItems,
     TREE_ENTRY_MENU,
     TREE_PAGE_DISPLAY_MENU,
-} from '@/app/dashboard/config/menuConfig';
+} from '@/app/dashboard/config/ui/menu';
 import { TypeBadge } from '@/components/dna';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 

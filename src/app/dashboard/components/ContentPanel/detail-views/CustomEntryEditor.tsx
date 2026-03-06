@@ -22,11 +22,6 @@ import { useCallback, useId, useState, type ReactNode } from 'react';
 import { Plus } from 'lucide-react';
 
 import type { CustomEntry, SectionBlock, SectionBlockDataMap, SectionBlockType } from '@/types';
-import {
-    createBlock,
-    SECTION_BLOCK_CONFIG,
-    SECTION_BLOCK_TYPES,
-} from '@/app/dashboard/config/customBlockConfig';
 import { Button } from '@/components/ui/button';
 
 import {
@@ -42,6 +37,7 @@ import {
 } from '../shared-fields';
 import type { ImageItem } from '../shared-fields/types';
 import BlockWrapper from './BlockWrapper';
+import { createBlock, SECTION_BLOCK_CONFIG, SECTION_BLOCK_TYPES } from './custom-block.config';
 
 // ============================================
 // Block Renderers

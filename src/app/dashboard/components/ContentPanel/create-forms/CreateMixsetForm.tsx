@@ -2,6 +2,7 @@
 
 import { Loader2 } from 'lucide-react';
 
+import { MIXSET_FORM_CONFIG } from '@/app/dashboard/config/entry/entry-forms';
 import { Button } from '@/components/ui/button';
 import {
     Form,
@@ -14,7 +15,6 @@ import {
 import ImageUpload from '@/components/ui/ImageUpload';
 import { Input } from '@/components/ui/input';
 
-import { MIXSET_FORM_CONFIG } from '../../../config/entryFormConfig';
 import { useCreateEntryForm } from '../../../hooks/use-create-entry-form';
 
 const inputClassName =
