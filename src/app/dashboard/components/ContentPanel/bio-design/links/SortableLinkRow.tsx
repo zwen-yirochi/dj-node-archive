@@ -13,7 +13,7 @@ import {
     getPlatformIcon,
     getPlatformLabel,
     getPlatformPlaceholder,
-} from '../../../config/profileLinksConfig';
+} from '../../../../config/profileLinksConfig';
 import type { LinkItem } from './links.utils';
 
 interface SortableLinkRowProps {

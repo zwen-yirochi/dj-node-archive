@@ -5,13 +5,17 @@ import Link from 'next/link';
 
 import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 
-import { useUser } from '../hooks';
+import { useUser } from '../../hooks';
 import {
     useRegisterPreviewHandler,
     type PreviewAction,
     type PreviewTarget,
-} from '../hooks/use-preview-actions';
-import { selectContentView, useDashboardStore, type ContentView } from '../stores/dashboardStore';
+} from '../../hooks/use-preview-actions';
+import {
+    selectContentView,
+    useDashboardStore,
+    type ContentView,
+} from '../../stores/dashboardStore';
 
 function viewToPreviewTarget(view: ContentView): PreviewTarget {
     return view.kind === 'detail' ? 'entry-detail' : 'userpage';

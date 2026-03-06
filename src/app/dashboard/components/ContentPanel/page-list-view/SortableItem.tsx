@@ -17,10 +17,10 @@ import { resolveMenuItems, TREE_PAGE_DISPLAY_MENU } from '@/app/dashboard/config
 import { TypeBadge } from '@/components/dna';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
-import { useEntryMutations } from '../../hooks';
-import { useConfirmAction } from '../../hooks/use-confirm-action';
-import { selectSetView, useDashboardStore } from '../../stores/dashboardStore';
-import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { useEntryMutations } from '../../../hooks';
+import { useConfirmAction } from '../../../hooks/use-confirm-action';
+import { selectSetView, useDashboardStore } from '../../../stores/dashboardStore';
+import { ConfirmDialog } from '../../ui/ConfirmDialog';
 
 // ============================================
 // DetailText

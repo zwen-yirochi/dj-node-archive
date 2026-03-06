@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AlertCircle, ArrowLeft, Check, Loader2, MoreHorizontal } from 'lucide-react';
 
-import type { ContentEntry, CustomEntry } from '@/types';
+import type { CustomEntry } from '@/types';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
 import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
 import { EDITOR_MENU_CONFIG, resolveMenuItems } from '@/app/dashboard/config/menuConfig';
@@ -12,13 +12,13 @@ import { TypeBadge } from '@/components/dna';
 import { Button } from '@/components/ui/button';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
-import { useEntryDetail, useEntryMutations } from '../../hooks';
-import { useConfirmAction } from '../../hooks/use-confirm-action';
-import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { useEntryDetail, useEntryMutations } from '../../../hooks';
+import { useConfirmAction } from '../../../hooks/use-confirm-action';
+import { ConfirmDialog } from '../../ui/ConfirmDialog';
+import EventDetailView from '../detail-views/EventDetailView';
+import LinkDetailView from '../detail-views/LinkDetailView';
+import MixsetDetailView from '../detail-views/MixsetDetailView';
 import CustomEntryEditor from './CustomEntryEditor';
-import EventDetailView from './detail-views/EventDetailView';
-import LinkDetailView from './detail-views/LinkDetailView';
-import MixsetDetailView from './detail-views/MixsetDetailView';
 
 // ============================================
 // Header Save Indicator

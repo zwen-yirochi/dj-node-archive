@@ -29,7 +29,6 @@ import {
 } from '@/app/dashboard/config/customBlockConfig';
 import { Button } from '@/components/ui/button';
 
-import BlockWrapper from './custom-blocks/BlockWrapper';
 import {
     EmbedField,
     IMAGE_FIELD_CONFIG,
@@ -40,8 +39,9 @@ import {
     TEXT_FIELD_CONFIG,
     TextField,
     URL_FIELD_CONFIG,
-} from './shared-fields';
-import type { ImageItem } from './shared-fields/types';
+} from '../shared-fields';
+import type { ImageItem } from '../shared-fields/types';
+import BlockWrapper from './BlockWrapper';
 
 // ============================================
 // Block Renderers

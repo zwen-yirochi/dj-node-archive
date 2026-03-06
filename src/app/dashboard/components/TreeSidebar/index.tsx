@@ -43,7 +43,7 @@ import {
     selectToggleSection,
     useDashboardStore,
 } from '../../stores/dashboardStore';
-import { CommandPalette } from '../CommandPalette';
+import { CommandPalette } from '../ui/CommandPalette';
 import AccountSection from './AccountSection';
 import ComponentGroup from './ComponentGroup';
 import PageDisplayList from './PageDisplayList';

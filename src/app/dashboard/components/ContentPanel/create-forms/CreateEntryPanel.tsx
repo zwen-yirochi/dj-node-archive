@@ -9,14 +9,14 @@ import { toast } from '@/hooks/use-toast';
 import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
 import { TypeBadge } from '@/components/dna';
 
-import { useEntryMutations } from '../../hooks';
+import { useEntryMutations } from '../../../hooks';
 import {
     selectGoBack,
     selectHasPreviousView,
     selectPageId,
     selectSetView,
     useDashboardStore,
-} from '../../stores/dashboardStore';
+} from '../../../stores/dashboardStore';
 import CreateLinkForm from './CreateLinkForm';
 import CreateMixsetForm from './CreateMixsetForm';
 import EventCreateSection from './EventCreateSection';

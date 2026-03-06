@@ -8,16 +8,16 @@ import type { ProfileLink } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
 
-import { useUser } from '../../hooks';
-import { usePageMeta } from '../../hooks/use-editor-data';
-import { usePageMutations } from '../../hooks/use-page';
+import { useUser } from '../../../hooks';
+import { usePageMeta } from '../../../hooks/use-editor-data';
+import { usePageMutations } from '../../../hooks/use-page';
 import {
     selectPageId,
     selectSetSettingsOpen,
     useDashboardStore,
-} from '../../stores/dashboardStore';
+} from '../../../stores/dashboardStore';
 import HeaderStyleSection from './HeaderStyleSection';
-import LinksSection from './LinksSection';
+import LinksSection from './links/LinksSection';
 
 export default function BioDesignPanel() {
     const user = useUser();

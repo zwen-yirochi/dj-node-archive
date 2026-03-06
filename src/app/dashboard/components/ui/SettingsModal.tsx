@@ -12,9 +12,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
-import { useUser, useUserMutations } from '../hooks';
-import { checkUsernameAvailable } from '../hooks/use-user';
-import { DashboardDialogContent, Dialog, DialogHeader, DialogTitle } from './ui/DashboardDialog';
+import { useUser, useUserMutations } from '../../hooks';
+import { checkUsernameAvailable } from '../../hooks/use-user';
+import { DashboardDialogContent, Dialog, DialogHeader, DialogTitle } from './DashboardDialog';
 
 const USERNAME_REGEX = /^[a-z0-9_-]{3,30}$/;
 

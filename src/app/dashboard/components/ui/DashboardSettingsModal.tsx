@@ -4,7 +4,7 @@ import {
     selectIsSettingsOpen,
     selectSetSettingsOpen,
     useDashboardStore,
-} from '../stores/dashboardStore';
+} from '../../stores/dashboardStore';
 import SettingsModal from './SettingsModal';
 
 export default function DashboardSettingsModal() {

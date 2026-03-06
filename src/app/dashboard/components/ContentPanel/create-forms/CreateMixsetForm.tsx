@@ -14,8 +14,8 @@ import {
 import ImageUpload from '@/components/ui/ImageUpload';
 import { Input } from '@/components/ui/input';
 
-import { MIXSET_FORM_CONFIG } from '../../config/entryFormConfig';
-import { useCreateEntryForm } from '../../hooks/use-create-entry-form';
+import { MIXSET_FORM_CONFIG } from '../../../config/entryFormConfig';
+import { useCreateEntryForm } from '../../../hooks/use-create-entry-form';
 
 const inputClassName =
     'border-dashboard-border bg-dashboard-bg-muted text-dashboard-text placeholder:text-dashboard-text-placeholder focus:border-dashboard-border-hover focus:ring-dashboard-border-hover focus:ring-1';

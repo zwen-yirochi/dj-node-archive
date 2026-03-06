@@ -21,8 +21,8 @@ import SearchableInput from '@/components/ui/SearchableInput';
 import SearchableTagInput from '@/components/ui/SearchableTagInput';
 import { Textarea } from '@/components/ui/textarea';
 
-import { EVENT_FORM_CONFIG } from '../../config/entryFormConfig';
-import { useCreateEntryForm } from '../../hooks/use-create-entry-form';
+import { EVENT_FORM_CONFIG } from '../../../config/entryFormConfig';
+import { useCreateEntryForm } from '../../../hooks/use-create-entry-form';
 
 // Common Input styles
 const inputClassName =

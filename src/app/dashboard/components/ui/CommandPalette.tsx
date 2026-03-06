@@ -9,10 +9,10 @@ import { Palette, Plus, Search } from 'lucide-react';
 import type { ContentEntry } from '@/types';
 import { TypeBadge } from '@/components/dna';
 
-import { ENTRY_TYPE_CONFIG, type EntryType } from '../config/entryConfig';
-import { COMPONENT_GROUPS } from '../config/sidebarConfig';
-import { useEntries } from '../hooks/use-editor-data';
-import { selectSetView, useDashboardStore } from '../stores/dashboardStore';
+import { ENTRY_TYPE_CONFIG, type EntryType } from '../../config/entryConfig';
+import { COMPONENT_GROUPS } from '../../config/sidebarConfig';
+import { useEntries } from '../../hooks/use-editor-data';
+import { selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 
 /** Creatable entry types — custom auto-creates, so include all types */
 const CREATABLE_TYPES = COMPONENT_GROUPS.map((g) => g.entryType);

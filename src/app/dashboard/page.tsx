@@ -7,10 +7,10 @@ import { getEditorDataByAuthUserId } from '@/lib/services/user.service';
 import { getUser } from '@/app/actions/auth';
 
 import ContentPanel from './components/ContentPanel';
-import DashboardSettingsModal from './components/DashboardSettingsModal';
-import PreviewPanel from './components/PreviewPanel';
 import StoreInitializer from './components/StoreInitializer';
 import TreeSidebar from './components/TreeSidebar';
+import DashboardSettingsModal from './components/ui/DashboardSettingsModal';
+import PreviewPanel from './components/ui/PreviewPanel';
 
 export const metadata = {
     title: 'Editor - Dashboard',

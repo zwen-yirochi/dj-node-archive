@@ -26,9 +26,9 @@ import type { ContentEntry } from '@/types';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
 import { TypeBadge } from '@/components/dna';
 
-import { useEntries, useEntryMutations } from '../../hooks';
-import { computeReorderedDisplay } from '../../hooks/entries.api';
-import { entryKeys } from '../../hooks/use-editor-data';
+import { useEntries, useEntryMutations } from '../../../hooks';
+import { computeReorderedDisplay } from '../../../hooks/entries.api';
+import { entryKeys } from '../../../hooks/use-editor-data';
 import SortableItem from './SortableItem';
 
 export default function PageListView() {
