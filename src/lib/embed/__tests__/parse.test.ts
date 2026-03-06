@@ -48,7 +48,7 @@ describe('parseEmbedUrl', () => {
             expect(result?.provider).toBe('soundcloud');
             expect(result?.displayName).toBe('SoundCloud');
             expect(result?.embedUrl).toContain('w.soundcloud.com/player');
-            expect(result?.embedUrl).toContain('soundcloud.com/artist-name/track-name');
+            expect(result?.embedUrl).toContain('soundcloud.com%2Fartist-name%2Ftrack-name');
             expect(result?.dimensions).toEqual({ height: 166 });
         });
     });
