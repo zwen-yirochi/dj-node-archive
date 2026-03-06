@@ -1,22 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback } from 'react';
 
 import { Loader2, MapPin, X } from 'lucide-react';
 
-import { searchVenues } from '@/app/dashboard/services/search';
+import { useClickOutside } from '@/hooks/ui/useClickOutside';
+import { useScrollIntoView } from '@/hooks/ui/useScrollIntoView';
 
+import { useVenueSearch, type SearchResult } from './hooks/useVenueSearch';
 import type { FieldComponentProps } from './types';
 
 type VenueValue = { id?: string; name: string };
-type SearchResult = { id: string; name: string; subtitle?: string };
-
-/** SearchOption(id optional) → SearchResult(id required) 필터 */
-function toSearchResults(
-    options: { id?: string; name: string; subtitle?: string }[]
-): SearchResult[] {
-    return options.filter((o): o is SearchResult => !!o.id);
-}
 
 interface VenueFieldProps extends FieldComponentProps<VenueValue> {
     placeholder?: string;
@@ -30,59 +24,19 @@ export default function VenueField({
     placeholder = 'Search venue...',
     className,
 }: VenueFieldProps) {
-    const [query, setQuery] = useState('');
-    const [results, setResults] = useState<SearchResult[]>([]);
-    const [isOpen, setIsOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [highlightedIndex, setHighlightedIndex] = useState(-1);
+    const {
+        query,
+        setQuery,
+        results,
+        isLoading,
+        isOpen,
+        setIsOpen,
+        highlightedIndex,
+        setHighlightedIndex,
+    } = useVenueSearch();
 
-    const inputRef = useRef<HTMLInputElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const listRef = useRef<HTMLUListElement>(null);
-
-    // Debounced search
-    useEffect(() => {
-        if (query.length < 1) {
-            setResults([]);
-            setIsOpen(false);
-            return;
-        }
-
-        const timer = setTimeout(async () => {
-            setIsLoading(true);
-            try {
-                const data = await searchVenues(query);
-                setResults(toSearchResults(data));
-                setIsOpen(true);
-                setHighlightedIndex(-1);
-            } catch {
-                setResults([]);
-            } finally {
-                setIsLoading(false);
-            }
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [query]);
-
-    // Close on outside click
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    // Scroll highlighted item into view
-    useEffect(() => {
-        if (highlightedIndex >= 0 && listRef.current) {
-            const item = listRef.current.children[highlightedIndex] as HTMLElement;
-            item?.scrollIntoView({ block: 'nearest' });
-        }
-    }, [highlightedIndex]);
+    const containerRef = useClickOutside<HTMLDivElement>(() => setIsOpen(false));
+    const listRef = useScrollIntoView<HTMLUListElement>(highlightedIndex);
 
     const handleSelect = useCallback(
         (result: SearchResult) => {
@@ -91,14 +45,13 @@ export default function VenueField({
             setIsOpen(false);
             setHighlightedIndex(-1);
         },
-        [onChange]
+        [onChange, setQuery, setIsOpen, setHighlightedIndex]
     );
 
     const handleClear = useCallback(() => {
         onChange?.({ name: '' });
         setQuery('');
-        inputRef.current?.focus();
-    }, [onChange]);
+    }, [onChange, setQuery]);
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
@@ -107,11 +60,15 @@ export default function VenueField({
             switch (e.key) {
                 case 'ArrowDown':
                     e.preventDefault();
-                    setHighlightedIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
+                    setHighlightedIndex(
+                        highlightedIndex < results.length - 1 ? highlightedIndex + 1 : 0
+                    );
                     break;
                 case 'ArrowUp':
                     e.preventDefault();
-                    setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : results.length - 1));
+                    setHighlightedIndex(
+                        highlightedIndex > 0 ? highlightedIndex - 1 : results.length - 1
+                    );
                     break;
                 case 'Enter':
                     e.preventDefault();
@@ -125,10 +82,9 @@ export default function VenueField({
                     break;
             }
         },
-        [isOpen, results, highlightedIndex, handleSelect]
+        [isOpen, results, highlightedIndex, handleSelect, setIsOpen, setHighlightedIndex]
     );
 
-    // Selected venue with id — show read-only chip
     if (value.id && value.name) {
         return (
             <div className={className}>
@@ -149,17 +105,14 @@ export default function VenueField({
         );
     }
 
-    // No selection — search input with free-text fallback
     return (
         <div ref={containerRef} className={`relative ${className ?? ''}`}>
             <input
-                ref={inputRef}
                 type="text"
                 value={query || value.name}
                 onChange={(e) => {
                     const v = e.target.value;
                     setQuery(v);
-                    // Free-text: update name without id
                     onChange?.({ name: v });
                 }}
                 onKeyDown={handleKeyDown}

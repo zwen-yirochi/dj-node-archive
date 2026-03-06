@@ -75,6 +75,8 @@ function SortableBlock({ block, onUpdate, onRemove, disabled }: SortableBlockPro
     const config = SECTION_BLOCK_CONFIG[block.type];
     const BlockComponent = BLOCK_COMPONENT_MAP[block.type];
 
+    if (!config || !BlockComponent) return null;
+
     return (
         <div ref={setNodeRef} style={style}>
             <BlockWrapper
