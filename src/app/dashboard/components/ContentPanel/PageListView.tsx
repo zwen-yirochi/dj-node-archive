@@ -12,138 +12,29 @@ import {
     type DragStartEvent,
 } from '@dnd-kit/core';
 import {
-    defaultAnimateLayoutChanges,
     SortableContext,
     sortableKeyboardCoordinates,
-    useSortable,
     verticalListSortingStrategy,
-    type AnimateLayoutChanges,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { useId, useMemo, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { Calendar, GripVertical, MoreHorizontal } from 'lucide-react';
+import { Calendar, GripVertical } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
-import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
-import { resolveMenuItems, TREE_PAGE_DISPLAY_MENU } from '@/app/dashboard/config/menuConfig';
 import { TypeBadge } from '@/components/dna';
-import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntries, useEntryMutations } from '../../hooks';
 import { computeReorderedDisplay } from '../../hooks/entries.api';
-import { useConfirmAction } from '../../hooks/use-confirm-action';
 import { entryKeys } from '../../hooks/use-editor-data';
-import { selectSetView, useDashboardStore } from '../../stores/dashboardStore';
-import { ConfirmDialog } from '../ui/ConfirmDialog';
-
-interface SortableItemProps {
-    id: string;
-    entry: ContentEntry;
-    actionHandlers: Record<string, () => void>;
-}
-
-function SortableItem({ id, entry, actionHandlers }: SortableItemProps) {
-    const confirmAction = useConfirmAction();
-
-    const animateLayoutChanges: AnimateLayoutChanges = (args) => {
-        if (args.wasDragging) return false;
-        if (args.isSorting) return true;
-        return defaultAnimateLayoutChanges(args);
-    };
-
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-        id,
-        animateLayoutChanges,
-    });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
-
-    const config = ENTRY_TYPE_CONFIG[entry.type];
-
-    // Config-driven menu + confirm strategy
-    const handlers = confirmAction.wrapHandlers(
-        TREE_PAGE_DISPLAY_MENU,
-        actionHandlers,
-        entry as unknown as Record<string, unknown>
-    );
-    const menuItems = resolveMenuItems(TREE_PAGE_DISPLAY_MENU, handlers, {
-        isVisible: entry.isVisible ?? true,
-    });
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            className={cn(
-                'group flex items-center gap-3 rounded-lg border p-3 transition-all',
-                isDragging
-                    ? 'shadow-panel-hover border-dashboard-border-hover'
-                    : 'hover:shadow-panel border-dashboard-border/60 hover:border-dashboard-border-hover',
-                entry.isVisible === false && 'opacity-60'
-            )}
-        >
-            {/* Drag Handle */}
-            <button
-                {...attributes}
-                {...listeners}
-                className="cursor-grab touch-none text-dashboard-text-placeholder hover:text-dashboard-text-secondary active:cursor-grabbing"
-            >
-                <GripVertical className="h-5 w-5" />
-            </button>
-
-            {/* Type Badge */}
-            <TypeBadge type={config.badgeType} size="sm" />
-
-            {/* Content */}
-            <div className="min-w-0 flex-1 cursor-pointer" onClick={actionHandlers.edit}>
-                <p className="truncate text-sm font-medium text-dashboard-text">
-                    {entry.title || 'Untitled'}
-                </p>
-                <p className="text-xs text-dashboard-text-muted">{config.label}</p>
-            </div>
-
-            {/* More menu */}
-            <SimpleDropdown
-                trigger={
-                    <button
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex h-8 w-8 items-center justify-center rounded-md opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
-                    >
-                        <MoreHorizontal className="h-4 w-4 text-dashboard-text-muted" />
-                    </button>
-                }
-                items={menuItems}
-                contentClassName="w-44"
-            />
-
-            <ConfirmDialog
-                pending={confirmAction.pending}
-                matchValue={confirmAction.matchValue}
-                onConfirm={confirmAction.confirm}
-                onClose={confirmAction.close}
-            />
-        </div>
-    );
-}
+import SortableItem from './SortableItem';
 
 export default function PageListView() {
-    // TanStack Query
     const queryClient = useQueryClient();
     const { data: entries } = useEntries();
-    const {
-        remove,
-        removeFromDisplay,
-        toggleVisibility,
-        reorderDisplay: reorderDisplayMutation,
-    } = useEntryMutations();
-    const setView = useDashboardStore(selectSetView);
+    const { reorderDisplay: reorderDisplayMutation } = useEntryMutations();
 
     const dndId = useId();
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -246,32 +137,7 @@ export default function PageListView() {
                         >
                             <div className="space-y-2">
                                 {displayedEntries.map((entry) => (
-                                    <SortableItem
-                                        key={entry.id}
-                                        id={entry.id}
-                                        entry={entry}
-                                        actionHandlers={{
-                                            edit: () =>
-                                                setView(
-                                                    { kind: 'detail', entryId: entry.id },
-                                                    { fromPageList: true }
-                                                ),
-                                            delete: () => {
-                                                const cv = useDashboardStore.getState().contentView;
-                                                if (
-                                                    cv.kind === 'detail' &&
-                                                    cv.entryId === entry.id
-                                                ) {
-                                                    setView({ kind: 'page' });
-                                                }
-                                                remove.mutate(entry.id);
-                                            },
-                                            'remove-from-page': () =>
-                                                removeFromDisplay.mutate(entry.id),
-                                            'toggle-visibility': () =>
-                                                toggleVisibility.mutate(entry.id),
-                                        }}
-                                    />
+                                    <SortableItem key={entry.id} entry={entry} />
                                 ))}
                             </div>
                         </SortableContext>
