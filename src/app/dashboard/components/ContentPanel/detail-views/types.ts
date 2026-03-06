@@ -29,7 +29,5 @@ export interface FieldBlockConfig {
 export interface DetailViewProps {
     entry: ContentEntry;
     onSave: FieldSaveFn;
-    editingField: 'title' | null;
-    onEditingDone: () => void;
     disabled?: boolean;
 }

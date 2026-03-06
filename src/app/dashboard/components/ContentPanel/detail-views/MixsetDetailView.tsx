@@ -1,82 +1,141 @@
 'use client';
 
-import Image from 'next/image';
+import { useMemo } from 'react';
 
-import { ImagePlus } from 'lucide-react';
+import { FieldSync, IMAGE_FIELD_CONFIG, ImageField, TextField } from '../shared-fields';
+import type { FieldSyncConfig } from '../shared-fields/FieldSync';
+import KeyValueField, { type KeyValueColumn } from '../shared-fields/KeyValueField';
+import LinkField from '../shared-fields/LinkField';
+import type { ImageItem } from '../shared-fields/types';
+import type { DetailViewProps, SaveOptions } from './types';
 
-import { MIXSET_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
+/** URL → stable ID (short hash) */
+function urlToStableId(url: string): string {
+    let hash = 0;
+    for (let i = 0; i < url.length; i++) {
+        hash = ((hash << 5) - hash + url.charCodeAt(i)) | 0;
+    }
+    return `cover-${(hash >>> 0).toString(36)}`;
+}
 
-import { TitleEditModal } from './EditModals';
-import type { DetailViewProps } from './types';
+// ============================================
+// Field configs
+// ============================================
 
-export default function MixsetDetailView({
-    entry,
-    onSave,
-    editingField,
-    onEditingDone,
-    disabled,
-}: DetailViewProps) {
+const TEXT_CONFIG: FieldSyncConfig<string> = { debounceMs: 800 };
+const URL_CONFIG: FieldSyncConfig<string> = { immediate: true };
+
+type TrackItem = { track: string; artist: string; time: string };
+const TRACKLIST_CONFIG: FieldSyncConfig<TrackItem[]> = { debounceMs: 800 };
+
+const TRACKLIST_COLUMNS: KeyValueColumn[] = [
+    {
+        key: 'time',
+        placeholder: '0:00',
+        width: 'w-12 shrink-0',
+        className: 'font-mono text-xs text-dashboard-text-placeholder',
+    },
+    { key: 'track', placeholder: 'Track title', width: 'min-w-0 flex-1' },
+    { key: 'artist', placeholder: 'Artist', className: 'text-dashboard-text-placeholder' },
+];
+
+const EMPTY_TRACK: TrackItem = { track: '', artist: '', time: '0:00' };
+
+// ============================================
+// MixsetDetailView
+// ============================================
+
+export default function MixsetDetailView({ entry, onSave, disabled }: DetailViewProps) {
     if (entry.type !== 'mixset') return null;
 
-    const coverUrl = entry.coverUrl;
-    const title = entry.title;
+    const { title, coverUrl, url, tracklist, description } = entry;
 
-    const blockByKey = Object.fromEntries(MIXSET_FIELD_BLOCKS.map((b) => [b.key, b.component]));
-    const UrlComponent = blockByKey.url;
-    const DescComponent = blockByKey.description;
-    const TracklistComponent = blockByKey.tracklist;
+    // coverUrl (single string) ↔ ImageItem[] 변환
+    const imageItems: ImageItem[] = useMemo(
+        () => (coverUrl ? [{ id: urlToStableId(coverUrl), url: coverUrl }] : []),
+        [coverUrl]
+    );
+
+    const handleImageSave = (items: ImageItem[], options?: SaveOptions) => {
+        onSave('coverUrl', items[0]?.url || '', options);
+    };
 
     return (
         <div className="space-y-8">
-            {/* Header — Read-only cover + title */}
-            <div className="space-y-3">
-                {coverUrl ? (
-                    <div className="relative mx-auto aspect-square max-w-[200px] overflow-hidden rounded-xl">
-                        <Image
-                            src={coverUrl}
-                            alt={title}
-                            fill
-                            className="object-cover"
-                            sizes="200px"
-                        />
-                    </div>
-                ) : (
-                    <div className="mx-auto flex aspect-square max-w-[200px] items-center justify-center rounded-xl border-2 border-dashed border-dashboard-border">
-                        <div className="text-center">
-                            <ImagePlus className="mx-auto mb-2 h-8 w-8 text-dashboard-text-placeholder" />
-                            <p className="text-xs text-dashboard-text-muted">
-                                Change image from &quot;...&quot; menu
-                            </p>
-                        </div>
-                    </div>
+            {/* Title */}
+            <FieldSync config={TEXT_CONFIG} value={title} onSave={(v) => onSave('title', v)}>
+                {({ value, onChange }) => (
+                    <TextField
+                        value={value}
+                        onChange={onChange}
+                        disabled={disabled}
+                        placeholder="Mixset title"
+                        className="text-center text-xl font-bold text-dashboard-text"
+                    />
                 )}
-                <h2 className="text-center text-xl font-bold text-dashboard-text">{title}</h2>
-            </div>
+            </FieldSync>
 
-            {/* URL block */}
+            {/* Cover image */}
+            <FieldSync config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleImageSave}>
+                {({ value, onChange }) => (
+                    <ImageField
+                        value={value}
+                        onChange={onChange}
+                        aspectRatio="square"
+                        maxCount={1}
+                        disabled={disabled}
+                    />
+                )}
+            </FieldSync>
+
+            {/* URL */}
+            <FieldSync config={URL_CONFIG} value={url || ''} onSave={(v) => onSave('url', v)}>
+                {({ value, onChange }) => (
+                    <LinkField value={value} onChange={onChange} disabled={disabled} />
+                )}
+            </FieldSync>
+
+            {/* Description */}
             <div>
-                <UrlComponent entry={entry} onSave={onSave} disabled={disabled} />
+                <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
+                <FieldSync
+                    config={TEXT_CONFIG}
+                    value={description || ''}
+                    onSave={(v) => onSave('description', v)}
+                >
+                    {({ value, onChange }) => (
+                        <TextField
+                            value={value}
+                            onChange={onChange}
+                            disabled={disabled}
+                            variant="textarea"
+                            placeholder="Add a description..."
+                            className="text-sm leading-relaxed text-dashboard-text-muted"
+                        />
+                    )}
+                </FieldSync>
             </div>
 
-            {/* Description block */}
-            <DescComponent entry={entry} onSave={onSave} disabled={disabled} />
-
-            {/* Tracklist block */}
+            {/* Tracklist */}
             <div>
-                <TracklistComponent entry={entry} onSave={onSave} disabled={disabled} />
+                <h3 className="mb-4 text-sm font-semibold text-dashboard-text">Tracklist</h3>
+                <FieldSync
+                    config={TRACKLIST_CONFIG}
+                    value={tracklist || []}
+                    onSave={(items) => onSave('tracklist', items)}
+                >
+                    {({ value, onChange }) => (
+                        <KeyValueField
+                            value={value}
+                            onChange={onChange}
+                            disabled={disabled}
+                            columns={TRACKLIST_COLUMNS}
+                            emptyItem={EMPTY_TRACK}
+                            addLabel="Add track"
+                        />
+                    )}
+                </FieldSync>
             </div>
-
-            {/* Edit Modals */}
-            {editingField === 'title' && (
-                <TitleEditModal
-                    value={title}
-                    onSave={(newTitle) => {
-                        onSave('title', newTitle);
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                />
-            )}
         </div>
     );
 }

@@ -1,51 +1,117 @@
 'use client';
 
-import { LINK_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
+import { useMemo } from 'react';
 
-import IconBlock from './blocks/IconBlock';
-import { TitleEditModal } from './EditModals';
-import type { DetailViewProps } from './types';
+import { FieldSync, IMAGE_FIELD_CONFIG, ImageField, TextField } from '../shared-fields';
+import type { FieldSyncConfig } from '../shared-fields/FieldSync';
+import IconField from '../shared-fields/IconField';
+import LinkField from '../shared-fields/LinkField';
+import type { ImageItem } from '../shared-fields/types';
+import type { DetailViewProps, SaveOptions } from './types';
 
-export default function LinkDetailView({
-    entry,
-    onSave,
-    editingField,
-    onEditingDone,
-    disabled,
-}: DetailViewProps) {
+/** URL → stable ID (short hash) */
+function urlToStableId(url: string): string {
+    let hash = 0;
+    for (let i = 0; i < url.length; i++) {
+        hash = ((hash << 5) - hash + url.charCodeAt(i)) | 0;
+    }
+    return `cover-${(hash >>> 0).toString(36)}`;
+}
+
+// ============================================
+// Field configs
+// ============================================
+
+const TEXT_CONFIG: FieldSyncConfig<string> = { debounceMs: 800 };
+const URL_CONFIG: FieldSyncConfig<string> = { immediate: true };
+const ICON_CONFIG: FieldSyncConfig<string> = { immediate: true };
+
+// ============================================
+// LinkDetailView
+// ============================================
+
+export default function LinkDetailView({ entry, onSave, disabled }: DetailViewProps) {
     if (entry.type !== 'link') return null;
 
-    const title = entry.title;
+    const { title, url, coverUrl, icon, description } = entry;
+
+    // coverUrl (single string) ↔ ImageItem[] 변환
+    const imageItems: ImageItem[] = useMemo(
+        () => (coverUrl ? [{ id: urlToStableId(coverUrl), url: coverUrl }] : []),
+        [coverUrl]
+    );
+
+    const handleImageSave = (items: ImageItem[], options?: SaveOptions) => {
+        onSave('coverUrl', items[0]?.url || '', options);
+    };
 
     return (
         <div className="space-y-8">
             {/* Header — Icon + title */}
             <div className="space-y-3 text-center">
-                <IconBlock entry={entry} onSave={onSave} disabled={disabled} />
-                <h2 className="text-xl font-bold text-dashboard-text">{title}</h2>
+                <FieldSync
+                    config={ICON_CONFIG}
+                    value={icon || ''}
+                    onSave={(v) => onSave('icon', v)}
+                >
+                    {({ value, onChange }) => (
+                        <IconField value={value} onChange={onChange} disabled={disabled} />
+                    )}
+                </FieldSync>
+
+                <FieldSync config={TEXT_CONFIG} value={title} onSave={(v) => onSave('title', v)}>
+                    {({ value, onChange }) => (
+                        <TextField
+                            value={value}
+                            onChange={onChange}
+                            disabled={disabled}
+                            placeholder="Link title"
+                            className="text-center text-xl font-bold text-dashboard-text"
+                        />
+                    )}
+                </FieldSync>
             </div>
 
-            {/* Field blocks */}
-            {LINK_FIELD_BLOCKS.map((block) => (
-                <block.component
-                    key={block.key}
-                    entry={entry}
-                    onSave={onSave}
-                    disabled={disabled}
-                />
-            ))}
+            {/* Cover image */}
+            <FieldSync config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleImageSave}>
+                {({ value, onChange }) => (
+                    <ImageField
+                        value={value}
+                        onChange={onChange}
+                        aspectRatio="video"
+                        maxCount={1}
+                        disabled={disabled}
+                    />
+                )}
+            </FieldSync>
 
-            {/* Edit Modals — Link only uses TitleEditModal */}
-            {editingField === 'title' && (
-                <TitleEditModal
-                    value={title}
-                    onSave={(newTitle) => {
-                        onSave('title', newTitle);
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                />
-            )}
+            {/* URL */}
+            <FieldSync config={URL_CONFIG} value={url} onSave={(v) => onSave('url', v)}>
+                {({ value, onChange }) => (
+                    <LinkField value={value} onChange={onChange} disabled={disabled} />
+                )}
+            </FieldSync>
+
+            {/* Description */}
+            <div>
+                <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
+                <FieldSync
+                    config={TEXT_CONFIG}
+                    value={description || ''}
+                    onSave={(v) => onSave('description', v)}
+                >
+                    {({ value, onChange }) => (
+                        <TextField
+                            value={value}
+                            onChange={onChange}
+                            disabled={disabled}
+                            variant="textarea"
+                            placeholder="Add a description..."
+                            className="text-sm leading-relaxed text-dashboard-text-muted"
+                        />
+                    )}
+                </FieldSync>
+            </div>
         </div>
     );
 }

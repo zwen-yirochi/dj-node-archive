@@ -1,11 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AlertCircle, ArrowLeft, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry, CustomEntry } from '@/types';
-import { ENTRY_TYPE_CONFIG, type EntryType } from '@/app/dashboard/config/entryConfig';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
 import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
 import { EDITOR_MENU_CONFIG, resolveMenuItems } from '@/app/dashboard/config/menuConfig';
 import { TypeBadge } from '@/components/dna';
@@ -19,17 +19,16 @@ import CustomEntryEditor from './CustomEntryEditor';
 import EventDetailView from './detail-views/EventDetailView';
 import LinkDetailView from './detail-views/LinkDetailView';
 import MixsetDetailView from './detail-views/MixsetDetailView';
-import type { DetailViewProps } from './detail-views/types';
 
 // ============================================
 // Detail View Registry
 // ============================================
 
-const DETAIL_VIEW_REGISTRY: Record<Exclude<EntryType, 'custom'>, ComponentType<DetailViewProps>> = {
+const DETAIL_VIEW_REGISTRY = {
     event: EventDetailView,
     mixset: MixsetDetailView,
     link: LinkDetailView,
-};
+} as const;
 
 // ============================================
 // useDebouncedSave hook
@@ -128,7 +127,6 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     const localEntryRef = useRef(localEntry);
     localEntryRef.current = localEntry;
 
-    const [editingField, setEditingField] = useState<'title' | null>(null);
     const confirmAction = useConfirmAction();
 
     // Save handler — pass changedFields to mutation for preview trigger decision
@@ -194,14 +192,12 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     const handlers = confirmAction.wrapHandlers(
         menuConfig,
         {
-            'edit-title': () => setEditingField('title'),
             delete: handleDelete,
         },
         localEntry as unknown as Record<string, unknown>
     );
     const menuItems = resolveMenuItems(menuConfig, handlers);
 
-    const handleEditingDone = () => setEditingField(null);
     const DetailView =
         localEntry.type !== 'custom'
             ? DETAIL_VIEW_REGISTRY[localEntry.type as keyof typeof DETAIL_VIEW_REGISTRY]
@@ -265,12 +261,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                         />
                     </>
                 ) : DetailView ? (
-                    <DetailView
-                        entry={localEntry}
-                        onSave={handleFieldSave}
-                        editingField={editingField}
-                        onEditingDone={handleEditingDone}
-                    />
+                    <DetailView entry={localEntry} onSave={handleFieldSave} />
                 ) : null}
             </div>
 

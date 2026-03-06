@@ -95,7 +95,6 @@ const EVENT_DELETE_CONFIRM = (ctx: Record<string, unknown>) =>
 // Editor menu item constants
 // ============================================
 
-const EDIT_TITLE: MenuItemConfig = { actionKey: 'edit-title', label: 'Edit title' };
 const SEPARATOR: MenuSeparatorConfig = { type: 'separator' };
 
 const DELETE_SIMPLE: MenuItemConfig = {
@@ -116,10 +115,10 @@ const DELETE_EVENT: MenuItemConfig = {
 // ============================================
 
 export const EDITOR_MENU_CONFIG: Record<EntryType, MenuConfig> = {
-    event: [EDIT_TITLE, SEPARATOR, DELETE_EVENT],
-    mixset: [EDIT_TITLE, SEPARATOR, DELETE_SIMPLE],
-    link: [EDIT_TITLE, SEPARATOR, DELETE_SIMPLE],
-    custom: [EDIT_TITLE, SEPARATOR, DELETE_SIMPLE],
+    event: [DELETE_EVENT],
+    mixset: [DELETE_SIMPLE],
+    link: [DELETE_SIMPLE],
+    custom: [DELETE_SIMPLE],
 };
 
 // ============================================
