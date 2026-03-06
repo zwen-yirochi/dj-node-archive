@@ -2,20 +2,12 @@
 
 import { useMemo } from 'react';
 
-import { Calendar, Users } from 'lucide-react';
-
 import type { ArtistReference, VenueReference } from '@/types';
 
-import {
-    FieldSync,
-    IMAGE_FIELD_CONFIG,
-    ImageField,
-    TagListField,
-    TextField,
-} from '../shared-fields';
+import { FieldSync, IMAGE_FIELD_CONFIG, ImageField, TextField } from '../shared-fields';
 import DateField from '../shared-fields/DateField';
 import type { FieldSyncConfig } from '../shared-fields/FieldSync';
-import type { TagItem } from '../shared-fields/TagListField';
+import LineupField from '../shared-fields/LineupField';
 import type { ImageItem } from '../shared-fields/types';
 import VenueField from '../shared-fields/VenueField';
 import type { DetailViewProps, SaveOptions } from './types';
@@ -28,17 +20,7 @@ import { urlToStableId } from './utils';
 const TEXT_CONFIG: FieldSyncConfig<string> = { debounceMs: 800 };
 const DATE_CONFIG: FieldSyncConfig<string> = { immediate: true };
 const VENUE_CONFIG: FieldSyncConfig<VenueReference> = { debounceMs: 800 };
-const TAG_CONFIG: FieldSyncConfig<TagItem[]> = { immediate: true };
-
-const formatArtistTag = (name: string) => (name.startsWith('@') ? name : `@${name}`);
-
-function toTagItems(artists: ArtistReference[]): TagItem[] {
-    return artists.map(({ id, name }) => ({ id, name }));
-}
-
-function toArtistRefs(tags: TagItem[]): ArtistReference[] {
-    return tags.map(({ id, name }) => ({ id, name }));
-}
+const LINEUP_CONFIG: FieldSyncConfig<ArtistReference[]> = { immediate: true };
 
 // ============================================
 // EventDetailView
@@ -90,55 +72,30 @@ export default function EventDetailView({ entry, onSave, disabled }: DetailViewP
                 )}
             </FieldSync>
 
-            {/* Info Grid — date, venue, lineup */}
-            <div className="space-y-3">
-                {/* Date */}
-                <div className="flex items-center gap-3 text-sm">
-                    <Calendar className="h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
-                    <FieldSync config={DATE_CONFIG} value={date} onSave={(v) => onSave('date', v)}>
-                        {({ value, onChange }) => (
-                            <DateField
-                                value={value}
-                                onChange={onChange}
-                                disabled={disabled}
-                                className="flex-1"
-                            />
-                        )}
-                    </FieldSync>
-                </div>
+            {/* Date */}
+            <FieldSync config={DATE_CONFIG} value={date} onSave={(v) => onSave('date', v)}>
+                {({ value, onChange }) => (
+                    <DateField value={value} onChange={onChange} disabled={disabled} />
+                )}
+            </FieldSync>
 
-                {/* Venue */}
-                <FieldSync config={VENUE_CONFIG} value={venue} onSave={(v) => onSave('venue', v)}>
-                    {({ value, onChange }) => (
-                        <VenueField
-                            value={value}
-                            onChange={onChange}
-                            disabled={disabled}
-                            className="flex-1"
-                        />
-                    )}
-                </FieldSync>
+            {/* Venue */}
+            <FieldSync config={VENUE_CONFIG} value={venue} onSave={(v) => onSave('venue', v)}>
+                {({ value, onChange }) => (
+                    <VenueField value={value} onChange={onChange} disabled={disabled} />
+                )}
+            </FieldSync>
 
-                {/* Lineup */}
-                <div className="flex items-start gap-3 text-sm">
-                    <Users className="mt-0.5 h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
-                    <FieldSync
-                        config={TAG_CONFIG}
-                        value={toTagItems(entry.lineup)}
-                        onSave={(items) => onSave('lineup', toArtistRefs(items))}
-                    >
-                        {({ value, onChange }) => (
-                            <TagListField
-                                value={value}
-                                onChange={onChange}
-                                disabled={disabled}
-                                placeholder="Tag artists with @username"
-                                formatNewTag={formatArtistTag}
-                            />
-                        )}
-                    </FieldSync>
-                </div>
-            </div>
+            {/* Lineup */}
+            <FieldSync
+                config={LINEUP_CONFIG}
+                value={entry.lineup}
+                onSave={(v) => onSave('lineup', v)}
+            >
+                {({ value, onChange }) => (
+                    <LineupField value={value} onChange={onChange} disabled={disabled} />
+                )}
+            </FieldSync>
 
             {/* Description */}
             <div>
