@@ -59,7 +59,7 @@ export type TracklistItem = { track: string; artist: string; time: string };
 // ============================================
 // Custom Block Types
 // ============================================
-export type SectionBlockType = 'header' | 'richtext' | 'image' | 'embed' | 'keyvalue' | 'list';
+export type SectionBlockType = 'header' | 'richtext' | 'image' | 'embed' | 'keyvalue';
 
 export interface HeaderBlockData {
     title: string;
@@ -80,18 +80,12 @@ export interface EmbedBlockData {
 export interface KeyValueBlockData {
     items: { key: string; value: string }[];
 }
-export interface ListBlockData {
-    items: string[];
-    style?: 'bullet' | 'numbered' | 'plain';
-}
-
 export interface SectionBlockDataMap {
     header: HeaderBlockData;
     richtext: RichTextBlockData;
     image: ImageBlockData;
     embed: EmbedBlockData;
     keyvalue: KeyValueBlockData;
-    list: ListBlockData;
 }
 
 export interface SectionBlock<T extends SectionBlockType = SectionBlockType> {

@@ -15,7 +15,6 @@ import {
     Image as ImageIcon,
     KeyRound,
     Link2,
-    List,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -56,10 +55,6 @@ export const blockSchemas = {
     }),
     keyvalue: z.object({
         items: z.array(z.object({ key: z.string(), value: z.string() })),
-    }),
-    list: z.object({
-        items: z.array(z.string()),
-        style: z.enum(['bullet', 'numbered', 'plain']).optional(),
     }),
 } as const;
 
@@ -102,13 +97,6 @@ export const SECTION_BLOCK_CONFIG: Record<SectionBlockType, SectionBlockConfig> 
         icon: KeyRound,
         schema: blockSchemas.keyvalue,
         defaultData: () => ({ items: [{ key: '', value: '' }] }),
-    },
-    list: {
-        type: 'list',
-        label: 'List',
-        icon: List,
-        schema: blockSchemas.list,
-        defaultData: () => ({ items: [''], style: 'plain' as const }),
     },
 };
 

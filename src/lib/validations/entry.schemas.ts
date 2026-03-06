@@ -178,7 +178,7 @@ export const linkFieldSchemas = {
 
 const sectionBlockSchema = z.object({
     id: z.string().uuid(),
-    type: z.enum(['header', 'richtext', 'image', 'embed', 'keyvalue', 'list']),
+    type: z.enum(['header', 'richtext', 'image', 'embed', 'keyvalue']),
     data: z.record(z.unknown()),
 });
 

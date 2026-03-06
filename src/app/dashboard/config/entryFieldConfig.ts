@@ -40,7 +40,6 @@ export const FIELD_CONFIG: Record<EntryType, FieldConfig[]> = {
         { key: 'posterUrls', label: 'Poster', triggersPreview: true },
         { key: 'lineup', label: 'Lineup', triggersPreview: true },
         { key: 'description', label: 'Description', triggersPreview: false },
-        { key: 'links', label: 'Links', triggersPreview: false },
     ],
     mixset: [
         { key: 'title', label: 'Title', triggersPreview: true },

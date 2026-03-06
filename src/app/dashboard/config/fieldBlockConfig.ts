@@ -18,7 +18,6 @@ import {
 import DateBlock from '@/app/dashboard/components/ContentPanel/detail-views/blocks/DateBlock';
 import DescriptionBlock from '@/app/dashboard/components/ContentPanel/detail-views/blocks/DescriptionBlock';
 import LineupBlock from '@/app/dashboard/components/ContentPanel/detail-views/blocks/LineupBlock';
-import LinksBlock from '@/app/dashboard/components/ContentPanel/detail-views/blocks/LinksBlock';
 import TracklistBlock from '@/app/dashboard/components/ContentPanel/detail-views/blocks/TracklistBlock';
 import UrlBlock from '@/app/dashboard/components/ContentPanel/detail-views/blocks/UrlBlock';
 import VenueBlock from '@/app/dashboard/components/ContentPanel/detail-views/blocks/VenueBlock';
@@ -58,7 +57,6 @@ export const EVENT_FIELD_BLOCKS: FieldBlockConfig[] = [
         schema: eventFieldSchemas.description,
         component: DescriptionBlock,
     }),
-    fieldBlock('event', 'links', { schema: eventFieldSchemas.links, component: LinksBlock }),
 ];
 
 export const MIXSET_FIELD_BLOCKS: FieldBlockConfig[] = [

@@ -34,7 +34,6 @@ import {
     HeaderSection,
     ImageSection,
     KeyValueSection,
-    ListSection,
     RichTextSection,
 } from './custom-blocks';
 import BlockWrapper from './custom-blocks/BlockWrapper';
@@ -50,7 +49,6 @@ const BLOCK_COMPONENT_MAP: Record<SectionBlockType, ComponentType<SectionBlockEd
     image: ImageSection,
     embed: EmbedSection,
     keyvalue: KeyValueSection,
-    list: ListSection,
 };
 
 // ============================================
