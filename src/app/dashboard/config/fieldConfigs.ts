@@ -51,3 +51,11 @@ export const VENUE_FIELD_CONFIG: FieldSyncConfig<VenueReference> = {
 };
 
 export const TRACKLIST_FIELD_CONFIG: FieldSyncConfig<TracklistItem[]> = { debounceMs: 800 };
+
+// ============================================
+// KeyValue fields (debounced)
+// ============================================
+
+export const KEYVALUE_FIELD_CONFIG: FieldSyncConfig<{ key: string; value: string }[]> = {
+    debounceMs: 800,
+};
