@@ -37,14 +37,6 @@ export {
     type ValidationResult,
 } from './entryFieldConfig';
 
-// === Detail view field blocks ===
-export {
-    FIELD_BLOCKS,
-    EVENT_FIELD_BLOCKS,
-    MIXSET_FIELD_BLOCKS,
-    LINK_FIELD_BLOCKS,
-} from './fieldBlockConfig';
-
 // === Create form configs ===
 export {
     FORM_CONFIGS,

@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 
 import { Calendar, MapPin, Users } from 'lucide-react';
 
+import type { ArtistReference } from '@/types';
+
 import {
     FieldSync,
     IMAGE_FIELD_CONFIG,
@@ -36,6 +38,14 @@ const TAG_CONFIG: FieldSyncConfig<TagItem[]> = { immediate: true };
 
 const formatArtistTag = (name: string) => (name.startsWith('@') ? name : `@${name}`);
 
+function toTagItems(artists: ArtistReference[]): TagItem[] {
+    return artists.map(({ id, name }) => ({ id, name }));
+}
+
+function toArtistRefs(tags: TagItem[]): ArtistReference[] {
+    return tags.map(({ id, name }) => ({ id, name }));
+}
+
 // ============================================
 // EventDetailView
 // ============================================
@@ -43,7 +53,7 @@ const formatArtistTag = (name: string) => (name.startsWith('@') ? name : `@${nam
 export default function EventDetailView({ entry, onSave, disabled }: DetailViewProps) {
     if (entry.type !== 'event') return null;
 
-    const { title, date, venue, lineup, posterUrls, description } = entry;
+    const { title, date, venue, posterUrls, description } = entry;
 
     // posterUrls ↔ ImageItem[] 변환 (URL 기반 안정 ID)
     const imageItems: ImageItem[] = useMemo(
@@ -128,8 +138,8 @@ export default function EventDetailView({ entry, onSave, disabled }: DetailViewP
                     <Users className="mt-0.5 h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
                     <FieldSync
                         config={TAG_CONFIG}
-                        value={lineup as TagItem[]}
-                        onSave={(items) => onSave('lineup', items)}
+                        value={toTagItems(entry.lineup)}
+                        onSave={(items) => onSave('lineup', toArtistRefs(items))}
                     >
                         {({ value, onChange }) => (
                             <TagListField
