@@ -153,6 +153,7 @@ export interface LinkEntry extends EntryBase {
 
     title: string;
     url: string;
+    coverUrl?: string;
     icon?: string;
     description?: string;
 }

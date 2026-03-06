@@ -48,6 +48,7 @@ export interface Page {
 export interface LinkEntryData {
     title: string;
     url: string;
+    cover_url?: string;
     icon?: string;
     description?: string;
 }

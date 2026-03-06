@@ -149,6 +149,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                 type: 'link',
                 title: (data.title as string) || '',
                 url: (data.url as string) || '',
+                coverUrl: data.cover_url as string | undefined,
                 icon: data.icon as string | undefined,
                 description: data.description as string | undefined,
             } as LinkEntry;
@@ -263,6 +264,7 @@ export function mapEntryToDatabase(
                 data: {
                     title: linkEntry.title,
                     url: linkEntry.url,
+                    cover_url: linkEntry.coverUrl || undefined,
                     icon: linkEntry.icon || undefined,
                     description: linkEntry.description || undefined,
                 },
@@ -449,6 +451,7 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): 
                 isVisible: true,
                 title: '',
                 url: '',
+                coverUrl: '',
                 icon: 'globe',
                 description: '',
                 createdAt: '',

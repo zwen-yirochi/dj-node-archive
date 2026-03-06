@@ -63,12 +63,14 @@ export const LINK_FORM_CONFIG: CreateEntryFormConfig<CreateLinkFormData> = {
     defaultValues: {
         title: '',
         url: '',
+        coverUrl: '',
     },
     toEntry: (formData) =>
         ({
             ...createEmptyEntry('link'),
             title: formData.title.trim(),
             url: formData.url.trim(),
+            coverUrl: formData.coverUrl || '',
         }) as LinkEntry,
     errorFieldMap: { title: 'title', url: 'url' },
 };

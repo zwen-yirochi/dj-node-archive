@@ -154,10 +154,12 @@ const linkBase = z.object({
 
 export const draftLinkSchema = linkBase.extend({
     url: z.string().min(1).trim(),
+    coverUrl: z.string().default(''),
 });
 
 export const publishLinkSchema = linkBase.extend({
     url: z.string().url('Must be a valid URL'),
+    coverUrl: z.string().default(''),
 });
 
 // ============================================

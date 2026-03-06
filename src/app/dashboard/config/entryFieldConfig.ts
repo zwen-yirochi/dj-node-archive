@@ -52,6 +52,7 @@ export const FIELD_CONFIG: Record<EntryType, FieldConfig[]> = {
     link: [
         { key: 'title', label: 'Title', triggersPreview: true },
         { key: 'url', label: 'URL', triggersPreview: true },
+        { key: 'coverUrl', label: 'Cover', triggersPreview: true },
         { key: 'icon', label: 'Icon', triggersPreview: true },
         { key: 'description', label: 'Description', triggersPreview: false },
     ],

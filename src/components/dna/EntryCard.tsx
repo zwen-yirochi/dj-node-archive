@@ -28,6 +28,7 @@ function getTitle(entry: ContentEntry): string {
 function getImageUrl(entry: ContentEntry): string | undefined {
     if (entry.type === 'event') return (entry as EventEntry).posterUrls[0];
     if (entry.type === 'mixset') return (entry as MixsetEntry).coverUrl;
+    if (entry.type === 'link') return (entry as LinkEntry).coverUrl || undefined;
     return undefined;
 }
 

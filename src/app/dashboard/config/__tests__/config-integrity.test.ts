@@ -153,11 +153,12 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
         expect(r.description).toBe(original.description);
     });
 
-    it('link: 모든 필드 보존 (description 포함)', () => {
+    it('link: 모든 필드 보존 (coverUrl, description 포함)', () => {
         const original: LinkEntry = {
             ...(createEmptyEntry('link') as LinkEntry),
             title: 'My Link',
             url: 'https://example.com',
+            coverUrl: 'https://example.com/cover.jpg',
             icon: 'globe',
             description: 'A useful link',
         };
@@ -168,8 +169,8 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
         const r = restored as LinkEntry;
         expect(r.title).toBe(original.title);
         expect(r.url).toBe(original.url);
+        expect(r.coverUrl).toBe(original.coverUrl);
         expect(r.icon).toBe(original.icon);
-        // C1-1 수정 검증: 이전에는 description이 유실되었음
         expect(r.description).toBe(original.description);
     });
 
