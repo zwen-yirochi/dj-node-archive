@@ -47,17 +47,16 @@ function toArtistRefs(tags: TagItem[]): ArtistReference[] {
 export default function EventDetailView({ entry, onSave, disabled }: DetailViewProps) {
     if (entry.type !== 'event') return null;
 
-    const { title, date, venue, posterUrls, description } = entry;
+    const { title, date, venue, imageUrls, description } = entry;
 
-    // posterUrls ↔ ImageItem[] 변환 (URL 기반 안정 ID)
     const imageItems: ImageItem[] = useMemo(
-        () => posterUrls.map((url) => ({ id: urlToStableId(url), url })),
-        [posterUrls]
+        () => imageUrls.map((url) => ({ id: urlToStableId(url), url })),
+        [imageUrls]
     );
 
     const handleImageSave = (items: ImageItem[], options?: SaveOptions) => {
         onSave(
-            'posterUrls',
+            'imageUrls',
             items.map((item) => item.url),
             options
         );

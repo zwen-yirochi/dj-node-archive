@@ -116,7 +116,7 @@ export interface EventEntry extends EntryBase {
     date: string;
     venue: VenueReference;
     lineup: ArtistReference[];
-    posterUrls: string[];
+    imageUrls: string[];
     description?: string;
     links?: ExternalLink[];
 }
@@ -131,7 +131,7 @@ export interface MixsetEntry extends EntryBase {
 
     // 표시용 데이터
     title: string;
-    coverUrl?: string;
+    imageUrls: string[];
     url?: string;
     tracklist: { track: string; artist: string; time: string }[];
     description?: string;
@@ -147,7 +147,7 @@ export interface LinkEntry extends EntryBase {
 
     title: string;
     url: string;
-    coverUrl?: string;
+    imageUrls: string[];
     icon?: string;
     description?: string;
 }
@@ -202,7 +202,7 @@ export interface Event {
     date: string;
     venue: { id?: string; name: string };
     lineup: { id?: string; name: string }[];
-    posterUrls?: string[];
+    imageUrls?: string[];
     description?: string;
     links?: { title: string; url: string }[];
     isPublic: boolean;

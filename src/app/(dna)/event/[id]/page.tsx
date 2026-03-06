@@ -59,10 +59,10 @@ export default async function EventPage({ params }: PageProps) {
         >
             {/* ── Poster ── */}
             <section className="pb-4 pt-6 md:pt-8">
-                {event.posterUrls?.[0] ? (
+                {event.imageUrls?.[0] ? (
                     <div className="mx-auto w-full md:max-w-[480px]">
                         <ImageFrame
-                            src={event.posterUrls[0]}
+                            src={event.imageUrls[0]}
                             alt={event.title}
                             className="aspect-[3/4]"
                             priority
@@ -113,7 +113,7 @@ export default async function EventPage({ params }: PageProps) {
                             { key: 'Public', value: event.isPublic ? 'YES' : 'NO' },
                             {
                                 key: 'Poster',
-                                value: event.posterUrls?.length ? 'ATTACHED' : 'NULL',
+                                value: event.imageUrls?.length ? 'ATTACHED' : 'NULL',
                             },
                             {
                                 key: 'Description',

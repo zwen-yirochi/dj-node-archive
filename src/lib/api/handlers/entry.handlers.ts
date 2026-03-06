@@ -94,7 +94,7 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
             venue: eventData.venue || { name: '' },
             lineup: eventData.lineup || [],
             data: {
-                poster_urls: eventData.posterUrls?.length ? eventData.posterUrls : undefined,
+                poster_urls: eventData.imageUrls?.length ? eventData.imageUrls : undefined,
                 description: eventData.description,
                 links: eventData.links,
             },

@@ -24,7 +24,7 @@ export const EVENT_FORM_CONFIG: CreateEntryFormConfig<CreateEventData> = {
     publishable: true,
     defaultValues: {
         title: '',
-        posterUrls: [],
+        imageUrls: [],
         date: '',
         venue: { name: '' },
         lineup: [],
@@ -38,21 +38,21 @@ export const EVENT_FORM_CONFIG: CreateEntryFormConfig<CreateEventData> = {
             date: formData.date || new Date().toISOString().split('T')[0],
             description: formData.description?.trim() || '',
         }) as EventEntry,
-    errorFieldMap: { title: 'title', poster: 'posterUrls' },
+    errorFieldMap: { title: 'title', poster: 'imageUrls' },
 };
 
 export const MIXSET_FORM_CONFIG: CreateEntryFormConfig<CreateMixsetFormData> = {
     type: 'mixset',
     defaultValues: {
         title: '',
-        coverUrl: '',
+        imageUrls: [],
         url: '',
     },
     toEntry: (formData) =>
         ({
             ...createEmptyEntry('mixset'),
             title: formData.title.trim(),
-            coverUrl: formData.coverUrl || '',
+            imageUrls: formData.imageUrls || [],
             url: formData.url || '',
         }) as MixsetEntry,
     errorFieldMap: { title: 'title' },
@@ -63,14 +63,14 @@ export const LINK_FORM_CONFIG: CreateEntryFormConfig<CreateLinkFormData> = {
     defaultValues: {
         title: '',
         url: '',
-        coverUrl: '',
+        imageUrls: [],
     },
     toEntry: (formData) =>
         ({
             ...createEmptyEntry('link'),
             title: formData.title.trim(),
             url: formData.url.trim(),
-            coverUrl: formData.coverUrl || '',
+            imageUrls: formData.imageUrls || [],
         }) as LinkEntry,
     errorFieldMap: { title: 'title', url: 'url' },
 };

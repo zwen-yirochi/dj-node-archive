@@ -61,7 +61,7 @@ export default function CreateMixsetForm() {
                 {/* Cover Image */}
                 <FormField
                     control={control}
-                    name="coverUrl"
+                    name="imageUrls"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel className="text-dashboard-text-secondary">
@@ -69,8 +69,8 @@ export default function CreateMixsetForm() {
                             </FormLabel>
                             <FormControl>
                                 <ImageUpload
-                                    value={field.value}
-                                    onChange={field.onChange}
+                                    value={field.value?.[0] || ''}
+                                    onChange={(url) => field.onChange(url ? [url] : [])}
                                     aspectRatio="square"
                                 />
                             </FormControl>

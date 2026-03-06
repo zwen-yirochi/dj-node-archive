@@ -113,7 +113,7 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
             date: '2026-03-05',
             venue: { name: 'Club' },
             lineup: [{ name: 'DJ A' }],
-            posterUrls: ['https://example.com/poster.jpg'],
+            imageUrls: ['https://example.com/poster.jpg'],
             description: 'A great event',
             links: [{ title: 'Tickets', url: 'https://tickets.com' }],
         };
@@ -126,7 +126,7 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
         expect(r.date).toBe(original.date);
         expect(r.venue.name).toBe(original.venue.name);
         expect(r.lineup).toHaveLength(1);
-        expect(r.posterUrls).toEqual(original.posterUrls);
+        expect(r.imageUrls).toEqual(original.imageUrls);
         expect(r.description).toBe(original.description);
         expect(r.links).toHaveLength(1);
     });
@@ -135,7 +135,7 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
         const original: MixsetEntry = {
             ...(createEmptyEntry('mixset') as MixsetEntry),
             title: 'Test Mix',
-            coverUrl: 'https://example.com/cover.jpg',
+            imageUrls: ['https://example.com/cover.jpg'],
             url: 'https://soundcloud.com/mix',
             tracklist: [{ track: 'Track 1', artist: 'Artist', time: '0:00' }],
             description: 'A great mix',
@@ -146,18 +146,18 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
         expect(restored.type).toBe('mixset');
         const r = restored as MixsetEntry;
         expect(r.title).toBe(original.title);
-        expect(r.coverUrl).toBe(original.coverUrl);
+        expect(r.imageUrls).toEqual(original.imageUrls);
         expect(r.url).toBe(original.url);
         expect(r.tracklist).toHaveLength(1);
         expect(r.description).toBe(original.description);
     });
 
-    it('link: 모든 필드 보존 (coverUrl, description 포함)', () => {
+    it('link: 모든 필드 보존 (imageUrls, description 포함)', () => {
         const original: LinkEntry = {
             ...(createEmptyEntry('link') as LinkEntry),
             title: 'My Link',
             url: 'https://example.com',
-            coverUrl: 'https://example.com/cover.jpg',
+            imageUrls: ['https://example.com/cover.jpg'],
             icon: 'globe',
             description: 'A useful link',
         };
@@ -168,7 +168,7 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
         const r = restored as LinkEntry;
         expect(r.title).toBe(original.title);
         expect(r.url).toBe(original.url);
-        expect(r.coverUrl).toBe(original.coverUrl);
+        expect(r.imageUrls).toEqual(original.imageUrls);
         expect(r.icon).toBe(original.icon);
         expect(r.description).toBe(original.description);
     });
@@ -209,10 +209,10 @@ describe('draftSchema 기본값 ↔ createEmptyEntry 기본값 일치', () => {
      */
 
     it('event: optional 필드 기본값 일치', () => {
-        // 필수 필드(title, posterUrls)에 유효한 더미값 → 나머지 default 추출
+        // 필수 필드(title, imageUrls)에 유효한 더미값 → 나머지 default 추출
         const schemaDefaults = draftEventSchema.parse({
             title: 'xx', // min 2
-            posterUrls: ['x'], // min 1 item
+            imageUrls: ['x'], // min 1 item
         });
         const factory = createEmptyEntry('event') as EventEntry;
 
@@ -229,7 +229,7 @@ describe('draftSchema 기본값 ↔ createEmptyEntry 기본값 일치', () => {
         });
         const factory = createEmptyEntry('mixset') as MixsetEntry;
 
-        expect(factory.coverUrl).toBe(schemaDefaults.coverUrl); // '' === ''
+        expect(factory.imageUrls).toEqual(schemaDefaults.imageUrls); // [] === []
     });
 
     it('custom: optional 필드 기본값 일치', () => {

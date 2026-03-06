@@ -130,9 +130,9 @@ export default function UserPageContent({
                                         : null;
                                     const card = (
                                         <div className="border border-dna-ink-faint p-4">
-                                            {event.posterUrls[0] && (
+                                            {event.imageUrls[0] && (
                                                 <ImageFrame
-                                                    src={event.posterUrls[0]}
+                                                    src={event.imageUrls[0]}
                                                     alt={event.title}
                                                     className="mb-3 aspect-[4/3]"
                                                 />

@@ -42,7 +42,7 @@ const eventBaseFields = {
         .min(2, 'Title must be at least 2 characters')
         .max(100, 'Title must be 100 characters or less')
         .trim(),
-    posterUrls: z.array(z.string().min(1)).min(1, 'At least one poster image is required'),
+    imageUrls: z.array(z.string().min(1)).min(1, 'At least one image is required'),
     links: eventLinksBase,
 };
 
@@ -116,12 +116,12 @@ const mixsetBase = z.object({
 });
 
 export const draftMixsetSchema = mixsetBase.extend({
-    coverUrl: z.string().default(''),
+    imageUrls: z.array(z.string().min(1)).default([]),
     url: mixsetUrlBase.url('Must be a valid URL'),
 });
 
 export const publishMixsetSchema = mixsetBase.extend({
-    coverUrl: z.string().min(1, 'Cover image is required'),
+    imageUrls: z.array(z.string().min(1)).min(1, 'At least one image is required'),
     url: mixsetUrlBase.url('Must be a valid URL'),
 });
 
@@ -154,12 +154,12 @@ const linkBase = z.object({
 
 export const draftLinkSchema = linkBase.extend({
     url: z.string().min(1).trim(),
-    coverUrl: z.string().default(''),
+    imageUrls: z.array(z.string().min(1)).default([]),
 });
 
 export const publishLinkSchema = linkBase.extend({
     url: z.string().url('Must be a valid URL'),
-    coverUrl: z.string().default(''),
+    imageUrls: z.array(z.string().min(1)).default([]),
 });
 
 // ============================================

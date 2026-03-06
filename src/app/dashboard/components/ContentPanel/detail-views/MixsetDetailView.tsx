@@ -2,21 +2,15 @@
 
 import { useMemo } from 'react';
 
+import type { TracklistItem } from '@/types';
+
 import { FieldSync, IMAGE_FIELD_CONFIG, ImageField, TextField } from '../shared-fields';
 import type { FieldSyncConfig } from '../shared-fields/FieldSync';
 import KeyValueField, { type KeyValueColumn } from '../shared-fields/KeyValueField';
 import LinkField from '../shared-fields/LinkField';
 import type { ImageItem } from '../shared-fields/types';
 import type { DetailViewProps, SaveOptions } from './types';
-
-/** URL → stable ID (short hash) */
-function urlToStableId(url: string): string {
-    let hash = 0;
-    for (let i = 0; i < url.length; i++) {
-        hash = ((hash << 5) - hash + url.charCodeAt(i)) | 0;
-    }
-    return `cover-${(hash >>> 0).toString(36)}`;
-}
+import { urlToStableId } from './utils';
 
 // ============================================
 // Field configs
@@ -25,8 +19,7 @@ function urlToStableId(url: string): string {
 const TEXT_CONFIG: FieldSyncConfig<string> = { debounceMs: 800 };
 const URL_CONFIG: FieldSyncConfig<string> = { immediate: true };
 
-type TrackItem = { track: string; artist: string; time: string };
-const TRACKLIST_CONFIG: FieldSyncConfig<TrackItem[]> = { debounceMs: 800 };
+const TRACKLIST_CONFIG: FieldSyncConfig<TracklistItem[]> = { debounceMs: 800 };
 
 const TRACKLIST_COLUMNS: KeyValueColumn[] = [
     {
@@ -39,7 +32,7 @@ const TRACKLIST_COLUMNS: KeyValueColumn[] = [
     { key: 'artist', placeholder: 'Artist', className: 'text-dashboard-text-placeholder' },
 ];
 
-const EMPTY_TRACK: TrackItem = { track: '', artist: '', time: '0:00' };
+const EMPTY_TRACK: TracklistItem = { track: '', artist: '', time: '0:00' };
 
 // ============================================
 // MixsetDetailView
@@ -48,16 +41,19 @@ const EMPTY_TRACK: TrackItem = { track: '', artist: '', time: '0:00' };
 export default function MixsetDetailView({ entry, onSave, disabled }: DetailViewProps) {
     if (entry.type !== 'mixset') return null;
 
-    const { title, coverUrl, url, tracklist, description } = entry;
+    const { title, imageUrls, url, tracklist, description } = entry;
 
-    // coverUrl (single string) ↔ ImageItem[] 변환
     const imageItems: ImageItem[] = useMemo(
-        () => (coverUrl ? [{ id: urlToStableId(coverUrl), url: coverUrl }] : []),
-        [coverUrl]
+        () => imageUrls.map((u) => ({ id: urlToStableId(u), url: u })),
+        [imageUrls]
     );
 
     const handleImageSave = (items: ImageItem[], options?: SaveOptions) => {
-        onSave('coverUrl', items[0]?.url || '', options);
+        onSave(
+            'imageUrls',
+            items.map((item) => item.url),
+            options
+        );
     };
 
     return (

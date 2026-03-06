@@ -8,15 +8,7 @@ import IconField from '../shared-fields/IconField';
 import LinkField from '../shared-fields/LinkField';
 import type { ImageItem } from '../shared-fields/types';
 import type { DetailViewProps, SaveOptions } from './types';
-
-/** URL → stable ID (short hash) */
-function urlToStableId(url: string): string {
-    let hash = 0;
-    for (let i = 0; i < url.length; i++) {
-        hash = ((hash << 5) - hash + url.charCodeAt(i)) | 0;
-    }
-    return `cover-${(hash >>> 0).toString(36)}`;
-}
+import { urlToStableId } from './utils';
 
 // ============================================
 // Field configs
@@ -33,16 +25,19 @@ const ICON_CONFIG: FieldSyncConfig<string> = { immediate: true };
 export default function LinkDetailView({ entry, onSave, disabled }: DetailViewProps) {
     if (entry.type !== 'link') return null;
 
-    const { title, url, coverUrl, icon, description } = entry;
+    const { title, url, imageUrls, icon, description } = entry;
 
-    // coverUrl (single string) ↔ ImageItem[] 변환
     const imageItems: ImageItem[] = useMemo(
-        () => (coverUrl ? [{ id: urlToStableId(coverUrl), url: coverUrl }] : []),
-        [coverUrl]
+        () => imageUrls.map((u) => ({ id: urlToStableId(u), url: u })),
+        [imageUrls]
     );
 
     const handleImageSave = (items: ImageItem[], options?: SaveOptions) => {
-        onSave('coverUrl', items[0]?.url || '', options);
+        onSave(
+            'imageUrls',
+            items.map((item) => item.url),
+            options
+        );
     };
 
     return (

@@ -53,13 +53,15 @@ export function mapUserToDatabase(user: Partial<User>): Partial<DBUser> {
 }
 
 // ============================================
-// Poster URL Migration Helper
+// Image URL Normalization Helper
 // ============================================
 
-/** Normalize legacy poster_url (string) and new poster_urls (string[]) to string[] */
-function normalizePosterUrls(data: Record<string, unknown>): string[] {
+/** Normalize legacy poster_url/poster_urls/cover_url and new image_urls to string[] */
+function normalizeImageUrls(data: Record<string, unknown>): string[] {
+    if (Array.isArray(data.image_urls)) return data.image_urls as string[];
     if (Array.isArray(data.poster_urls)) return data.poster_urls as string[];
     if (typeof data.poster_url === 'string' && data.poster_url) return [data.poster_url];
+    if (typeof data.cover_url === 'string' && data.cover_url) return [data.cover_url];
     return [];
 }
 
@@ -94,7 +96,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                 date: (data.date as string) || '',
                 venue: venue ? { id: venue.venue_id, name: venue.name } : { name: '' },
                 lineup: lineup?.map((p) => ({ id: p.artist_id, name: p.name })) || [],
-                posterUrls: normalizePosterUrls(data),
+                imageUrls: normalizeImageUrls(data),
                 description: data.description as string | undefined,
                 links: data.links as { title: string; url: string }[] | undefined,
             };
@@ -117,6 +119,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                     type: 'mixset',
                     mixsetId: data.mixset_id as string,
                     title: '',
+                    imageUrls: [],
                     tracklist: [],
                 } as MixsetEntry;
             }
@@ -130,7 +133,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                 type: 'mixset',
                 title: (data.title as string) || '',
                 tracklist: tracklist || [],
-                coverUrl: data.cover_url as string | undefined,
+                imageUrls: normalizeImageUrls(data),
                 // 기존 데이터 호환: url || audio_url || soundcloud_url
                 url:
                     (data.url as string) ||
@@ -149,7 +152,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                 type: 'link',
                 title: (data.title as string) || '',
                 url: (data.url as string) || '',
-                coverUrl: data.cover_url as string | undefined,
+                imageUrls: normalizeImageUrls(data),
                 icon: data.icon as string | undefined,
                 description: data.description as string | undefined,
             } as LinkEntry;
@@ -213,8 +216,7 @@ export function mapEntryToDatabase(
                     lineup: eventEntry.lineup.map((p) =>
                         p.id ? { artist_id: p.id, name: p.name } : { name: p.name }
                     ),
-                    poster_urls:
-                        eventEntry.posterUrls.length > 0 ? eventEntry.posterUrls : undefined,
+                    image_urls: eventEntry.imageUrls.length > 0 ? eventEntry.imageUrls : undefined,
                     description: eventEntry.description || undefined,
                     links: eventEntry.links || undefined,
                 },
@@ -246,7 +248,8 @@ export function mapEntryToDatabase(
                 data: {
                     title: mixsetEntry.title,
                     tracklist: mixsetEntry.tracklist || [],
-                    cover_url: mixsetEntry.coverUrl || undefined,
+                    image_urls:
+                        mixsetEntry.imageUrls.length > 0 ? mixsetEntry.imageUrls : undefined,
                     url: mixsetEntry.url || undefined,
                     description: mixsetEntry.description || undefined,
                     duration_minutes: mixsetEntry.durationMinutes ?? undefined,
@@ -264,7 +267,7 @@ export function mapEntryToDatabase(
                 data: {
                     title: linkEntry.title,
                     url: linkEntry.url,
-                    cover_url: linkEntry.coverUrl || undefined,
+                    image_urls: linkEntry.imageUrls.length > 0 ? linkEntry.imageUrls : undefined,
                     icon: linkEntry.icon || undefined,
                     description: linkEntry.description || undefined,
                 },
@@ -307,8 +310,8 @@ export function mapEventToDomain(dbEvent: DBEvent): Event {
         lineup: dbEvent.lineup.map((p) =>
             p.artist_id ? { id: p.artist_id, name: p.name } : { name: p.name }
         ),
-        posterUrls:
-            normalizePosterUrls(dbEvent.data as unknown as Record<string, unknown>) || undefined,
+        imageUrls:
+            normalizeImageUrls(dbEvent.data as unknown as Record<string, unknown>) || undefined,
         description: dbEvent.data.description,
         links: dbEvent.data.links,
         isPublic: dbEvent.is_public,
@@ -331,7 +334,7 @@ export function mapEventToEntry(dbEvent: DBEvent): EventEntry {
         lineup: dbEvent.lineup.map((p) =>
             p.artist_id ? { id: p.artist_id, name: p.name } : { name: p.name }
         ),
-        posterUrls: normalizePosterUrls((dbEvent.data ?? {}) as unknown as Record<string, unknown>),
+        imageUrls: normalizeImageUrls((dbEvent.data ?? {}) as unknown as Record<string, unknown>),
         description: dbEvent.data?.description,
         links: dbEvent.data?.links,
         createdAt: dbEvent.created_at,
@@ -354,7 +357,7 @@ export function mapEventToDatabase(
             p.id ? { artist_id: p.id, name: p.name } : { name: p.name }
         ),
         data: {
-            poster_urls: event.posterUrls?.length ? event.posterUrls : undefined,
+            poster_urls: event.imageUrls?.length ? event.imageUrls : undefined,
             description: event.description,
             links: event.links,
         },
@@ -419,7 +422,7 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): 
                 date: '',
                 venue: { name: '' },
                 lineup: [],
-                posterUrls: [],
+                imageUrls: [],
                 description: '',
                 links: [],
                 createdAt: '',
@@ -435,7 +438,7 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): 
                 isVisible: true,
                 title: '',
                 tracklist: [],
-                coverUrl: '',
+                imageUrls: [],
                 url: '',
                 description: '',
                 createdAt: '',
@@ -451,7 +454,7 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): 
                 isVisible: true,
                 title: '',
                 url: '',
-                coverUrl: '',
+                imageUrls: [],
                 icon: 'globe',
                 description: '',
                 createdAt: '',

@@ -78,7 +78,7 @@ export default function CreateEventForm() {
                 {/* Poster Upload (Required) */}
                 <FormField
                     control={control}
-                    name="posterUrls"
+                    name="imageUrls"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel className="text-dashboard-text-secondary">
