@@ -10,7 +10,7 @@ import {
     type DragEndEvent,
 } from '@dnd-kit/core';
 import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable';
-import { useCallback, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import { Pencil } from 'lucide-react';
@@ -24,12 +24,10 @@ import { useImageUpload } from './useImageUpload';
 // Constants
 // ============================================
 
-const ASPECT_RATIO_CLASS: Record<string, string> = {
-    video: 'aspect-video',
-    square: 'aspect-square',
-    portrait: 'aspect-[3/4]',
-};
-
+/** 갤러리 카드 고정 높이 (px) */
+const CARD_HEIGHT = 160;
+/** 빈 상태 드롭존 높이 (px) */
+const EMPTY_HEIGHT = 128;
 const DEFAULT_MAX_COUNT = 10;
 
 // ============================================
@@ -41,9 +39,7 @@ export default function ImageField({
     onChange = () => {},
     disabled,
     maxCount = DEFAULT_MAX_COUNT,
-    aspectRatio = 'video',
 }: ImageFieldProps) {
-    const ratioClass = ASPECT_RATIO_CLASS[aspectRatio] ?? 'aspect-video';
     const [isEditing, setIsEditing] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -81,6 +77,19 @@ export default function ImageField({
         [onChange, value]
     );
 
+    const scrollRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const onWheel = (e: WheelEvent) => {
+            if (e.deltaY === 0) return;
+            e.preventDefault();
+            el.scrollLeft += e.deltaY * 0.5;
+        };
+        el.addEventListener('wheel', onWheel, { passive: false });
+        return () => el.removeEventListener('wheel', onWheel);
+    }, []);
+
     const activeItem = activeId ? value.find((v) => v.id === activeId) : null;
 
     // ---- Empty state ----
@@ -97,7 +106,7 @@ export default function ImageField({
                     className="hidden"
                 />
                 <ImageDropZone
-                    ratioClass={ratioClass}
+                    height={EMPTY_HEIGHT}
                     isUploading={isUploading}
                     disabled={disabled}
                     onFileDrop={uploadFiles}
@@ -134,10 +143,10 @@ export default function ImageField({
                     <button
                         type="button"
                         onClick={() => setIsEditing(!isEditing)}
-                        className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                        className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
                             isEditing
-                                ? 'border-dashboard-accent text-dashboard-accent hover:bg-dashboard-accent/10 border'
-                                : 'text-dashboard-text-muted hover:bg-dashboard-bg-muted hover:text-dashboard-text'
+                                ? 'border-dashboard-accent text-dashboard-accent hover:bg-dashboard-accent/10'
+                                : 'border-transparent text-dashboard-text-muted hover:bg-dashboard-bg-muted hover:text-dashboard-text'
                         }`}
                     >
                         {isEditing ? (
@@ -153,7 +162,7 @@ export default function ImageField({
             )}
 
             {/* Image strip — center when fits, scroll left when overflows */}
-            <div className="scrollbar-thin overflow-x-auto pb-1">
+            <div ref={scrollRef} className="scrollbar-thin overflow-x-auto pb-1">
                 <div className="mx-auto flex w-fit gap-2">
                     <DndContext
                         id={dndId}
@@ -170,7 +179,7 @@ export default function ImageField({
                                 <ImageCard
                                     key={item.id}
                                     item={item}
-                                    ratioClass={ratioClass}
+                                    height={CARD_HEIGHT}
                                     isEditing={isEditing}
                                     onRemove={removeImage}
                                     onReplace={replaceFile}
@@ -180,17 +189,15 @@ export default function ImageField({
 
                         <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
                             {activeItem && (
-                                <div
-                                    className={`relative ${ratioClass} border-dashboard-accent w-28 overflow-hidden rounded-lg border-2 shadow-lg sm:w-32`}
-                                >
-                                    <Image
-                                        src={activeItem.url}
-                                        alt=""
-                                        fill
-                                        className="object-cover"
-                                        sizes="128px"
-                                    />
-                                </div>
+                                <Image
+                                    src={activeItem.url}
+                                    alt=""
+                                    width={300}
+                                    height={CARD_HEIGHT}
+                                    style={{ height: `${CARD_HEIGHT}px`, width: 'auto' }}
+                                    className="border-dashboard-accent rounded-lg border-2 shadow-lg"
+                                    unoptimized
+                                />
                             )}
                         </DragOverlay>
                     </DndContext>
@@ -198,7 +205,7 @@ export default function ImageField({
                     {/* Add / drop zone (edit mode only) */}
                     {isEditing && canAdd && (
                         <ImageDropZone
-                            ratioClass={ratioClass}
+                            height={CARD_HEIGHT}
                             isUploading={isUploading}
                             onFileDrop={uploadFiles}
                             onClickAdd={openFilePicker}

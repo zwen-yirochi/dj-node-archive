@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { deletePoster, uploadPoster } from '@/app/dashboard/actions/upload';
 
+import { urlToStableId } from '../../detail-views/utils';
 import type { ImageItem } from '../types';
 
 const COMPRESSION_OPTIONS = {
@@ -13,10 +14,6 @@ const COMPRESSION_OPTIONS = {
     useWebWorker: true,
     fileType: 'image/webp' as const,
 };
-
-function generateId() {
-    return `img_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-}
 
 interface UseImageUploadOptions {
     value: ImageItem[];
@@ -61,7 +58,10 @@ export function useImageUpload({ value, onChange, maxCount }: UseImageUploadOpti
             if (result.status === 'fulfilled') {
                 const { value } = result;
                 if (value.success && value.data) {
-                    newItems.push({ id: generateId(), url: value.data.posterUrl });
+                    newItems.push({
+                        id: urlToStableId(value.data.posterUrl),
+                        url: value.data.posterUrl,
+                    });
                 } else if (!value.success) {
                     setError(value.error);
                 }

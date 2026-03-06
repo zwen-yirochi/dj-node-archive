@@ -51,7 +51,7 @@ export default function EventDetailView({ entry, onSave, disabled }: EventDetail
                     value={imageItems}
                     onSave={handleImageSave}
                 >
-                    <ImageField disabled={disabled} aspectRatio="portrait" maxCount={10} />
+                    <ImageField disabled={disabled} maxCount={10} />
                 </SyncedField>
             </div>
             <div className="mx-4 space-y-4">

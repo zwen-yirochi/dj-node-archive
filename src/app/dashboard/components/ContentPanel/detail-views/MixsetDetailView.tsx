@@ -64,7 +64,7 @@ export default function MixsetDetailView({ entry, onSave, disabled }: MixsetDeta
             </SyncedField>
 
             <SyncedField config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleImageSave}>
-                <ImageField disabled={disabled} aspectRatio="square" maxCount={1} />
+                <ImageField disabled={disabled} maxCount={1} />
             </SyncedField>
 
             <SyncedField

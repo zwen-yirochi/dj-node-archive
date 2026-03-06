@@ -55,7 +55,7 @@ export default function LinkDetailView({ entry, onSave, disabled }: LinkDetailVi
             </SyncedField>
 
             <SyncedField config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleImageSave}>
-                <ImageField disabled={disabled} aspectRatio="video" maxCount={1} />
+                <ImageField disabled={disabled} maxCount={1} />
             </SyncedField>
 
             <SyncedField

@@ -31,11 +31,7 @@ export interface ImageItem {
     url: string;
 }
 
-/** 이미지 필드 aspect ratio 옵션 */
-export type ImageAspectRatio = 'video' | 'square' | 'portrait';
-
 /** ImageField 전용 props — 멀티 이미지 지원 */
 export interface ImageFieldProps extends FieldComponentProps<ImageItem[]> {
     maxCount?: number;
-    aspectRatio?: ImageAspectRatio;
 }

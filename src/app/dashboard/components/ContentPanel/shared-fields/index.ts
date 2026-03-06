@@ -25,4 +25,4 @@ export {
 
 // Types
 export type { FieldSyncConfig, SaveOptions } from './types';
-export type { FieldComponentProps, ImageFieldProps, ImageItem, ImageAspectRatio } from './types';
+export type { FieldComponentProps, ImageFieldProps, ImageItem } from './types';

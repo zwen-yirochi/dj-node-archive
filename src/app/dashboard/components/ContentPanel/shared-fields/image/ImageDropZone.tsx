@@ -7,17 +7,17 @@ import { ImagePlus, Loader2 } from 'lucide-react';
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 interface ImageDropZoneProps {
-    ratioClass: string;
+    height: number;
     isUploading: boolean;
     disabled?: boolean;
     onFileDrop: (files: File[]) => void;
     onClickAdd: () => void;
-    /** true면 w-full, false면 카드 사이즈 (w-28/sm:w-32) */
+    /** true면 w-full, false면 카드 사이즈 (w-28) */
     fullWidth?: boolean;
 }
 
 export default function ImageDropZone({
-    ratioClass,
+    height,
     isUploading,
     disabled,
     onFileDrop,
@@ -58,7 +58,12 @@ export default function ImageDropZone({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             disabled={isDisabled}
-            className={`flex ${ratioClass} ${fullWidth ? 'w-full' : 'w-28 sm:w-32'} flex-shrink-0 flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed transition-colors ${
+            style={
+                fullWidth
+                    ? { height: `${height}px` }
+                    : { height: `${height}px`, width: `${height}px` }
+            }
+            className={`flex ${fullWidth ? 'w-full' : ''} flex-shrink-0 flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed transition-colors ${
                 isDragOver
                     ? 'border-dashboard-accent bg-dashboard-accent/5'
                     : 'border-dashboard-border hover:border-dashboard-border-hover hover:bg-dashboard-bg-muted/30'
