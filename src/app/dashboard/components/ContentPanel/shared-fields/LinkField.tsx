@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Check, Copy, ExternalLink, X } from 'lucide-react';
 
@@ -20,6 +20,7 @@ export default function LinkField({
     const [editValue, setEditValue] = useState(value);
     const [copied, setCopied] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    const copiedTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (!isEditing) {
@@ -52,16 +53,26 @@ export default function LinkField({
         }
     };
 
-    const handleCopy = async () => {
+    useEffect(() => {
+        return () => {
+            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+        };
+    }, []);
+
+    const handleCopy = useCallback(async () => {
         if (!value) return;
         try {
             await navigator.clipboard.writeText(value);
             setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+            copiedTimerRef.current = setTimeout(() => {
+                copiedTimerRef.current = null;
+                setCopied(false);
+            }, 1500);
         } catch {
             // ignore
         }
-    };
+    }, [value]);
 
     const handleClear = () => {
         onChange('');

@@ -89,8 +89,8 @@ export default function TagListField({
     return (
         <div
             className={`flex-1 ${disabled ? '' : 'cursor-pointer'}`}
-            onDoubleClick={() => !disabled && setIsEditing(true)}
-            title={disabled ? undefined : 'Double-click to edit'}
+            onClick={() => !disabled && setIsEditing(true)}
+            title={disabled ? undefined : 'Click to edit'}
         >
             {value.length > 0 ? (
                 <div className="flex flex-wrap gap-1">

@@ -6,20 +6,20 @@ interface DateFieldProps extends FieldComponentProps<string> {
     className?: string;
 }
 
-export default function DateField({ value, onChange, disabled, className }: DateFieldProps) {
-    const formatDate = (dateStr: string) => {
-        if (!dateStr) return null;
-        try {
-            return new Date(dateStr).toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-            });
-        } catch {
-            return dateStr;
-        }
-    };
+function formatDate(dateStr: string): string | null {
+    if (!dateStr) return null;
+    try {
+        return new Date(dateStr).toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+    } catch {
+        return dateStr;
+    }
+}
 
+export default function DateField({ value, onChange, disabled, className }: DateFieldProps) {
     return (
         <div className={className}>
             <input
