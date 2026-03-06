@@ -14,7 +14,7 @@ export const youtube: EmbedProvider = {
 export const soundcloud: EmbedProvider = {
     name: 'soundcloud',
     displayName: 'SoundCloud',
-    regex: [/(soundcloud\.com\/[\w-]+\/[\w-]+)/],
+    regex: [/(soundcloud\.com\/[\w-]+(?:\/[\w-]+)*)/],
     toEmbedUrl: (match) =>
         `https://w.soundcloud.com/player/?url=${encodeURIComponent(`https://${match[1]}`)}&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false`,
     dimensions: { height: 166 },
