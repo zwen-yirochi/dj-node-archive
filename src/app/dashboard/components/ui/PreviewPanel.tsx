@@ -5,7 +5,8 @@ import Link from 'next/link';
 
 import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 
-import { useUser } from '../../hooks';
+import { ENTRY_TYPE_CONFIG } from '../../config/entry/entry-types';
+import { useEntries, useUser } from '../../hooks';
 import {
     useRegisterPreviewHandler,
     type PreviewAction,
@@ -17,18 +18,29 @@ import {
     type ContentView,
 } from '../../stores/dashboardStore';
 
-function viewToPreviewTarget(view: ContentView): PreviewTarget {
-    return view.kind === 'detail' ? 'entry-detail' : 'userpage';
+function useDetailHasPage(entryId?: string): boolean {
+    const { data: entries } = useEntries();
+    if (!entryId) return false;
+    const entry = entries?.find((e) => e.id === entryId);
+    if (!entry) return false;
+    return ENTRY_TYPE_CONFIG[entry.type].hasDetailPage;
+}
+
+function viewToPreviewTarget(view: ContentView, hasDetailPage: boolean): PreviewTarget {
+    return view.kind === 'detail' && hasDetailPage ? 'entry-detail' : 'userpage';
 }
 
 function usePreviewUrl(username: string): string {
     const contentView = useDashboardStore(selectContentView);
+    const hasDetailPage = useDetailHasPage(
+        contentView.kind === 'detail' ? contentView.entryId : undefined
+    );
     return useMemo(() => {
-        if (contentView.kind === 'detail') {
+        if (contentView.kind === 'detail' && hasDetailPage) {
             return `/${username}/${contentView.entryId}?preview=true`;
         }
         return `/${username}?preview=true`;
-    }, [username, contentView]);
+    }, [username, contentView, hasDetailPage]);
 }
 
 export default function PreviewPanel() {
@@ -68,6 +80,9 @@ export default function PreviewPanel() {
     }, [isVisible]);
 
     const contentView = useDashboardStore(selectContentView);
+    const hasDetailPage = useDetailHasPage(
+        contentView.kind === 'detail' ? contentView.entryId : undefined
+    );
 
     // Unified preview action handler — filters refresh by target
     const handlePreviewAction = useCallback(
@@ -75,7 +90,7 @@ export default function PreviewPanel() {
             if (!iframeRef.current?.contentWindow || !isVisible) return;
 
             if (action.type === 'refresh') {
-                if (action.target !== viewToPreviewTarget(contentView)) return;
+                if (action.target !== viewToPreviewTarget(contentView, hasDetailPage)) return;
                 setIsLoading(true);
                 iframeRef.current.contentWindow.location.reload();
             } else if (action.type === 'navigate') {
@@ -83,7 +98,7 @@ export default function PreviewPanel() {
                 iframeRef.current.src = action.url;
             }
         },
-        [isVisible, contentView]
+        [isVisible, contentView, hasDetailPage]
     );
 
     useRegisterPreviewHandler(handlePreviewAction);

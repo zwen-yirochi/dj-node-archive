@@ -20,7 +20,7 @@ export interface OptimisticMutationConfig<TParams> {
     mutationFn: (params: TParams, entries: ContentEntry[] | undefined) => Promise<unknown>;
     optimisticUpdate: (params: TParams, entries: ContentEntry[]) => ContentEntry[];
     triggersPreview?: boolean | ((params: TParams, snapshot: ContentEntry[]) => boolean);
-    previewTarget?: PreviewTarget;
+    previewTarget?: PreviewTarget | ((params: TParams, snapshot: ContentEntry[]) => PreviewTarget);
     onPreviewTrigger?: (target: PreviewTarget) => void;
 }
 
@@ -63,7 +63,11 @@ export function makeOptimisticMutation<TParams>(
                     ? config.triggersPreview(params, snapshotRef.current!)
                     : true;
             if (shouldRefresh) {
-                config.onPreviewTrigger(config.previewTarget ?? 'userpage');
+                const target =
+                    typeof config.previewTarget === 'function'
+                        ? config.previewTarget(params, snapshotRef.current!)
+                        : (config.previewTarget ?? 'userpage');
+                config.onPreviewTrigger(target);
             }
         },
         onError: (_err, _vars, ctx) => {

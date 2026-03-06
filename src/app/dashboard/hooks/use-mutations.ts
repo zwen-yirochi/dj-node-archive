@@ -14,6 +14,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { ContentEntry } from '@/types';
 import { FIELD_CONFIG, type FieldConfig } from '@/app/dashboard/config/entry/entry-fields';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { canAddToView } from '@/app/dashboard/config/entry/entry-validation';
 
 import type { PublishOption } from '../components/ContentPanel/create-forms/workflow-options';
@@ -58,7 +59,7 @@ export function useEntryMutations() {
                 entries.map((e) => (e.id === entry.id ? entry : e)),
             triggersPreview: ({ entry, changedFields }) =>
                 hasPreviewField(entry.type, changedFields),
-            previewTarget: 'entry-detail',
+            previewTarget: ({ entry }) => previewTargetFor(entry.type),
         })
     );
 
@@ -78,7 +79,10 @@ export function useEntryMutations() {
                 const entry = snapshot.find((e) => e.id === entryId);
                 return entry ? hasPreviewField(entry.type, [fieldKey]) : false;
             },
-            previewTarget: 'entry-detail',
+            previewTarget: ({ entryId }, snapshot) => {
+                const entry = snapshot.find((e) => e.id === entryId);
+                return previewTargetFor(entry?.type);
+            },
         })
     );
 
@@ -185,6 +189,12 @@ export function useEntryMutations() {
 // ============================================
 // Preview Trigger Helpers
 // ============================================
+
+/** Returns the correct preview target based on whether the entry type has a detail page */
+function previewTargetFor(type?: ContentEntry['type']): PreviewTarget {
+    if (!type) return 'userpage';
+    return ENTRY_TYPE_CONFIG[type].hasDetailPage ? 'entry-detail' : 'userpage';
+}
 
 /** Determines whether any changed fields affect the preview */
 function hasPreviewField(type: ContentEntry['type'], changedFields?: string[]): boolean {
