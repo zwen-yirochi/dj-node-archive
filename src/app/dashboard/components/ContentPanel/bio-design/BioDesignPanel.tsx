@@ -96,11 +96,13 @@ export default function BioDesignPanel() {
                             <div className="mt-4 rounded-xl border border-dashboard-border/50 bg-dashboard-bg-surface p-4">
                                 <div className="flex items-center gap-3">
                                     <Avatar className="h-12 w-12 shrink-0 border border-dashboard-border">
-                                        <AvatarImage
-                                            src={user.avatarUrl}
-                                            alt={user.displayName}
-                                            className="object-cover"
-                                        />
+                                        {user.avatarUrl && (
+                                            <AvatarImage
+                                                src={user.avatarUrl}
+                                                alt={user.displayName}
+                                                className="object-cover"
+                                            />
+                                        )}
                                         <AvatarFallback className="bg-dashboard-bg-active text-xs font-medium text-dashboard-text-secondary">
                                             {getInitials(user.displayName || user.username)}
                                         </AvatarFallback>

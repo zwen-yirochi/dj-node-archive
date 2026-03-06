@@ -45,11 +45,13 @@ export default function AccountSection({ username }: AccountSectionProps) {
                     trigger={
                         <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 transition-colors hover:bg-dashboard-bg-hover/70">
                             <Avatar className="h-8 w-8 border border-dashboard-border">
-                                <AvatarImage
-                                    src={user.avatarUrl}
-                                    alt={user.displayName}
-                                    className="object-cover"
-                                />
+                                {user.avatarUrl && (
+                                    <AvatarImage
+                                        src={user.avatarUrl}
+                                        alt={user.displayName}
+                                        className="object-cover"
+                                    />
+                                )}
                                 <AvatarFallback className="bg-dashboard-bg-active text-xs font-medium text-dashboard-text-secondary">
                                     {getInitials(user.displayName || username)}
                                 </AvatarFallback>
