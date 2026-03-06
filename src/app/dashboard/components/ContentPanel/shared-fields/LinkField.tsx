@@ -11,7 +11,7 @@ interface LinkFieldProps extends FieldComponentProps<string> {
 }
 
 export default function LinkField({
-    value,
+    value = '',
     onChange,
     disabled,
     placeholder = 'Paste a URL',
@@ -36,9 +36,9 @@ export default function LinkField({
     }, [isEditing]);
 
     const handleSave = () => {
-        const trimmed = editValue.trim();
+        const trimmed = (editValue ?? '').trim();
         if (trimmed !== value) {
-            onChange(trimmed);
+            onChange?.(trimmed);
         }
         setIsEditing(false);
     };
@@ -75,7 +75,7 @@ export default function LinkField({
     }, [value]);
 
     const handleClear = () => {
-        onChange('');
+        onChange?.('');
         setEditValue('');
     };
 

@@ -18,7 +18,7 @@ interface TagListFieldProps extends FieldComponentProps<TagItem[]> {
 }
 
 export default function TagListField({
-    value,
+    value = [],
     onChange,
     disabled,
     placeholder = 'Add tag...',
@@ -30,13 +30,13 @@ export default function TagListField({
     const addTag = (name: string) => {
         const formatted = formatNewTag ? formatNewTag(name) : name;
         if (!value.some((t) => t.name === formatted)) {
-            onChange([...value, { name: formatted }]);
+            onChange?.([...value, { name: formatted }]);
         }
         setInputValue('');
     };
 
     const removeTag = (tag: TagItem) => {
-        onChange(value.filter((t) => t.name !== tag.name));
+        onChange?.(value.filter((t) => t.name !== tag.name));
     };
 
     if (isEditing) {

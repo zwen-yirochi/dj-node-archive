@@ -37,8 +37,8 @@ const DEFAULT_MAX_COUNT = 10;
 // ============================================
 
 export default function ImageField({
-    value,
-    onChange,
+    value = [],
+    onChange = () => {},
     disabled,
     maxCount = DEFAULT_MAX_COUNT,
     aspectRatio = 'video',
@@ -185,7 +185,7 @@ export default function ImageField({
                                 >
                                     <Image
                                         src={activeItem.url}
-                                        alt={activeItem.alt || ''}
+                                        alt=""
                                         fill
                                         className="object-cover"
                                         sizes="128px"

@@ -11,7 +11,7 @@ interface TextFieldProps extends FieldComponentProps<string> {
 }
 
 export default function TextField({
-    value,
+    value = '',
     onChange,
     disabled,
     variant = 'input',
@@ -26,7 +26,7 @@ export default function TextField({
         return (
             <textarea
                 value={value}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={(e) => onChange?.(e.target.value)}
                 disabled={disabled}
                 placeholder={placeholder}
                 rows={rows}
@@ -40,7 +40,7 @@ export default function TextField({
         <input
             type="text"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => onChange?.(e.target.value)}
             disabled={disabled}
             placeholder={placeholder}
             aria-label={ariaLabel}

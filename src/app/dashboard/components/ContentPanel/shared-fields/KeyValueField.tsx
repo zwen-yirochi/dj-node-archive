@@ -20,7 +20,7 @@ interface KeyValueFieldProps<T extends Record<string, string>> extends FieldComp
 }
 
 export default function KeyValueField<T extends Record<string, string>>({
-    value,
+    value = [] as unknown as T[],
     onChange,
     disabled,
     columns,
@@ -40,14 +40,14 @@ export default function KeyValueField<T extends Record<string, string>>({
         const next = value.map((row, i) =>
             i === rowIndex ? { ...row, [colKey]: cellValue } : row
         );
-        onChange(next);
+        onChange?.(next);
     };
 
-    const addRow = () => onChange([...value, { ...emptyItem }]);
+    const addRow = () => onChange?.([...value, { ...emptyItem }]);
 
     const removeRow = (index: number) => {
         keysRef.current.splice(index, 1);
-        onChange(value.filter((_, i) => i !== index));
+        onChange?.(value.filter((_, i) => i !== index));
     };
 
     return (

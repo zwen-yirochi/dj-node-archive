@@ -1,7 +1,7 @@
 // Components
 export { default as DateField } from './DateField';
 export { default as EmbedField } from './EmbedField';
-export { default as FieldSync } from './FieldSync';
+export { default as SyncedField } from './SyncedField';
 export { default as IconField } from './IconField';
 export { ImageField } from './image';
 export { default as KeyValueField } from './KeyValueField';
@@ -24,5 +24,5 @@ export {
 } from '@/app/dashboard/config/fieldConfigs';
 
 // Types
-export type { FieldSyncConfig } from './FieldSync';
+export type { FieldSyncConfig, SaveOptions } from './types';
 export type { FieldComponentProps, ImageFieldProps, ImageItem, ImageAspectRatio } from './types';

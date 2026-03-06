@@ -20,7 +20,7 @@ const iconComponents: Record<string, React.ComponentType<{ className?: string }>
     mail: Mail,
 };
 
-export default function IconField({ value, onChange, disabled }: FieldComponentProps<string>) {
+export default function IconField({ value = '', onChange, disabled }: FieldComponentProps<string>) {
     const [showSelector, setShowSelector] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
     const IconComponent = iconComponents[value] || Globe;
@@ -55,7 +55,7 @@ export default function IconField({ value, onChange, disabled }: FieldComponentP
                                 <button
                                     key={opt}
                                     onClick={() => {
-                                        onChange(opt);
+                                        onChange?.(opt);
                                         setShowSelector(false);
                                     }}
                                     className={cn(

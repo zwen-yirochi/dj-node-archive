@@ -23,8 +23,16 @@ function toArtistRefs(tags: TagItem[]): ArtistReference[] {
     return tags.map(({ id, name }) => ({ id, name }));
 }
 
-export default function LineupField({ value, onChange, disabled, className }: LineupFieldProps) {
-    const handleChange = useCallback((tags: TagItem[]) => onChange(toArtistRefs(tags)), [onChange]);
+export default function LineupField({
+    value = [],
+    onChange,
+    disabled,
+    className,
+}: LineupFieldProps) {
+    const handleChange = useCallback(
+        (tags: TagItem[]) => onChange?.(toArtistRefs(tags)),
+        [onChange]
+    );
 
     return (
         <div className={`flex items-start gap-3 text-sm ${className ?? ''}`}>

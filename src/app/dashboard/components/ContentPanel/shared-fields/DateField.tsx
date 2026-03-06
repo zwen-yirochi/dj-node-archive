@@ -19,13 +19,13 @@ function formatDate(dateStr: string): string | null {
     }
 }
 
-export default function DateField({ value, onChange, disabled, className }: DateFieldProps) {
+export default function DateField({ value = '', onChange, disabled, className }: DateFieldProps) {
     return (
         <div className={className}>
             <input
                 type="date"
                 value={value}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={(e) => onChange?.(e.target.value)}
                 disabled={disabled}
                 className="w-full bg-transparent text-dashboard-text-secondary outline-none"
             />

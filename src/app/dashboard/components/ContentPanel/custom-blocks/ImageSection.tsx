@@ -1,6 +1,6 @@
 'use client';
 
-import { FieldSync, IMAGE_FIELD_CONFIG, ImageField } from '../shared-fields';
+import { IMAGE_FIELD_CONFIG, ImageField, SyncedField } from '../shared-fields';
 import type { ImageItem } from '../shared-fields/types';
 import type { SectionBlockEditorProps } from './types';
 
@@ -10,20 +10,15 @@ export default function ImageSection({
     disabled,
 }: SectionBlockEditorProps<'image'>) {
     // 단일 ImageBlockData ↔ ImageItem[] 변환
-    const imageItems: ImageItem[] = data.url
-        ? [{ id: 'block-img', url: data.url, alt: data.alt, caption: data.caption }]
-        : [];
+    const imageItems: ImageItem[] = data.url ? [{ id: 'block-img', url: data.url }] : [];
 
     const handleSave = (items: ImageItem[]) => {
-        const first = items[0];
-        onChange({ url: first?.url || '', alt: first?.alt, caption: first?.caption });
+        onChange({ url: items[0]?.url || '' });
     };
 
     return (
-        <FieldSync config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleSave}>
-            {({ value, onChange: onFieldChange }) => (
-                <ImageField value={value} onChange={onFieldChange} disabled={disabled} />
-            )}
-        </FieldSync>
+        <SyncedField config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleSave}>
+            <ImageField disabled={disabled} />
+        </SyncedField>
     );
 }

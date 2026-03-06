@@ -24,7 +24,7 @@ interface VenueFieldProps extends FieldComponentProps<VenueValue> {
 }
 
 export default function VenueField({
-    value,
+    value = { name: '' },
     onChange,
     disabled,
     placeholder = 'Search venue...',
@@ -86,7 +86,7 @@ export default function VenueField({
 
     const handleSelect = useCallback(
         (result: SearchResult) => {
-            onChange({ id: result.id, name: result.name });
+            onChange?.({ id: result.id, name: result.name });
             setQuery('');
             setIsOpen(false);
             setHighlightedIndex(-1);
@@ -95,7 +95,7 @@ export default function VenueField({
     );
 
     const handleClear = useCallback(() => {
-        onChange({ name: '' });
+        onChange?.({ name: '' });
         setQuery('');
         inputRef.current?.focus();
     }, [onChange]);
@@ -160,7 +160,7 @@ export default function VenueField({
                     const v = e.target.value;
                     setQuery(v);
                     // Free-text: update name without id
-                    onChange({ name: v });
+                    onChange?.({ name: v });
                 }}
                 onKeyDown={handleKeyDown}
                 onFocus={() => query.length >= 1 && results.length > 0 && setIsOpen(true)}

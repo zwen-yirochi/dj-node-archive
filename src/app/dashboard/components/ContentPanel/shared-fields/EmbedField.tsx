@@ -9,7 +9,7 @@ interface EmbedFieldProps extends FieldComponentProps<string> {
 }
 
 export default function EmbedField({
-    value,
+    value = '',
     onChange,
     disabled,
     placeholder = 'Paste URL (SoundCloud, YouTube, etc.)',
@@ -21,7 +21,7 @@ export default function EmbedField({
                 <input
                     type="text"
                     value={value}
-                    onChange={(e) => onChange(e.target.value)}
+                    onChange={(e) => onChange?.(e.target.value)}
                     placeholder={placeholder}
                     disabled={disabled}
                     className="w-full border-none bg-transparent p-0 text-sm text-dashboard-text outline-none placeholder:text-dashboard-text-placeholder"

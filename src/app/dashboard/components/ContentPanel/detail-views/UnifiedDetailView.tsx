@@ -8,7 +8,6 @@ import { DETAIL_VIEW_CONFIG, type DetailFieldSlot } from '@/app/dashboard/config
 import {
     DATE_FIELD_CONFIG,
     DateField,
-    FieldSync,
     ICON_FIELD_CONFIG,
     IconField,
     IMAGE_FIELD_CONFIG,
@@ -17,6 +16,7 @@ import {
     LINEUP_FIELD_CONFIG,
     LineupField,
     LinkField,
+    SyncedField,
     TEXT_FIELD_CONFIG,
     TextField,
     TRACKLIST_FIELD_CONFIG,
@@ -51,26 +51,21 @@ function ImageSlotRenderer({
         [entry.imageUrls]
     );
 
-    const handleImageSave = (items: ImageItem[], options?: SaveOptions) => {
+    const handleImageSave = (items: ImageItem[]) => {
         onSave(
             'imageUrls',
-            items.map((item) => item.url),
-            options
+            items.map((item) => item.url)
         );
     };
 
     return (
-        <FieldSync config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleImageSave}>
-            {({ value, onChange }) => (
-                <ImageField
-                    value={value}
-                    onChange={onChange}
-                    aspectRatio={slot.aspectRatio}
-                    maxCount={slot.maxCount}
-                    disabled={disabled}
-                />
-            )}
-        </FieldSync>
+        <SyncedField config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleImageSave}>
+            <ImageField
+                aspectRatio={slot.aspectRatio}
+                maxCount={slot.maxCount}
+                disabled={disabled}
+            />
+        </SyncedField>
     );
 }
 
@@ -89,21 +84,17 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
     switch (slot.field) {
         case 'title':
             return (
-                <FieldSync
+                <SyncedField
                     config={TEXT_FIELD_CONFIG}
                     value={entry.title}
                     onSave={(v) => onSave('title', v)}
                 >
-                    {({ value, onChange }) => (
-                        <TextField
-                            value={value}
-                            onChange={onChange}
-                            disabled={disabled}
-                            placeholder={slot.placeholder}
-                            className="text-center text-xl font-bold text-dashboard-text"
-                        />
-                    )}
-                </FieldSync>
+                    <TextField
+                        disabled={disabled}
+                        placeholder={slot.placeholder}
+                        className="text-center text-xl font-bold text-dashboard-text"
+                    />
+                </SyncedField>
             );
 
         case 'image':
@@ -114,93 +105,79 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
         case 'date':
             if (entry.type !== 'event') return null;
             return (
-                <FieldSync
+                <SyncedField
                     config={DATE_FIELD_CONFIG}
                     value={entry.date}
                     onSave={(v) => onSave('date', v)}
                 >
-                    {({ value, onChange }) => (
-                        <DateField value={value} onChange={onChange} disabled={disabled} />
-                    )}
-                </FieldSync>
+                    <DateField disabled={disabled} />
+                </SyncedField>
             );
 
         case 'venue':
             if (entry.type !== 'event') return null;
             return (
-                <FieldSync
+                <SyncedField
                     config={VENUE_FIELD_CONFIG}
                     value={entry.venue}
                     onSave={(v) => onSave('venue', v)}
                 >
-                    {({ value, onChange }) => (
-                        <VenueField value={value} onChange={onChange} disabled={disabled} />
-                    )}
-                </FieldSync>
+                    <VenueField disabled={disabled} />
+                </SyncedField>
             );
 
         case 'lineup':
             if (entry.type !== 'event') return null;
             return (
-                <FieldSync
+                <SyncedField
                     config={LINEUP_FIELD_CONFIG}
                     value={entry.lineup}
                     onSave={(v) => onSave('lineup', v)}
                 >
-                    {({ value, onChange }) => (
-                        <LineupField value={value} onChange={onChange} disabled={disabled} />
-                    )}
-                </FieldSync>
+                    <LineupField disabled={disabled} />
+                </SyncedField>
             );
 
         case 'url':
             if (entry.type !== 'mixset' && entry.type !== 'link') return null;
             return (
-                <FieldSync
+                <SyncedField
                     config={URL_FIELD_CONFIG}
                     value={entry.url || ''}
                     onSave={(v) => onSave('url', v)}
                 >
-                    {({ value, onChange }) => (
-                        <LinkField value={value} onChange={onChange} disabled={disabled} />
-                    )}
-                </FieldSync>
+                    <LinkField disabled={disabled} />
+                </SyncedField>
             );
 
         case 'icon':
             if (entry.type !== 'link') return null;
             return (
-                <FieldSync
+                <SyncedField
                     config={ICON_FIELD_CONFIG}
                     value={entry.icon || ''}
                     onSave={(v) => onSave('icon', v)}
                 >
-                    {({ value, onChange }) => (
-                        <IconField value={value} onChange={onChange} disabled={disabled} />
-                    )}
-                </FieldSync>
+                    <IconField disabled={disabled} />
+                </SyncedField>
             );
 
         case 'description':
             return (
                 <div>
                     <p className="mb-3 text-sm font-semibold text-dashboard-text">{slot.label}</p>
-                    <FieldSync
+                    <SyncedField
                         config={TEXT_FIELD_CONFIG}
                         value={entry.description || ''}
                         onSave={(v) => onSave('description', v)}
                     >
-                        {({ value, onChange }) => (
-                            <TextField
-                                value={value}
-                                onChange={onChange}
-                                disabled={disabled}
-                                variant="textarea"
-                                placeholder="Add a description..."
-                                className="text-sm leading-relaxed text-dashboard-text-muted"
-                            />
-                        )}
-                    </FieldSync>
+                        <TextField
+                            disabled={disabled}
+                            variant="textarea"
+                            placeholder="Add a description..."
+                            className="text-sm leading-relaxed text-dashboard-text-muted"
+                        />
+                    </SyncedField>
                 </div>
             );
 
@@ -209,22 +186,18 @@ function FieldSlotRenderer({ slot, entry, onSave, disabled }: FieldRendererProps
             return (
                 <div>
                     <h3 className="mb-4 text-sm font-semibold text-dashboard-text">{slot.label}</h3>
-                    <FieldSync
+                    <SyncedField
                         config={TRACKLIST_FIELD_CONFIG}
                         value={entry.tracklist || []}
                         onSave={(items) => onSave('tracklist', items)}
                     >
-                        {({ value, onChange }) => (
-                            <KeyValueField
-                                value={value}
-                                onChange={onChange}
-                                disabled={disabled}
-                                columns={slot.columns}
-                                emptyItem={slot.emptyItem}
-                                addLabel="Add track"
-                            />
-                        )}
-                    </FieldSync>
+                        <KeyValueField
+                            disabled={disabled}
+                            columns={slot.columns}
+                            emptyItem={slot.emptyItem}
+                            addLabel="Add track"
+                        />
+                    </SyncedField>
                 </div>
             );
     }
