@@ -2,11 +2,19 @@
 
 import { useMemo } from 'react';
 
-import { EVENT_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
+import { Calendar, MapPin, Users } from 'lucide-react';
 
-import { FieldSync, IMAGE_FIELD_CONFIG, ImageField } from '../shared-fields';
+import {
+    FieldSync,
+    IMAGE_FIELD_CONFIG,
+    ImageField,
+    TagListField,
+    TextField,
+} from '../shared-fields';
+import DateField from '../shared-fields/DateField';
+import type { FieldSyncConfig } from '../shared-fields/FieldSync';
+import type { TagItem } from '../shared-fields/TagListField';
 import type { ImageItem } from '../shared-fields/types';
-import { TitleEditModal } from './EditModals';
 import type { DetailViewProps, SaveOptions } from './types';
 
 /** URL → stable ID (short hash) */
@@ -19,20 +27,23 @@ function urlToStableId(url: string): string {
 }
 
 // ============================================
+// Field configs
+// ============================================
+
+const TEXT_CONFIG: FieldSyncConfig<string> = { debounceMs: 800 };
+const DATE_CONFIG: FieldSyncConfig<string> = { immediate: true };
+const TAG_CONFIG: FieldSyncConfig<TagItem[]> = { immediate: true };
+
+const formatArtistTag = (name: string) => (name.startsWith('@') ? name : `@${name}`);
+
+// ============================================
 // EventDetailView
 // ============================================
 
-export default function EventDetailView({
-    entry,
-    onSave,
-    editingField,
-    onEditingDone,
-    disabled,
-}: DetailViewProps) {
+export default function EventDetailView({ entry, onSave, disabled }: DetailViewProps) {
     if (entry.type !== 'event') return null;
 
-    const posterUrls = entry.posterUrls;
-    const title = entry.title;
+    const { title, date, venue, lineup, posterUrls, description } = entry;
 
     // posterUrls ↔ ImageItem[] 변환 (URL 기반 안정 ID)
     const imageItems: ImageItem[] = useMemo(
@@ -50,61 +61,109 @@ export default function EventDetailView({
 
     return (
         <div className="space-y-8">
-            {/* Header — Image + title */}
+            {/* Title */}
+            <FieldSync config={TEXT_CONFIG} value={title} onSave={(v) => onSave('title', v)}>
+                {({ value, onChange }) => (
+                    <TextField
+                        value={value}
+                        onChange={onChange}
+                        disabled={disabled}
+                        placeholder="Event title"
+                        className="text-center text-xl font-bold text-dashboard-text"
+                    />
+                )}
+            </FieldSync>
+
+            {/* Poster images */}
+            <FieldSync config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleImageSave}>
+                {({ value, onChange }) => (
+                    <ImageField
+                        value={value}
+                        onChange={onChange}
+                        aspectRatio="portrait"
+                        maxCount={10}
+                        disabled={disabled}
+                    />
+                )}
+            </FieldSync>
+
+            {/* Info Grid — date, venue, lineup */}
             <div className="space-y-3">
-                <div>
-                    <FieldSync
-                        config={IMAGE_FIELD_CONFIG}
-                        value={imageItems}
-                        onSave={handleImageSave}
-                    >
+                {/* Date */}
+                <div className="flex items-center gap-3 text-sm">
+                    <Calendar className="h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
+                    <FieldSync config={DATE_CONFIG} value={date} onSave={(v) => onSave('date', v)}>
                         {({ value, onChange }) => (
-                            <ImageField
+                            <DateField
                                 value={value}
                                 onChange={onChange}
-                                aspectRatio="portrait"
-                                maxCount={10}
                                 disabled={disabled}
+                                className="flex-1"
                             />
                         )}
                     </FieldSync>
                 </div>
-                <h2 className="text-center text-xl font-bold text-dashboard-text">{title}</h2>
+
+                {/* Venue */}
+                <div className="flex items-center gap-3 text-sm">
+                    <MapPin className="h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
+                    <FieldSync
+                        config={TEXT_CONFIG}
+                        value={venue.name}
+                        onSave={(name) => onSave('venue', { ...venue, name })}
+                    >
+                        {({ value, onChange }) => (
+                            <TextField
+                                value={value}
+                                onChange={onChange}
+                                disabled={disabled}
+                                placeholder="Enter venue name"
+                            />
+                        )}
+                    </FieldSync>
+                </div>
+
+                {/* Lineup */}
+                <div className="flex items-start gap-3 text-sm">
+                    <Users className="mt-0.5 h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
+                    <FieldSync
+                        config={TAG_CONFIG}
+                        value={lineup as TagItem[]}
+                        onSave={(items) => onSave('lineup', items)}
+                    >
+                        {({ value, onChange }) => (
+                            <TagListField
+                                value={value}
+                                onChange={onChange}
+                                disabled={disabled}
+                                placeholder="Tag artists with @username"
+                                formatNewTag={formatArtistTag}
+                            />
+                        )}
+                    </FieldSync>
+                </div>
             </div>
 
-            {/* Info Grid — date, venue, lineup */}
-            <div className="space-y-3">
-                {EVENT_FIELD_BLOCKS.slice(0, 3).map((block) => (
-                    <block.component
-                        key={block.key}
-                        entry={entry}
-                        onSave={onSave}
-                        disabled={disabled}
-                    />
-                ))}
+            {/* Description */}
+            <div>
+                <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
+                <FieldSync
+                    config={TEXT_CONFIG}
+                    value={description || ''}
+                    onSave={(v) => onSave('description', v)}
+                >
+                    {({ value, onChange }) => (
+                        <TextField
+                            value={value}
+                            onChange={onChange}
+                            disabled={disabled}
+                            variant="textarea"
+                            placeholder="Add a description..."
+                            className="text-sm leading-relaxed text-dashboard-text-muted"
+                        />
+                    )}
+                </FieldSync>
             </div>
-
-            {/* Content blocks — description, links */}
-            {EVENT_FIELD_BLOCKS.slice(3).map((block) => (
-                <block.component
-                    key={block.key}
-                    entry={entry}
-                    onSave={onSave}
-                    disabled={disabled}
-                />
-            ))}
-
-            {/* Edit Modals */}
-            {editingField === 'title' && (
-                <TitleEditModal
-                    value={title}
-                    onSave={(newTitle) => {
-                        onSave('title', newTitle);
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                />
-            )}
         </div>
     );
 }
