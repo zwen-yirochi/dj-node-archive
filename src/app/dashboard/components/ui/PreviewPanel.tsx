@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 
-import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
+import { Check, Copy, ExternalLink } from 'lucide-react';
 
 import { ENTRY_TYPE_CONFIG } from '../../config/entry/entry-types';
 import { useEntries, useUser } from '../../hooks';
@@ -47,7 +47,6 @@ export default function PreviewPanel() {
     const user = useUser();
     const [copied, setCopied] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -84,17 +83,18 @@ export default function PreviewPanel() {
         contentView.kind === 'detail' ? contentView.entryId : undefined
     );
 
-    // Unified preview action handler — filters refresh by target
+    // Refresh handler — postMessage for scroll-preserving server refresh
     const handlePreviewAction = useCallback(
         (action: PreviewAction) => {
             if (!iframeRef.current?.contentWindow || !isVisible) return;
 
             if (action.type === 'refresh') {
                 if (action.target !== viewToPreviewTarget(contentView, hasDetailPage)) return;
-                setIsLoading(true);
-                iframeRef.current.contentWindow.location.reload();
+                iframeRef.current.contentWindow.postMessage(
+                    { type: 'refresh' },
+                    window.location.origin
+                );
             } else if (action.type === 'navigate') {
-                setIsLoading(true);
                 iframeRef.current.src = action.url;
             }
         },
@@ -102,10 +102,6 @@ export default function PreviewPanel() {
     );
 
     useRegisterPreviewHandler(handlePreviewAction);
-
-    const handleIframeLoad = useCallback(() => {
-        setIsLoading(false);
-    }, []);
 
     const pagePath = `/${user.username}`;
 
@@ -170,13 +166,6 @@ export default function PreviewPanel() {
                             height: `${scaledHeight}px`,
                         }}
                     >
-                        {/* Loading indicator */}
-                        {isLoading && (
-                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80">
-                                <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
-                            </div>
-                        )}
-
                         {/* iframe */}
                         <div
                             style={{
@@ -192,7 +181,6 @@ export default function PreviewPanel() {
                                     src={previewUrl}
                                     className="h-full w-full border-0"
                                     title="Page preview"
-                                    onLoad={handleIframeLoad}
                                 />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center bg-neutral-50">
