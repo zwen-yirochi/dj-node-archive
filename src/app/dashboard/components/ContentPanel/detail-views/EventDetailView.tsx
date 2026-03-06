@@ -45,30 +45,18 @@ export default function EventDetailView({ entry, onSave, disabled }: EventDetail
                     className="text-xl font-bold text-dashboard-text"
                 />
             </SyncedField>
-
-            <SyncedField config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleImageSave}>
-                <ImageField disabled={disabled} aspectRatio="portrait" maxCount={10} />
-            </SyncedField>
-            <div className="mt-4 space-y-4">
-                <div className="flex items-start gap-3">
-                    <p className="w-16 shrink-0 pt-1.5 text-sm font-semibold text-dashboard-text">
-                        Date
-                    </p>
-                    <div className="min-w-0 flex-1">
-                        <SyncedField
-                            config={DATE_FIELD_CONFIG}
-                            value={entry.date}
-                            onSave={(v) => onSave('date', v)}
-                        >
-                            <DateField disabled={disabled} />
-                        </SyncedField>
-                    </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                    <p className="w-16 shrink-0 pt-1.5 text-sm font-semibold text-dashboard-text">
-                        Venue
-                    </p>
+            <div className="pb-8">
+                <SyncedField
+                    config={IMAGE_FIELD_CONFIG}
+                    value={imageItems}
+                    onSave={handleImageSave}
+                >
+                    <ImageField disabled={disabled} aspectRatio="portrait" maxCount={10} />
+                </SyncedField>
+            </div>
+            <div className="mx-4 space-y-4">
+                <div className="flex items-center gap-3">
+                    <p className="w-16 shrink-0 text-sm font-semibold text-dashboard-text">Venue</p>
                     <div className="min-w-0 flex-1">
                         <SyncedField
                             config={VENUE_FIELD_CONFIG}
@@ -94,22 +82,35 @@ export default function EventDetailView({ entry, onSave, disabled }: EventDetail
                         </SyncedField>
                     </div>
                 </div>
-            </div>
-
-            <div>
-                <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
-                <SyncedField
-                    config={TEXT_FIELD_CONFIG}
-                    value={entry.description || ''}
-                    onSave={(v) => onSave('description', v)}
-                >
-                    <TextField
-                        disabled={disabled}
-                        variant="textarea"
-                        placeholder="Add a description..."
-                        className="text-sm leading-relaxed text-dashboard-text-muted"
-                    />
-                </SyncedField>
+                <div className="flex items-start gap-3">
+                    <p className="w-16 shrink-0 pt-1.5 text-sm font-semibold text-dashboard-text">
+                        Date
+                    </p>
+                    <div className="min-w-0 flex-1">
+                        <SyncedField
+                            config={DATE_FIELD_CONFIG}
+                            value={entry.date}
+                            onSave={(v) => onSave('date', v)}
+                        >
+                            <DateField disabled={disabled} />
+                        </SyncedField>
+                    </div>
+                </div>
+                <div className="pt-8">
+                    <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
+                    <SyncedField
+                        config={TEXT_FIELD_CONFIG}
+                        value={entry.description || ''}
+                        onSave={(v) => onSave('description', v)}
+                    >
+                        <TextField
+                            disabled={disabled}
+                            variant="textarea"
+                            placeholder="Add a description..."
+                            className="text-sm leading-relaxed text-dashboard-text-muted"
+                        />
+                    </SyncedField>
+                </div>
             </div>
         </div>
     );

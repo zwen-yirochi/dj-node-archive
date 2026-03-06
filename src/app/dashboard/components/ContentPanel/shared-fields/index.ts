@@ -7,7 +7,7 @@ export { ImageField } from './image';
 export { default as KeyValueField } from './KeyValueField';
 export { default as LineupField } from './LineupField';
 export { default as LinkField } from './LinkField';
-export { default as TagListField } from './TagListField';
+export { default as SearchableTagField } from './SearchableTagField';
 export { default as TextField } from './TextField';
 export { default as VenueField } from './VenueField';
 

@@ -85,10 +85,12 @@ export default function VenueField({
         [isOpen, results, highlightedIndex, handleSelect, setIsOpen, setHighlightedIndex]
     );
 
-    if (value.id && value.name) {
-        return (
-            <div className={className}>
-                <div className="flex items-center gap-2 rounded-md border border-dashboard-border px-3 py-1.5">
+    const isSelected = !!(value.id && value.name);
+
+    return (
+        <div ref={containerRef} className={`relative p-2 ${className ?? ''}`}>
+            {isSelected ? (
+                <div className="flex items-center gap-2">
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-dashboard-text-placeholder" />
                     <span className="flex-1 text-sm text-dashboard-text">{value.name}</span>
                     {!disabled && (
@@ -101,65 +103,60 @@ export default function VenueField({
                         </button>
                     )}
                 </div>
-            </div>
-        );
-    }
+            ) : (
+                <>
+                    <input
+                        type="text"
+                        value={query || value.name}
+                        onChange={(e) => {
+                            const v = e.target.value;
+                            setQuery(v);
+                            onChange?.({ name: v });
+                        }}
+                        onKeyDown={handleKeyDown}
+                        onFocus={() => query.length >= 1 && results.length > 0 && setIsOpen(true)}
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        className="w-full bg-transparent py-1 text-sm text-dashboard-text outline-none placeholder:text-dashboard-text-placeholder"
+                    />
 
-    return (
-        <div
-            ref={containerRef}
-            className={`relative rounded-md border border-dashboard-border px-3 py-1.5 ${className ?? ''}`}
-        >
-            <input
-                type="text"
-                value={query || value.name}
-                onChange={(e) => {
-                    const v = e.target.value;
-                    setQuery(v);
-                    onChange?.({ name: v });
-                }}
-                onKeyDown={handleKeyDown}
-                onFocus={() => query.length >= 1 && results.length > 0 && setIsOpen(true)}
-                placeholder={placeholder}
-                disabled={disabled}
-                className="w-full bg-transparent text-sm text-dashboard-text outline-none placeholder:text-dashboard-text-placeholder"
-            />
+                    {isLoading && (
+                        <Loader2 className="absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-dashboard-text-placeholder" />
+                    )}
 
-            {isLoading && (
-                <Loader2 className="absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-dashboard-text-placeholder" />
-            )}
-
-            {isOpen && results.length > 0 && (
-                <ul
-                    ref={listRef}
-                    className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-auto rounded-lg border border-dashboard-border bg-dashboard-bg-card p-1 shadow-lg"
-                    role="listbox"
-                >
-                    {results.map((result, index) => (
-                        <li
-                            key={result.id}
-                            role="option"
-                            aria-selected={highlightedIndex === index}
-                            className={`flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
-                                highlightedIndex === index
-                                    ? 'bg-dashboard-bg-hover text-dashboard-text'
-                                    : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
-                            }`}
-                            onClick={() => handleSelect(result)}
-                            onMouseEnter={() => setHighlightedIndex(index)}
+                    {isOpen && results.length > 0 && (
+                        <ul
+                            ref={listRef}
+                            className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-auto rounded-lg border border-dashboard-border bg-dashboard-bg-card p-1 shadow-lg"
+                            role="listbox"
                         >
-                            <MapPin className="h-3.5 w-3.5 shrink-0 text-dashboard-text-placeholder" />
-                            <div className="flex-1">
-                                <span>{result.name}</span>
-                                {result.subtitle && (
-                                    <span className="ml-1 text-xs text-dashboard-text-placeholder">
-                                        · {result.subtitle}
-                                    </span>
-                                )}
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                            {results.map((result, index) => (
+                                <li
+                                    key={result.id}
+                                    role="option"
+                                    aria-selected={highlightedIndex === index}
+                                    className={`flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
+                                        highlightedIndex === index
+                                            ? 'bg-dashboard-bg-hover text-dashboard-text'
+                                            : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
+                                    }`}
+                                    onClick={() => handleSelect(result)}
+                                    onMouseEnter={() => setHighlightedIndex(index)}
+                                >
+                                    <MapPin className="h-3.5 w-3.5 shrink-0 text-dashboard-text-placeholder" />
+                                    <div className="flex-1">
+                                        <span>{result.name}</span>
+                                        {result.subtitle && (
+                                            <span className="ml-1 text-xs text-dashboard-text-placeholder">
+                                                · {result.subtitle}
+                                            </span>
+                                        )}
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </>
             )}
         </div>
     );

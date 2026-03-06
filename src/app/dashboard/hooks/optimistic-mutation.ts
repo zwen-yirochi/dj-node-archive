@@ -43,10 +43,16 @@ export function makeOptimisticMutation<TParams>(
             const previous = queryClient.getQueryData<ContentEntry[]>(entryKeys.all);
             snapshotRef.current = previous;
             if (previous) {
-                queryClient.setQueryData<ContentEntry[]>(
-                    entryKeys.all,
-                    config.optimisticUpdate(params, previous)
-                );
+                const updated = config.optimisticUpdate(params, previous);
+                queryClient.setQueryData<ContentEntry[]>(entryKeys.all, updated);
+
+                // detail 캐시도 동기화
+                for (const entry of updated) {
+                    const detailKey = entryKeys.detail(entry.id);
+                    if (queryClient.getQueryData(detailKey)) {
+                        queryClient.setQueryData(detailKey, entry);
+                    }
+                }
             }
             return { previous };
         },
@@ -63,6 +69,14 @@ export function makeOptimisticMutation<TParams>(
         onError: (_err, _vars, ctx) => {
             if (ctx?.previous) {
                 queryClient.setQueryData(entryKeys.all, ctx.previous);
+
+                // detail 캐시도 롤백
+                for (const entry of ctx.previous) {
+                    const detailKey = entryKeys.detail(entry.id);
+                    if (queryClient.getQueryData(detailKey)) {
+                        queryClient.setQueryData(detailKey, entry);
+                    }
+                }
             }
         },
         onSettled: () => {

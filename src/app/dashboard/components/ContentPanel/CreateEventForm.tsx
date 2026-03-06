@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import OptionSelector from '@/components/ui/OptionSelector';
 import SearchableInput from '@/components/ui/SearchableInput';
-import TagSearchInput from '@/components/ui/TagSearchInput';
+import SearchableTagInput from '@/components/ui/SearchableTagInput';
 import { Textarea } from '@/components/ui/textarea';
 
 import { EVENT_FORM_CONFIG } from '../../config/entryFormConfig';
@@ -139,7 +139,7 @@ export default function CreateEventForm() {
                         <FormItem>
                             <FormLabel className="text-dashboard-text-secondary">Lineup</FormLabel>
                             <FormControl>
-                                <TagSearchInput
+                                <SearchableTagInput
                                     value={field.value}
                                     onChange={field.onChange}
                                     searchFn={searchArtists}

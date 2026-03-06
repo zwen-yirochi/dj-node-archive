@@ -2,24 +2,22 @@
 
 import { useCallback } from 'react';
 
-import { Users } from 'lucide-react';
-
 import type { ArtistReference } from '@/types';
+import { searchArtists } from '@/app/dashboard/services/search';
+import type { TagOption } from '@/components/ui/SearchableTagInput';
 
-import TagListField, { type TagItem } from './TagListField';
+import SearchableTagField from './SearchableTagField';
 import type { FieldComponentProps } from './types';
 
 interface LineupFieldProps extends FieldComponentProps<ArtistReference[]> {
     className?: string;
 }
 
-const formatArtistTag = (name: string) => (name.startsWith('@') ? name : `@${name}`);
-
-function toTagItems(artists: ArtistReference[]): TagItem[] {
+function toTagOptions(artists: ArtistReference[]): TagOption[] {
     return artists.map(({ id, name }) => ({ id, name }));
 }
 
-function toArtistRefs(tags: TagItem[]): ArtistReference[] {
+function toArtistRefs(tags: TagOption[]): ArtistReference[] {
     return tags.map(({ id, name }) => ({ id, name }));
 }
 
@@ -30,20 +28,18 @@ export default function LineupField({
     className,
 }: LineupFieldProps) {
     const handleChange = useCallback(
-        (tags: TagItem[]) => onChange?.(toArtistRefs(tags)),
+        (tags: TagOption[]) => onChange?.(toArtistRefs(tags)),
         [onChange]
     );
 
     return (
-        <div className={`flex items-start gap-3 text-sm ${className ?? ''}`}>
-            <Users className="mt-0.5 h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
-            <TagListField
-                value={toTagItems(value)}
-                onChange={handleChange}
-                disabled={disabled}
-                placeholder="Tag artists with @username"
-                formatNewTag={formatArtistTag}
-            />
-        </div>
+        <SearchableTagField
+            value={toTagOptions(value)}
+            onChange={handleChange}
+            disabled={disabled}
+            searchFn={searchArtists}
+            placeholder="Search artists..."
+            className={className}
+        />
     );
 }

@@ -1,8 +1,10 @@
 'use client';
 
-import { cn } from '@/lib/utils';
-import { Loader2, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+
+import { Loader2, Search, X } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
 
 export interface TagOption {
     id?: string;
@@ -19,7 +21,7 @@ interface TagSearchInputProps {
     debounceMs?: number;
 }
 
-export default function TagSearchInput({
+export default function SearchableTagInput({
     value,
     onChange,
     searchFn,
@@ -96,6 +98,7 @@ export default function TagSearchInput({
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.nativeEvent.isComposing) return;
         if (e.key === 'Enter') {
             e.preventDefault();
             // Add as text tag if input has value
@@ -117,24 +120,18 @@ export default function TagSearchInput({
     return (
         <div ref={containerRef} className={cn('relative', className)}>
             {/* Tags + Input */}
-            <div
-                className={cn(
-                    'flex flex-wrap gap-2 rounded-md border p-2 transition-colors',
-                    'border-dashboard-border bg-dashboard-bg-muted',
-                    'focus-within:border-dashboard-border-hover focus-within:ring-1 focus-within:ring-dashboard-border-hover'
-                )}
-            >
+            <div className={cn('flex flex-wrap gap-2 rounded-md border-b-0 p-2 transition-colors')}>
                 {/* Tags */}
                 {value.map((tag, index) => (
                     <span
                         key={tag.id || index}
-                        className="flex items-center gap-1 rounded-full bg-dashboard-bg-active px-3 py-1 text-sm text-dashboard-text"
+                        className="flex items-center gap-1 rounded-full border border-dashboard-border bg-dashboard-bg-active px-2 py-0.5 text-xs text-dashboard-text"
                     >
                         {tag.name}
                         <button
                             type="button"
                             onClick={() => handleRemove(index)}
-                            className="ml-1 rounded-full p-0.5 hover:bg-dashboard-bg-hover"
+                            className="ml-0.5 rounded-sm p-0.5 hover:bg-dashboard-bg-hover"
                         >
                             <X className="h-3 w-3" />
                         </button>
