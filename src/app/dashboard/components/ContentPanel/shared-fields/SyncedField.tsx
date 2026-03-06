@@ -13,6 +13,8 @@ interface SyncedFieldProps<T> {
     onSave: (value: T) => void;
     /** 필드 컴포넌트 — value/onChange가 cloneElement로 주입된다 */
     children: ReactNode;
+    /** indicator 위치: inline(기본)=오른쪽 옆, top-right=우상단 absolute */
+    indicatorPosition?: 'inline' | 'top-right';
 }
 
 /**
@@ -23,7 +25,13 @@ interface SyncedFieldProps<T> {
  *
  * children에 value/onChange를 cloneElement로 주입한다.
  */
-export default function SyncedField<T>({ config, value, onSave, children }: SyncedFieldProps<T>) {
+export default function SyncedField<T>({
+    config,
+    value,
+    onSave,
+    children,
+    indicatorPosition = 'inline',
+}: SyncedFieldProps<T>) {
     const immediate = config.immediate ?? false;
 
     const validate = (v: T): boolean => {
@@ -54,7 +62,13 @@ export default function SyncedField<T>({ config, value, onSave, children }: Sync
     }
 
     return (
-        <DebouncedSyncedField config={config} value={value} onSave={onSave} validate={validate}>
+        <DebouncedSyncedField
+            config={config}
+            value={value}
+            onSave={onSave}
+            validate={validate}
+            indicatorPosition={indicatorPosition}
+        >
             {children}
         </DebouncedSyncedField>
     );
@@ -67,12 +81,14 @@ function DebouncedSyncedField<T>({
     onSave,
     validate,
     children,
+    indicatorPosition = 'inline',
 }: {
     config: FieldSyncConfig<T>;
     value: T;
     onSave: (value: T) => void;
     validate: (v: T) => boolean;
     children: ReactNode;
+    indicatorPosition?: 'inline' | 'top-right';
 }) {
     const handleSave = (v: T) => {
         if (!validate(v)) return;
@@ -85,15 +101,27 @@ function DebouncedSyncedField<T>({
         debounceMs: config.debounceMs,
     });
 
+    const field =
+        isValidElement(children) &&
+        cloneElement(children as ReactElement<Record<string, unknown>>, {
+            value: localValue,
+            onChange: setLocalValue,
+        });
+
+    if (indicatorPosition === 'top-right') {
+        return (
+            <div className="relative">
+                {field}
+                <div className="pointer-events-none absolute -top-8 right-0">
+                    <SaveIndicator status={saveStatus} />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">
-                {isValidElement(children) &&
-                    cloneElement(children as ReactElement<Record<string, unknown>>, {
-                        value: localValue,
-                        onChange: setLocalValue,
-                    })}
-            </div>
+            <div className="min-w-0 flex-1">{field}</div>
             <div className="flex h-6 items-center pt-1">
                 <SaveIndicator status={saveStatus} />
             </div>

@@ -25,23 +25,15 @@ export default function SaveIndicator({ status }: SaveIndicatorProps) {
         }
     }, [status]);
 
-    if (!visible) return <span className="inline-block h-3 w-3 shrink-0" />;
-
-    if (status === 'saving') {
-        return (
-            <span className="inline-block h-2 w-2 shrink-0 animate-pulse rounded-full bg-amber-400" />
-        );
-    }
-
-    if (status === 'saved') {
-        return (
-            <Check className="h-3 w-3 shrink-0 text-green-500 duration-200 animate-in fade-in" />
-        );
-    }
-
-    if (status === 'error') {
-        return <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-red-500" />;
-    }
-
-    return null;
+    return (
+        <span className="inline-flex h-3 w-3 shrink-0 items-center justify-center">
+            {visible && status === 'saving' && (
+                <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
+            )}
+            {visible && status === 'saved' && (
+                <Check className="h-3 w-3 text-green-500 duration-200 animate-in fade-in" />
+            )}
+            {visible && status === 'error' && <span className="h-2 w-2 rounded-full bg-red-500" />}
+        </span>
+    );
 }

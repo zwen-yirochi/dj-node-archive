@@ -33,7 +33,7 @@ export const DATE_FIELD_CONFIG: FieldSyncConfig<string> = {
 };
 
 export const URL_FIELD_CONFIG: FieldSyncConfig<string> = {
-    immediate: true,
+    debounceMs: 500,
     schema: urlStrictAtom.or(z.literal('')),
 };
 
