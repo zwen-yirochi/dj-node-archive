@@ -1,7 +1,6 @@
 'use client';
 
-import { Textarea } from '@/components/ui/textarea';
-
+import TextField from '../shared-fields/TextField';
 import type { SectionBlockEditorProps } from './types';
 
 export default function RichTextSection({
@@ -10,13 +9,14 @@ export default function RichTextSection({
     disabled,
 }: SectionBlockEditorProps<'richtext'>) {
     return (
-        <Textarea
+        <TextField
             value={data.content}
-            onChange={(e) => onChange({ ...data, content: e.target.value })}
-            placeholder="Write something..."
+            onChange={(content) => onChange({ ...data, content })}
             disabled={disabled}
+            variant="textarea"
+            placeholder="Write something..."
             rows={3}
-            className="min-h-[80px] resize-none border-none bg-transparent p-0 text-sm text-dashboard-text placeholder:text-dashboard-text-placeholder focus-visible:ring-0"
+            className="min-h-[80px] text-sm text-dashboard-text"
         />
     );
 }
