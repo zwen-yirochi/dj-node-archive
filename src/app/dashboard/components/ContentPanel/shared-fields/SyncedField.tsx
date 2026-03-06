@@ -46,6 +46,9 @@ export default function SyncedField<T>({ config, value, onSave, children }: Sync
                             onChange: handleChange,
                         })}
                 </div>
+                <div className="flex h-6 items-center pt-1">
+                    <span className="inline-block h-3 w-3 shrink-0" />
+                </div>
             </div>
         );
     }

@@ -9,7 +9,7 @@ interface DateFieldProps extends FieldComponentProps<string> {
 function formatDate(dateStr: string): string | null {
     if (!dateStr) return null;
     try {
-        return new Date(dateStr).toLocaleDateString('ko-KR', {
+        return new Date(dateStr).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -21,7 +21,7 @@ function formatDate(dateStr: string): string | null {
 
 export default function DateField({ value = '', onChange, disabled, className }: DateFieldProps) {
     return (
-        <div className={className}>
+        <div className={`rounded-md border border-dashboard-border px-3 py-1.5 ${className ?? ''}`}>
             <input
                 type="date"
                 value={value}

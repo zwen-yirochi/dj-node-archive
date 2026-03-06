@@ -88,7 +88,7 @@ export default function VenueField({
     if (value.id && value.name) {
         return (
             <div className={className}>
-                <div className="flex items-center gap-2 rounded-md border border-dashboard-border bg-dashboard-bg-muted px-3 py-1.5">
+                <div className="flex items-center gap-2 rounded-md border border-dashboard-border px-3 py-1.5">
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-dashboard-text-placeholder" />
                     <span className="flex-1 text-sm text-dashboard-text">{value.name}</span>
                     {!disabled && (
@@ -106,7 +106,10 @@ export default function VenueField({
     }
 
     return (
-        <div ref={containerRef} className={`relative ${className ?? ''}`}>
+        <div
+            ref={containerRef}
+            className={`relative rounded-md border border-dashboard-border px-3 py-1.5 ${className ?? ''}`}
+        >
             <input
                 type="text"
                 value={query || value.name}

@@ -25,7 +25,7 @@ export default function SaveIndicator({ status }: SaveIndicatorProps) {
         }
     }, [status]);
 
-    if (!visible) return null;
+    if (!visible) return <span className="inline-block h-3 w-3 shrink-0" />;
 
     if (status === 'saving') {
         return (

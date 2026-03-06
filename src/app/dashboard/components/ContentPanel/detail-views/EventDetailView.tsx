@@ -2,8 +2,6 @@
 
 import { useMemo } from 'react';
 
-import type { EventEntry } from '@/types';
-
 import {
     DATE_FIELD_CONFIG,
     DateField,
@@ -35,7 +33,7 @@ export default function EventDetailView({ entry, onSave, disabled }: EventDetail
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 px-6">
             <SyncedField
                 config={TEXT_FIELD_CONFIG}
                 value={entry.title}
@@ -44,37 +42,59 @@ export default function EventDetailView({ entry, onSave, disabled }: EventDetail
                 <TextField
                     disabled={disabled}
                     placeholder="Event title"
-                    className="text-center text-xl font-bold text-dashboard-text"
+                    className="text-xl font-bold text-dashboard-text"
                 />
             </SyncedField>
 
             <SyncedField config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleImageSave}>
                 <ImageField disabled={disabled} aspectRatio="portrait" maxCount={10} />
             </SyncedField>
+            <div className="mt-4 space-y-4">
+                <div className="flex items-start gap-3">
+                    <p className="w-16 shrink-0 pt-1.5 text-sm font-semibold text-dashboard-text">
+                        Date
+                    </p>
+                    <div className="min-w-0 flex-1">
+                        <SyncedField
+                            config={DATE_FIELD_CONFIG}
+                            value={entry.date}
+                            onSave={(v) => onSave('date', v)}
+                        >
+                            <DateField disabled={disabled} />
+                        </SyncedField>
+                    </div>
+                </div>
 
-            <SyncedField
-                config={DATE_FIELD_CONFIG}
-                value={entry.date}
-                onSave={(v) => onSave('date', v)}
-            >
-                <DateField disabled={disabled} />
-            </SyncedField>
+                <div className="flex items-start gap-3">
+                    <p className="w-16 shrink-0 pt-1.5 text-sm font-semibold text-dashboard-text">
+                        Venue
+                    </p>
+                    <div className="min-w-0 flex-1">
+                        <SyncedField
+                            config={VENUE_FIELD_CONFIG}
+                            value={entry.venue}
+                            onSave={(v) => onSave('venue', v)}
+                        >
+                            <VenueField disabled={disabled} />
+                        </SyncedField>
+                    </div>
+                </div>
 
-            <SyncedField
-                config={VENUE_FIELD_CONFIG}
-                value={entry.venue}
-                onSave={(v) => onSave('venue', v)}
-            >
-                <VenueField disabled={disabled} />
-            </SyncedField>
-
-            <SyncedField
-                config={LINEUP_FIELD_CONFIG}
-                value={entry.lineup}
-                onSave={(v) => onSave('lineup', v)}
-            >
-                <LineupField disabled={disabled} />
-            </SyncedField>
+                <div className="flex items-center gap-3">
+                    <p className="w-16 shrink-0 text-sm font-semibold text-dashboard-text">
+                        Lineup
+                    </p>
+                    <div className="min-w-0 flex-1">
+                        <SyncedField
+                            config={LINEUP_FIELD_CONFIG}
+                            value={entry.lineup}
+                            onSave={(v) => onSave('lineup', v)}
+                        >
+                            <LineupField disabled={disabled} />
+                        </SyncedField>
+                    </div>
+                </div>
+            </div>
 
             <div>
                 <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
