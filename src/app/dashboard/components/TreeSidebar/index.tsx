@@ -9,6 +9,7 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
+    type CollisionDetection,
     type DragEndEvent,
     type DragStartEvent,
 } from '@dnd-kit/core';
@@ -17,7 +18,7 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useId, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -27,9 +28,9 @@ import { ChevronDown, ChevronRight, FileText, Palette } from 'lucide-react';
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
-import { type EntryType } from '@/app/dashboard/config/entryConfig';
-import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entryFieldConfig';
-import { COMPONENT_GROUPS } from '@/app/dashboard/config/sidebarConfig';
+import { type EntryType } from '@/app/dashboard/config/entry/entry-types';
+import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entry/entry-validation';
+import { COMPONENT_GROUPS } from '@/app/dashboard/config/ui/sidebar';
 import { TypeBadge } from '@/components/dna';
 
 import { useEntries, useEntryMutations, useUser } from '../../hooks';
@@ -42,7 +43,7 @@ import {
     selectToggleSection,
     useDashboardStore,
 } from '../../stores/dashboardStore';
-import { CommandPalette } from '../CommandPalette';
+import { CommandPalette } from '../ui/CommandPalette';
 import AccountSection from './AccountSection';
 import ComponentGroup from './ComponentGroup';
 import PageDisplayList from './PageDisplayList';
@@ -119,6 +120,34 @@ export default function TreeSidebar() {
         })
     );
 
+    /**
+     * Custom collision detection that restricts targets to the same logical group:
+     * - entry drag → same-type entries + view-drop-zone
+     * - display-entry drag → display-entries only
+     */
+    const collisionDetection: CollisionDetection = useCallback((args) => {
+        const activeData = args.active.data.current as DragData | undefined;
+
+        if (activeData?.type === 'entry') {
+            const filtered = args.droppableContainers.filter((container) => {
+                if (container.id === 'view-drop-zone') return true;
+                const data = container.data.current as DragData | undefined;
+                return data?.type === 'entry' && data.entry.type === activeData.entry.type;
+            });
+            return closestCenter({ ...args, droppableContainers: filtered });
+        }
+
+        if (activeData?.type === 'display-entry') {
+            const filtered = args.droppableContainers.filter((container) => {
+                const data = container.data.current as DragData | undefined;
+                return data?.type === 'display-entry';
+            });
+            return closestCenter({ ...args, droppableContainers: filtered });
+        }
+
+        return closestCenter(args);
+    }, []);
+
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
         const data = active.data.current as DragData | undefined;
@@ -141,8 +170,11 @@ export default function TreeSidebar() {
         const activeData = active.data.current as DragData | undefined;
         const overData = over.data.current as DragData | undefined;
 
-        // Drop onto the View drop zone
-        if (over.id === 'view-drop-zone' && activeData?.type === 'entry') {
+        // Drop onto the Page area (drop zone or existing display entry)
+        if (
+            activeData?.type === 'entry' &&
+            (over.id === 'view-drop-zone' || overData?.type === 'display-entry')
+        ) {
             const entry = activeData.entry;
 
             if (typeof entry.displayOrder === 'number') {
@@ -252,7 +284,7 @@ export default function TreeSidebar() {
         <DndContext
             id={dndId}
             sensors={sensors}
-            collisionDetection={closestCenter}
+            collisionDetection={collisionDetection}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >

@@ -59,7 +59,7 @@ export type TracklistItem = { track: string; artist: string; time: string };
 // ============================================
 // Custom Block Types
 // ============================================
-export type SectionBlockType = 'header' | 'richtext' | 'image' | 'embed' | 'keyvalue' | 'list';
+export type SectionBlockType = 'header' | 'richtext' | 'image' | 'embed' | 'keyvalue';
 
 export interface HeaderBlockData {
     title: string;
@@ -80,18 +80,12 @@ export interface EmbedBlockData {
 export interface KeyValueBlockData {
     items: { key: string; value: string }[];
 }
-export interface ListBlockData {
-    items: string[];
-    style?: 'bullet' | 'numbered' | 'plain';
-}
-
 export interface SectionBlockDataMap {
     header: HeaderBlockData;
     richtext: RichTextBlockData;
     image: ImageBlockData;
     embed: EmbedBlockData;
     keyvalue: KeyValueBlockData;
-    list: ListBlockData;
 }
 
 export interface SectionBlock<T extends SectionBlockType = SectionBlockType> {
@@ -122,7 +116,7 @@ export interface EventEntry extends EntryBase {
     date: string;
     venue: VenueReference;
     lineup: ArtistReference[];
-    posterUrl: string;
+    imageUrls: string[];
     description?: string;
     links?: ExternalLink[];
 }
@@ -137,7 +131,7 @@ export interface MixsetEntry extends EntryBase {
 
     // 표시용 데이터
     title: string;
-    coverUrl?: string;
+    imageUrls: string[];
     url?: string;
     tracklist: { track: string; artist: string; time: string }[];
     description?: string;
@@ -153,6 +147,7 @@ export interface LinkEntry extends EntryBase {
 
     title: string;
     url: string;
+    imageUrls: string[];
     icon?: string;
     description?: string;
 }
@@ -207,7 +202,7 @@ export interface Event {
     date: string;
     venue: { id?: string; name: string };
     lineup: { id?: string; name: string }[];
-    posterUrl?: string;
+    imageUrls?: string[];
     description?: string;
     links?: { title: string; url: string }[];
     isPublic: boolean;

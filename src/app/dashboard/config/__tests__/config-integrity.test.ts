@@ -14,12 +14,12 @@ import {
     draftMixsetSchema,
 } from '@/lib/validations/entry.schemas';
 
-import { ENTRY_TYPE_CONFIG, type EntryType } from '../entryConfig';
-import { ENTRY_SCHEMAS, FIELD_CONFIG } from '../entryFieldConfig';
-import { FORM_CONFIGS } from '../entryFormConfig';
-import { FIELD_BLOCKS } from '../fieldBlockConfig';
-import { EDITOR_MENU_CONFIG } from '../menuConfig';
-import { COMPONENT_GROUPS, SIDEBAR_CONFIG } from '../sidebarConfig';
+import { FIELD_CONFIG } from '../entry/entry-fields';
+import { FORM_CONFIGS } from '../entry/entry-forms';
+import { ENTRY_TYPE_CONFIG, type EntryType } from '../entry/entry-types';
+import { ENTRY_SCHEMAS } from '../entry/entry-validation';
+import { EDITOR_MENU_CONFIG } from '../ui/menu';
+import { COMPONENT_GROUPS, SIDEBAR_CONFIG } from '../ui/sidebar';
 
 // EntryType 전체 목록 — entryConfig에서 파생
 const ALL_TYPES = Object.keys(ENTRY_TYPE_CONFIG) as EntryType[];
@@ -114,7 +114,7 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
             date: '2026-03-05',
             venue: { name: 'Club' },
             lineup: [{ name: 'DJ A' }],
-            posterUrl: 'https://example.com/poster.jpg',
+            imageUrls: ['https://example.com/poster.jpg'],
             description: 'A great event',
             links: [{ title: 'Tickets', url: 'https://tickets.com' }],
         };
@@ -127,7 +127,7 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
         expect(r.date).toBe(original.date);
         expect(r.venue.name).toBe(original.venue.name);
         expect(r.lineup).toHaveLength(1);
-        expect(r.posterUrl).toBe(original.posterUrl);
+        expect(r.imageUrls).toEqual(original.imageUrls);
         expect(r.description).toBe(original.description);
         expect(r.links).toHaveLength(1);
     });
@@ -136,7 +136,7 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
         const original: MixsetEntry = {
             ...(createEmptyEntry('mixset') as MixsetEntry),
             title: 'Test Mix',
-            coverUrl: 'https://example.com/cover.jpg',
+            imageUrls: ['https://example.com/cover.jpg'],
             url: 'https://soundcloud.com/mix',
             tracklist: [{ track: 'Track 1', artist: 'Artist', time: '0:00' }],
             description: 'A great mix',
@@ -147,17 +147,18 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
         expect(restored.type).toBe('mixset');
         const r = restored as MixsetEntry;
         expect(r.title).toBe(original.title);
-        expect(r.coverUrl).toBe(original.coverUrl);
+        expect(r.imageUrls).toEqual(original.imageUrls);
         expect(r.url).toBe(original.url);
         expect(r.tracklist).toHaveLength(1);
         expect(r.description).toBe(original.description);
     });
 
-    it('link: 모든 필드 보존 (description 포함)', () => {
+    it('link: 모든 필드 보존 (imageUrls, description 포함)', () => {
         const original: LinkEntry = {
             ...(createEmptyEntry('link') as LinkEntry),
             title: 'My Link',
             url: 'https://example.com',
+            imageUrls: ['https://example.com/cover.jpg'],
             icon: 'globe',
             description: 'A useful link',
         };
@@ -168,8 +169,8 @@ describe('mapEntryToDatabase ↔ mapEntryToDomain 라운드트립', () => {
         const r = restored as LinkEntry;
         expect(r.title).toBe(original.title);
         expect(r.url).toBe(original.url);
+        expect(r.imageUrls).toEqual(original.imageUrls);
         expect(r.icon).toBe(original.icon);
-        // C1-1 수정 검증: 이전에는 description이 유실되었음
         expect(r.description).toBe(original.description);
     });
 
@@ -209,10 +210,10 @@ describe('draftSchema 기본값 ↔ createEmptyEntry 기본값 일치', () => {
      */
 
     it('event: optional 필드 기본값 일치', () => {
-        // 필수 필드(title, posterUrl)에 유효한 더미값 → 나머지 default 추출
+        // 필수 필드(title, imageUrls)에 유효한 더미값 → 나머지 default 추출
         const schemaDefaults = draftEventSchema.parse({
             title: 'xx', // min 2
-            posterUrl: 'x', // min 1
+            imageUrls: ['x'], // min 1 item
         });
         const factory = createEmptyEntry('event') as EventEntry;
 
@@ -229,7 +230,7 @@ describe('draftSchema 기본값 ↔ createEmptyEntry 기본값 일치', () => {
         });
         const factory = createEmptyEntry('mixset') as MixsetEntry;
 
-        expect(factory.coverUrl).toBe(schemaDefaults.coverUrl); // '' === ''
+        expect(factory.imageUrls).toEqual(schemaDefaults.imageUrls); // [] === []
     });
 
     it('custom: optional 필드 기본값 일치', () => {
@@ -250,12 +251,6 @@ describe('Config Registry: Record<EntryType> completeness', () => {
     it('SIDEBAR_CONFIG에 모든 타입 존재', () => {
         for (const type of ALL_TYPES) {
             expect(SIDEBAR_CONFIG[type], `SIDEBAR_CONFIG['${type}'] 누락`).toBeDefined();
-        }
-    });
-
-    it('FIELD_BLOCKS에 모든 타입 존재', () => {
-        for (const type of ALL_TYPES) {
-            expect(FIELD_BLOCKS[type], `FIELD_BLOCKS['${type}'] 누락`).toBeDefined();
         }
     });
 

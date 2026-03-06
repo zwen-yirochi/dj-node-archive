@@ -21,11 +21,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import type { ContentEntry } from '@/types/domain';
 import { toast } from '@/hooks/use-toast';
-import { type PublishOption } from '@/app/dashboard/config/workflowOptions';
 
 import { useEntryMutations } from '.';
-import { ENTRY_TYPE_CONFIG, type EntryType } from '../config/entryConfig';
-import { ENTRY_SCHEMAS } from '../config/entryFieldConfig';
+import { type PublishOption } from '../components/ContentPanel/create-forms/workflow-options';
+import { ENTRY_TYPE_CONFIG, type EntryType } from '../config/entry/entry-types';
+import { ENTRY_SCHEMAS } from '../config/entry/entry-validation';
 import { selectPageId, selectSetView, useDashboardStore } from '../stores/dashboardStore';
 
 // ── Config ──────────────────────────────────

@@ -1,94 +1,125 @@
 'use client';
 
-import Image from 'next/image';
+import { useMemo } from 'react';
 
-import { ImagePlus } from 'lucide-react';
+import type { TracklistItem } from '@/types';
 
-import { MIXSET_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
+import {
+    IMAGE_FIELD_CONFIG,
+    ImageField,
+    KeyValueField,
+    LinkField,
+    SyncedField,
+    TEXT_FIELD_CONFIG,
+    TextField,
+    TRACKLIST_FIELD_CONFIG,
+    URL_FIELD_CONFIG,
+} from '../shared-fields';
+import type { ImageItem } from '../shared-fields/types';
+import type { MixsetDetailViewProps } from './types';
+import { urlToStableId } from './utils';
 
-import { ImageEditModal, TitleEditModal } from './EditModals';
-import type { DetailViewProps } from './types';
+const TRACKLIST_COLUMNS = [
+    {
+        key: 'time',
+        placeholder: '0:00',
+        width: 'w-12 shrink-0',
+        className: 'font-mono text-xs text-dashboard-text-placeholder',
+    },
+    { key: 'track', placeholder: 'Track title', width: 'min-w-0 flex-1' },
+    {
+        key: 'artist',
+        placeholder: 'Artist',
+        className: 'text-dashboard-text-placeholder',
+    },
+] as const;
 
-export default function MixsetDetailView({
-    entry,
-    onSave,
-    editingField,
-    onEditingDone,
-    disabled,
-}: DetailViewProps) {
-    if (entry.type !== 'mixset') return null;
+const EMPTY_TRACK: TracklistItem = { track: '', artist: '', time: '0:00' };
 
-    const coverUrl = entry.coverUrl;
-    const title = entry.title;
+export default function MixsetDetailView({ entry, onSave, disabled }: MixsetDetailViewProps) {
+    const imageItems: ImageItem[] = useMemo(
+        () => entry.imageUrls.map((url) => ({ id: urlToStableId(url), url })),
+        [entry.imageUrls]
+    );
 
-    const blockByKey = Object.fromEntries(MIXSET_FIELD_BLOCKS.map((b) => [b.key, b.component]));
-    const UrlComponent = blockByKey.url;
-    const DescComponent = blockByKey.description;
-    const TracklistComponent = blockByKey.tracklist;
+    const handleImageSave = (items: ImageItem[]) => {
+        onSave(
+            'imageUrls',
+            items.map((item) => item.url)
+        );
+    };
 
     return (
-        <div className="space-y-8">
-            {/* Header — Read-only cover + title */}
-            <div className="space-y-3">
-                {coverUrl ? (
-                    <div className="relative mx-auto aspect-square max-w-[200px] overflow-hidden rounded-xl">
-                        <Image
-                            src={coverUrl}
-                            alt={title}
-                            fill
-                            className="object-cover"
-                            sizes="200px"
+        <div className="space-y-8 px-6">
+            <SyncedField
+                config={TEXT_FIELD_CONFIG}
+                value={entry.title}
+                onSave={(v) => onSave('title', v)}
+            >
+                <TextField
+                    disabled={disabled}
+                    placeholder="Mixset title"
+                    className="text-xl font-bold text-dashboard-text"
+                />
+            </SyncedField>
+
+            <div className="pb-8">
+                <SyncedField
+                    config={IMAGE_FIELD_CONFIG}
+                    value={imageItems}
+                    onSave={handleImageSave}
+                >
+                    <ImageField disabled={disabled} maxCount={1} />
+                </SyncedField>
+            </div>
+
+            <div className="mx-4 space-y-4">
+                <div className="flex items-center gap-3">
+                    <p className="w-16 shrink-0 text-sm font-semibold text-dashboard-text">URL</p>
+                    <div className="min-w-0 flex-1">
+                        <SyncedField
+                            config={URL_FIELD_CONFIG}
+                            value={entry.url || ''}
+                            onSave={(v) => onSave('url', v)}
+                        >
+                            <LinkField disabled={disabled} />
+                        </SyncedField>
+                    </div>
+                </div>
+
+                <div className="pt-8">
+                    <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
+                    <SyncedField
+                        config={TEXT_FIELD_CONFIG}
+                        value={entry.description || ''}
+                        onSave={(v) => onSave('description', v)}
+                    >
+                        <TextField
+                            disabled={disabled}
+                            variant="textarea"
+                            placeholder="Add a description..."
+                            className="text-sm leading-relaxed text-dashboard-text-muted"
                         />
-                    </div>
-                ) : (
-                    <div className="mx-auto flex aspect-square max-w-[200px] items-center justify-center rounded-xl border-2 border-dashed border-dashboard-border">
-                        <div className="text-center">
-                            <ImagePlus className="mx-auto mb-2 h-8 w-8 text-dashboard-text-placeholder" />
-                            <p className="text-xs text-dashboard-text-muted">
-                                Change image from &quot;...&quot; menu
-                            </p>
-                        </div>
-                    </div>
-                )}
-                <h2 className="text-center text-xl font-bold text-dashboard-text">{title}</h2>
+                    </SyncedField>
+                </div>
+
+                <div className="pt-4">
+                    <h3 className="mb-4 text-sm font-semibold text-dashboard-text">Tracklist</h3>
+                    <SyncedField
+                        config={TRACKLIST_FIELD_CONFIG}
+                        value={entry.tracklist || []}
+                        onSave={(v) => onSave('tracklist', v)}
+                        indicatorPosition="top-right"
+                    >
+                        <KeyValueField
+                            disabled={disabled}
+                            columns={[...TRACKLIST_COLUMNS]}
+                            emptyItem={EMPTY_TRACK}
+                            addLabel="Add track"
+                        />
+                    </SyncedField>
+                </div>
             </div>
-
-            {/* URL block */}
-            <div>
-                <UrlComponent entry={entry} onSave={onSave} disabled={disabled} />
-            </div>
-
-            {/* Description block */}
-            <DescComponent entry={entry} onSave={onSave} disabled={disabled} />
-
-            {/* Tracklist block */}
-            <div>
-                <TracklistComponent entry={entry} onSave={onSave} disabled={disabled} />
-            </div>
-
-            {/* Edit Modals */}
-            {editingField === 'image' && (
-                <ImageEditModal
-                    value={coverUrl || ''}
-                    onSave={(url) => {
-                        onSave('coverUrl', url);
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                    aspectRatio="1/1"
-                    title="Change cover image"
-                />
-            )}
-            {editingField === 'title' && (
-                <TitleEditModal
-                    value={title}
-                    onSave={(newTitle) => {
-                        onSave('title', newTitle);
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                />
-            )}
         </div>
     );
 }

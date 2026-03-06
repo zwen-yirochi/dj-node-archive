@@ -5,7 +5,7 @@
  */
 
 import type { SearchOption } from '@/components/ui/SearchableInput';
-import type { TagOption } from '@/components/ui/TagSearchInput';
+import type { TagOption } from '@/components/ui/SearchableTagInput';
 
 // ============================================
 // Venue Search

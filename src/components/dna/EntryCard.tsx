@@ -1,9 +1,17 @@
-import type { ContentEntry, EventEntry, LinkEntry, MixsetEntry } from '@/types/domain';
-import { isEventEntry, isPublicEventEntry } from '@/types/domain';
+import Link from 'next/link';
+
+import {
+    isEventEntry,
+    isPublicEventEntry,
+    type ContentEntry,
+    type EventEntry,
+    type LinkEntry,
+    type MixsetEntry,
+} from '@/types/domain';
 import { formatDateCompact, venueCode } from '@/lib/formatters';
+
 import { TypeBadge } from './TypeBadge';
 import { VenueLink } from './VenueLink';
-import Link from 'next/link';
 
 interface EntryCardProps {
     entry: ContentEntry;
@@ -18,8 +26,9 @@ function getTitle(entry: ContentEntry): string {
 }
 
 function getImageUrl(entry: ContentEntry): string | undefined {
-    if (entry.type === 'event') return (entry as EventEntry).posterUrl;
-    if (entry.type === 'mixset') return (entry as MixsetEntry).coverUrl;
+    if (entry.type === 'event') return (entry as EventEntry).imageUrls[0];
+    if (entry.type === 'mixset') return (entry as MixsetEntry).imageUrls[0];
+    if (entry.type === 'link') return (entry as LinkEntry).imageUrls[0];
     return undefined;
 }
 

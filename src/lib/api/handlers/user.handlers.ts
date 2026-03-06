@@ -112,7 +112,7 @@ export async function handleUploadAvatar(
     try {
         const supabase = await createClient();
         const fileExt = file.name.split('.').pop();
-        const fileName = `${params.id}/${Date.now()}.${fileExt}`;
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
         // 새 파일 업로드 (기존 파일 삭제 전에 수행하여 실패 시 기존 아바타 유지)
         const arrayBuffer = await file.arrayBuffer();

@@ -1,6 +1,8 @@
 // lib/api/handlers/entry.handlers.ts
 // ContentEntry API 핸들러
-import type { AuthContext } from '@/lib/api';
+import { ZodError } from 'zod';
+
+import { isSuccess } from '@/types/result';
 import {
     forbiddenResponse,
     internalErrorResponse,
@@ -10,6 +12,7 @@ import {
     verifyEntryOwnership,
     verifyPageOwnership,
     zodValidationErrorResponse,
+    type AuthContext,
 } from '@/lib/api';
 import {
     createEntry,
@@ -31,8 +34,6 @@ import {
     reorderEntriesRequestSchema,
     updateEntryRequestSchema,
 } from '@/lib/validations/entry.schemas';
-import { isSuccess } from '@/types/result';
-import { ZodError } from 'zod';
 
 /**
  * POST /api/entries (또는 /api/components)
@@ -93,7 +94,7 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
             venue: eventData.venue || { name: '' },
             lineup: eventData.lineup || [],
             data: {
-                poster_url: eventData.posterUrl,
+                poster_urls: eventData.imageUrls?.length ? eventData.imageUrls : undefined,
                 description: eventData.description,
                 links: eventData.links,
             },

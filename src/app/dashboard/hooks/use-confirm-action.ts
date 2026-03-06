@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 
-import type { ConfirmStrategy, MenuConfig } from '../config/menuConfig';
+import type { ConfirmStrategy, MenuConfig } from '../config/ui/menu';
 
 // ============================================
 // Types

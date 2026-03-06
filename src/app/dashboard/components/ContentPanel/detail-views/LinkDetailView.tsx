@@ -1,51 +1,73 @@
 'use client';
 
-import { LINK_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
+import {
+    ICON_FIELD_CONFIG,
+    IconField,
+    LinkField,
+    SyncedField,
+    TEXT_FIELD_CONFIG,
+    TextField,
+    URL_FIELD_CONFIG,
+} from '../shared-fields';
+import type { LinkDetailViewProps } from './types';
 
-import IconBlock from './blocks/IconBlock';
-import { TitleEditModal } from './EditModals';
-import type { DetailViewProps } from './types';
-
-export default function LinkDetailView({
-    entry,
-    onSave,
-    editingField,
-    onEditingDone,
-    disabled,
-}: DetailViewProps) {
-    if (entry.type !== 'link') return null;
-
-    const title = entry.title;
-
+export default function LinkDetailView({ entry, onSave, disabled }: LinkDetailViewProps) {
     return (
-        <div className="space-y-8">
-            {/* Header — Icon + title */}
-            <div className="space-y-3 text-center">
-                <IconBlock entry={entry} onSave={onSave} disabled={disabled} />
-                <h2 className="text-xl font-bold text-dashboard-text">{title}</h2>
+        <div className="space-y-8 px-6">
+            <div className="flex items-center gap-3">
+                <SyncedField
+                    config={ICON_FIELD_CONFIG}
+                    value={entry.icon || ''}
+                    onSave={(v) => onSave('icon', v)}
+                >
+                    <IconField disabled={disabled} />
+                </SyncedField>
+
+                <div className="min-w-0 flex-1">
+                    <SyncedField
+                        config={TEXT_FIELD_CONFIG}
+                        value={entry.title}
+                        onSave={(v) => onSave('title', v)}
+                    >
+                        <TextField
+                            disabled={disabled}
+                            placeholder="Link title"
+                            className="text-xl font-bold text-dashboard-text"
+                        />
+                    </SyncedField>
+                </div>
             </div>
 
-            {/* Field blocks */}
-            {LINK_FIELD_BLOCKS.map((block) => (
-                <block.component
-                    key={block.key}
-                    entry={entry}
-                    onSave={onSave}
-                    disabled={disabled}
-                />
-            ))}
+            <div className="mx-4 space-y-4">
+                <div className="flex items-center gap-3">
+                    <p className="w-16 shrink-0 text-sm font-semibold text-dashboard-text">URL</p>
+                    <div className="min-w-0 flex-1">
+                        <SyncedField
+                            config={URL_FIELD_CONFIG}
+                            value={entry.url || ''}
+                            onSave={(v) => onSave('url', v)}
+                        >
+                            <LinkField disabled={disabled} />
+                        </SyncedField>
+                    </div>
+                </div>
 
-            {/* Edit Modals — Link only uses TitleEditModal */}
-            {editingField === 'title' && (
-                <TitleEditModal
-                    value={title}
-                    onSave={(newTitle) => {
-                        onSave('title', newTitle);
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                />
-            )}
+                <div className="pt-8">
+                    <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
+                    <SyncedField
+                        config={TEXT_FIELD_CONFIG}
+                        value={entry.description || ''}
+                        onSave={(v) => onSave('description', v)}
+                    >
+                        <TextField
+                            disabled={disabled}
+                            variant="textarea"
+                            placeholder="Add a description..."
+                            className="text-sm leading-relaxed text-dashboard-text-muted"
+                        />
+                    </SyncedField>
+                </div>
+            </div>
         </div>
     );
 }

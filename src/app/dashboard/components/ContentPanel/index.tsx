@@ -13,7 +13,7 @@ import {
     useDashboardStore,
 } from '../../stores/dashboardStore';
 import ErrorBoundaryWithQueryReset from '../ErrorBoundary';
-import PageListView from './PageListView';
+import PageListView from './page-list-view/PageListView';
 
 function LoadingSkeleton() {
     return (
@@ -23,15 +23,15 @@ function LoadingSkeleton() {
     );
 }
 
-const BioDesignPanel = dynamic(() => import('./BioDesignPanel'), {
+const BioDesignPanel = dynamic(() => import('./bio-design/BioDesignPanel'), {
     loading: () => <LoadingSkeleton />,
 });
 
-const CreateEntryPanel = dynamic(() => import('./CreateEntryPanel'), {
+const CreateEntryPanel = dynamic(() => import('./create-forms/CreateEntryPanel'), {
     loading: () => <LoadingSkeleton />,
 });
 
-const EntryDetailView = dynamic(() => import('./EntryDetailView'), {
+const EntryDetailView = dynamic(() => import('./detail-views/EntryDetailView'), {
     loading: () => <LoadingSkeleton />,
 });
 

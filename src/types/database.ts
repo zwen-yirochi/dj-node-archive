@@ -48,6 +48,7 @@ export interface Page {
 export interface LinkEntryData {
     title: string;
     url: string;
+    image_urls?: string[];
     icon?: string;
     description?: string;
 }
@@ -64,7 +65,7 @@ export interface EventSelfData {
     date: string;
     venue: { venue_id?: string; name: string };
     lineup?: { artist_id?: string; name: string }[];
-    poster_url?: string;
+    poster_urls?: string[];
     description?: string;
     links?: { title: string; url: string }[];
 }
@@ -180,7 +181,7 @@ export interface EventLink {
 }
 
 export interface EventData {
-    poster_url?: string;
+    poster_urls?: string[];
     description?: string;
     links?: EventLink[];
 }

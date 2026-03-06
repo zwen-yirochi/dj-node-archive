@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { User } from '@/types';
 
 import { userKeys, useUserQuery } from './use-editor-data';
+import { triggerPreviewRefresh } from './use-preview-actions';
 
 // ============================================
 // Query Hook
@@ -107,6 +108,7 @@ export function useUserMutations() {
         },
         onSuccess: (serverUser) => {
             queryClient.setQueryData<User>(userKeys.all, serverUser);
+            triggerPreviewRefresh('userpage');
         },
         onError: (_err, _vars, ctx) => {
             if (ctx?.previous) {
@@ -125,6 +127,7 @@ export function useUserMutations() {
             queryClient.setQueryData<User>(userKeys.all, (prev) =>
                 prev ? { ...prev, avatarUrl: data.avatarUrl } : prev
             );
+            triggerPreviewRefresh('userpage');
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: userKeys.all });
@@ -143,6 +146,9 @@ export function useUserMutations() {
                 });
             }
             return { previous };
+        },
+        onSuccess: () => {
+            triggerPreviewRefresh('userpage');
         },
         onError: (_err, _vars, ctx) => {
             if (ctx?.previous) {

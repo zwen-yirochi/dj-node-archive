@@ -1,100 +1,117 @@
 'use client';
 
-import Image from 'next/image';
+import { useMemo } from 'react';
 
-import { Music } from 'lucide-react';
+import {
+    DATE_FIELD_CONFIG,
+    DateField,
+    IMAGE_FIELD_CONFIG,
+    ImageField,
+    LINEUP_FIELD_CONFIG,
+    LineupField,
+    SyncedField,
+    TEXT_FIELD_CONFIG,
+    TextField,
+    VENUE_FIELD_CONFIG,
+    VenueField,
+} from '../shared-fields';
+import type { ImageItem } from '../shared-fields/types';
+import type { EventDetailViewProps } from './types';
+import { urlToStableId } from './utils';
 
-import { EVENT_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
+export default function EventDetailView({ entry, onSave, disabled }: EventDetailViewProps) {
+    const imageItems: ImageItem[] = useMemo(
+        () => entry.imageUrls.map((url) => ({ id: urlToStableId(url), url })),
+        [entry.imageUrls]
+    );
 
-import { ImageEditModal, TitleEditModal } from './EditModals';
-import type { DetailViewProps } from './types';
-
-// ============================================
-// EventDetailView
-// ============================================
-
-export default function EventDetailView({
-    entry,
-    onSave,
-    editingField,
-    onEditingDone,
-    disabled,
-}: DetailViewProps) {
-    if (entry.type !== 'event') return null;
-
-    const posterUrl = entry.posterUrl;
-    const title = entry.title;
+    const handleImageSave = (items: ImageItem[]) => {
+        onSave(
+            'imageUrls',
+            items.map((item) => item.url)
+        );
+    };
 
     return (
-        <div className="space-y-8">
-            {/* Header — Read-only image + title */}
-            <div className="space-y-3">
-                {posterUrl ? (
-                    <div className="relative mx-auto aspect-[3/4] max-w-[200px] overflow-hidden rounded-xl">
-                        <Image
-                            src={posterUrl}
-                            alt={title}
-                            fill
-                            className="object-cover"
-                            sizes="200px"
-                        />
-                    </div>
-                ) : (
-                    <div className="mx-auto flex aspect-[3/4] max-w-[200px] items-center justify-center rounded-xl border-2 border-dashed border-dashboard-border">
-                        <div className="text-center">
-                            <Music className="mx-auto mb-2 h-8 w-8 text-dashboard-text-placeholder" />
-                            <p className="text-xs text-dashboard-text-muted">
-                                Change image from &quot;...&quot; menu
-                            </p>
-                        </div>
-                    </div>
-                )}
-                <h2 className="text-center text-xl font-bold text-dashboard-text">{title}</h2>
-            </div>
-
-            {/* Info Grid — date, venue, lineup */}
-            <div className="space-y-3">
-                {EVENT_FIELD_BLOCKS.slice(0, 3).map((block) => (
-                    <block.component
-                        key={block.key}
-                        entry={entry}
-                        onSave={onSave}
-                        disabled={disabled}
-                    />
-                ))}
-            </div>
-
-            {/* Content blocks — description, links */}
-            {EVENT_FIELD_BLOCKS.slice(3).map((block) => (
-                <block.component
-                    key={block.key}
-                    entry={entry}
-                    onSave={onSave}
+        <div className="space-y-8 px-6">
+            <SyncedField
+                config={TEXT_FIELD_CONFIG}
+                value={entry.title}
+                onSave={(v) => onSave('title', v)}
+            >
+                <TextField
                     disabled={disabled}
+                    placeholder="Event title"
+                    className="text-xl font-bold text-dashboard-text"
                 />
-            ))}
+            </SyncedField>
+            <div className="pb-8">
+                <SyncedField
+                    config={IMAGE_FIELD_CONFIG}
+                    value={imageItems}
+                    onSave={handleImageSave}
+                >
+                    <ImageField disabled={disabled} maxCount={10} />
+                </SyncedField>
+            </div>
+            <div className="mx-4 space-y-4">
+                <div className="flex items-center gap-3">
+                    <p className="w-16 shrink-0 text-sm font-semibold text-dashboard-text">Venue</p>
+                    <div className="min-w-0 flex-1">
+                        <SyncedField
+                            config={VENUE_FIELD_CONFIG}
+                            value={entry.venue}
+                            onSave={(v) => onSave('venue', v)}
+                        >
+                            <VenueField disabled={disabled} />
+                        </SyncedField>
+                    </div>
+                </div>
 
-            {/* Edit Modals — Triggered from "..." menu */}
-            {editingField === 'image' && (
-                <ImageEditModal
-                    value={posterUrl || ''}
-                    onSave={(url) => {
-                        onSave('posterUrl', url);
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                />
-            )}
-            {editingField === 'title' && (
-                <TitleEditModal
-                    value={title}
-                    onSave={(newTitle) => {
-                        onSave('title', newTitle);
-                        onEditingDone();
-                    }}
-                    onClose={onEditingDone}
-                />
-            )}
+                <div className="flex items-center gap-3">
+                    <p className="w-16 shrink-0 text-sm font-semibold text-dashboard-text">
+                        Lineup
+                    </p>
+                    <div className="min-w-0 flex-1">
+                        <SyncedField
+                            config={LINEUP_FIELD_CONFIG}
+                            value={entry.lineup}
+                            onSave={(v) => onSave('lineup', v)}
+                        >
+                            <LineupField disabled={disabled} />
+                        </SyncedField>
+                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                    <p className="w-16 shrink-0 pt-1.5 text-sm font-semibold text-dashboard-text">
+                        Date
+                    </p>
+                    <div className="min-w-0 flex-1">
+                        <SyncedField
+                            config={DATE_FIELD_CONFIG}
+                            value={entry.date}
+                            onSave={(v) => onSave('date', v)}
+                        >
+                            <DateField disabled={disabled} />
+                        </SyncedField>
+                    </div>
+                </div>
+                <div className="pt-8">
+                    <p className="mb-3 text-sm font-semibold text-dashboard-text">Description</p>
+                    <SyncedField
+                        config={TEXT_FIELD_CONFIG}
+                        value={entry.description || ''}
+                        onSave={(v) => onSave('description', v)}
+                    >
+                        <TextField
+                            disabled={disabled}
+                            variant="textarea"
+                            placeholder="Add a description..."
+                            className="text-sm leading-relaxed text-dashboard-text-muted"
+                        />
+                    </SyncedField>
+                </div>
+            </div>
         </div>
     );
 }

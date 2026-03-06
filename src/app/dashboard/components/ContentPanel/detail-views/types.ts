@@ -1,29 +1,21 @@
-import type { ComponentType } from 'react';
+import type { EventEntry, LinkEntry, MixsetEntry } from '@/types';
 
-import type { ZodSchema } from 'zod';
+export type FieldSaveFn = (fieldKey: string, value: unknown) => void;
 
-import type { ContentEntry } from '@/types';
-
-/** Common props for all field blocks */
-export interface FieldBlockProps {
-    entry: ContentEntry;
-    onSave: (fieldKey: string, value: unknown) => void;
+export interface EventDetailViewProps {
+    entry: EventEntry;
+    onSave: FieldSaveFn;
     disabled?: boolean;
 }
 
-/** Field block configuration */
-export interface FieldBlockConfig {
-    key: string;
-    label: string;
-    schema: ZodSchema;
-    component: ComponentType<FieldBlockProps>;
+export interface MixsetDetailViewProps {
+    entry: MixsetEntry;
+    onSave: FieldSaveFn;
+    disabled?: boolean;
 }
 
-/** Detail view component props */
-export interface DetailViewProps {
-    entry: ContentEntry;
-    onSave: (fieldKey: string, value: unknown) => void;
-    editingField: 'title' | 'image' | null;
-    onEditingDone: () => void;
+export interface LinkDetailViewProps {
+    entry: LinkEntry;
+    onSave: FieldSaveFn;
     disabled?: boolean;
 }
