@@ -79,11 +79,25 @@ export default function LinkField({
         setEditValue('');
     };
 
-    // Input mode — empty state or editing
-    if (!value || isEditing) {
-        return (
-            <div className="flex items-center gap-3 text-sm">
+    const isInputMode = !value || isEditing;
+
+    return (
+        <div className="flex h-7 items-center gap-2 text-sm">
+            {value ? (
+                <a
+                    href={value}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 text-dashboard-text-placeholder transition-colors hover:text-dashboard-text-secondary"
+                    title="Open link"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <ExternalLink className="h-4 w-4" />
+                </a>
+            ) : (
                 <ExternalLink className="h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
+            )}
+            {isInputMode ? (
                 <input
                     ref={inputRef}
                     type="text"
@@ -94,44 +108,39 @@ export default function LinkField({
                     onFocus={() => setIsEditing(true)}
                     disabled={disabled}
                     placeholder={placeholder}
-                    className="w-full bg-transparent text-dashboard-text-secondary outline-none placeholder:text-dashboard-text-placeholder"
+                    className="min-w-0 flex-1 bg-transparent text-dashboard-text-secondary outline-none placeholder:text-dashboard-text-placeholder"
                 />
-            </div>
-        );
-    }
-
-    // Read mode — double-click to edit + copy/remove buttons
-    return (
-        <div className="flex items-center gap-2">
-            <ExternalLink className="h-4 w-4 shrink-0 text-dashboard-text-placeholder" />
-            <div
-                onDoubleClick={() => !disabled && setIsEditing(true)}
-                className="min-w-0 flex-1 cursor-text truncate rounded px-1 text-sm text-dashboard-text-secondary transition-colors hover:bg-dashboard-bg-hover"
-                title="Double-click to edit"
-            >
-                {value}
-            </div>
-            {!disabled && (
-                <div className="flex shrink-0 items-center gap-1">
-                    <button
-                        onClick={handleCopy}
-                        className="rounded p-1.5 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-bg-hover hover:text-dashboard-text-secondary"
-                        title="Copy"
+            ) : (
+                <>
+                    <div
+                        onClick={() => !disabled && setIsEditing(true)}
+                        className="min-w-0 flex-1 cursor-text truncate text-dashboard-text-secondary"
                     >
-                        {copied ? (
-                            <Check className="h-3.5 w-3.5 text-green-500" />
-                        ) : (
-                            <Copy className="h-3.5 w-3.5" />
-                        )}
-                    </button>
-                    <button
-                        onClick={handleClear}
-                        className="rounded p-1.5 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-bg-hover hover:text-dashboard-danger"
-                        title="Remove"
-                    >
-                        <X className="h-3.5 w-3.5" />
-                    </button>
-                </div>
+                        {value}
+                    </div>
+                    {!disabled && (
+                        <div className="flex shrink-0 items-center gap-0.5">
+                            <button
+                                onClick={handleCopy}
+                                className="rounded p-1 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-bg-hover hover:text-dashboard-text-secondary"
+                                title="Copy"
+                            >
+                                {copied ? (
+                                    <Check className="h-3.5 w-3.5 text-green-500" />
+                                ) : (
+                                    <Copy className="h-3.5 w-3.5" />
+                                )}
+                            </button>
+                            <button
+                                onClick={handleClear}
+                                className="rounded p-1 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-bg-hover hover:text-dashboard-danger"
+                                title="Remove"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
