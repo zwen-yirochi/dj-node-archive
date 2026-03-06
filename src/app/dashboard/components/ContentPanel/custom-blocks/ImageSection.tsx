@@ -1,13 +1,8 @@
 'use client';
 
-import { EditFieldWrapper, ImageField } from '../shared-fields';
-import type { EditFieldConfig } from '../shared-fields/EditFieldWrapper';
+import { EditFieldWrapper, IMAGE_FIELD_CONFIG, ImageField } from '../shared-fields';
 import type { ImageItem } from '../shared-fields/types';
 import type { SectionBlockEditorProps } from './types';
-
-const IMAGE_EDIT_CONFIG: EditFieldConfig<ImageItem[]> = {
-    immediate: true,
-};
 
 export default function ImageSection({
     data,
@@ -25,7 +20,7 @@ export default function ImageSection({
     };
 
     return (
-        <EditFieldWrapper config={IMAGE_EDIT_CONFIG} value={imageItems} onSave={handleSave}>
+        <EditFieldWrapper config={IMAGE_FIELD_CONFIG} value={imageItems} onSave={handleSave}>
             {({ value, onChange: onFieldChange }) => (
                 <ImageField value={value} onChange={onFieldChange} disabled={disabled} />
             )}

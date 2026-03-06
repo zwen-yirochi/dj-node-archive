@@ -4,15 +4,10 @@ import { useMemo } from 'react';
 
 import { EVENT_FIELD_BLOCKS } from '@/app/dashboard/config/fieldBlockConfig';
 
-import { EditFieldWrapper, ImageField } from '../shared-fields';
-import type { EditFieldConfig } from '../shared-fields/EditFieldWrapper';
+import { EditFieldWrapper, IMAGE_FIELD_CONFIG, ImageField } from '../shared-fields';
 import type { ImageItem } from '../shared-fields/types';
 import { TitleEditModal } from './EditModals';
 import type { DetailViewProps, SaveOptions } from './types';
-
-const IMAGE_EDIT_CONFIG: EditFieldConfig<ImageItem[]> = {
-    immediate: true,
-};
 
 /** URL → stable ID (short hash) */
 function urlToStableId(url: string): string {
@@ -59,7 +54,7 @@ export default function EventDetailView({
             <div className="space-y-3">
                 <div>
                     <EditFieldWrapper
-                        config={IMAGE_EDIT_CONFIG}
+                        config={IMAGE_FIELD_CONFIG}
                         value={imageItems}
                         onSave={handleImageSave}
                     >

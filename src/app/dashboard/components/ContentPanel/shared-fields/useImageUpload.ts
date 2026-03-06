@@ -47,29 +47,33 @@ export function useImageUpload({ value, onChange, maxCount }: UseImageUploadOpti
         setError(null);
         setIsUploading(true);
 
-        const newItems: ImageItem[] = [];
-        try {
-            for (const file of toUpload) {
+        const results = await Promise.allSettled(
+            toUpload.map(async (file) => {
                 const compressed = await imageCompression(file, COMPRESSION_OPTIONS);
                 const formData = new FormData();
                 formData.append('file', compressed);
+                return uploadPoster(formData);
+            })
+        );
 
-                const result = await uploadPoster(formData);
-
-                if (result.success && result.data) {
-                    newItems.push({ id: generateId(), url: result.data.posterUrl });
-                } else if (!result.success) {
-                    setError(result.error);
+        const newItems: ImageItem[] = [];
+        for (const result of results) {
+            if (result.status === 'fulfilled') {
+                const { value } = result;
+                if (value.success && value.data) {
+                    newItems.push({ id: generateId(), url: value.data.posterUrl });
+                } else if (!value.success) {
+                    setError(value.error);
                 }
+            } else {
+                setError('Upload failed');
             }
-        } catch {
-            setError('Upload failed');
-        } finally {
-            if (newItems.length > 0) {
-                onChangeRef.current([...valueRef.current, ...newItems]);
-            }
-            setIsUploading(false);
         }
+
+        if (newItems.length > 0) {
+            onChangeRef.current([...valueRef.current, ...newItems]);
+        }
+        setIsUploading(false);
     }, []);
 
     const replaceFile = useCallback(async (id: string, file: File) => {
