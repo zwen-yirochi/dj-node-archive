@@ -2,15 +2,17 @@
  * Field Sync Configs — 필드별 저장 전략의 단일 소스
  *
  * 각 필드 타입의 FieldSync 설정(immediate/debounce + schema)을 정의한다.
- * UnifiedDetailView와 custom-blocks 모두 이 설정을 import한다.
+ * 각 DetailView와 custom-blocks 모두 이 설정을 import한다.
  */
 
 import { z } from 'zod';
 
 import type { ArtistReference, TracklistItem, VenueReference } from '@/types';
 import { urlStrictAtom, venueReferenceSchema } from '@/lib/validations/field.atoms';
-import type { FieldSyncConfig } from '@/app/dashboard/components/ContentPanel/shared-fields/FieldSync';
-import type { ImageItem } from '@/app/dashboard/components/ContentPanel/shared-fields/types';
+import type {
+    FieldSyncConfig,
+    ImageItem,
+} from '@/app/dashboard/components/ContentPanel/shared-fields/types';
 
 // ============================================
 // Text fields (debounced)
