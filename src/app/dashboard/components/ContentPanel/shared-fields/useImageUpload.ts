@@ -29,15 +29,27 @@ export function useImageUpload({ value, onChange, maxCount }: UseImageUploadOpti
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
+    // Refs to avoid stale closures in async callbacks
+    const valueRef = useRef(value);
+    valueRef.current = value;
+    const onChangeRef = useRef(onChange);
+    onChangeRef.current = onChange;
+    const maxCountRef = useRef(maxCount);
+    maxCountRef.current = maxCount;
+
     const canAdd = value.length < maxCount;
 
-    const uploadFile = useCallback(
-        async (file: File) => {
-            if (!canAdd) return;
-            setError(null);
-            setIsUploading(true);
+    const uploadFiles = useCallback(async (files: File[]) => {
+        const remaining = maxCountRef.current - valueRef.current.length;
+        if (remaining <= 0) return;
 
-            try {
+        const toUpload = files.slice(0, remaining);
+        setError(null);
+        setIsUploading(true);
+
+        const newItems: ImageItem[] = [];
+        try {
+            for (const file of toUpload) {
                 const compressed = await imageCompression(file, COMPRESSION_OPTIONS);
                 const formData = new FormData();
                 formData.append('file', compressed);
@@ -45,74 +57,70 @@ export function useImageUpload({ value, onChange, maxCount }: UseImageUploadOpti
                 const result = await uploadPoster(formData);
 
                 if (result.success && result.data) {
-                    const newItem: ImageItem = { id: generateId(), url: result.data.posterUrl };
-                    onChange([...value, newItem]);
+                    newItems.push({ id: generateId(), url: result.data.posterUrl });
                 } else if (!result.success) {
                     setError(result.error);
                 }
-            } catch {
-                setError('Upload failed');
-            } finally {
-                setIsUploading(false);
             }
-        },
-        [canAdd, onChange, value]
-    );
-
-    const replaceFile = useCallback(
-        async (id: string, file: File) => {
-            setError(null);
-            setIsUploading(true);
-
-            try {
-                const compressed = await imageCompression(file, COMPRESSION_OPTIONS);
-                const formData = new FormData();
-                formData.append('file', compressed);
-
-                const result = await uploadPoster(formData);
-
-                if (result.success && result.data) {
-                    // 기존 이미지 스토리지 삭제 (비동기, 실패 무시)
-                    const old = value.find((v) => v.id === id);
-                    if (old) deletePoster(old.url).catch(() => {});
-
-                    onChange(
-                        value.map((v) => (v.id === id ? { ...v, url: result.data!.posterUrl } : v))
-                    );
-                } else if (!result.success) {
-                    setError(result.error);
-                }
-            } catch {
-                setError('Upload failed');
-            } finally {
-                setIsUploading(false);
+        } catch {
+            setError('Upload failed');
+        } finally {
+            if (newItems.length > 0) {
+                onChangeRef.current([...valueRef.current, ...newItems]);
             }
-        },
-        [onChange, value]
-    );
+            setIsUploading(false);
+        }
+    }, []);
 
-    const removeImage = useCallback(
-        async (id: string) => {
-            const item = value.find((v) => v.id === id);
-            if (!item) return;
+    const replaceFile = useCallback(async (id: string, file: File) => {
+        setError(null);
+        setIsUploading(true);
 
-            try {
-                await deletePoster(item.url);
-            } catch {
-                // 삭제 실패해도 UI에서는 제거
+        try {
+            const compressed = await imageCompression(file, COMPRESSION_OPTIONS);
+            const formData = new FormData();
+            formData.append('file', compressed);
+
+            const result = await uploadPoster(formData);
+
+            if (result.success && result.data) {
+                const newUrl = result.data.posterUrl;
+                const old = valueRef.current.find((v) => v.id === id);
+                if (old) deletePoster(old.url).catch(() => {});
+
+                onChangeRef.current(
+                    valueRef.current.map((v) => (v.id === id ? { ...v, url: newUrl } : v))
+                );
+            } else if (!result.success) {
+                setError(result.error);
             }
-            onChange(value.filter((v) => v.id !== id));
-        },
-        [onChange, value]
-    );
+        } catch {
+            setError('Upload failed');
+        } finally {
+            setIsUploading(false);
+        }
+    }, []);
+
+    const removeImage = useCallback(async (id: string) => {
+        const item = valueRef.current.find((v) => v.id === id);
+        if (!item) return;
+
+        try {
+            await deletePoster(item.url);
+        } catch {
+            // 삭제 실패해도 UI에서는 제거
+        }
+        onChangeRef.current(valueRef.current.filter((v) => v.id !== id));
+    }, []);
 
     const handleFileSelect = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
-            const file = e.target.files?.[0];
-            if (file) uploadFile(file);
+            const files = e.target.files;
+            if (!files?.length) return;
+            uploadFiles(Array.from(files));
             if (inputRef.current) inputRef.current.value = '';
         },
-        [uploadFile]
+        [uploadFiles]
     );
 
     const openFilePicker = useCallback(() => {
@@ -124,7 +132,7 @@ export function useImageUpload({ value, onChange, maxCount }: UseImageUploadOpti
         error,
         canAdd,
         inputRef,
-        uploadFile,
+        uploadFiles,
         replaceFile,
         removeImage,
         handleFileSelect,
