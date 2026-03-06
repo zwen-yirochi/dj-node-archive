@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { AlertCircle, ArrowLeft, MoreHorizontal } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, Loader2, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry, CustomEntry } from '@/types';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entryConfig';
@@ -16,82 +16,44 @@ import { useEntryDetail, useEntryMutations } from '../../hooks';
 import { useConfirmAction } from '../../hooks/use-confirm-action';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import CustomEntryEditor from './CustomEntryEditor';
-import UnifiedDetailView from './detail-views/UnifiedDetailView';
+import EventDetailView from './detail-views/EventDetailView';
+import LinkDetailView from './detail-views/LinkDetailView';
+import MixsetDetailView from './detail-views/MixsetDetailView';
 
 // ============================================
-// useDebouncedSave hook
+// Header Save Indicator
 // ============================================
 
-function useDebouncedSave(
-    onSave: (entry: ContentEntry, changedFields: string[]) => Promise<void>,
-    delay: number = 800
-) {
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-    const [lastSaved, setLastSaved] = useState<Date | null>(null);
-
-    const hasPendingSave = useCallback(() => timeoutRef.current !== null, []);
-
-    const pendingFieldsRef = useRef<Set<string>>(new Set());
-
-    const executeSave = useCallback(
-        async (entry: ContentEntry, fields: string[]) => {
-            setIsSaving(true);
-            try {
-                await onSave(entry, fields);
-                setLastSaved(new Date());
-            } catch (error) {
-                console.error('Save failed:', error);
-            } finally {
-                setIsSaving(false);
-            }
-        },
-        [onSave]
-    );
-
-    /** Debounced save — for continuous edits (text fields) */
-    const debouncedSave = useCallback(
-        (entry: ContentEntry, changedFields: string[]) => {
-            for (const key of changedFields) pendingFieldsRef.current.add(key);
-
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-
-            timeoutRef.current = setTimeout(() => {
-                timeoutRef.current = null;
-                const fields = [...pendingFieldsRef.current];
-                pendingFieldsRef.current.clear();
-                executeSave(entry, fields);
-            }, delay);
-        },
-        [executeSave, delay]
-    );
-
-    /** Immediate save — for discrete actions (image upload/delete/reorder) */
-    const immediateSave = useCallback(
-        (entry: ContentEntry, changedFields: string[]) => {
-            // Flush any pending debounced fields
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
-            }
-            const fields = [...pendingFieldsRef.current, ...changedFields];
-            pendingFieldsRef.current.clear();
-            executeSave(entry, fields);
-        },
-        [executeSave]
-    );
+function HeaderSaveIndicator({ status }: { status: 'idle' | 'pending' | 'success' | 'error' }) {
+    const [showSuccess, setShowSuccess] = useState(false);
 
     useEffect(() => {
-        return () => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-        };
-    }, []);
+        if (status === 'success') {
+            setShowSuccess(true);
+            const timer = setTimeout(() => setShowSuccess(false), 3000);
+            return () => clearTimeout(timer);
+        }
+        setShowSuccess(false);
+    }, [status]);
 
-    return { debouncedSave, immediateSave, isSaving, lastSaved, hasPendingSave };
+    if (status === 'pending') {
+        return <Loader2 className="h-3.5 w-3.5 animate-spin text-dashboard-text-muted" />;
+    }
+
+    if (showSuccess) {
+        return <Check className="h-3.5 w-3.5 text-green-500 duration-200 animate-in fade-in" />;
+    }
+
+    if (status === 'error') {
+        return (
+            <span className="flex items-center gap-1">
+                <AlertCircle className="h-3.5 w-3.5 text-dashboard-danger" />
+                <span className="text-xs text-dashboard-danger">Save failed</span>
+            </span>
+        );
+    }
+
+    return null;
 }
 
 // ============================================
@@ -104,85 +66,45 @@ interface EntryDetailViewProps {
 }
 
 export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProps) {
-    // Data
-    const { data: entry, isFetching } = useEntryDetail(entryId);
-
-    // Mutations
-    const { update: updateMutation, remove: deleteMutation } = useEntryMutations();
-
-    // Local editing state
-    const [localEntry, setLocalEntry] = useState<ContentEntry>(entry);
-    const localEntryRef = useRef(localEntry);
-    localEntryRef.current = localEntry;
+    const { data: entry } = useEntryDetail(entryId);
+    const { updateField, remove: deleteMutation } = useEntryMutations();
 
     const confirmAction = useConfirmAction();
 
-    // Save handler — pass changedFields to mutation for preview trigger decision
-    const handleSave = useCallback(
-        async (updated: ContentEntry, changedFields: string[]) => {
-            await updateMutation.mutateAsync({ entry: updated, changedFields });
+    // Field-level save — SyncedField debounce 후 직접 호출됨
+    const handleFieldSave = useCallback(
+        (fieldKey: string, value: unknown) => {
+            updateField.mutate({ entryId, fieldKey, value });
         },
-        [updateMutation]
+        [entryId, updateField]
     );
 
-    const { debouncedSave, immediateSave, isSaving, lastSaved, hasPendingSave } =
-        useDebouncedSave(handleSave);
+    // Custom entry — blocks save
+    const handleBlocksSave = useCallback(
+        (blocks: CustomEntry['blocks']) => {
+            updateField.mutate({ entryId, fieldKey: 'blocks', value: blocks });
+        },
+        [entryId, updateField]
+    );
 
-    // Sync external entry changes to local state — skip during pending/in-flight saves
-    // AND during refetch to prevent stale data from overwriting edits
-    useEffect(() => {
-        if (!isSaving && !hasPendingSave() && !isFetching) {
-            setLocalEntry(entry);
-        }
-    }, [entry, isSaving, hasPendingSave, isFetching]);
-
-    // Delete handler — preview refresh is handled by the mutation factory
+    // Delete handler
     const handleDelete = async () => {
         await deleteMutation.mutateAsync(entry.id);
         onBack?.();
     };
 
-    // Field-level save — always reference latest localEntry via ref
-    // Callers pass { immediate: true } for discrete actions (image upload/reorder)
-    const handleFieldSave = useCallback(
-        (fieldKey: string, value: unknown, options?: { immediate?: boolean }) => {
-            const updated = { ...localEntryRef.current, [fieldKey]: value } as ContentEntry;
-            setLocalEntry(updated);
-            if (options?.immediate) {
-                immediateSave(updated, [fieldKey]);
-            } else {
-                debouncedSave(updated, [fieldKey]);
-            }
-        },
-        [debouncedSave, immediateSave]
-    );
-
-    const config = ENTRY_TYPE_CONFIG[localEntry.type];
-
-    // Save status
-    const getSaveStatus = () => {
-        if (isSaving) return 'Saving...';
-        if (lastSaved) {
-            const seconds = Math.floor((Date.now() - lastSaved.getTime()) / 1000);
-            if (seconds < 5) return 'Saved';
-        }
-        return null;
-    };
-
-    const saveStatus = getSaveStatus();
+    const config = ENTRY_TYPE_CONFIG[entry.type];
 
     // Warning for view-readiness
-    const isViewReady = canAddToView(localEntry);
-    const missingFields = isViewReady ? [] : getMissingFieldLabels(localEntry, 'create');
+    const isViewReady = canAddToView(entry);
+    const missingFields = isViewReady ? [] : getMissingFieldLabels(entry, 'create');
 
-    // "..." menu items — config-driven + confirm strategy
-    const menuConfig = EDITOR_MENU_CONFIG[localEntry.type];
+    // "..." menu items
+    const menuConfig = EDITOR_MENU_CONFIG[entry.type];
     const handlers = confirmAction.wrapHandlers(
         menuConfig,
-        {
-            delete: handleDelete,
-        },
-        localEntry as unknown as Record<string, unknown>
+        { delete: handleDelete },
+        entry as unknown as Record<string, unknown>
     );
     const menuItems = resolveMenuItems(menuConfig, handlers);
 
@@ -201,9 +123,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                         </button>
                     )}
                     <TypeBadge type={config.badgeType} size="sm" />
-                    {saveStatus && (
-                        <span className="text-xs text-dashboard-text-muted">{saveStatus}</span>
-                    )}
+                    <HeaderSaveIndicator status={updateField.status} />
                     {!isViewReady && (
                         <span
                             title={`Required to add to Page: ${missingFields.join(', ')}`}
@@ -226,26 +146,26 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
 
             {/* Detail View Content */}
             <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
-                {localEntry.type === 'custom' ? (
+                {entry.type === 'custom' ? (
                     <>
                         <input
-                            value={localEntry.title}
+                            value={entry.title}
                             onChange={(e) => handleFieldSave('title', e.target.value)}
                             placeholder="Untitled"
                             className="mb-6 w-full bg-transparent text-xl font-semibold text-dashboard-text outline-none placeholder:text-dashboard-text-placeholder"
                         />
                         <CustomEntryEditor
-                            entry={localEntry as CustomEntry}
-                            onBlocksChange={(blocks) => {
-                                const updated = { ...localEntry, blocks } as CustomEntry;
-                                setLocalEntry(updated as ContentEntry);
-                                debouncedSave(updated as ContentEntry, ['blocks']);
-                            }}
+                            entry={entry as CustomEntry}
+                            onBlocksChange={handleBlocksSave}
                         />
                     </>
-                ) : (
-                    <UnifiedDetailView entry={localEntry} onSave={handleFieldSave} />
-                )}
+                ) : entry.type === 'event' ? (
+                    <EventDetailView entry={entry} onSave={handleFieldSave} />
+                ) : entry.type === 'mixset' ? (
+                    <MixsetDetailView entry={entry} onSave={handleFieldSave} />
+                ) : entry.type === 'link' ? (
+                    <LinkDetailView entry={entry} onSave={handleFieldSave} />
+                ) : null}
             </div>
 
             <ConfirmDialog
