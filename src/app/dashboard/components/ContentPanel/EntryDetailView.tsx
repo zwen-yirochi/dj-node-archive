@@ -16,19 +16,7 @@ import { useEntryDetail, useEntryMutations } from '../../hooks';
 import { useConfirmAction } from '../../hooks/use-confirm-action';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import CustomEntryEditor from './CustomEntryEditor';
-import EventDetailView from './detail-views/EventDetailView';
-import LinkDetailView from './detail-views/LinkDetailView';
-import MixsetDetailView from './detail-views/MixsetDetailView';
-
-// ============================================
-// Detail View Registry
-// ============================================
-
-const DETAIL_VIEW_REGISTRY = {
-    event: EventDetailView,
-    mixset: MixsetDetailView,
-    link: LinkDetailView,
-} as const;
+import UnifiedDetailView from './detail-views/UnifiedDetailView';
 
 // ============================================
 // useDebouncedSave hook
@@ -198,11 +186,6 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     );
     const menuItems = resolveMenuItems(menuConfig, handlers);
 
-    const DetailView =
-        localEntry.type !== 'custom'
-            ? DETAIL_VIEW_REGISTRY[localEntry.type as keyof typeof DETAIL_VIEW_REGISTRY]
-            : null;
-
     return (
         <div className="flex h-full flex-col">
             {/* Editor Header */}
@@ -260,9 +243,9 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                             }}
                         />
                     </>
-                ) : DetailView ? (
-                    <DetailView entry={localEntry} onSave={handleFieldSave} />
-                ) : null}
+                ) : (
+                    <UnifiedDetailView entry={localEntry} onSave={handleFieldSave} />
+                )}
             </div>
 
             <ConfirmDialog
