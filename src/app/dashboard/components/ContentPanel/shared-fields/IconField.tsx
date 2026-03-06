@@ -1,8 +1,16 @@
 'use client';
 
+import {
+    FaBandcamp,
+    FaEnvelope,
+    FaGlobe,
+    FaInstagram,
+    FaSoundcloud,
+    FaSpotify,
+    FaYoutube,
+} from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 import { useEffect, useRef, useState } from 'react';
-
-import { Globe, Instagram, Mail, Music, Youtube } from 'lucide-react';
 
 import { ICON_OPTIONS } from '@/types';
 import { cn } from '@/lib/utils';
@@ -10,20 +18,20 @@ import { cn } from '@/lib/utils';
 import type { FieldComponentProps } from './types';
 
 const iconComponents: Record<string, React.ComponentType<{ className?: string }>> = {
-    soundcloud: Music,
-    spotify: Music,
-    bandcamp: Music,
-    instagram: Instagram,
-    youtube: Youtube,
-    twitter: Globe,
-    globe: Globe,
-    mail: Mail,
+    soundcloud: FaSoundcloud,
+    spotify: FaSpotify,
+    bandcamp: FaBandcamp,
+    instagram: FaInstagram,
+    youtube: FaYoutube,
+    twitter: FaXTwitter,
+    globe: FaGlobe,
+    mail: FaEnvelope,
 };
 
 export default function IconField({ value = '', onChange, disabled }: FieldComponentProps<string>) {
     const [showSelector, setShowSelector] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
-    const IconComponent = iconComponents[value] || Globe;
+    const IconComponent = iconComponents[value] || FaGlobe;
 
     useEffect(() => {
         if (!showSelector) return;
@@ -50,7 +58,7 @@ export default function IconField({ value = '', onChange, disabled }: FieldCompo
                 <div className="absolute left-0 top-full z-50 mt-1 w-max rounded-xl border border-dashboard-border bg-dashboard-bg-card p-2 shadow-lg">
                     <div className="grid grid-cols-4 gap-1">
                         {ICON_OPTIONS.map((opt) => {
-                            const Icon = iconComponents[opt] || Globe;
+                            const Icon = iconComponents[opt] || FaGlobe;
                             return (
                                 <button
                                     key={opt}
