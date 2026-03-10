@@ -2,9 +2,9 @@
 
 DJ 씬의 이벤트·베뉴·아티스트를 아카이빙하고, 아티스트가 자신만의 퍼블릭 페이지를 만들 수 있는 플랫폼
 
-<!-- TODO: 스크린샷 추가 -->
 <img width="1523" height="1371" alt="Berghain  Panorama Bar  Säule - DJ Node Archive" src="https://github.com/user-attachments/assets/5eda0474-0627-4403-8272-a5dfe38ed417" />
 
+<img width="1465" height="929" alt="스크린샷 2026-03-10 오후 7 34 58" src="https://github.com/user-attachments/assets/0a915671-f91b-4b23-b453-8ab2960c2a28" />
 
 ## About
 
