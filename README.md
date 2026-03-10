@@ -51,6 +51,7 @@ DJ 씬의 이벤트·베뉴·아티스트를 아카이빙하고, 아티스트가
 ## Docs
 
 - [Dashboard Architecture](docs/DASHBOARD_ARCHITECTURE.md) — 컴포넌트 구조, 상태 관리, Mutation 전략
+<img width="1465" height="929" alt="스크린샷 2026-03-10 오후 7 34 58" src="https://github.com/user-attachments/assets/950544c4-0a43-4442-8d07-4ae56503db30" />
 
 ## Project Structure
 
