@@ -1,10 +1,9 @@
 // hooks/use-editor-data.ts
 /**
- * Query keys & hooks — entries / user / entryDetail
+ * Query keys & hooks — entries / user / page / entryDetail
  *
- * - entryKeys: for ContentEntry[]
- * - userKeys: for User
- * - pageId is managed in Zustand dashboardStore (immutable within a session)
+ * Server data is prefetched in page.tsx and hydrated via HydrationBoundary.
+ * Hooks call useSuspenseQuery — cache hit from hydration, no network request on mount.
  */
 
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
@@ -73,32 +72,26 @@ async function fetchEntryDetail(id: string): Promise<ContentEntry> {
 // Query Hooks
 // ============================================
 
-export function useEntries(initialEntries?: ContentEntry[]) {
+export function useEntries() {
     return useSuspenseQuery({
         queryKey: entryKeys.all,
         queryFn: fetchEntries,
-        initialData: initialEntries,
-        initialDataUpdatedAt: initialEntries ? Date.now() : undefined,
         staleTime: 60_000,
     });
 }
 
-export function useUserQuery(initialUser?: User) {
+export function useUserQuery() {
     return useSuspenseQuery({
         queryKey: userKeys.all,
         queryFn: fetchUser,
-        initialData: initialUser,
-        initialDataUpdatedAt: initialUser ? Date.now() : undefined,
         staleTime: 5 * 60_000,
     });
 }
 
-export function usePageMeta(initialPageMeta?: PageMeta) {
+export function usePageMeta() {
     return useSuspenseQuery({
         queryKey: pageKeys.all,
         queryFn: fetchPageMeta,
-        initialData: initialPageMeta,
-        initialDataUpdatedAt: initialPageMeta ? Date.now() : undefined,
         staleTime: 60_000,
     });
 }

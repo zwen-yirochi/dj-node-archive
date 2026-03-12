@@ -1,16 +1,15 @@
 // app/dashboard/page.tsx
 import { notFound } from 'next/navigation';
 
+import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
+
 import { isSuccess } from '@/types/result';
 import { syncUserFromAuth } from '@/lib/api/handlers/auth.handlers';
 import { getEditorDataByAuthUserId } from '@/lib/services/user.service';
 import { getUser } from '@/app/actions/auth';
 
-import ContentPanel from './components/ContentPanel';
-import StoreInitializer from './components/StoreInitializer';
-import TreeSidebar from './components/TreeSidebar';
-import DashboardSettingsModal from './components/ui/DashboardSettingsModal';
-import PreviewPanel from './components/ui/PreviewPanel';
+import Dashboard from './components/Dashboard';
+import { entryKeys, pageKeys, userKeys } from './hooks/use-editor-data';
 
 export const metadata = {
     title: 'Editor - Dashboard',
@@ -18,7 +17,6 @@ export const metadata = {
 };
 
 export default async function DashboardPage() {
-    // Data fetching
     const authUser = await getUser();
 
     let result = await getEditorDataByAuthUserId(authUser!.id);
@@ -37,33 +35,29 @@ export default async function DashboardPage() {
         throw new Error(result.error.message);
     }
 
-    const initialData = result.data;
+    const { user, contentEntries, pageId, pageSettings } = result.data;
 
-    // UI rendering
+    // TanStack Query — prefetch into server-side QueryClient
+    const queryClient = new QueryClient();
+
+    await Promise.all([
+        queryClient.prefetchQuery({
+            queryKey: entryKeys.all,
+            queryFn: () => contentEntries,
+        }),
+        queryClient.prefetchQuery({
+            queryKey: userKeys.all,
+            queryFn: () => user,
+        }),
+        queryClient.prefetchQuery({
+            queryKey: pageKeys.all,
+            queryFn: () => ({ pageId, pageSettings }),
+        }),
+    ]);
+
     return (
-        <>
-            <StoreInitializer initialData={initialData} />
-            <DashboardSettingsModal />
-
-            <div className="flex h-screen overflow-hidden p-3">
-                <div className="flex flex-1 overflow-hidden rounded-2xl bg-dashboard-bg-base shadow-lg backdrop-blur-sm">
-                    {/* TreeSidebar */}
-                    <TreeSidebar />
-
-                    {/* Main Content */}
-                    <div className="flex flex-1 overflow-hidden">
-                        {/* ContentPanel */}
-                        <div className="flex flex-1 flex-col overflow-hidden">
-                            <ContentPanel />
-                        </div>
-
-                        {/* PreviewPanel */}
-                        <aside className="w-[400px] shrink-0 overflow-hidden">
-                            <PreviewPanel />
-                        </aside>
-                    </div>
-                </div>
-            </div>
-        </>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+            <Dashboard pageId={pageId} />
+        </HydrationBoundary>
     );
 }
