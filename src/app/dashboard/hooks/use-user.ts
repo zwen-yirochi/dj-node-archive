@@ -3,7 +3,7 @@
  * User data read hook + User mutation hook
  *
  * User data is managed in an independent cache ['user'].
- * StoreInitializer hydrates with initialData, so no actual suspend occurs.
+ * HydrationBoundary prefills the cache from the server, so no actual suspend occurs.
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
