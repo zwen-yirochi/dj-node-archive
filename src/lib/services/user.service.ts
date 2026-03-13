@@ -2,15 +2,18 @@
 // 서버 전용 - 'use server' 없어도 됨 (기본이 서버)
 import { cache } from 'react';
 
-import type {
-    ContentEntry,
-    EventEntry,
-    HeaderStyle,
-    LinkEntry,
-    MixsetEntry,
-    PageSettings,
-    ProfileLink,
-    User,
+import {
+    isEventEntry,
+    isLinkEntry,
+    isMixsetEntry,
+    type ContentEntry,
+    type EventEntry,
+    type HeaderStyle,
+    type LinkEntry,
+    type MixsetEntry,
+    type PageSettings,
+    type ProfileLink,
+    type User,
 } from '@/types/domain';
 import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
 import {
@@ -145,9 +148,9 @@ export async function getComponentsByType(username: string): Promise<Result<Comp
 
     const page = result.data;
     return success({
-        events: page.entries.filter((c): c is EventEntry => c.type === 'event'),
-        mixsets: page.entries.filter((c): c is MixsetEntry => c.type === 'mixset'),
-        links: page.entries.filter((c): c is LinkEntry => c.type === 'link'),
+        events: page.entries.filter(isEventEntry),
+        mixsets: page.entries.filter(isMixsetEntry),
+        links: page.entries.filter(isLinkEntry),
     });
 }
 
