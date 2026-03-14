@@ -124,7 +124,7 @@ export default function SearchableTagInput({
                 {/* Tags */}
                 {value.map((tag, index) => (
                     <span
-                        key={tag.id || index}
+                        key={tag.id || tag.name}
                         className="flex items-center gap-1 rounded-full border border-dashboard-border bg-dashboard-bg-active px-2 py-0.5 text-xs text-dashboard-text"
                     >
                         {tag.name}
@@ -171,8 +171,8 @@ export default function SearchableTagInput({
                         </div>
                     ) : (
                         <ul className="py-1">
-                            {options.map((option, index) => (
-                                <li key={option.id || index}>
+                            {options.map((option) => (
+                                <li key={option.id || option.name}>
                                     <button
                                         type="button"
                                         onClick={() => handleSelect(option)}
