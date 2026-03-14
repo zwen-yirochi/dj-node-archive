@@ -1,13 +1,6 @@
 import Link from 'next/link';
 
-import {
-    isEventEntry,
-    isPublicEventEntry,
-    type ContentEntry,
-    type EventEntry,
-    type LinkEntry,
-    type MixsetEntry,
-} from '@/types/domain';
+import { isEventEntry, isPublicEventEntry, type ContentEntry } from '@/types/domain';
 import { formatDateCompact, venueCode } from '@/lib/formatters';
 
 import { TypeBadge } from './TypeBadge';
@@ -20,47 +13,38 @@ interface EntryCardProps {
 }
 
 function getTitle(entry: ContentEntry): string {
-    if (entry.type === 'event') return (entry as EventEntry).title;
-    if (entry.type === 'mixset') return (entry as MixsetEntry).title;
-    return (entry as LinkEntry).title;
+    return entry.title;
 }
 
 function getImageUrl(entry: ContentEntry): string | undefined {
-    if (entry.type === 'event') return (entry as EventEntry).imageUrls[0];
-    if (entry.type === 'mixset') return (entry as MixsetEntry).imageUrls[0];
-    if (entry.type === 'link') return (entry as LinkEntry).imageUrls[0];
-    return undefined;
+    if (entry.type === 'custom') return undefined;
+    return entry.imageUrls[0];
 }
 
 function DetailText({ entry }: { entry: ContentEntry }) {
     switch (entry.type) {
         case 'event': {
-            const e = entry as EventEntry;
-            if (!e.venue?.name) return <>{formatDateCompact(e.date)}</>;
+            if (!entry.venue?.name) return <>{formatDateCompact(entry.date)}</>;
             return (
                 <>
-                    @ <VenueLink name={e.venue.name} venueId={e.venue.id} />
+                    @ <VenueLink name={entry.venue.name} venueId={entry.venue.id} />
                 </>
             );
         }
-        case 'mixset': {
-            const m = entry as MixsetEntry;
+        case 'mixset':
             return (
                 <>
-                    {m.durationMinutes
-                        ? `${m.durationMinutes}MIN`
+                    {entry.durationMinutes
+                        ? `${entry.durationMinutes}MIN`
                         : formatDateCompact(entry.createdAt)}
                 </>
             );
-        }
-        case 'link': {
-            const l = entry as LinkEntry;
+        case 'link':
             try {
-                return <>{new URL(l.url).hostname}</>;
+                return <>{new URL(entry.url).hostname}</>;
             } catch {
                 return <>LINK</>;
             }
-        }
     }
 }
 
@@ -71,7 +55,7 @@ function getTypeLabel(type: string): string {
 }
 
 function getDateValue(entry: ContentEntry): string {
-    if (entry.type === 'event') return formatDateCompact((entry as EventEntry).date);
+    if (entry.type === 'event') return formatDateCompact(entry.date);
     return formatDateCompact(entry.createdAt);
 }
 
