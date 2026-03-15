@@ -6,6 +6,7 @@ import {
     type AnimateLayoutChanges,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { memo } from 'react';
 
 import { GripVertical, MoreHorizontal } from 'lucide-react';
 
@@ -74,7 +75,7 @@ interface SortableItemProps {
     entry: ContentEntry;
 }
 
-export default function SortableItem({ entry }: SortableItemProps) {
+function SortableItem({ entry }: SortableItemProps) {
     const setView = useDashboardStore(selectSetView);
     const confirmAction = useConfirmAction();
     const { remove, removeFromDisplay, toggleVisibility } = useEntryMutations();
@@ -191,3 +192,5 @@ export default function SortableItem({ entry }: SortableItemProps) {
         </>
     );
 }
+
+export default memo(SortableItem);

@@ -117,7 +117,7 @@ export function SimpleDropdown({
                     // 링크 아이템인 경우
                     if (isLinkItem(item)) {
                         return (
-                            <DropdownMenuItem key={`item-${index}`} asChild>
+                            <DropdownMenuItem key={item.label} asChild>
                                 <Link
                                     href={item.href}
                                     target={item.external ? '_blank' : undefined}
@@ -134,7 +134,7 @@ export function SimpleDropdown({
                     // 액션 아이템인 경우
                     return (
                         <DropdownMenuItem
-                            key={`item-${index}`}
+                            key={item.label}
                             onClick={item.onClick}
                             disabled={item.disabled}
                             className={itemClassName}

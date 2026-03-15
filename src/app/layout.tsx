@@ -35,6 +35,9 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
+            <head>
+                <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+            </head>
             <body className={`${inter.variable} antialiased`}>
                 <ErrorBoundary>{children}</ErrorBoundary>
                 <SpeedInsights debug={process.env.NODE_ENV === 'development'} />

@@ -6,6 +6,7 @@ import {
     type AnimateLayoutChanges,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { memo } from 'react';
 
 import { AlertCircle, Check, MoreHorizontal } from 'lucide-react';
 
@@ -55,7 +56,7 @@ function StatusIcon({
     }
 }
 
-export default function TreeItem({ entry, isInPageDisplay = false }: TreeItemProps) {
+function TreeItem({ entry, isInPageDisplay = false }: TreeItemProps) {
     // Dashboard Store
     const contentView = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
@@ -210,3 +211,5 @@ export default function TreeItem({ entry, isInPageDisplay = false }: TreeItemPro
         </>
     );
 }
+
+export default memo(TreeItem);
