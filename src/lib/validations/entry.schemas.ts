@@ -120,25 +120,14 @@ export const createEntryRequestSchema = z.object({
     publishOption: z.enum(['publish', 'private']).default('private'),
 });
 
-export const updateEntryRequestSchema = z
-    .object({
-        entry: z
-            .object({
-                id: z.string().uuid(),
-                type: z.enum(['event', 'mixset', 'link', 'custom']),
-            })
-            .passthrough()
-            .optional(),
-        displayOrder: z.number().int().nullable().optional(),
-        isVisible: z.boolean().optional(),
-    })
-    .refine(
-        (data) =>
-            data.entry !== undefined ||
-            data.displayOrder !== undefined ||
-            data.isVisible !== undefined,
-        { message: 'At least one of entry, displayOrder, isVisible is required' }
-    );
+export const updateEntryRequestSchema = z.object({
+    entry: z
+        .object({
+            id: z.string().uuid(),
+            type: z.enum(['event', 'mixset', 'link', 'custom']),
+        })
+        .passthrough(),
+});
 
 export const reorderEntriesRequestSchema = z.object({
     updates: z
@@ -146,17 +135,6 @@ export const reorderEntriesRequestSchema = z.object({
             z.object({
                 id: z.string().uuid(),
                 position: z.number().int().min(0),
-            })
-        )
-        .min(1, 'At least one update is required'),
-});
-
-export const reorderDisplayEntriesRequestSchema = z.object({
-    updates: z
-        .array(
-            z.object({
-                id: z.string().uuid(),
-                displayOrder: z.number().int().min(0).nullable(),
             })
         )
         .min(1, 'At least one update is required'),
