@@ -39,7 +39,7 @@ export function SectionEntryList({ sectionId, viewType, entries, onRemoveEntry }
                                 key={entry.id}
                                 entry={entry}
                                 sectionId={sectionId}
-                                compact={viewType === 'grid' || viewType === 'carousel'}
+                                compact={viewType === 'carousel'}
                                 onRemove={() => onRemoveEntry(entry.id)}
                             />
                         ))}
@@ -54,10 +54,7 @@ function getLayoutClass(viewType: ViewType): string {
     switch (viewType) {
         case 'carousel':
             return 'flex gap-1 overflow-x-auto scrollbar-hide';
-        case 'grid':
-            return 'grid grid-cols-2 gap-1';
         case 'feature':
-            return 'space-y-0';
         case 'list':
         default:
             return 'space-y-0';
@@ -65,10 +62,9 @@ function getLayoutClass(viewType: ViewType): string {
 }
 
 function EmptyState({ viewType }: { viewType: ViewType }) {
-    const hints: Record<ViewType, string> = {
+    const hints: Record<string, string> = {
         carousel: '가로로 스크롤되는 카드',
         list: '세로 리스트 형태',
-        grid: '그리드 형태',
         feature: '첫 번째 엔트리를 강조',
     };
 

@@ -4,7 +4,7 @@ import { GripVertical, Trash2 } from 'lucide-react';
 
 import type { ViewType } from '@/types/domain';
 import { cn } from '@/lib/utils';
-import { VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
+import { CONVERTIBLE_VIEW_TYPES, FEATURE_VIEW_TYPE } from '@/app/dashboard/config/ui/view-types';
 
 interface Props {
     title: string | null;
@@ -29,6 +29,9 @@ export function SectionHeader({
         onTitleChange(localTitle.trim() || null);
     };
 
+    const isFeature = viewType === 'feature';
+    const FeatureIcon = FEATURE_VIEW_TYPE.icon;
+
     return (
         <div className="flex items-center gap-2 px-2 py-2">
             <button {...dragHandleProps} className="cursor-grab text-dashboard-text-placeholder">
@@ -42,28 +45,34 @@ export function SectionHeader({
                 placeholder="섹션 제목 (선택)"
                 className="flex-1 bg-transparent text-sm font-medium text-dashboard-text placeholder:text-dashboard-text-placeholder focus:outline-none"
             />
-            {/* View type icon selector */}
-            <div className="flex items-center gap-0.5 rounded-md border border-dashboard-border p-0.5">
-                {VIEW_TYPE_OPTIONS.map((opt) => {
-                    const Icon = opt.icon;
-                    const isActive = viewType === opt.value;
-                    return (
-                        <button
-                            key={opt.value}
-                            onClick={() => onViewTypeChange(opt.value)}
-                            title={opt.label}
-                            className={cn(
-                                'rounded p-1 transition-colors',
-                                isActive
-                                    ? 'bg-dashboard-bg-active text-dashboard-text'
-                                    : 'text-dashboard-text-placeholder hover:text-dashboard-text-secondary'
-                            )}
-                        >
-                            <Icon className="h-3.5 w-3.5" />
-                        </button>
-                    );
-                })}
-            </div>
+            {isFeature ? (
+                <div className="flex items-center gap-1 rounded-md border border-dashboard-border px-2 py-1 text-dashboard-text-placeholder">
+                    <FeatureIcon className="h-3.5 w-3.5" />
+                    <span className="text-[10px]">Feature</span>
+                </div>
+            ) : (
+                <div className="flex items-center gap-0.5 rounded-md border border-dashboard-border p-0.5">
+                    {CONVERTIBLE_VIEW_TYPES.map((opt) => {
+                        const Icon = opt.icon;
+                        const isActive = viewType === opt.value;
+                        return (
+                            <button
+                                key={opt.value}
+                                onClick={() => onViewTypeChange(opt.value)}
+                                title={opt.label}
+                                className={cn(
+                                    'rounded p-1 transition-colors',
+                                    isActive
+                                        ? 'bg-dashboard-bg-active text-dashboard-text'
+                                        : 'text-dashboard-text-placeholder hover:text-dashboard-text-secondary'
+                                )}
+                            >
+                                <Icon className="h-3.5 w-3.5" />
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
             <button
                 onClick={onDelete}
                 className="text-dashboard-text-placeholder hover:text-red-400"

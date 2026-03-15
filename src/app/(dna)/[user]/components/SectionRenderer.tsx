@@ -5,7 +5,6 @@ import { SectionLabel } from '@/components/dna/SectionLabel';
 
 import { CarouselView } from './section-views/CarouselView';
 import { FeatureView } from './section-views/FeatureView';
-import { GridView } from './section-views/GridView';
 import { ListView } from './section-views/ListView';
 
 interface SectionViewProps {
@@ -16,7 +15,6 @@ interface SectionViewProps {
 const VIEW_RENDERERS: Record<ViewType, ComponentType<SectionViewProps>> = {
     carousel: CarouselView,
     list: ListView,
-    grid: GridView,
     feature: FeatureView,
 };
 

@@ -29,7 +29,7 @@ export interface PageSettings {
 // ============================================
 // Section / View Types
 // ============================================
-export type ViewType = 'carousel' | 'list' | 'grid' | 'feature';
+export type ViewType = 'carousel' | 'list' | 'feature';
 
 export interface Section {
     id: string;

@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
-import { VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
+import { ALL_VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
 import { useEntries, usePageMeta } from '@/app/dashboard/hooks/use-editor-data';
 import { useSectionMutations } from '@/app/dashboard/hooks/use-section-mutations';
 
@@ -38,7 +38,7 @@ export default function PageSectionEditor() {
                     </button>
                     {showTypeSelect && (
                         <div className="absolute right-0 top-full z-10 mt-1 rounded-md border border-dashboard-border bg-dashboard-bg-card py-1 shadow-lg">
-                            {VIEW_TYPE_OPTIONS.map((opt) => {
+                            {ALL_VIEW_TYPE_OPTIONS.map((opt) => {
                                 const Icon = opt.icon;
                                 return (
                                     <button
