@@ -18,7 +18,7 @@ interface ComponentGroupProps {
     title: string;
     icon?: ReactNode;
     count?: number;
-    entryType?: EntryType; // Type used for the create panel
+    entryType?: EntryType;
     children: ReactNode;
 }
 
@@ -52,29 +52,22 @@ export default function ComponentGroup({
                     )}
                 </span>
 
-                {/* Icon (optional) */}
+                {/* Icon */}
                 {icon && <span className="text-dashboard-text-muted">{icon}</span>}
 
                 {/* Title */}
                 <span className="flex-1 text-sm text-dashboard-text-secondary">{title}</span>
 
-                {/* Count Badge */}
-                {count !== undefined && count > 0 && (
-                    <span className="rounded-full bg-dashboard-bg-muted px-1.5 py-0.5 text-[10px] font-normal text-dashboard-text-placeholder">
-                        {count}
-                    </span>
-                )}
-
-                {/* Add Button */}
+                {/* Add Button — always visible */}
                 {entryType && (
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             setView({ kind: 'create', entryType });
                         }}
-                        className="rounded p-1 opacity-0 transition-opacity hover:bg-dashboard-bg-active group-hover:opacity-100"
+                        className="rounded p-0.5 text-dashboard-text-placeholder transition-colors hover:bg-dashboard-bg-active hover:text-dashboard-text-secondary"
                     >
-                        <Plus className="h-3.5 w-3.5 text-dashboard-text-secondary" />
+                        <Plus className="h-3.5 w-3.5" />
                     </button>
                 )}
             </div>
@@ -85,7 +78,6 @@ export default function ComponentGroup({
                 style={{ gridTemplateRows: isCollapsed ? '0fr' : '1fr' }}
             >
                 <div className="overflow-hidden">
-                    {/* Tree Line - vertical line */}
                     <div className="absolute bottom-2 left-2 top-2 w-px bg-dashboard-border-hover" />
                     {children}
                 </div>

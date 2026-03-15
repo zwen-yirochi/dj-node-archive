@@ -8,7 +8,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { memo } from 'react';
 
-import { AlertTriangle, Check, MoreHorizontal } from 'lucide-react';
+import { AlertTriangle, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
@@ -105,19 +105,16 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                     {entry.title || 'Untitled'}
                 </span>
 
-                {/* Section membership indicator */}
-                {isInSection && <Check className="h-3 w-3 shrink-0 text-green-500/60" />}
-                {!isInSection && !isValid && (
-                    <AlertTriangle className="h-3 w-3 shrink-0 text-amber-500/70" />
-                )}
-
-                {/* Right Side */}
+                {/* Right: warning (default) → menu (hover) */}
                 <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
+                    {!isValid && (
+                        <AlertTriangle className="h-3 w-3 text-amber-500/70 transition-opacity group-hover:opacity-0" />
+                    )}
                     <SimpleDropdown
                         trigger={
                             <button
                                 onClick={(e) => e.stopPropagation()}
-                                className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
+                                className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-dashboard-bg-active group-hover:opacity-100"
                             >
                                 <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
                             </button>

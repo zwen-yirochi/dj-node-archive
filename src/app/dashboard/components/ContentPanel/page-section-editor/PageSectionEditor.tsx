@@ -1,7 +1,7 @@
 'use client';
 
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
@@ -17,6 +17,18 @@ export default function PageSectionEditor() {
     const { data: entries } = useEntries();
     const mutations = useSectionMutations();
     const [showTypeSelect, setShowTypeSelect] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!showTypeSelect) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setShowTypeSelect(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showTypeSelect]);
 
     const sections = pageMeta?.sections ?? [];
     const entryMap = new Map(entries.map((e) => [e.id, e]));
@@ -29,7 +41,7 @@ export default function PageSectionEditor() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-dashboard-border px-4 py-3">
                 <h2 className="text-sm font-medium text-dashboard-text">Page Sections</h2>
-                <div className="relative">
+                <div ref={dropdownRef} className="relative">
                     <button
                         onClick={() => setShowTypeSelect(!showTypeSelect)}
                         className="flex items-center gap-1 rounded-md bg-dashboard-bg-hover px-2 py-1 text-xs text-dashboard-text-secondary hover:bg-dashboard-bg-active"

@@ -268,12 +268,18 @@ export default function DashboardDndProvider({ children }: { children: ReactNode
                     >
                         <div className="flex items-center gap-2">
                             <span
-                                className={`text-sm font-medium ${activeItem.section.title ? 'text-dashboard-text' : 'text-dashboard-text-placeholder'}`}
+                                className={`text-sm font-medium ${activeItem.section.title || (activeItem.section.viewType === 'feature' && activeItem.section.entryIds.length > 0) ? 'text-dashboard-text' : 'text-dashboard-text-placeholder'}`}
                             >
-                                {activeItem.section.title || 'Section title (optional)'}
+                                {activeItem.section.viewType === 'feature'
+                                    ? getEntries().find(
+                                          (e) => e.id === activeItem.section!.entryIds[0]
+                                      )?.title || 'No entry'
+                                    : activeItem.section.title || 'Section title (optional)'}
                             </span>
                             <span className="text-xs text-dashboard-text-placeholder">
-                                {activeItem.section.entryIds.length} items
+                                {activeItem.section.viewType === 'feature'
+                                    ? 'Feature'
+                                    : `${activeItem.section.entryIds.length} items`}
                             </span>
                         </div>
                     </div>

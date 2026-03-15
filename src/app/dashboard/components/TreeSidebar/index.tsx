@@ -5,7 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useMemo } from 'react';
 import Link from 'next/link';
 
-import { ChevronDown, ChevronRight, FileText, Palette } from 'lucide-react';
+import { FileText, Palette } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
@@ -13,13 +13,7 @@ import { COMPONENT_GROUPS } from '@/app/dashboard/config/ui/sidebar';
 import { TypeBadge } from '@/components/dna';
 
 import { useEntries, usePageMeta, useUser } from '../../hooks';
-import {
-    selectContentView,
-    selectSetView,
-    selectSidebarSections,
-    selectToggleSection,
-    useDashboardStore,
-} from '../../stores/dashboardStore';
+import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 import { CommandPalette } from '../ui/CommandPalette';
 import AccountSection from './AccountSection';
 import ComponentGroup from './ComponentGroup';
@@ -43,8 +37,6 @@ export default function TreeSidebar() {
     // Dashboard Store
     const contentView = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
-    const sidebarSections = useDashboardStore(selectSidebarSections);
-    const toggleSection = useDashboardStore(selectToggleSection);
 
     // Derive sidebar highlight state from contentView
     const isBioActive = contentView.kind === 'bio';
@@ -60,17 +52,6 @@ export default function TreeSidebar() {
         }
         return map;
     }, [entries]);
-
-    const isPageCollapsed = sidebarSections?.page?.collapsed ?? false;
-
-    const handlePageClick = () => {
-        setView({ kind: 'page' });
-    };
-
-    const handlePageToggle = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        toggleSection('page');
-    };
 
     return (
         <aside className="flex h-full w-64 shrink-0 flex-col bg-dashboard-bg-muted">
@@ -103,10 +84,10 @@ export default function TreeSidebar() {
                 </button>
 
                 {/* Page */}
-                <div
-                    onClick={handlePageClick}
+                <button
+                    onClick={() => setView({ kind: 'page' })}
                     className={cn(
-                        'group mb-1 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
+                        'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
                         isPageActive
                             ? 'bg-dashboard-bg-active/70 font-medium text-dashboard-text'
                             : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover/70'
@@ -114,17 +95,7 @@ export default function TreeSidebar() {
                 >
                     <FileText className="h-4 w-4 text-dashboard-text-muted" />
                     <span className="flex-1 text-sm">Page</span>
-                    <button
-                        onClick={handlePageToggle}
-                        className="flex h-4 w-4 items-center justify-center text-dashboard-text-placeholder hover:text-dashboard-text-muted"
-                    >
-                        {isPageCollapsed ? (
-                            <ChevronRight className="h-3.5 w-3.5" />
-                        ) : (
-                            <ChevronDown className="h-3.5 w-3.5" />
-                        )}
-                    </button>
-                </div>
+                </button>
 
                 {/* Divider */}
                 <div className="my-2" />
