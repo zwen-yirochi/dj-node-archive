@@ -4,7 +4,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
 
 import type { ContentEntry } from '@/types/domain';
-import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { TypeBadge } from '@/components/dna';
 

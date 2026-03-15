@@ -18,16 +18,23 @@ import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryMutations } from '../../hooks';
 import { useConfirmAction } from '../../hooks/use-confirm-action';
-import { usePageMeta } from '../../hooks/use-editor-data';
 import { useSectionMutations } from '../../hooks/use-section-mutations';
 import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface TreeItemProps {
     entry: ContentEntry;
+    isInSection: boolean;
 }
 
-function TreeItem({ entry }: TreeItemProps) {
+const animateLayoutChanges: AnimateLayoutChanges = (args) => {
+    const { isSorting, wasDragging } = args;
+    if (wasDragging) return false;
+    if (isSorting) return true;
+    return defaultAnimateLayoutChanges(args);
+};
+
+function TreeItem({ entry, isInSection }: TreeItemProps) {
     // Dashboard Store
     const contentView = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
@@ -39,30 +46,12 @@ function TreeItem({ entry }: TreeItemProps) {
     const { remove } = useEntryMutations();
     const sectionMutations = useSectionMutations();
 
-    // Section data
-    const { data: pageMeta } = usePageMeta();
-    const sections = pageMeta?.sections ?? [];
-    const isInSection = sections.some((s) => s.entryIds.includes(entry.id));
-
     const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
-    const config = ENTRY_TYPE_CONFIG[entry.type];
-
-    const sortableId = entry.id;
-
-    const animateLayoutChanges: AnimateLayoutChanges = (args) => {
-        const { isSorting, wasDragging } = args;
-        if (wasDragging) return false;
-        if (isSorting) return true;
-        return defaultAnimateLayoutChanges(args);
-    };
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-        id: sortableId,
+        id: entry.id,
         animateLayoutChanges,
-        data: {
-            type: 'entry',
-            entry,
-        },
+        data: { type: 'entry', entry },
     });
 
     const style = {
@@ -79,12 +68,7 @@ function TreeItem({ entry }: TreeItemProps) {
         TREE_ENTRY_MENU,
         {
             'add-to-section': () => {
-                // Add to the first section, or navigate to page view if no sections
-                if (sections.length > 0) {
-                    sectionMutations.addEntryToSection(sections[0].id, entry.id);
-                } else {
-                    setView({ kind: 'page' });
-                }
+                sectionMutations.addEntryToSection('__first__', entry.id);
             },
             delete: () => {
                 const cv = useDashboardStore.getState().contentView;
@@ -126,7 +110,6 @@ function TreeItem({ entry }: TreeItemProps) {
 
                 {/* Right Side */}
                 <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
-                    {/* More menu */}
                     <SimpleDropdown
                         trigger={
                             <button

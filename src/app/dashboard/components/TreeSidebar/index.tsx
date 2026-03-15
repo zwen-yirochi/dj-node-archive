@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { COMPONENT_GROUPS } from '@/app/dashboard/config/ui/sidebar';
 import { TypeBadge } from '@/components/dna';
 
-import { useEntries, useUser } from '../../hooks';
+import { useEntries, usePageMeta, useUser } from '../../hooks';
 import {
     selectContentView,
     selectSetView,
@@ -28,7 +28,17 @@ import TreeItem from './TreeItem';
 export default function TreeSidebar() {
     // TanStack Query
     const { data: entries } = useEntries();
+    const { data: pageMeta } = usePageMeta();
     const user = useUser();
+
+    // Section membership — computed once, passed as prop
+    const sectionEntryIds = useMemo(() => {
+        const ids = new Set<string>();
+        for (const s of pageMeta?.sections ?? []) {
+            for (const id of s.entryIds) ids.add(id);
+        }
+        return ids;
+    }, [pageMeta?.sections]);
 
     // Dashboard Store
     const contentView = useDashboardStore(selectContentView);
@@ -145,7 +155,11 @@ export default function TreeSidebar() {
                                         <SectionEmptyHint label={cfg.emptyLabel} />
                                     ) : (
                                         items.map((entry) => (
-                                            <TreeItem key={entry.id} entry={entry} />
+                                            <TreeItem
+                                                key={entry.id}
+                                                entry={entry}
+                                                isInSection={sectionEntryIds.has(entry.id)}
+                                            />
                                         ))
                                     )}
                                 </div>

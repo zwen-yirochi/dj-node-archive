@@ -1,10 +1,22 @@
-import { useSortable } from '@dnd-kit/sortable';
+import {
+    defaultAnimateLayoutChanges,
+    useSortable,
+    type AnimateLayoutChanges,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { memo } from 'react';
 
-import type { ContentEntry, Section, ViewType } from '@/types/domain';
+import type { ContentEntry, Section } from '@/types/domain';
 
 import { SectionEntryList } from './SectionEntryList';
 import { SectionHeader } from './SectionHeader';
+
+const animateLayoutChanges: AnimateLayoutChanges = (args) => {
+    const { isSorting, wasDragging } = args;
+    if (wasDragging) return false;
+    if (isSorting) return true;
+    return defaultAnimateLayoutChanges(args);
+};
 
 interface Props {
     section: Section;
@@ -14,20 +26,31 @@ interface Props {
     onRemoveEntry: (entryId: string) => void;
 }
 
-export function SectionCard({ section, entries, onUpdateField, onDelete, onRemoveEntry }: Props) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-        id: section.id,
-        data: { type: 'section', section },
-    });
+export const SectionCard = memo(function SectionCard({
+    section,
+    entries,
+    onUpdateField,
+    onDelete,
+    onRemoveEntry,
+}: Props) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging, isSorting } =
+        useSortable({
+            id: section.id,
+            animateLayoutChanges,
+            data: { type: 'section', section },
+        });
 
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
+    const style: React.CSSProperties = {
+        transform: CSS.Translate.toString(transform),
+        transition: isSorting
+            ? 'transform 100ms ease'
+            : (transition ?? 'transform 250ms cubic-bezier(0.25, 1, 0.5, 1)'),
+        ...(isDragging && { opacity: 0, pointerEvents: 'none' }),
     };
 
     return (
         <div
+            id={`section-${section.id}`}
             ref={setNodeRef}
             style={style}
             className="mb-3 rounded-xl border border-dashboard-border bg-dashboard-bg-card"
@@ -50,4 +73,4 @@ export function SectionCard({ section, entries, onUpdateField, onDelete, onRemov
             </div>
         </div>
     );
-}
+});

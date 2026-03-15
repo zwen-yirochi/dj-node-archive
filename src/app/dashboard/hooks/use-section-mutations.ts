@@ -1,11 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 import { useCallback, useRef } from 'react';
 
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { Section, ViewType } from '@/types/domain';
 
-import { pageKeys, usePageMeta, type PageMeta } from './use-editor-data';
+import { pageKeys, type PageMeta } from './use-editor-data';
 import { triggerPreviewRefresh } from './use-preview-actions';
 
 const DEBOUNCE_MS = 300;
@@ -26,32 +26,49 @@ async function patchSections(pageId: string, sections: Section[]) {
 
 export function useSectionMutations() {
     const queryClient = useQueryClient();
-    const { data: pageMeta } = usePageMeta();
-    const pageId = pageMeta?.pageId;
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Core: update sections optimistically + debounced save
-    const updateSections = useCallback(
+    // ── Server save mutation (no debounce) ──
+    const saveMutation = useMutation({
+        mutationFn: async () => {
+            const current = queryClient.getQueryData<PageMeta>(pageKeys.all);
+            if (!current?.pageId || !current.sections) return;
+            await patchSections(current.pageId, current.sections);
+        },
+        onSuccess: () => triggerPreviewRefresh('userpage'),
+    });
+
+    // ── Cache-only update (no save, no debounce) ──
+    const setSections = useCallback(
         (updater: (prev: Section[]) => Section[]) => {
             queryClient.setQueryData(pageKeys.all, (prev: PageMeta | undefined) => {
                 if (!prev) return prev;
                 return { ...prev, sections: updater(prev.sections) };
             });
-
-            // Debounced server save
-            if (timerRef.current) clearTimeout(timerRef.current);
-            timerRef.current = setTimeout(() => {
-                const current = queryClient.getQueryData<PageMeta>(pageKeys.all);
-                if (current?.pageId && current.sections) {
-                    patchSections(current.pageId, current.sections).catch(console.error);
-                }
-                triggerPreviewRefresh('userpage');
-            }, DEBOUNCE_MS);
         },
         [queryClient]
     );
 
-    // Actions
+    // ── Cache update + debounced save ──
+    const updateSections = useCallback(
+        (updater: (prev: Section[]) => Section[]) => {
+            setSections(updater);
+
+            // Debounced server save
+            if (timerRef.current) clearTimeout(timerRef.current);
+            timerRef.current = setTimeout(async () => {
+                const current = queryClient.getQueryData<PageMeta>(pageKeys.all);
+                if (current?.pageId && current.sections) {
+                    await patchSections(current.pageId, current.sections).catch(console.error);
+                }
+                triggerPreviewRefresh('userpage');
+            }, DEBOUNCE_MS);
+        },
+        [queryClient, setSections]
+    );
+
+    // ── Actions ──
+
     const addSection = useCallback(
         (viewType: ViewType) => {
             const newSection: Section = {
@@ -97,13 +114,16 @@ export function useSectionMutations() {
 
     const addEntryToSection = useCallback(
         (sectionId: string, entryId: string) => {
-            updateSections((prev) =>
-                prev.map((s) => {
-                    if (s.id !== sectionId) return s;
-                    if (s.entryIds.includes(entryId)) return s; // 중복 방지
+            updateSections((prev) => {
+                // '__first__' → add to the first section
+                const targetId = sectionId === '__first__' ? prev[0]?.id : sectionId;
+                if (!targetId) return prev;
+                return prev.map((s) => {
+                    if (s.id !== targetId) return s;
+                    if (s.entryIds.includes(entryId)) return s;
                     return { ...s, entryIds: [...s.entryIds, entryId] };
-                })
-            );
+                });
+            });
         },
         [updateSections]
     );
@@ -154,7 +174,6 @@ export function useSectionMutations() {
         [updateSections]
     );
 
-    // Entry 삭제 시 sections에서 제거
     const removeEntryFromAllSections = useCallback(
         (entryId: string) => {
             updateSections((prev) =>
@@ -177,5 +196,9 @@ export function useSectionMutations() {
         reorderEntryInSection,
         moveEntryBetweenSections,
         removeEntryFromAllSections,
+        /** Cache-only: 서버 저장 없이 sections 배열만 업데이트 (DnD onDragOver용) */
+        setSections,
+        /** 현재 cache를 서버에 저장 (DnD onDragEnd용) */
+        saveMutation,
     };
 }
