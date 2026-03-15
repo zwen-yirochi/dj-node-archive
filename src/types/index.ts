@@ -25,6 +25,10 @@ export type {
     ProfileLink,
     ProfileLinkType,
     PublicEventEntry,
+    // Section / View Types
+    Section,
+    ViewType,
+    ResolvedSection,
     // Custom Block Types
     SectionBlock,
     SectionBlockDataMap,

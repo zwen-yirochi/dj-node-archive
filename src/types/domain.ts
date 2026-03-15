@@ -68,6 +68,7 @@ export interface Page {
     themeColor?: string;
     headerStyle?: HeaderStyle;
     links: ProfileLink[];
+    sections?: Section[];
 }
 
 // ============================================
