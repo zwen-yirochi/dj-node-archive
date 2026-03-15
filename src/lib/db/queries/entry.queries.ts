@@ -160,6 +160,22 @@ export async function updateEntryPositions(
     }
 }
 
+export async function getEntriesByPageId(pageId: string): Promise<Result<Entry[]>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase.from('entries').select('id').eq('page_id', pageId);
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'getEntriesByPageId', error));
+        }
+        return success((data ?? []) as Entry[]);
+    } catch (err) {
+        return failure(
+            createDatabaseError('엔트리 조회 중 오류가 발생했습니다.', 'getEntriesByPageId', err)
+        );
+    }
+}
+
 export async function getMaxPosition(pageId: string): Promise<Result<number>> {
     try {
         const supabase = await createClient();
