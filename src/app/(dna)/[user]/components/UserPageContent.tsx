@@ -1,6 +1,5 @@
 import {
     isEventEntry,
-    type ContentEntry,
     type HeaderStyle,
     type ProfileLink,
     type ResolvedSection,
@@ -10,6 +9,7 @@ import { DnaPageShell } from '@/components/dna/DnaPageShell';
 import { headerRenderers } from '@/components/dna/headers';
 import { MetaTable } from '@/components/dna/MetaTable';
 import { SectionLabel } from '@/components/dna/SectionLabel';
+import ShareButton from '@/components/dna/ShareButton';
 import { StatsRow } from '@/components/dna/StatsRow';
 
 import { SectionRenderer } from './SectionRenderer';
@@ -33,6 +33,13 @@ export default function UserPageContent({
 
     const HeaderComponent = headerRenderers[headerStyle];
 
+    const activeLinks = links
+        .filter((l) => l.url && l.enabled !== false)
+        .map((l) => ({
+            label: l.type === 'custom' ? l.label || 'Link' : l.type.replace('_', ' '),
+            href: l.url,
+        }));
+
     return (
         <DnaPageShell
             pathBar={{
@@ -41,26 +48,41 @@ export default function UserPageContent({
             }}
             footerMeta={[`DJ-NODE-ARCHIVE // NODE: ${user.username.toUpperCase()}`]}
         >
-            <HeaderComponent user={user} entries={allEntries} links={links} />
+            <div className="relative">
+                <HeaderComponent user={user} entries={allEntries} links={links} />
+                <div className="absolute right-0 top-6 md:top-8">
+                    <ShareButton />
+                </div>
+            </div>
 
-            <StatsRow
-                stats={[
-                    { number: String(eventEntries.length), label: 'Events' },
-                    { number: String(uniqueVenues.size), label: 'Venues' },
-                    { number: String(allEntries.length - eventEntries.length), label: 'Other' },
-                    { number: String(allEntries.length), label: 'Total' },
-                ]}
-            />
+            <div className="hidden md:block">
+                <StatsRow
+                    stats={[
+                        { number: String(eventEntries.length), label: 'Events' },
+                        { number: String(uniqueVenues.size), label: 'Venues' },
+                        { number: String(allEntries.length - eventEntries.length), label: 'Other' },
+                        { number: String(allEntries.length), label: 'Total' },
+                    ]}
+                />
+            </div>
 
             <div className="grid grid-cols-1 gap-dna-gap md:grid-cols-2">
                 <div>
                     <SectionLabel right="META">Node Info</SectionLabel>
                     <MetaTable
                         items={[
-                            { key: 'Username', value: user.username },
-                            { key: 'Display Name', value: user.displayName },
-                            { key: 'Links', value: String(links.length) },
                             { key: 'Entries', value: String(allEntries.length) },
+                            ...(activeLinks.length > 0
+                                ? [
+                                      {
+                                          key: 'Links',
+                                          values: activeLinks.map((l) => ({
+                                              text: l.label,
+                                              href: l.href,
+                                          })),
+                                      },
+                                  ]
+                                : []),
                             { key: 'Status', value: 'ACTIVE' },
                         ]}
                     />

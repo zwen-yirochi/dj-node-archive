@@ -1,5 +1,4 @@
 import { NodeLabel } from '@/components/dna/NodeLabel';
-import ShareButton from '@/components/dna/ShareButton';
 
 import type { HeaderProps } from '.';
 import { HeaderTags, SocialLinks } from './MinimalHeader';
@@ -59,10 +58,6 @@ export function BannerHeader({ user, entries, links }: HeaderProps) {
                     </div>
                     {user.bio && <p className="dna-text-body mt-3 md:max-w-[520px]">{user.bio}</p>}
                     <HeaderTags hasEvents={hasEvents} hasMixsets={hasMixsets} />
-                    <SocialLinks links={links} />
-                    <div className="mt-3 md:mt-4">
-                        <ShareButton />
-                    </div>
                 </div>
             </div>
         </section>
