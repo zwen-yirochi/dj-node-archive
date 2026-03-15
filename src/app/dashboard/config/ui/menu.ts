@@ -132,5 +132,9 @@ const TREE_DELETE: MenuItemConfig = {
     variant: 'danger',
     confirm: EVENT_DELETE_CONFIRM,
 };
-/** Component section: Delete */
-export const TREE_ENTRY_MENU: MenuConfig = [TREE_DELETE];
+const TREE_ADD_TO_SECTION: MenuItemConfig = {
+    actionKey: 'add-to-section',
+    label: '섹션에 추가',
+};
+/** Component section: Add to section + Delete */
+export const TREE_ENTRY_MENU: MenuConfig = [TREE_ADD_TO_SECTION, SEPARATOR, TREE_DELETE];

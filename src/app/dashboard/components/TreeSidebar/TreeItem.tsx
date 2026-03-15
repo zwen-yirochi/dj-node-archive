@@ -14,11 +14,12 @@ import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { resolveMenuItems, TREE_ENTRY_MENU } from '@/app/dashboard/config/ui/menu';
-import { TypeBadge } from '@/components/dna';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryMutations } from '../../hooks';
 import { useConfirmAction } from '../../hooks/use-confirm-action';
+import { usePageMeta } from '../../hooks/use-editor-data';
+import { useSectionMutations } from '../../hooks/use-section-mutations';
 import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 
@@ -36,6 +37,12 @@ function TreeItem({ entry }: TreeItemProps) {
 
     // Mutations
     const { remove } = useEntryMutations();
+    const sectionMutations = useSectionMutations();
+
+    // Section data
+    const { data: pageMeta } = usePageMeta();
+    const sections = pageMeta?.sections ?? [];
+    const isInSection = sections.some((s) => s.entryIds.includes(entry.id));
 
     const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
     const config = ENTRY_TYPE_CONFIG[entry.type];
@@ -71,6 +78,14 @@ function TreeItem({ entry }: TreeItemProps) {
     const handlers = confirmAction.wrapHandlers(
         TREE_ENTRY_MENU,
         {
+            'add-to-section': () => {
+                // Add to the first section, or navigate to page view if no sections
+                if (sections.length > 0) {
+                    sectionMutations.addEntryToSection(sections[0].id, entry.id);
+                } else {
+                    setView({ kind: 'page' });
+                }
+            },
             delete: () => {
                 const cv = useDashboardStore.getState().contentView;
                 if (cv.kind === 'detail' && cv.entryId === entry.id) {
@@ -99,6 +114,11 @@ function TreeItem({ entry }: TreeItemProps) {
                 )}
                 onClick={handleClick}
             >
+                {/* Section indicator dot */}
+                {isInSection && (
+                    <div className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-blue-400" />
+                )}
+
                 {/* Title */}
                 <span className="ml-2 min-w-0 flex-1 truncate text-sm">
                     {entry.title || 'Untitled'}
