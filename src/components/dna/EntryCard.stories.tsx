@@ -20,8 +20,6 @@ type Story = StoryObj<typeof EntryCard>;
 const baseEntry = {
     id: 'entry-001',
     position: 0,
-    displayOrder: 0,
-    isVisible: true,
     createdAt: '2024-12-15T00:00:00Z',
     updatedAt: '2024-12-15T00:00:00Z',
 };

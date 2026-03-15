@@ -18,13 +18,7 @@ import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { canAddToView } from '@/app/dashboard/config/entry/entry-validation';
 
 import type { PublishOption } from '../components/ContentPanel/create-forms/workflow-options';
-import {
-    createEntry,
-    deleteEntry,
-    reorderDisplay as reorderDisplayAPI,
-    reorderEntries,
-    updateEntry,
-} from './entries.api';
+import { createEntry, deleteEntry, reorderEntries, updateEntry } from './entries.api';
 import { makeOptimisticMutation, type OptimisticMutationConfig } from './optimistic-mutation';
 import { triggerPreviewRefresh, type PreviewTarget } from './use-preview-actions';
 
@@ -94,56 +88,6 @@ export function useEntryMutations() {
         })
     );
 
-    // ── Display ──
-
-    const addToDisplay = useMutation(
-        m<string>({
-            mutationFn: (entryId, entries) => {
-                const orders = (entries ?? [])
-                    .filter((e) => typeof e.displayOrder === 'number')
-                    .map((e) => e.displayOrder!);
-                const next = orders.length > 0 ? Math.max(...orders) + 1 : 0;
-                return updateEntry({ id: entryId, displayOrder: next, isVisible: true });
-            },
-            optimisticUpdate: (entryId, entries) => {
-                const target = entries.find((e) => e.id === entryId);
-                if (!target || typeof target.displayOrder === 'number') return entries;
-
-                const orders = entries
-                    .filter((e) => typeof e.displayOrder === 'number')
-                    .map((e) => e.displayOrder!);
-                const next = orders.length > 0 ? Math.max(...orders) + 1 : 0;
-
-                return entries.map((e) =>
-                    e.id === entryId ? { ...e, displayOrder: next, isVisible: true } : e
-                );
-            },
-            triggersPreview: true,
-        })
-    );
-
-    const removeFromDisplay = useMutation(
-        m<string>({
-            mutationFn: (entryId) => updateEntry({ id: entryId, displayOrder: null }),
-            optimisticUpdate: (entryId, entries) =>
-                entries.map((e) => (e.id === entryId ? { ...e, displayOrder: null } : e)),
-            triggersPreview: true,
-        })
-    );
-
-    const toggleVisibility = useMutation(
-        m<string>({
-            mutationFn: (entryId, entries) => {
-                const entry = entries?.find((e) => e.id === entryId);
-                if (!entry || typeof entry.displayOrder !== 'number') return Promise.resolve();
-                return updateEntry({ id: entryId, isVisible: !entry.isVisible });
-            },
-            optimisticUpdate: (entryId, entries) =>
-                entries.map((e) => (e.id === entryId ? { ...e, isVisible: !e.isVisible } : e)),
-            triggersPreview: true,
-        })
-    );
-
     // ── Reorder ──
 
     const reorder = useMutation(
@@ -159,30 +103,12 @@ export function useEntryMutations() {
         })
     );
 
-    const reorderDisplay = useMutation(
-        m<{ updates: { id: string; displayOrder: number }[] }>({
-            mutationFn: ({ updates }) => reorderDisplayAPI(updates),
-            optimisticUpdate: ({ updates }, entries) => {
-                const orderMap = new Map(updates.map((u) => [u.id, u.displayOrder]));
-                return entries.map((e) => {
-                    const newOrder = orderMap.get(e.id);
-                    return newOrder !== undefined ? { ...e, displayOrder: newOrder } : e;
-                });
-            },
-            triggersPreview: true,
-        })
-    );
-
     return {
         create,
         update,
         updateField,
         remove,
-        addToDisplay,
-        removeFromDisplay,
-        toggleVisibility,
         reorder,
-        reorderDisplay,
     };
 }
 

@@ -73,8 +73,6 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
     const base = {
         id: dbEntry.id,
         position: dbEntry.position,
-        displayOrder: dbEntry.display_order,
-        isVisible: dbEntry.is_visible,
         createdAt: dbEntry.created_at,
         updatedAt: dbEntry.updated_at,
     };
@@ -192,8 +190,6 @@ export function mapEntryToDatabase(
                 return {
                     type: 'event',
                     position,
-                    display_order: eventEntry.displayOrder,
-                    is_visible: eventEntry.isVisible,
                     data: {
                         event_id: eventEntry.eventId,
                         custom_title: eventEntry.title || undefined,
@@ -205,8 +201,6 @@ export function mapEntryToDatabase(
             return {
                 type: 'event',
                 position,
-                display_order: eventEntry.displayOrder,
-                is_visible: eventEntry.isVisible,
                 data: {
                     title: eventEntry.title,
                     date: eventEntry.date,
@@ -231,8 +225,6 @@ export function mapEntryToDatabase(
                 return {
                     type: 'mixset',
                     position,
-                    display_order: mixsetEntry.displayOrder,
-                    is_visible: mixsetEntry.isVisible,
                     data: {
                         mixset_id: mixsetEntry.mixsetId,
                     },
@@ -243,8 +235,6 @@ export function mapEntryToDatabase(
             return {
                 type: 'mixset',
                 position,
-                display_order: mixsetEntry.displayOrder,
-                is_visible: mixsetEntry.isVisible,
                 data: {
                     title: mixsetEntry.title,
                     tracklist: mixsetEntry.tracklist || [],
@@ -262,8 +252,6 @@ export function mapEntryToDatabase(
             return {
                 type: 'link',
                 position,
-                display_order: linkEntry.displayOrder,
-                is_visible: linkEntry.isVisible,
                 data: {
                     title: linkEntry.title,
                     url: linkEntry.url,
@@ -279,8 +267,6 @@ export function mapEntryToDatabase(
             return {
                 type: 'custom',
                 position,
-                display_order: customEntry.displayOrder,
-                is_visible: customEntry.isVisible,
                 data: {
                     title: customEntry.title,
                     blocks: (customEntry.blocks || []).map((b) => ({
@@ -324,8 +310,6 @@ export function mapEventToEntry(dbEvent: DBEvent): EventEntry {
         id: uuidv4(),
         type: 'event',
         position: 0,
-        displayOrder: null, // Page에 미표시
-        isVisible: true,
         title: dbEvent.title || '',
         date: dbEvent.date,
         venue: dbEvent.venue.venue_id
@@ -416,8 +400,6 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): 
                 id,
                 type: 'event',
                 position: 0,
-                displayOrder: null, // Page에 미표시
-                isVisible: true,
                 title: '',
                 date: '',
                 venue: { name: '' },
@@ -434,8 +416,6 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): 
                 id,
                 type: 'mixset',
                 position: 0,
-                displayOrder: null, // Page에 미표시
-                isVisible: true,
                 title: '',
                 tracklist: [],
                 imageUrls: [],
@@ -450,8 +430,6 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): 
                 id,
                 type: 'link',
                 position: 0,
-                displayOrder: null, // Page에 미표시
-                isVisible: true,
                 title: '',
                 url: '',
                 imageUrls: [],
@@ -466,8 +444,6 @@ export function createEmptyEntry(type: 'event' | 'mixset' | 'link' | 'custom'): 
                 id,
                 type: 'custom',
                 position: 0,
-                displayOrder: null,
-                isVisible: true,
                 title: '',
                 blocks: [],
                 createdAt: '',

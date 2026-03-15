@@ -1,7 +1,5 @@
 // lib/api/handlers/entry.handlers.ts
 // ContentEntry API 핸들러
-import { ZodError } from 'zod';
-
 import { isSuccess } from '@/types/result';
 import {
     forbiddenResponse,
@@ -18,9 +16,7 @@ import {
     createEntry,
     deleteEntry,
     getEntryById,
-    getMaxDisplayOrder,
     getMaxPosition,
-    updateDisplayOrders,
     updateEntry,
     updateEntryPositions,
 } from '@/lib/db/queries/entry.queries';
@@ -30,7 +26,6 @@ import { mapEntryToDatabase, mapEntryToDomain } from '@/lib/mappers';
 import {
     createEntryRequestSchema,
     publishEventSchema,
-    reorderDisplayEntriesRequestSchema,
     reorderEntriesRequestSchema,
     updateEntryRequestSchema,
 } from '@/lib/validations/entry.schemas';
@@ -150,12 +145,6 @@ export async function handleGetEntry({ user }: AuthContext, id: string) {
 /**
  * PATCH /api/entries/[id] (또는 /api/components/[id])
  * Entry 수정
- *
- * Body 옵션:
- * 1. { entry: ContentEntry } - 전체 엔트리 수정
- * 2. { isVisible: boolean } - visibility만 토글
- * 3. { displayOrder: number | null } - Page에 추가/제거
- * 4. { displayOrder: number | null, isVisible: boolean } - 둘 다 변경
  */
 export async function handleUpdateEntry(request: Request, { user }: AuthContext, id: string) {
     // 소유권 검증
@@ -171,42 +160,7 @@ export async function handleUpdateEntry(request: Request, { user }: AuthContext,
         return zodValidationErrorResponse(parsed.error);
     }
 
-    const { entry, isVisible, displayOrder } = parsed.data;
-
-    // Case 1: displayOrder 및/또는 isVisible만 변경
-    if (displayOrder !== undefined || typeof isVisible === 'boolean') {
-        const updateData: { is_visible?: boolean; display_order?: number | null } = {};
-
-        if (typeof isVisible === 'boolean') {
-            updateData.is_visible = isVisible;
-        }
-        if (displayOrder !== undefined) {
-            updateData.display_order = displayOrder;
-        }
-
-        const result = await updateEntry(id, updateData);
-
-        if (!isSuccess(result)) {
-            return result.error.code === 'NOT_FOUND'
-                ? notFoundResponse('엔트리')
-                : internalErrorResponse(result.error.message);
-        }
-
-        return successResponse(result.data);
-    }
-
-    // Case 2: 전체 엔트리 수정
-    if (!entry) {
-        return zodValidationErrorResponse(
-            new ZodError([
-                {
-                    code: 'custom',
-                    path: ['entry'],
-                    message: 'entry, isVisible, 또는 displayOrder가 필요합니다',
-                },
-            ])
-        );
-    }
+    const { entry } = parsed.data;
 
     // position은 유지하면서 type과 data만 업데이트
     const dbEntry = mapEntryToDatabase(entry, 0);
@@ -273,71 +227,4 @@ export async function handleReorderEntries(request: Request, { user }: AuthConte
     }
 
     return successResponse(null);
-}
-
-/**
- * PATCH /api/entries/reorder-display
- * Page 내 Entry 순서 변경 (display_order)
- */
-export async function handleReorderDisplayEntries(request: Request, { user }: AuthContext) {
-    const body = await request.json();
-    const parsed = reorderDisplayEntriesRequestSchema.safeParse(body);
-
-    if (!parsed.success) {
-        return zodValidationErrorResponse(parsed.error);
-    }
-
-    const { updates } = parsed.data;
-
-    // 모든 엔트리의 소유권 일괄 검증
-    const entryIds = updates.map((u) => u.id);
-    const ownership = await verifyEntriesOwnership(entryIds, user.id);
-    if (!ownership.ok) {
-        return ownership.reason === 'not_found' ? notFoundResponse('엔트리') : forbiddenResponse();
-    }
-
-    const result = await updateDisplayOrders(
-        updates.map((u) => ({ id: u.id, display_order: u.displayOrder }))
-    );
-
-    if (!isSuccess(result)) {
-        return internalErrorResponse(result.error.message);
-    }
-
-    return successResponse(null);
-}
-
-/**
- * GET /api/entries/max-display-order?pageId=xxx
- * 최대 display_order 조회 (Page에 추가할 때 사용)
- */
-export async function handleGetMaxDisplayOrder(request: Request, { user }: AuthContext) {
-    const { searchParams } = new URL(request.url);
-    const pageId = searchParams.get('pageId');
-
-    if (!pageId) {
-        return zodValidationErrorResponse(
-            new ZodError([
-                {
-                    code: 'custom',
-                    path: ['pageId'],
-                    message: 'pageId가 필요합니다',
-                },
-            ])
-        );
-    }
-
-    // 페이지 소유권 검증
-    const ownership = await verifyPageOwnership(pageId, user.id);
-    if (!ownership.ok) {
-        return ownership.reason === 'not_found' ? notFoundResponse('페이지') : forbiddenResponse();
-    }
-
-    const result = await getMaxDisplayOrder(pageId);
-
-    if (!isSuccess(result)) {
-        return internalErrorResponse(result.error.message);
-    }
-
-    return successResponse({ maxDisplayOrder: result.data });
 }

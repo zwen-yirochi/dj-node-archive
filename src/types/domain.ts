@@ -26,6 +26,28 @@ export interface PageSettings {
     links: ProfileLink[];
 }
 
+// ============================================
+// Section / View Types
+// ============================================
+export type ViewType = 'carousel' | 'list' | 'grid' | 'feature';
+
+export interface Section {
+    id: string;
+    viewType: ViewType;
+    title: string | null;
+    entryIds: string[];
+    isVisible: boolean;
+    options: Record<string, unknown>;
+}
+
+export interface ResolvedSection {
+    id: string;
+    viewType: ViewType;
+    title: string | null;
+    entries: ContentEntry[];
+    options: Record<string, unknown>;
+}
+
 // User & Page
 export interface User {
     id: string;
@@ -94,17 +116,9 @@ export interface SectionBlock<T extends SectionBlockType = SectionBlockType> {
     data: SectionBlockDataMap[T];
 }
 
-/**
- * Entry 공통 필드
- * - position: Components 섹션 내 순서
- * - displayOrder: Page 섹션 내 순서 (null이면 Page에 미표시)
- * - isVisible: Page에 있을 때 일시적 숨김 여부
- */
 interface EntryBase {
     id: string;
     position: number;
-    displayOrder: number | null; // null = Page에 미표시
-    isVisible: boolean; // displayOrder가 있을 때만 의미 있음
     createdAt: string;
     updatedAt: string;
 }
@@ -269,18 +283,6 @@ export function isLinkEntry(entry: ContentEntry): entry is LinkEntry {
 
 export function isCustomEntry(entry: ContentEntry): entry is CustomEntry {
     return entry.type === 'custom';
-}
-
-// ============================================
-// Helper Functions
-// ============================================
-
-export function isDisplayed(entry: ContentEntry): boolean {
-    return typeof entry.displayOrder === 'number';
-}
-
-export function isVisibleOnPage(entry: ContentEntry): boolean {
-    return typeof entry.displayOrder === 'number' && entry.isVisible;
 }
 
 // ============================================

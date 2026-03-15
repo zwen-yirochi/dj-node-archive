@@ -2,6 +2,7 @@
 // 서버 전용 - 'use server' 없어도 됨 (기본이 서버)
 import { cache } from 'react';
 
+import type { Entry } from '@/types/database';
 import {
     isEventEntry,
     isLinkEntry,
@@ -13,6 +14,8 @@ import {
     type MixsetEntry,
     type PageSettings,
     type ProfileLink,
+    type ResolvedSection,
+    type Section,
     type User,
 } from '@/types/domain';
 import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
@@ -190,11 +193,33 @@ export const getEditorDataByAuthUserId = cache(
     }
 );
 
-// 공개 페이지용 - is_visible = true인 엔트리만 조회
+// 공개 페이지용 - sections 기반 조회
 export interface PublicPageData {
     user: User;
-    components: ContentEntry[];
+    sections: ResolvedSection[];
     pageSettings: PageSettings;
+}
+
+function parseSections(raw: unknown): Section[] {
+    if (!Array.isArray(raw)) return [];
+    return raw as Section[];
+}
+
+function resolveSections(sections: Section[], dbEntries: Entry[]): ResolvedSection[] {
+    const entryMap = new Map(dbEntries.map((e) => [e.id, e]));
+
+    return sections
+        .filter((s) => s.isVisible)
+        .map((section) => ({
+            id: section.id,
+            viewType: section.viewType,
+            title: section.title,
+            entries: section.entryIds
+                .map((id) => entryMap.get(id))
+                .filter((e): e is Entry => e !== undefined)
+                .map(mapEntryToDomain),
+            options: section.options,
+        }));
 }
 
 export const getPublicPageData = cache(
@@ -212,20 +237,16 @@ export const getPublicPageData = cache(
         if (!page) {
             return success({
                 user,
-                components: [],
+                sections: [],
                 pageSettings: DEFAULT_PAGE_SETTINGS,
             });
         }
 
-        // is_visible = true이고 display_order가 있는 엔트리만 display_order 순으로 반환
-        const components = (page.entries || [])
-            .filter((entry) => entry.is_visible && entry.display_order !== null)
-            .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-            .map(mapEntryToDomain);
+        const sections = resolveSections(parseSections(page.sections), page.entries || []);
 
         return success({
             user,
-            components,
+            sections,
             pageSettings: buildPageSettings(page),
         });
     }

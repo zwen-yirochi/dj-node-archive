@@ -8,19 +8,12 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { memo } from 'react';
 
-import { AlertCircle, Check, MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
-import { toast } from '@/hooks/use-toast';
-import { getTreeItemStatus, type TreeItemStatus } from '@/app/dashboard/config/entry/entry-fields';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
-import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entry/entry-validation';
-import {
-    resolveMenuItems,
-    TREE_ENTRY_MENU,
-    TREE_PAGE_DISPLAY_MENU,
-} from '@/app/dashboard/config/ui/menu';
+import { resolveMenuItems, TREE_ENTRY_MENU } from '@/app/dashboard/config/ui/menu';
 import { TypeBadge } from '@/components/dna';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
@@ -31,32 +24,9 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface TreeItemProps {
     entry: ContentEntry;
-    isInPageDisplay?: boolean;
 }
 
-/** Status icon component */
-function StatusIcon({
-    status,
-    missingFields,
-}: {
-    status: TreeItemStatus;
-    missingFields: string[];
-}) {
-    switch (status) {
-        case 'warning':
-            return (
-                <span title={`Required to add to Page: ${missingFields.join(', ')}`}>
-                    <AlertCircle className="h-3.5 w-3.5 text-dashboard-warning" />
-                </span>
-            );
-        case 'inView':
-            return <Check className="h-3.5 w-3.5 text-dashboard-success" />;
-        default:
-            return null;
-    }
-}
-
-function TreeItem({ entry, isInPageDisplay = false }: TreeItemProps) {
+function TreeItem({ entry }: TreeItemProps) {
     // Dashboard Store
     const contentView = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
@@ -65,19 +35,12 @@ function TreeItem({ entry, isInPageDisplay = false }: TreeItemProps) {
     const confirmAction = useConfirmAction();
 
     // Mutations
-    const { remove, removeFromDisplay, toggleVisibility, addToDisplay } = useEntryMutations();
-
-    // Compute status - numeric displayOrder means it's in the Page
-    const isInView = typeof entry.displayOrder === 'number';
-    const isValid = canAddToView(entry);
-    const status = getTreeItemStatus(isInView, isValid);
-    const missingFields = status === 'warning' ? getMissingFieldLabels(entry, 'create') : [];
+    const { remove } = useEntryMutations();
 
     const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
     const config = ENTRY_TYPE_CONFIG[entry.type];
 
-    // PageDisplayList uses 'view-{id}' format IDs (matches SortableContext)
-    const sortableId = isInPageDisplay ? `view-${entry.id}` : entry.id;
+    const sortableId = entry.id;
 
     const animateLayoutChanges: AnimateLayoutChanges = (args) => {
         const { isSorting, wasDragging } = args;
@@ -90,7 +53,7 @@ function TreeItem({ entry, isInPageDisplay = false }: TreeItemProps) {
         id: sortableId,
         animateLayoutChanges,
         data: {
-            type: isInPageDisplay ? 'display-entry' : 'entry',
+            type: 'entry',
             entry,
         },
     });
@@ -105,30 +68,9 @@ function TreeItem({ entry, isInPageDisplay = false }: TreeItemProps) {
     };
 
     // Config-driven menu: confirm strategy auto-applied
-    const menuConfig = isInPageDisplay ? TREE_PAGE_DISPLAY_MENU : TREE_ENTRY_MENU;
     const handlers = confirmAction.wrapHandlers(
-        menuConfig,
+        TREE_ENTRY_MENU,
         {
-            edit: () => setView({ kind: 'detail', entryId: entry.id }),
-            'add-to-page': () => {
-                if (typeof entry.displayOrder === 'number') {
-                    toast({ variant: 'destructive', title: 'Already added to Page' });
-                    return;
-                }
-                if (!canAddToView(entry)) {
-                    const missing = getMissingFieldLabels(entry, 'create');
-                    toast({
-                        variant: 'destructive',
-                        title: 'Cannot add to Page',
-                        description:
-                            missing.length > 0
-                                ? `Missing: ${missing.join(', ')}`
-                                : 'Entry is incomplete',
-                    });
-                    return;
-                }
-                addToDisplay.mutate(entry.id);
-            },
             delete: () => {
                 const cv = useDashboardStore.getState().contentView;
                 if (cv.kind === 'detail' && cv.entryId === entry.id) {
@@ -136,14 +78,10 @@ function TreeItem({ entry, isInPageDisplay = false }: TreeItemProps) {
                 }
                 remove.mutate(entry.id);
             },
-            'remove-from-page': () => removeFromDisplay.mutate(entry.id),
-            'toggle-visibility': () => toggleVisibility.mutate(entry.id),
         },
         entry as unknown as Record<string, unknown>
     );
-    const menuItems = resolveMenuItems(menuConfig, handlers, {
-        isVisible: entry.isVisible ?? true,
-    });
+    const menuItems = resolveMenuItems(TREE_ENTRY_MENU, handlers);
 
     return (
         <>
@@ -157,41 +95,23 @@ function TreeItem({ entry, isInPageDisplay = false }: TreeItemProps) {
                     isSelected
                         ? 'bg-dashboard-bg-active text-dashboard-text'
                         : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover hover:text-dashboard-text',
-                    isDragging && 'opacity-50',
-                    entry.isVisible === false && 'opacity-50'
+                    isDragging && 'opacity-50'
                 )}
                 onClick={handleClick}
             >
-                {/* Type Badge - only shown in Page section */}
-                {isInPageDisplay && <TypeBadge type={config.badgeType} size="sm" />}
-
                 {/* Title */}
-                <span
-                    className={cn(
-                        'ml-2 min-w-0 flex-1 truncate text-sm',
-                        isInPageDisplay && 'ml-2'
-                    )}
-                >
+                <span className="ml-2 min-w-0 flex-1 truncate text-sm">
                     {entry.title || 'Untitled'}
                 </span>
 
                 {/* Right Side */}
                 <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
-                    {/* Status icon (entry section only) - hidden on hover */}
-                    {!isInPageDisplay && (
-                        <div className="absolute transition-opacity group-hover:opacity-0">
-                            <StatusIcon status={status} missingFields={missingFields} />
-                        </div>
-                    )}
                     {/* More menu */}
                     <SimpleDropdown
                         trigger={
                             <button
                                 onClick={(e) => e.stopPropagation()}
-                                className={cn(
-                                    'flex h-5 w-5 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100',
-                                    !isInPageDisplay && 'absolute'
-                                )}
+                                className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
                             >
                                 <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
                             </button>

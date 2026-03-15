@@ -5,8 +5,6 @@ export {
     handleUpdateEntry,
     handleDeleteEntry,
     handleReorderEntries,
-    handleReorderDisplayEntries,
-    handleGetMaxDisplayOrder,
 } from './entry.handlers';
 
 export { handleUpdatePage } from './page.handlers';
