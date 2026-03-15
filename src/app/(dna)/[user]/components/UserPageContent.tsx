@@ -14,6 +14,14 @@ import { StatsRow } from '@/components/dna/StatsRow';
 
 import { SectionRenderer } from './SectionRenderer';
 
+const PLATFORM_LABELS: Record<string, string> = {
+    instagram: 'Instagram',
+    bandcamp: 'Bandcamp',
+    spotify: 'Spotify',
+    apple_music: 'Apple Music',
+    soundcloud: 'SoundCloud',
+};
+
 interface Props {
     user: User;
     sections: ResolvedSection[];
@@ -36,7 +44,7 @@ export default function UserPageContent({
     const activeLinks = links
         .filter((l) => l.url && l.enabled !== false)
         .map((l) => ({
-            label: l.type === 'custom' ? l.label || 'Link' : l.type.replace('_', ' '),
+            label: l.type === 'custom' ? l.label || 'Link' : (PLATFORM_LABELS[l.type] ?? l.type),
             href: l.url,
         }));
 

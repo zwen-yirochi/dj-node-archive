@@ -12,6 +12,7 @@ import type { HeaderStyle, ProfileLink } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
 import { pageKeys, usePageMeta, type PageMeta } from './use-editor-data';
+import { triggerPreviewRefresh } from './use-preview-actions';
 
 // ============================================
 // API Functions
@@ -58,6 +59,7 @@ export function usePageMutations() {
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: pageKeys.all });
+            triggerPreviewRefresh('userpage');
         },
     });
 
@@ -83,6 +85,7 @@ export function usePageMutations() {
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: pageKeys.all });
+            triggerPreviewRefresh('userpage');
         },
     });
 
