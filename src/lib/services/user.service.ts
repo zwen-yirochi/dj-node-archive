@@ -53,6 +53,7 @@ export interface EditorData {
     contentEntries: ContentEntry[];
     pageId: string | null;
     pageSettings: PageSettings;
+    sections: Section[];
 }
 
 export interface ComponentsByType {
@@ -126,6 +127,7 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
             contentEntries: [],
             pageId: null,
             pageSettings: DEFAULT_PAGE_SETTINGS,
+            sections: [],
         });
     }
 
@@ -138,6 +140,7 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
         contentEntries,
         pageId: page.id,
         pageSettings: buildPageSettings(page),
+        sections: parseSections(page.sections),
     });
 });
 
@@ -177,6 +180,7 @@ export const getEditorDataByAuthUserId = cache(
                 contentEntries: [],
                 pageId: null,
                 pageSettings: DEFAULT_PAGE_SETTINGS,
+                sections: [],
             });
         }
 
@@ -189,6 +193,7 @@ export const getEditorDataByAuthUserId = cache(
             contentEntries,
             pageId: page.id,
             pageSettings: buildPageSettings(page),
+            sections: parseSections(page.sections),
         });
     }
 );

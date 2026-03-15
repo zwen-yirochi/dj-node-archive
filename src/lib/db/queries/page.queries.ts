@@ -68,6 +68,27 @@ export async function updatePage(pageId: string, input: UpdatePageInput): Promis
     }
 }
 
+export async function updateSections(pageId: string, sections: unknown[]): Promise<Result<Page>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('pages')
+            .update({ sections, updated_at: new Date().toISOString() })
+            .eq('id', pageId)
+            .select()
+            .single();
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'updateSections', error));
+        }
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError('섹션 업데이트 중 오류가 발생했습니다.', 'updateSections', err)
+        );
+    }
+}
+
 export async function findPageByUserId(userId: string): Promise<Result<Page | null>> {
     try {
         const supabase = await createClient();

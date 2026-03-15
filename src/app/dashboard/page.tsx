@@ -35,7 +35,7 @@ export default async function DashboardPage() {
         throw new Error(result.error.message);
     }
 
-    const { user, contentEntries, pageId, pageSettings } = result.data;
+    const { user, contentEntries, pageId, pageSettings, sections } = result.data;
 
     // TanStack Query — prefetch into server-side QueryClient
     const queryClient = new QueryClient();
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
         }),
         queryClient.prefetchQuery({
             queryKey: pageKeys.all,
-            queryFn: () => ({ pageId, pageSettings }),
+            queryFn: () => ({ pageId, pageSettings, sections: sections ?? [] }),
         }),
     ]);
 

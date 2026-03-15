@@ -1,5 +1,4 @@
 import { NodeLabel } from '@/components/dna/NodeLabel';
-import ShareButton from '@/components/dna/ShareButton';
 
 import type { HeaderProps } from '.';
 import { HeaderTags, SocialLinks } from './MinimalHeader';
@@ -69,10 +68,6 @@ export function ShapesHeader({ user, entries, links }: HeaderProps) {
             {/* Tags, links, share below the box */}
             <div className="flex flex-col items-center text-center md:items-start md:text-left">
                 <HeaderTags hasEvents={hasEvents} hasMixsets={hasMixsets} />
-                <SocialLinks links={links} />
-                <div className="mt-3 md:mt-4">
-                    <ShareButton />
-                </div>
             </div>
         </section>
     );

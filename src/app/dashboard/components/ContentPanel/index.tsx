@@ -13,7 +13,7 @@ import {
     useDashboardStore,
 } from '../../stores/dashboardStore';
 import ErrorBoundaryWithQueryReset from '../ErrorBoundary';
-import PageListView from './page-list-view/PageListView';
+import PageSectionEditor from './page-section-editor/PageSectionEditor';
 
 function LoadingSkeleton() {
     return (
@@ -53,7 +53,7 @@ export default function ContentPanel() {
             case 'page':
                 return (
                     <div className="h-full overflow-hidden rounded-2xl">
-                        <PageListView />
+                        <PageSectionEditor />
                     </div>
                 );
 

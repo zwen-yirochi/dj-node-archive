@@ -1,5 +1,4 @@
 import { NodeLabel } from '@/components/dna/NodeLabel';
-import ShareButton from '@/components/dna/ShareButton';
 
 import type { HeaderProps } from '.';
 import { HeaderTags, SocialLinks } from './MinimalHeader';
@@ -49,10 +48,6 @@ export function PortraitHeader({ user, entries, links }: HeaderProps) {
                 )}
 
                 <HeaderTags hasEvents={hasEvents} hasMixsets={hasMixsets} />
-                <SocialLinks links={links} className="mt-2 justify-center" />
-                <div className="mt-3 md:mt-4">
-                    <ShareButton />
-                </div>
             </div>
         </section>
     );

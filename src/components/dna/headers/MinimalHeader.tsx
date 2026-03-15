@@ -1,7 +1,6 @@
 import type { EventEntry, ProfileLink } from '@/types/domain';
 import { ExternalLinks } from '@/components/dna/ExternalLinks';
 import { NodeLabel } from '@/components/dna/NodeLabel';
-import ShareButton from '@/components/dna/ShareButton';
 
 import type { HeaderProps } from '.';
 
@@ -37,12 +36,6 @@ export function MinimalHeader({ user, entries, links }: HeaderProps) {
                         hasEvents={eventEntries.length > 0}
                         hasMixsets={otherEntries.some((e) => e.type === 'mixset')}
                     />
-
-                    <SocialLinks links={links} />
-
-                    <div className="mt-3 md:mt-4">
-                        <ShareButton />
-                    </div>
                 </div>
             </div>
         </section>

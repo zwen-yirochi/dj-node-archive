@@ -8,25 +8,34 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { memo } from 'react';
 
-import { MoreHorizontal } from 'lucide-react';
+import { AlertTriangle, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
+import { validateEntry } from '@/app/dashboard/config/entry/entry-validation';
 import { resolveMenuItems, TREE_ENTRY_MENU } from '@/app/dashboard/config/ui/menu';
-import { TypeBadge } from '@/components/dna';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryMutations } from '../../hooks';
 import { useConfirmAction } from '../../hooks/use-confirm-action';
+import { useSectionMutations } from '../../hooks/use-section-mutations';
 import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface TreeItemProps {
     entry: ContentEntry;
+    isInSection: boolean;
 }
 
-function TreeItem({ entry }: TreeItemProps) {
+const animateLayoutChanges: AnimateLayoutChanges = (args) => {
+    const { isSorting, wasDragging } = args;
+    if (wasDragging) return false;
+    if (isSorting) return true;
+    return defaultAnimateLayoutChanges(args);
+};
+
+function TreeItem({ entry, isInSection }: TreeItemProps) {
     // Dashboard Store
     const contentView = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
@@ -36,26 +45,15 @@ function TreeItem({ entry }: TreeItemProps) {
 
     // Mutations
     const { remove } = useEntryMutations();
+    const sectionMutations = useSectionMutations();
 
     const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
-    const config = ENTRY_TYPE_CONFIG[entry.type];
-
-    const sortableId = entry.id;
-
-    const animateLayoutChanges: AnimateLayoutChanges = (args) => {
-        const { isSorting, wasDragging } = args;
-        if (wasDragging) return false;
-        if (isSorting) return true;
-        return defaultAnimateLayoutChanges(args);
-    };
+    const { isValid } = validateEntry(entry, 'create');
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-        id: sortableId,
+        id: entry.id,
         animateLayoutChanges,
-        data: {
-            type: 'entry',
-            entry,
-        },
+        data: { type: 'entry', entry },
     });
 
     const style = {
@@ -71,6 +69,9 @@ function TreeItem({ entry }: TreeItemProps) {
     const handlers = confirmAction.wrapHandlers(
         TREE_ENTRY_MENU,
         {
+            'add-to-section': () => {
+                sectionMutations.addEntryToSection('__first__', entry.id);
+            },
             delete: () => {
                 const cv = useDashboardStore.getState().contentView;
                 if (cv.kind === 'detail' && cv.entryId === entry.id) {
@@ -104,14 +105,16 @@ function TreeItem({ entry }: TreeItemProps) {
                     {entry.title || 'Untitled'}
                 </span>
 
-                {/* Right Side */}
+                {/* Right: warning (default) → menu (hover) */}
                 <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
-                    {/* More menu */}
+                    {!isValid && (
+                        <AlertTriangle className="h-3 w-3 text-amber-500/70 transition-opacity group-hover:opacity-0" />
+                    )}
                     <SimpleDropdown
                         trigger={
                             <button
                                 onClick={(e) => e.stopPropagation()}
-                                className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
+                                className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-dashboard-bg-active group-hover:opacity-100"
                             >
                                 <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
                             </button>

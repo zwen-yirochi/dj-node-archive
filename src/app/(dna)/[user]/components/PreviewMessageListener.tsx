@@ -11,6 +11,14 @@ export default function PreviewMessageListener() {
     useEffect(() => {
         if (!isPreview) return;
 
+        // Hide scrollbar in preview mode
+        document.documentElement.classList.add('scrollbar-hide');
+        return () => document.documentElement.classList.remove('scrollbar-hide');
+    }, [isPreview]);
+
+    useEffect(() => {
+        if (!isPreview) return;
+
         const handler = (event: MessageEvent) => {
             if (event.origin !== window.location.origin) return;
             if (typeof event.data !== 'object' || event.data?.type !== 'refresh') return;

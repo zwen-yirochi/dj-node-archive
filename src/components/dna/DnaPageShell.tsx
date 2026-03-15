@@ -1,6 +1,6 @@
-import { TopNav } from './TopNav';
-import { PathBar } from './PathBar';
 import { Footer } from './Footer';
+import { PathBar } from './PathBar';
+import { TopNav } from './TopNav';
 
 interface DnaPageShellProps {
     activeLink?: 'archive' | 'discover';
@@ -18,7 +18,7 @@ export function DnaPageShell({
     children,
 }: DnaPageShellProps) {
     return (
-        <div className="mx-auto flex min-h-screen max-w-dna flex-col px-4 md:px-dna-gutter">
+        <div className="mx-auto flex min-h-screen w-full max-w-dna flex-col px-4 md:px-dna-gutter">
             <TopNav
                 logo="DNA:"
                 links={[
@@ -33,7 +33,7 @@ export function DnaPageShell({
                 </div>
             )}
 
-            <div className="flex-1">{children}</div>
+            <div className="min-w-0 flex-1">{children}</div>
 
             <Footer
                 meta={footerMeta}

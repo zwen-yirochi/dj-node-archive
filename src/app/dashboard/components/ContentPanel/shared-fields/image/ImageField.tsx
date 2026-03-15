@@ -10,10 +10,12 @@ import {
     type DragEndEvent,
 } from '@dnd-kit/core';
 import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 import Image from 'next/image';
 
 import { Pencil } from 'lucide-react';
+
+import { useHorizontalScroll } from '@/hooks/use-horizontal-scroll';
 
 import type { ImageFieldProps } from '../types';
 import ImageCard from './ImageCard';
@@ -77,18 +79,7 @@ export default function ImageField({
         [onChange, value]
     );
 
-    const scrollRef = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-        const onWheel = (e: WheelEvent) => {
-            if (e.deltaY === 0) return;
-            e.preventDefault();
-            el.scrollLeft += e.deltaY * 0.5;
-        };
-        el.addEventListener('wheel', onWheel, { passive: false });
-        return () => el.removeEventListener('wheel', onWheel);
-    }, []);
+    const { scrollRef } = useHorizontalScroll();
 
     const activeItem = activeId ? value.find((v) => v.id === activeId) : null;
 

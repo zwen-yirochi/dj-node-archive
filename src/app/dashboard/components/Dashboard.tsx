@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 
 import { useDashboardStore } from '../stores/dashboardStore';
 import ContentPanel from './ContentPanel';
+import DashboardDndProvider from './DashboardDndProvider';
 import TreeSidebar from './TreeSidebar';
 import DashboardSettingsModal from './ui/DashboardSettingsModal';
 import PreviewPanel from './ui/PreviewPanel';
@@ -23,25 +24,27 @@ export default function Dashboard({ pageId }: DashboardProps) {
         <>
             <DashboardSettingsModal />
 
-            <div className="flex h-screen overflow-hidden p-3">
-                <div className="flex flex-1 overflow-hidden rounded-2xl bg-dashboard-bg-base shadow-lg backdrop-blur-sm">
-                    {/* TreeSidebar */}
-                    <TreeSidebar />
+            <DashboardDndProvider>
+                <div className="flex h-screen overflow-hidden p-3">
+                    <div className="flex flex-1 overflow-hidden rounded-2xl bg-dashboard-bg-base shadow-lg backdrop-blur-sm">
+                        {/* TreeSidebar */}
+                        <TreeSidebar />
 
-                    {/* Main Content */}
-                    <div className="flex flex-1 overflow-hidden">
-                        {/* ContentPanel */}
-                        <div className="flex flex-1 flex-col overflow-hidden">
-                            <ContentPanel />
+                        {/* Main Content */}
+                        <div className="flex flex-1 overflow-hidden">
+                            {/* ContentPanel */}
+                            <div className="flex flex-1 flex-col overflow-hidden">
+                                <ContentPanel />
+                            </div>
+
+                            {/* PreviewPanel */}
+                            <aside className="w-[400px] shrink-0 overflow-hidden">
+                                <PreviewPanel />
+                            </aside>
                         </div>
-
-                        {/* PreviewPanel */}
-                        <aside className="w-[400px] shrink-0 overflow-hidden">
-                            <PreviewPanel />
-                        </aside>
                     </div>
                 </div>
-            </div>
+            </DashboardDndProvider>
         </>
     );
 }

@@ -8,7 +8,7 @@
 
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 
-import type { ContentEntry, PageSettings, User } from '@/types';
+import type { ContentEntry, PageSettings, Section, User } from '@/types';
 
 // ============================================
 // Query Keys
@@ -31,6 +31,7 @@ export const pageKeys = {
 export interface PageMeta {
     pageId: string | null;
     pageSettings: PageSettings;
+    sections: Section[];
 }
 
 // ============================================
@@ -58,6 +59,7 @@ async function fetchPageMeta(): Promise<PageMeta> {
     return {
         pageId: json.data.pageId,
         pageSettings: json.data.pageSettings ?? { headerStyle: 'minimal', links: [] },
+        sections: json.data.sections ?? [],
     };
 }
 
