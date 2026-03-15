@@ -23,8 +23,23 @@ WHERE EXISTS (
   WHERE e.page_id = p.id AND e.display_order IS NOT NULL
 );
 
+-- is_visible 의존 RLS policy 제거
+DROP POLICY IF EXISTS entries_select_visible ON entries;
+
 -- display_order 컬럼 제거
 ALTER TABLE entries DROP COLUMN display_order;
 
 -- is_visible 컬럼 제거
 ALTER TABLE entries DROP COLUMN is_visible;
+
+-- 새 RLS policy (공개 읽기)
+CREATE POLICY entries_select_policy ON entries
+  FOR SELECT
+  USING (
+    page_id IN (
+      SELECT p.id FROM pages p
+      JOIN users u ON p.user_id = u.id
+      WHERE u.auth_user_id = auth.uid()
+    )
+    OR true
+  );
