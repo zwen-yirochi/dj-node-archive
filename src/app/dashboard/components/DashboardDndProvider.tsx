@@ -270,7 +270,7 @@ export default function DashboardDndProvider({ children }: { children: ReactNode
                             <span
                                 className={`text-sm font-medium ${activeItem.section.title ? 'text-dashboard-text' : 'text-dashboard-text-placeholder'}`}
                             >
-                                {activeItem.section.title || '섹션 제목 (선택)'}
+                                {activeItem.section.title || 'Section title (optional)'}
                             </span>
                             <span className="text-xs text-dashboard-text-placeholder">
                                 {activeItem.section.entryIds.length} items

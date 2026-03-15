@@ -9,6 +9,7 @@ import { ALL_VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
 import { useEntries, usePageMeta } from '@/app/dashboard/hooks/use-editor-data';
 import { useSectionMutations } from '@/app/dashboard/hooks/use-section-mutations';
 
+import { FeatureSectionCard } from './FeatureSectionCard';
 import { SectionCard } from './SectionCard';
 
 export default function PageSectionEditor() {
@@ -34,7 +35,7 @@ export default function PageSectionEditor() {
                         className="flex items-center gap-1 rounded-md bg-dashboard-bg-hover px-2 py-1 text-xs text-dashboard-text-secondary hover:bg-dashboard-bg-active"
                     >
                         <Plus className="h-3.5 w-3.5" />
-                        섹션 추가
+                        Add section
                     </button>
                     {showTypeSelect && (
                         <div className="absolute right-0 top-full z-10 mt-1 rounded-md border border-dashboard-border bg-dashboard-bg-card py-1 shadow-lg">
@@ -64,7 +65,7 @@ export default function PageSectionEditor() {
                 {sections.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                         <p className="text-sm text-dashboard-text-placeholder">
-                            섹션을 추가해서 페이지를 구성하세요
+                            Add sections to build your page
                         </p>
                     </div>
                 ) : (
@@ -72,20 +73,32 @@ export default function PageSectionEditor() {
                         items={sections.map((s) => s.id)}
                         strategy={verticalListSortingStrategy}
                     >
-                        {sections.map((section) => (
-                            <SectionCard
-                                key={section.id}
-                                section={section}
-                                entries={resolveEntries(section.entryIds)}
-                                onUpdateField={(field) =>
-                                    mutations.updateSectionField(section.id, field)
-                                }
-                                onDelete={() => mutations.removeSection(section.id)}
-                                onRemoveEntry={(entryId) =>
-                                    mutations.removeEntryFromSection(section.id, entryId)
-                                }
-                            />
-                        ))}
+                        {sections.map((section) =>
+                            section.viewType === 'feature' ? (
+                                <FeatureSectionCard
+                                    key={section.id}
+                                    section={section}
+                                    entries={resolveEntries(section.entryIds)}
+                                    onDelete={() => mutations.removeSection(section.id)}
+                                    onRemoveEntry={(entryId) =>
+                                        mutations.removeEntryFromSection(section.id, entryId)
+                                    }
+                                />
+                            ) : (
+                                <SectionCard
+                                    key={section.id}
+                                    section={section}
+                                    entries={resolveEntries(section.entryIds)}
+                                    onUpdateField={(field) =>
+                                        mutations.updateSectionField(section.id, field)
+                                    }
+                                    onDelete={() => mutations.removeSection(section.id)}
+                                    onRemoveEntry={(entryId) =>
+                                        mutations.removeEntryFromSection(section.id, entryId)
+                                    }
+                                />
+                            )
+                        )}
                     </SortableContext>
                 )}
             </div>

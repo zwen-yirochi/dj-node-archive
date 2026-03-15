@@ -134,7 +134,7 @@ const TREE_DELETE: MenuItemConfig = {
 };
 const TREE_ADD_TO_SECTION: MenuItemConfig = {
     actionKey: 'add-to-section',
-    label: '섹션에 추가',
+    label: 'Add to section',
 };
 /** Component section: Add to section + Delete */
 export const TREE_ENTRY_MENU: MenuConfig = [TREE_ADD_TO_SECTION, SEPARATOR, TREE_DELETE];

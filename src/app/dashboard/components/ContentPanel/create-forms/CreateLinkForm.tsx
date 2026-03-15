@@ -134,7 +134,7 @@ export default function CreateLinkForm() {
                         />
                         <div className="flex items-center gap-1.5 text-xs text-dashboard-text-muted">
                             <Globe className="h-3 w-3" />
-                            썸네일 자동 감지됨
+                            Thumbnail detected
                         </div>
                     </div>
                 )}

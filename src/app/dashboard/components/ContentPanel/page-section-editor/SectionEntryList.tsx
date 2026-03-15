@@ -63,14 +63,14 @@ function getLayoutClass(viewType: ViewType): string {
 
 function EmptyState({ viewType }: { viewType: ViewType }) {
     const hints: Record<string, string> = {
-        carousel: '가로로 스크롤되는 카드',
-        list: '세로 리스트 형태',
-        feature: '첫 번째 엔트리를 강조',
+        carousel: 'Horizontal scrollable cards',
+        list: 'Vertical list',
+        feature: 'Highlight first entry',
     };
 
     return (
         <p className="py-3 text-center text-xs text-dashboard-text-placeholder">
-            엔트리를 드래그해서 추가하세요 · {hints[viewType]}
+            Drag entries here · {hints[viewType]}
         </p>
     );
 }

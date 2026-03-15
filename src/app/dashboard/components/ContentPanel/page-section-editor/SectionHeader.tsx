@@ -42,7 +42,7 @@ export function SectionHeader({
                 onChange={(e) => setLocalTitle(e.target.value)}
                 onBlur={handleBlur}
                 onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                placeholder="섹션 제목 (선택)"
+                placeholder="Section title (optional)"
                 className="flex-1 bg-transparent text-sm font-medium text-dashboard-text placeholder:text-dashboard-text-placeholder focus:outline-none"
             />
             {isFeature ? (
