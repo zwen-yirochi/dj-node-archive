@@ -49,9 +49,6 @@ export {
     isPublicEventEntry,
 } from './domain';
 
-// Helper functions for display state
-export { isDisplayed, isVisibleOnPage } from './domain';
-
 // Legacy aliases (호환성)
 export { isEventComponent, isLinkComponent, isMixsetComponent, type LinkComponent } from './domain';
 
