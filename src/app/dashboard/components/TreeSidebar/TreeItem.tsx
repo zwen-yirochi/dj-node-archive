@@ -8,11 +8,12 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { memo } from 'react';
 
-import { MoreHorizontal } from 'lucide-react';
+import { AlertTriangle, Check, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
+import { validateEntry } from '@/app/dashboard/config/entry/entry-validation';
 import { resolveMenuItems, TREE_ENTRY_MENU } from '@/app/dashboard/config/ui/menu';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
@@ -47,6 +48,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
     const sectionMutations = useSectionMutations();
 
     const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
+    const { isValid } = validateEntry(entry, 'create');
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: entry.id,
@@ -98,15 +100,16 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                 )}
                 onClick={handleClick}
             >
-                {/* Section indicator dot */}
-                {isInSection && (
-                    <div className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-blue-400" />
-                )}
-
                 {/* Title */}
                 <span className="ml-2 min-w-0 flex-1 truncate text-sm">
                     {entry.title || 'Untitled'}
                 </span>
+
+                {/* Section membership indicator */}
+                {isInSection && <Check className="h-3 w-3 shrink-0 text-green-500/60" />}
+                {!isInSection && !isValid && (
+                    <AlertTriangle className="h-3 w-3 shrink-0 text-amber-500/70" />
+                )}
 
                 {/* Right Side */}
                 <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
