@@ -159,6 +159,14 @@
     box-shadow: 0 2px 6px 0 rgb(0 0 0 / 0.06), 0 1px 3px -1px rgb(0 0 0 / 0.05);
   }
 
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;

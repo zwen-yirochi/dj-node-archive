@@ -16,7 +16,11 @@ async function patchSections(pageId: string, sections: Section[]) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sections }),
     });
-    if (!res.ok) throw new Error('Failed to update sections');
+    if (!res.ok) {
+        const text = await res.text();
+        console.error(`[patchSections] ${res.status}:`, text);
+        throw new Error('Failed to update sections');
+    }
     return res.json();
 }
 
