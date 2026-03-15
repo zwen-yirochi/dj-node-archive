@@ -1,13 +1,15 @@
 import { isSuccess } from '@/types/result';
+import { verifyPageOwnership } from '@/lib/api/ownership';
 import {
     forbiddenResponse,
     internalErrorResponse,
+    notFoundResponse,
     successResponse,
     validationErrorResponse,
 } from '@/lib/api/responses';
 import type { AuthContext } from '@/lib/api/withAuth';
 import { getEntriesByPageId } from '@/lib/db/queries/entry.queries';
-import { findPageByUserId, updateSections } from '@/lib/db/queries/page.queries';
+import { updateSections } from '@/lib/db/queries/page.queries';
 import { updateSectionsRequestSchema } from '@/lib/validations/section.schemas';
 
 export async function handleUpdateSections(
@@ -24,10 +26,10 @@ export async function handleUpdateSections(
         return validationErrorResponse(parsed.error.issues[0]?.message ?? 'Invalid sections');
     }
 
-    // 3. Verify page ownership
-    const pageResult = await findPageByUserId(user.id);
-    if (!isSuccess(pageResult) || !pageResult.data || pageResult.data.id !== pageId) {
-        return forbiddenResponse();
+    // 3. Verify page ownership (auth.users.id → pages → users → auth_user_id)
+    const ownership = await verifyPageOwnership(pageId, user.id);
+    if (!ownership.ok) {
+        return ownership.reason === 'not_found' ? notFoundResponse('page') : forbiddenResponse();
     }
 
     // 4. Verify entryIds ownership
