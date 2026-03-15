@@ -19,12 +19,12 @@ export default async function Page({ params }: PageProps) {
         throw new Error(result.error.message);
     }
 
-    const { user: userData, components, pageSettings } = result.data;
+    const { user: userData, sections, pageSettings } = result.data;
 
     return (
         <UserPageContent
             user={userData}
-            entries={components}
+            sections={sections}
             headerStyle={pageSettings.headerStyle}
             links={pageSettings.links}
         />
