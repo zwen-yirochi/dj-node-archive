@@ -1,23 +1,26 @@
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
-import type { ContentEntry } from '@/types/domain';
+import type { ContentEntry, ViewType } from '@/types/domain';
 
 import { SectionEntryItem } from './SectionEntryItem';
 
 interface Props {
     sectionId: string;
+    viewType: ViewType;
     entries: ContentEntry[];
     onRemoveEntry: (entryId: string) => void;
 }
 
-export function SectionEntryList({ sectionId, entries, onRemoveEntry }: Props) {
+export function SectionEntryList({ sectionId, viewType, entries, onRemoveEntry }: Props) {
     const { setNodeRef, isOver } = useDroppable({
         id: `droppable:${sectionId}`,
         data: { type: 'section-drop', sectionId },
     });
 
     const sortableIds = entries.map((e) => `${sectionId}:${e.id}`);
+
+    const layoutClass = getLayoutClass(viewType);
 
     return (
         <div
@@ -28,20 +31,50 @@ export function SectionEntryList({ sectionId, entries, onRemoveEntry }: Props) {
         >
             <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
                 {entries.length === 0 ? (
-                    <p className="py-3 text-center text-xs text-dashboard-text-placeholder">
-                        엔트리를 드래그해서 추가하세요
-                    </p>
+                    <EmptyState viewType={viewType} />
                 ) : (
-                    entries.map((entry) => (
-                        <SectionEntryItem
-                            key={entry.id}
-                            entry={entry}
-                            sectionId={sectionId}
-                            onRemove={() => onRemoveEntry(entry.id)}
-                        />
-                    ))
+                    <div className={layoutClass}>
+                        {entries.map((entry) => (
+                            <SectionEntryItem
+                                key={entry.id}
+                                entry={entry}
+                                sectionId={sectionId}
+                                compact={viewType === 'grid' || viewType === 'carousel'}
+                                onRemove={() => onRemoveEntry(entry.id)}
+                            />
+                        ))}
+                    </div>
                 )}
             </SortableContext>
         </div>
+    );
+}
+
+function getLayoutClass(viewType: ViewType): string {
+    switch (viewType) {
+        case 'carousel':
+            return 'flex gap-1 overflow-x-auto scrollbar-hide';
+        case 'grid':
+            return 'grid grid-cols-2 gap-1';
+        case 'feature':
+            return 'space-y-0';
+        case 'list':
+        default:
+            return 'space-y-0';
+    }
+}
+
+function EmptyState({ viewType }: { viewType: ViewType }) {
+    const hints: Record<ViewType, string> = {
+        carousel: '가로로 스크롤되는 카드',
+        list: '세로 리스트 형태',
+        grid: '그리드 형태',
+        feature: '첫 번째 엔트리를 강조',
+    };
+
+    return (
+        <p className="py-3 text-center text-xs text-dashboard-text-placeholder">
+            엔트리를 드래그해서 추가하세요 · {hints[viewType]}
+        </p>
     );
 }

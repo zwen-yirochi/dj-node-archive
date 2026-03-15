@@ -3,13 +3,8 @@ import { useState } from 'react';
 import { GripVertical, Trash2 } from 'lucide-react';
 
 import type { ViewType } from '@/types/domain';
-
-const VIEW_TYPE_OPTIONS: { value: ViewType; label: string }[] = [
-    { value: 'list', label: 'List' },
-    { value: 'carousel', label: 'Carousel' },
-    { value: 'grid', label: 'Grid' },
-    { value: 'feature', label: 'Feature' },
-];
+import { cn } from '@/lib/utils';
+import { VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
 
 interface Props {
     title: string | null;
@@ -47,17 +42,28 @@ export function SectionHeader({
                 placeholder="섹션 제목 (선택)"
                 className="flex-1 bg-transparent text-sm font-medium text-dashboard-text placeholder:text-dashboard-text-placeholder focus:outline-none"
             />
-            <select
-                value={viewType}
-                onChange={(e) => onViewTypeChange(e.target.value as ViewType)}
-                className="rounded border border-dashboard-border bg-dashboard-bg px-2 py-1 text-xs text-dashboard-text"
-            >
-                {VIEW_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                    </option>
-                ))}
-            </select>
+            {/* View type icon selector */}
+            <div className="flex items-center gap-0.5 rounded-md border border-dashboard-border p-0.5">
+                {VIEW_TYPE_OPTIONS.map((opt) => {
+                    const Icon = opt.icon;
+                    const isActive = viewType === opt.value;
+                    return (
+                        <button
+                            key={opt.value}
+                            onClick={() => onViewTypeChange(opt.value)}
+                            title={opt.label}
+                            className={cn(
+                                'rounded p-1 transition-colors',
+                                isActive
+                                    ? 'bg-dashboard-bg-active text-dashboard-text'
+                                    : 'text-dashboard-text-placeholder hover:text-dashboard-text-secondary'
+                            )}
+                        >
+                            <Icon className="h-3.5 w-3.5" />
+                        </button>
+                    );
+                })}
+            </div>
             <button
                 onClick={onDelete}
                 className="text-dashboard-text-placeholder hover:text-red-400"

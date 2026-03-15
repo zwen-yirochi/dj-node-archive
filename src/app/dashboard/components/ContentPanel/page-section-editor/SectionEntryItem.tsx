@@ -4,16 +4,18 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
 
 import type { ContentEntry } from '@/types/domain';
+import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { TypeBadge } from '@/components/dna';
 
 interface Props {
     entry: ContentEntry;
     sectionId: string;
+    compact?: boolean;
     onRemove: () => void;
 }
 
-export function SectionEntryItem({ entry, sectionId, onRemove }: Props) {
+export function SectionEntryItem({ entry, sectionId, compact, onRemove }: Props) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: `${sectionId}:${entry.id}`,
         data: { type: 'section-entry', entry, sectionId },
@@ -26,6 +28,34 @@ export function SectionEntryItem({ entry, sectionId, onRemove }: Props) {
     };
 
     const config = ENTRY_TYPE_CONFIG[entry.type];
+
+    if (compact) {
+        return (
+            <div
+                ref={setNodeRef}
+                style={style}
+                className="group flex min-w-0 flex-shrink-0 items-center gap-1 rounded border border-transparent px-1.5 py-1 hover:border-dashboard-border hover:bg-dashboard-bg-hover/50"
+            >
+                <button
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab text-dashboard-text-placeholder"
+                >
+                    <GripVertical className="h-3 w-3" />
+                </button>
+                <TypeBadge type={config.badgeType} size="sm" />
+                <span className="truncate text-xs text-dashboard-text">
+                    {entry.title || 'Untitled'}
+                </span>
+                <button
+                    onClick={onRemove}
+                    className="invisible ml-auto flex-shrink-0 text-dashboard-text-placeholder hover:text-red-400 group-hover:visible"
+                >
+                    <X className="h-3 w-3" />
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div

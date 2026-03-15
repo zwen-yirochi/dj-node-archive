@@ -43,6 +43,7 @@ export function SectionCard({ section, entries, onUpdateField, onDelete, onRemov
             <div className="px-2 pb-2">
                 <SectionEntryList
                     sectionId={section.id}
+                    viewType={section.viewType}
                     entries={entries}
                     onRemoveEntry={onRemoveEntry}
                 />

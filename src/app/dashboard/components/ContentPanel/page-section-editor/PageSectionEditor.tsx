@@ -5,18 +5,11 @@ import { useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
-import type { ViewType } from '@/types/domain';
+import { VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
 import { useEntries, usePageMeta } from '@/app/dashboard/hooks/use-editor-data';
 import { useSectionMutations } from '@/app/dashboard/hooks/use-section-mutations';
 
 import { SectionCard } from './SectionCard';
-
-const VIEW_TYPE_OPTIONS: { value: ViewType; label: string }[] = [
-    { value: 'list', label: 'List' },
-    { value: 'carousel', label: 'Carousel' },
-    { value: 'grid', label: 'Grid' },
-    { value: 'feature', label: 'Feature' },
-];
 
 export default function PageSectionEditor() {
     const { data: pageMeta } = usePageMeta();
@@ -45,18 +38,22 @@ export default function PageSectionEditor() {
                     </button>
                     {showTypeSelect && (
                         <div className="absolute right-0 top-full z-10 mt-1 rounded-md border border-dashboard-border bg-dashboard-bg-card py-1 shadow-lg">
-                            {VIEW_TYPE_OPTIONS.map((opt) => (
-                                <button
-                                    key={opt.value}
-                                    onClick={() => {
-                                        mutations.addSection(opt.value);
-                                        setShowTypeSelect(false);
-                                    }}
-                                    className="block w-full px-4 py-1.5 text-left text-xs text-dashboard-text hover:bg-dashboard-bg-hover"
-                                >
-                                    {opt.label}
-                                </button>
-                            ))}
+                            {VIEW_TYPE_OPTIONS.map((opt) => {
+                                const Icon = opt.icon;
+                                return (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => {
+                                            mutations.addSection(opt.value);
+                                            setShowTypeSelect(false);
+                                        }}
+                                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-dashboard-text hover:bg-dashboard-bg-hover"
+                                    >
+                                        <Icon className="h-3.5 w-3.5 text-dashboard-text-muted" />
+                                        {opt.label}
+                                    </button>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
