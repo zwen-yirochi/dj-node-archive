@@ -39,7 +39,7 @@ export function SectionEntryList({ sectionId, viewType, entries, onRemoveEntry }
                                 key={entry.id}
                                 entry={entry}
                                 sectionId={sectionId}
-                                compact={viewType === 'carousel'}
+                                variant={viewType === 'carousel' ? 'card' : 'list'}
                                 onRemove={() => onRemoveEntry(entry.id)}
                             />
                         ))}
@@ -53,7 +53,7 @@ export function SectionEntryList({ sectionId, viewType, entries, onRemoveEntry }
 function getLayoutClass(viewType: ViewType): string {
     switch (viewType) {
         case 'carousel':
-            return 'flex gap-1 overflow-x-auto scrollbar-hide';
+            return 'flex gap-2 overflow-x-auto scrollbar-hide pb-1';
         case 'feature':
         case 'list':
         default:

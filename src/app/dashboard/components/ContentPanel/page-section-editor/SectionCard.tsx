@@ -36,7 +36,7 @@ export const SectionCard = memo(function SectionCard({
                         onViewTypeChange={(viewType) => onUpdateField({ viewType })}
                         onDelete={onDelete}
                     />
-                    <div className="px-2 pb-2">
+                    <div className="pb-2 pl-8 pr-2">
                         <SectionEntryList
                             sectionId={section.id}
                             viewType={section.viewType}

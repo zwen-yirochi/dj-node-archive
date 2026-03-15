@@ -61,7 +61,7 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
                     </div>
 
                     {/* Content */}
-                    <div className="px-2 pb-2">
+                    <div className="pb-2 pl-8 pr-2">
                         {featured ? (
                             <FeatureEntryDetail entry={featured} />
                         ) : (
