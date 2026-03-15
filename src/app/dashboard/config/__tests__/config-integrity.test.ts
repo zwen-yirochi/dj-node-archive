@@ -57,15 +57,7 @@ describe('Config 완결성: 모든 EntryType이 각 config에 정의됨', () => 
 });
 
 // EntryBase 공통 필드 — config에서 관리하지 않는 인프라 필드
-const BASE_FIELDS = new Set([
-    'id',
-    'type',
-    'position',
-    'displayOrder',
-    'isVisible',
-    'createdAt',
-    'updatedAt',
-]);
+const BASE_FIELDS = new Set(['id', 'type', 'position', 'createdAt', 'updatedAt']);
 
 describe('FIELD_CONFIG 키 ↔ 도메인 타입 필드 매핑', () => {
     for (const type of ALL_TYPES) {

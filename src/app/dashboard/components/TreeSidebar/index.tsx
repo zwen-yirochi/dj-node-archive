@@ -29,12 +29,11 @@ import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { type EntryType } from '@/app/dashboard/config/entry/entry-types';
-import { canAddToView, getMissingFieldLabels } from '@/app/dashboard/config/entry/entry-validation';
 import { COMPONENT_GROUPS } from '@/app/dashboard/config/ui/sidebar';
 import { TypeBadge } from '@/components/dna';
 
 import { useEntries, useEntryMutations, useUser } from '../../hooks';
-import { computeReorderedDisplay, computeReorderedPositions } from '../../hooks/entries.api';
+import { computeReorderedPositions } from '../../hooks/entries.api';
 import { entryKeys } from '../../hooks/use-editor-data';
 import {
     selectContentView,
@@ -46,14 +45,12 @@ import {
 import { CommandPalette } from '../ui/CommandPalette';
 import AccountSection from './AccountSection';
 import ComponentGroup from './ComponentGroup';
-import PageDisplayList from './PageDisplayList';
 import TreeItem from './TreeItem';
 
 /** dnd-kit data type — declares the structure of active.data.current */
 interface DragData {
-    type: 'entry' | 'display-entry';
+    type: 'entry';
     entry: ContentEntry;
-    displayEntryId?: string;
 }
 
 export default function TreeSidebar() {
@@ -63,11 +60,7 @@ export default function TreeSidebar() {
     const user = useUser();
 
     // TanStack Query Mutations
-    const {
-        reorder: reorderEntriesMutation,
-        addToDisplay: addToDisplayMutation,
-        reorderDisplay: reorderDisplayMutation,
-    } = useEntryMutations();
+    const { reorder: reorderEntriesMutation } = useEntryMutations();
 
     // Dashboard Store
     const contentView = useDashboardStore(selectContentView);
@@ -78,7 +71,6 @@ export default function TreeSidebar() {
     // Derive sidebar highlight state from contentView
     const isBioActive = contentView.kind === 'bio';
     const isPageActive = contentView.kind === 'page';
-    const selectedEntryId = contentView.kind === 'detail' ? contentView.entryId : null;
 
     // Filter & sort by type
     const entriesByType = useMemo(() => {
@@ -91,23 +83,11 @@ export default function TreeSidebar() {
         return map;
     }, [entries]);
 
-    const displayedEntries = useMemo(
-        () =>
-            entries
-                .filter((e) => typeof e.displayOrder === 'number')
-                .sort((a, b) => a.displayOrder! - b.displayOrder!),
-        [entries]
-    );
-
     const dndId = useId();
 
     const [activeItem, setActiveItem] = useState<{
         entry: ContentEntry;
-        isDisplayEntry: boolean;
-        displayEntryId?: string;
     } | null>(null);
-
-    const isDraggingEntry = activeItem !== null && !activeItem.isDisplayEntry;
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -121,26 +101,15 @@ export default function TreeSidebar() {
     );
 
     /**
-     * Custom collision detection that restricts targets to the same logical group:
-     * - entry drag → same-type entries + view-drop-zone
-     * - display-entry drag → display-entries only
+     * Custom collision detection that restricts targets to the same entry type.
      */
     const collisionDetection: CollisionDetection = useCallback((args) => {
         const activeData = args.active.data.current as DragData | undefined;
 
         if (activeData?.type === 'entry') {
             const filtered = args.droppableContainers.filter((container) => {
-                if (container.id === 'view-drop-zone') return true;
                 const data = container.data.current as DragData | undefined;
                 return data?.type === 'entry' && data.entry.type === activeData.entry.type;
-            });
-            return closestCenter({ ...args, droppableContainers: filtered });
-        }
-
-        if (activeData?.type === 'display-entry') {
-            const filtered = args.droppableContainers.filter((container) => {
-                const data = container.data.current as DragData | undefined;
-                return data?.type === 'display-entry';
             });
             return closestCenter({ ...args, droppableContainers: filtered });
         }
@@ -153,11 +122,7 @@ export default function TreeSidebar() {
         const data = active.data.current as DragData | undefined;
 
         if (data?.entry) {
-            setActiveItem({
-                entry: data.entry,
-                isDisplayEntry: data.type === 'display-entry',
-                displayEntryId: data.displayEntryId,
-            });
+            setActiveItem({ entry: data.entry });
         }
     };
 
@@ -169,66 +134,6 @@ export default function TreeSidebar() {
 
         const activeData = active.data.current as DragData | undefined;
         const overData = over.data.current as DragData | undefined;
-
-        // Drop onto the Page area (drop zone or existing display entry)
-        if (
-            activeData?.type === 'entry' &&
-            (over.id === 'view-drop-zone' || overData?.type === 'display-entry')
-        ) {
-            const entry = activeData.entry;
-
-            if (typeof entry.displayOrder === 'number') {
-                toast({ variant: 'destructive', title: 'Already added to Page' });
-                return;
-            }
-
-            if (!canAddToView(entry)) {
-                const missing = getMissingFieldLabels(entry, 'create');
-                toast({
-                    variant: 'destructive',
-                    title: 'Cannot add to Page',
-                    description:
-                        missing.length > 0
-                            ? `Missing: ${missing.join(', ')}`
-                            : 'Entry is incomplete',
-                });
-                return;
-            }
-
-            addToDisplayMutation.mutate(entry.id, {
-                onError: () => toast({ variant: 'destructive', title: 'Failed to add to Page' }),
-            });
-            return;
-        }
-
-        // Reorder within the View section
-        if (activeData?.type === 'display-entry' && overData?.type === 'display-entry') {
-            const activeEntry = activeData.entry;
-            const overId = String(over.id).replace('view-', '');
-            const newIndex = displayedEntries.findIndex((e) => e.id === overId);
-
-            if (newIndex !== -1 && active.id !== over.id) {
-                const updates = computeReorderedDisplay(entries, activeEntry.id, newIndex);
-                if (updates) {
-                    // Sync cache update before mutate to prevent flash
-                    const orderMap = new Map(updates.map((u) => [u.id, u.displayOrder]));
-                    queryClient.setQueryData<ContentEntry[]>(entryKeys.all, (prev) =>
-                        prev?.map((e) => {
-                            const newOrder = orderMap.get(e.id);
-                            return newOrder !== undefined ? { ...e, displayOrder: newOrder } : e;
-                        })
-                    );
-                    reorderDisplayMutation.mutate(
-                        { updates },
-                        {
-                            onError: () =>
-                                toast({ variant: 'destructive', title: 'Failed to reorder' }),
-                        }
-                    );
-                }
-            }
-            return;
-        }
 
         // Reorder within a section
         if (activeData?.type === 'entry' && overData?.type === 'entry') {
@@ -344,14 +249,14 @@ export default function TreeSidebar() {
                         </button>
                     </div>
 
-                    {/* Page Display List */}
-                    <div className="mb-3 ml-3">
-                        <PageDisplayList
-                            entries={displayedEntries}
-                            isDragging={isDraggingEntry}
-                            isCollapsed={isPageCollapsed}
-                        />
-                    </div>
+                    {/* Placeholder for Page Display (disabled) */}
+                    {!isPageCollapsed && (
+                        <div className="mb-3 ml-3">
+                            <p className="px-3 py-2 text-xs text-dashboard-text-placeholder">
+                                섹션 편집은 다음 업데이트에서 지원됩니다.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Divider */}
                     <div className="my-2" />

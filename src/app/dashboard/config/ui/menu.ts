@@ -132,26 +132,5 @@ const TREE_DELETE: MenuItemConfig = {
     variant: 'danger',
     confirm: EVENT_DELETE_CONFIRM,
 };
-const TREE_TOGGLE_VISIBILITY: MenuItemConfig = {
-    actionKey: 'toggle-visibility',
-    label: 'Hide',
-    dynamicLabel: (ctx) => (ctx.isVisible ? 'Hide' : 'Show'),
-};
-const TREE_REMOVE_FROM_PAGE: MenuItemConfig = {
-    actionKey: 'remove-from-page',
-    label: 'Remove from Page',
-};
-
-const TREE_ADD_TO_PAGE: MenuItemConfig = { actionKey: 'add-to-page', label: 'Add to Page' };
-
-/** Component section: Add to Page / Delete */
-export const TREE_ENTRY_MENU: MenuConfig = [TREE_ADD_TO_PAGE, SEPARATOR, TREE_DELETE];
-
-/** Page display section: Edit / Hide / Remove from Page */
-export const TREE_PAGE_DISPLAY_MENU: MenuConfig = [
-    TREE_EDIT,
-    TREE_TOGGLE_VISIBILITY,
-    TREE_REMOVE_FROM_PAGE,
-    SEPARATOR,
-    TREE_DELETE,
-];
+/** Component section: Delete */
+export const TREE_ENTRY_MENU: MenuConfig = [TREE_DELETE];
