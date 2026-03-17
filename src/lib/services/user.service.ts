@@ -19,6 +19,7 @@ import {
     type User,
 } from '@/types/domain';
 import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
+import { getEntryBySlug } from '@/lib/db/queries/entry.queries';
 import {
     findUserWithPages,
     findUserWithPagesByAuthId,
@@ -254,5 +255,41 @@ export const getPublicPageData = cache(
             sections,
             pageSettings: buildPageSettings(page),
         });
+    }
+);
+
+export interface EntryDetailData {
+    user: User;
+    entry: ContentEntry;
+    username: string;
+}
+
+export const getEntryDetailData = cache(
+    async (username: string, slug: string): Promise<Result<EntryDetailData>> => {
+        const result = await findUserWithPages(username);
+
+        if (!isSuccess(result)) {
+            return result;
+        }
+
+        const dbData = result.data;
+        const user = mapUserToDomain(dbData);
+        const page = getFirstPage(dbData.pages);
+
+        if (!page) {
+            return failure(
+                createNotFoundError(`'${username}'의 페이지를 찾을 수 없습니다.`, 'page')
+            );
+        }
+
+        const entryResult = await getEntryBySlug(page.id, slug);
+
+        if (!isSuccess(entryResult)) {
+            return entryResult;
+        }
+
+        const entry = mapEntryToDomain(entryResult.data);
+
+        return success({ user, entry, username });
     }
 );
