@@ -47,7 +47,7 @@ export default function EmbedField({
                         <div style={{ aspectRatio: parsed.dimensions.aspectRatio }}>
                             <iframe
                                 src={parsed.embedUrl}
-                                className="h-full w-full"
+                                className="pointer-events-none h-full w-full"
                                 allow="autoplay; encrypted-media"
                                 allowFullScreen
                                 title={`${parsed.displayName} embed`}
@@ -57,7 +57,7 @@ export default function EmbedField({
                         <iframe
                             src={parsed.embedUrl}
                             style={{ height: parsed.dimensions.height }}
-                            className="w-full"
+                            className="pointer-events-none w-full"
                             allow="autoplay; encrypted-media"
                             allowFullScreen
                             title={`${parsed.displayName} embed`}

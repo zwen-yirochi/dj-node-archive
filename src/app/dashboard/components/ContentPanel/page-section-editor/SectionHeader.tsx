@@ -34,7 +34,7 @@ export function SectionHeader({
 
     return (
         <div className="flex items-center gap-2 px-2 py-2">
-            <button {...dragHandleProps} className="cursor-grab text-dashboard-text-placeholder">
+            <button {...dragHandleProps} className="drag-handle">
                 <GripVertical className="h-4 w-4" />
             </button>
             <input

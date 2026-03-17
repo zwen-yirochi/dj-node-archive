@@ -30,9 +30,9 @@ export type {
     ViewType,
     ResolvedSection,
     // Custom Block Types
-    SectionBlock,
-    SectionBlockDataMap,
-    SectionBlockType,
+    ContentBlock,
+    ContentBlockDataMap,
+    ContentBlockType,
     TracklistItem,
     // User & Page
     User,

@@ -152,6 +152,15 @@
 }
 
 @layer utilities {
+  /* ── DND ── */
+  .drag-handle          { @apply cursor-grab touch-none text-dashboard-text-placeholder hover:text-dashboard-text-muted active:cursor-grabbing; }
+  .drag-handle-hover    { @apply drag-handle opacity-0 transition-opacity group-hover:opacity-100; }
+  .drag-source-ghost    { @apply opacity-50; }
+  .drag-source-hidden   { @apply pointer-events-none opacity-0; }
+  .drag-source-elevated { @apply z-10 bg-dashboard-bg-surface shadow-md; }
+  .drag-overlay-card    { @apply rounded-lg border border-dashboard-border bg-dashboard-bg-card shadow-lg animate-[fade-in_150ms_ease-out]; }
+  .drop-zone-active     { @apply border-blue-400 bg-blue-400/5; }
+
   .shadow-panel {
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
   }

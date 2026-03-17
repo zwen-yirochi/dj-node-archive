@@ -1,13 +1,14 @@
 'use client';
 
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
 import { ALL_VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
 import { useEntries, usePageMeta } from '@/app/dashboard/hooks/use-editor-data';
 import { useSectionMutations } from '@/app/dashboard/hooks/use-section-mutations';
+import { useDndBridgeStore } from '@/app/dashboard/stores/dndBridgeStore';
 
 import { FeatureSectionCard } from './FeatureSectionCard';
 import { SectionCard } from './SectionCard';
@@ -30,11 +31,23 @@ export default function PageSectionEditor() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showTypeSelect]);
 
-    const sections = pageMeta?.sections ?? [];
+    // DND bridge — 드롭 순간 동기적 순서 보정
+    const tempSectionOrder = useDndBridgeStore((s) => s.tempSectionOrder);
+    const tempSectionEntryOrder = useDndBridgeStore((s) => s.tempSectionEntryOrder);
+    const rawSections = pageMeta?.sections ?? [];
+    const sections = useMemo(() => {
+        if (!tempSectionOrder) return rawSections;
+        const orderMap = new Map(tempSectionOrder.map((id, i) => [id, i]));
+        return [...rawSections].sort(
+            (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)
+        );
+    }, [rawSections, tempSectionOrder]);
     const entryMap = new Map(entries.map((e) => [e.id, e]));
 
-    const resolveEntries = (entryIds: string[]) =>
-        entryIds.map((id) => entryMap.get(id)).filter(Boolean) as typeof entries;
+    const resolveEntries = (sectionId: string, entryIds: string[]) => {
+        const ids = tempSectionEntryOrder?.[sectionId] ?? entryIds;
+        return ids.map((id) => entryMap.get(id)).filter(Boolean) as typeof entries;
+    };
 
     return (
         <div className="flex h-full flex-col">
@@ -90,7 +103,7 @@ export default function PageSectionEditor() {
                                 <FeatureSectionCard
                                     key={section.id}
                                     section={section}
-                                    entries={resolveEntries(section.entryIds)}
+                                    entries={resolveEntries(section.id, section.entryIds)}
                                     onDelete={() => mutations.removeSection(section.id)}
                                     onRemoveEntry={(entryId) =>
                                         mutations.removeEntryFromSection(section.id, entryId)
@@ -100,7 +113,7 @@ export default function PageSectionEditor() {
                                 <SectionCard
                                     key={section.id}
                                     section={section}
-                                    entries={resolveEntries(section.entryIds)}
+                                    entries={resolveEntries(section.id, section.entryIds)}
                                     onUpdateField={(field) =>
                                         mutations.updateSectionField(section.id, field)
                                     }

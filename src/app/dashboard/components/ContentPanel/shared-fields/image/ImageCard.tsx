@@ -5,7 +5,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { useRef } from 'react';
 import Image from 'next/image';
 
-import { GripHorizontal, ImagePlus, Trash2 } from 'lucide-react';
+import { GripVertical, ImagePlus, Trash2 } from 'lucide-react';
+
+import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
 
 import type { ImageItem } from '../types';
 
@@ -28,6 +30,7 @@ export default function ImageCard({
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: item.id,
         disabled: !isEditing,
+        animateLayoutChanges: sortableAnimateLayoutChanges,
     });
 
     const style = {
@@ -45,7 +48,7 @@ export default function ImageCard({
         <div
             ref={setNodeRef}
             style={style}
-            className={`group/card relative w-fit flex-shrink-0 ${isDragging ? 'opacity-30' : ''}`}
+            className={`group/card relative w-fit flex-shrink-0 ${isDragging ? 'drag-source-ghost' : ''}`}
         >
             {isEditing && (
                 <input
@@ -72,9 +75,9 @@ export default function ImageCard({
                     <div
                         {...attributes}
                         {...(listeners as React.DOMAttributes<HTMLDivElement>)}
-                        className="absolute left-0 right-0 top-0 z-10 flex cursor-grab items-center justify-center rounded-t-lg bg-black/15 py-1.5 opacity-0 transition-opacity active:cursor-grabbing group-hover/card:opacity-100"
+                        className="absolute left-0 right-0 top-0 z-10 flex cursor-grab touch-none items-center justify-center rounded-t-lg bg-black/15 py-1.5 opacity-0 transition-opacity active:cursor-grabbing group-hover/card:opacity-100"
                     >
-                        <GripHorizontal className="h-3.5 w-3.5 text-white/70" />
+                        <GripVertical className="h-4 w-4 text-white/70" />
                     </div>
 
                     <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-center gap-1.5 rounded-b-lg bg-gradient-to-t from-black/40 to-transparent px-1 py-1.5 opacity-0 transition-opacity group-hover/card:opacity-100">

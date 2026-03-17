@@ -36,7 +36,7 @@ export default function BlockWrapper({
     return (
         <div
             className={`group relative rounded-lg border border-transparent p-3 transition-colors hover:border-dashboard-border/50 hover:bg-dashboard-bg-muted/30 ${
-                isDragging ? 'opacity-50' : ''
+                isDragging ? 'drag-source-ghost' : ''
             }`}
         >
             {/* Block Header */}
@@ -45,9 +45,9 @@ export default function BlockWrapper({
                     <button
                         {...dragHandleProps.attributes}
                         {...(dragHandleProps.listeners as React.HTMLAttributes<HTMLButtonElement>)}
-                        className="cursor-grab rounded p-0.5 opacity-0 transition-opacity hover:bg-dashboard-bg-muted active:cursor-grabbing group-hover:opacity-100"
+                        className="drag-handle-hover rounded p-0.5"
                     >
-                        <GripVertical className="h-3.5 w-3.5 text-dashboard-text-placeholder" />
+                        <GripVertical className="h-4 w-4" />
                     </button>
                 )}
                 <Icon className="h-3.5 w-3.5 text-dashboard-text-muted" />

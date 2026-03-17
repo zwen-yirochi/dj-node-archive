@@ -82,7 +82,7 @@ export type TracklistItem = { track: string; artist: string; time: string };
 // ============================================
 // Custom Block Types
 // ============================================
-export type SectionBlockType = 'header' | 'richtext' | 'image' | 'embed' | 'keyvalue';
+export type ContentBlockType = 'header' | 'richtext' | 'image' | 'embed' | 'keyvalue';
 
 export interface HeaderBlockData {
     title: string;
@@ -103,7 +103,7 @@ export interface EmbedBlockData {
 export interface KeyValueBlockData {
     items: { key: string; value: string }[];
 }
-export interface SectionBlockDataMap {
+export interface ContentBlockDataMap {
     header: HeaderBlockData;
     richtext: RichTextBlockData;
     image: ImageBlockData;
@@ -111,10 +111,10 @@ export interface SectionBlockDataMap {
     keyvalue: KeyValueBlockData;
 }
 
-export interface SectionBlock<T extends SectionBlockType = SectionBlockType> {
+export interface ContentBlock<T extends ContentBlockType = ContentBlockType> {
     id: string;
     type: T;
-    data: SectionBlockDataMap[T];
+    data: ContentBlockDataMap[T];
 }
 
 interface EntryBase {
@@ -171,7 +171,7 @@ export interface LinkEntry extends EntryBase {
 export interface CustomEntry extends EntryBase {
     type: 'custom';
     title: string;
-    blocks: SectionBlock[];
+    blocks: ContentBlock[];
 }
 
 /** Entry 유니온 */

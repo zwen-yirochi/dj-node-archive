@@ -1,5 +1,9 @@
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+    horizontalListSortingStrategy,
+    SortableContext,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 import type { ContentEntry, ViewType } from '@/types/domain';
 
@@ -26,10 +30,17 @@ export function SectionEntryList({ sectionId, viewType, entries, onRemoveEntry }
         <div
             ref={setNodeRef}
             className={`min-h-[40px] rounded-md border border-dashed transition-colors ${
-                isOver ? 'border-blue-400 bg-blue-400/5' : 'border-transparent'
+                isOver ? 'drop-zone-active' : 'border-transparent'
             }`}
         >
-            <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+            <SortableContext
+                items={sortableIds}
+                strategy={
+                    viewType === 'carousel'
+                        ? horizontalListSortingStrategy
+                        : verticalListSortingStrategy
+                }
+            >
                 {entries.length === 0 ? (
                     <EmptyState viewType={viewType} />
                 ) : (

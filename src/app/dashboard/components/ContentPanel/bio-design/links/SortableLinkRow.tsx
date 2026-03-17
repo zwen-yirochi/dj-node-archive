@@ -7,6 +7,7 @@ import type { KeyboardEvent } from 'react';
 import { GripVertical, X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
 import { Input } from '@/components/ui/input';
 
 import type { LinkItem } from './links.utils';
@@ -31,6 +32,7 @@ export function SortableLinkRow({
 }: SortableLinkRowProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: item.id,
+        animateLayoutChanges: sortableAnimateLayoutChanges,
     });
 
     const style = {
@@ -55,17 +57,12 @@ export function SortableLinkRow({
             style={style}
             className={cn(
                 'flex items-center gap-2 border-b border-dashboard-border/30 px-3 py-2.5 last:border-b-0',
-                isDragging && 'z-10 bg-dashboard-bg-surface shadow-md'
+                isDragging && 'drag-source-elevated'
             )}
         >
             {/* Drag handle */}
-            <button
-                type="button"
-                className="shrink-0 cursor-grab touch-none text-dashboard-text-muted hover:text-dashboard-text active:cursor-grabbing"
-                {...attributes}
-                {...listeners}
-            >
-                <GripVertical className="h-3.5 w-3.5" />
+            <button type="button" className="drag-handle shrink-0" {...attributes} {...listeners}>
+                <GripVertical className="h-4 w-4" />
             </button>
 
             {/* Platform icon + label */}

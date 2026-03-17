@@ -10,6 +10,7 @@ import { FileText, Palette } from 'lucide-react';
 import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { COMPONENT_GROUPS } from '@/app/dashboard/config/ui/sidebar';
+import { useDndBridgeStore } from '@/app/dashboard/stores/dndBridgeStore';
 import { TypeBadge } from '@/components/dna';
 
 import { useEntries, usePageMeta, useUser } from '../../hooks';
@@ -42,16 +43,28 @@ export default function TreeSidebar() {
     const isBioActive = contentView.kind === 'bio';
     const isPageActive = contentView.kind === 'page';
 
-    // Filter & sort by type
+    // DND bridge — 드롭 순간 동기적 순서 보정
+    const tempEntryOrder = useDndBridgeStore((s) => s.tempEntryOrder);
+
+    // Filter & sort by type (bridge가 있으면 bridge 순서 우선)
     const entriesByType = useMemo(() => {
         const map: Record<string, ContentEntry[]> = {};
         for (const cfg of COMPONENT_GROUPS) {
-            map[cfg.entryType] = entries
-                .filter((e) => e.type === cfg.entryType)
-                .sort((a, b) => a.position - b.position);
+            const typed = entries.filter((e) => e.type === cfg.entryType);
+            if (tempEntryOrder) {
+                const orderMap = new Map(tempEntryOrder.map((id, i) => [id, i]));
+                typed.sort((a, b) => {
+                    const aIdx = orderMap.get(a.id) ?? a.position;
+                    const bIdx = orderMap.get(b.id) ?? b.position;
+                    return aIdx - bIdx;
+                });
+            } else {
+                typed.sort((a, b) => a.position - b.position);
+            }
+            map[cfg.entryType] = typed;
         }
         return map;
-    }, [entries]);
+    }, [entries, tempEntryOrder]);
 
     return (
         <aside className="flex h-full w-64 shrink-0 flex-col bg-dashboard-bg-muted">

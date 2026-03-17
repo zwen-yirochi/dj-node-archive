@@ -4,7 +4,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
 
 import type { ContentEntry } from '@/types/domain';
+import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
+import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
 import { TypeBadge } from '@/components/dna';
 
 import { selectSetView, useDashboardStore } from '../../../stores/dashboardStore';
@@ -31,13 +33,13 @@ export function SectionEntryItem({ entry, sectionId, variant = 'list', onRemove 
     };
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: `${sectionId}:${entry.id}`,
-        data: { type: 'section-entry', entry, sectionId },
+        data: { type: 'section-entry', entry, sectionId, variant },
+        animateLayoutChanges: sortableAnimateLayoutChanges,
     });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
     };
 
     const config = ENTRY_TYPE_CONFIG[entry.type];
@@ -49,15 +51,18 @@ export function SectionEntryItem({ entry, sectionId, variant = 'list', onRemove 
                 ref={setNodeRef}
                 style={style}
                 onClick={handleClick}
-                className="group/card relative w-28 flex-shrink-0 cursor-pointer rounded-md border border-dashboard-border bg-dashboard-bg-muted"
+                className={cn(
+                    'group/card relative w-28 flex-shrink-0 cursor-pointer rounded-md border border-dashboard-border bg-dashboard-bg-muted',
+                    isDragging && 'drag-source-ghost'
+                )}
             >
                 {/* Drag handle overlay */}
                 <button
                     {...attributes}
                     {...listeners}
-                    className="absolute left-0.5 top-0.5 z-10 cursor-grab rounded bg-dashboard-bg-card/80 p-0.5 text-dashboard-text-placeholder opacity-0 group-hover/card:opacity-100"
+                    className="drag-handle absolute left-0.5 top-0.5 z-10 rounded bg-dashboard-bg-card/80 p-0.5 opacity-0 transition-opacity group-hover/card:opacity-100"
                 >
-                    <GripVertical className="h-3 w-3" />
+                    <GripVertical className="h-4 w-4" />
                 </button>
                 {/* Remove button */}
                 <button
@@ -95,14 +100,13 @@ export function SectionEntryItem({ entry, sectionId, variant = 'list', onRemove 
             ref={setNodeRef}
             style={style}
             onClick={handleClick}
-            className="group flex cursor-pointer items-center gap-2 rounded-md border border-transparent px-2 py-1.5 hover:border-dashboard-border hover:bg-dashboard-bg-hover/50"
+            className={cn(
+                'group flex cursor-pointer items-center gap-2 rounded-md border border-transparent px-2 py-1.5 hover:border-dashboard-border hover:bg-dashboard-bg-hover/50',
+                isDragging && 'drag-source-ghost'
+            )}
         >
-            <button
-                {...attributes}
-                {...listeners}
-                className="cursor-grab text-dashboard-text-placeholder"
-            >
-                <GripVertical className="h-3.5 w-3.5" />
+            <button {...attributes} {...listeners} className="drag-handle">
+                <GripVertical className="h-4 w-4" />
             </button>
             <TypeBadge type={config.badgeType} size="sm" />
             <span className="flex-1 truncate text-sm text-dashboard-text">
