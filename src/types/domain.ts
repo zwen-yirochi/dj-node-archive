@@ -120,6 +120,7 @@ export interface SectionBlock<T extends SectionBlockType = SectionBlockType> {
 interface EntryBase {
     id: string;
     position: number;
+    slug?: string;
     createdAt: string;
     updatedAt: string;
 }

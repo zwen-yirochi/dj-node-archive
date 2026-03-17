@@ -73,6 +73,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
     const base = {
         id: dbEntry.id,
         position: dbEntry.position,
+        slug: dbEntry.slug ?? undefined,
         createdAt: dbEntry.created_at,
         updatedAt: dbEntry.updated_at,
     };

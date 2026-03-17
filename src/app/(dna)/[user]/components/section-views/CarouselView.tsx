@@ -2,17 +2,19 @@
 
 import Link from 'next/link';
 
-import { isEventEntry, isPublicEventEntry, type ContentEntry } from '@/types/domain';
+import type { ContentEntry } from '@/types/domain';
 import { formatDateCompact } from '@/lib/formatters';
+import { getEntryHref } from '@/lib/utils/entry-link';
 import { useHorizontalScroll } from '@/hooks/use-horizontal-scroll';
 import { TypeBadge } from '@/components/dna';
 
 interface CarouselViewProps {
     entries: ContentEntry[];
     options: Record<string, unknown>;
+    username: string;
 }
 
-export function CarouselView({ entries }: CarouselViewProps) {
+export function CarouselView({ entries, username }: CarouselViewProps) {
     const { scrollRef, state, scroll } = useHorizontalScroll();
 
     if (entries.length === 0) return null;
@@ -22,7 +24,7 @@ export function CarouselView({ entries }: CarouselViewProps) {
             {/* Scroll container */}
             <div ref={scrollRef} className="scrollbar-hide flex gap-4 overflow-x-auto">
                 {entries.map((entry) => (
-                    <CarouselCard key={entry.id} entry={entry} />
+                    <CarouselCard key={entry.id} entry={entry} username={username} />
                 ))}
             </div>
 
@@ -73,9 +75,8 @@ function getTypeLabel(type: string): 'EVT' | 'MIX' | 'LNK' {
 /** Fixed height for the image area */
 const IMG_HEIGHT = 180;
 
-function CarouselCard({ entry }: { entry: ContentEntry }) {
-    const href =
-        isEventEntry(entry) && isPublicEventEntry(entry) ? `/event/${entry.eventId}` : null;
+function CarouselCard({ entry, username }: { entry: ContentEntry; username: string }) {
+    const href = getEntryHref(entry, username);
     const imageUrl = getImageUrl(entry);
     const typeLabel = getTypeLabel(entry.type);
     const date =

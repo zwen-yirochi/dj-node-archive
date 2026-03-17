@@ -1,13 +1,15 @@
-import { isEventEntry, isPublicEventEntry, type ContentEntry } from '@/types/domain';
+import type { ContentEntry } from '@/types/domain';
 import { formatDateCompact } from '@/lib/formatters';
+import { getEntryHref } from '@/lib/utils/entry-link';
 import { Timeline, type TimelineEntry } from '@/components/dna/Timeline';
 
 interface ListViewProps {
     entries: ContentEntry[];
     options: Record<string, unknown>;
+    username: string;
 }
 
-function toTimelineEntry(entry: ContentEntry): TimelineEntry {
+function toTimelineEntry(entry: ContentEntry, username: string): TimelineEntry {
     const date =
         entry.type === 'event' ? formatDateCompact(entry.date) : formatDateCompact(entry.createdAt);
 
@@ -28,8 +30,7 @@ function toTimelineEntry(entry: ContentEntry): TimelineEntry {
                   })()
                 : entry.type;
 
-    const link =
-        isEventEntry(entry) && isPublicEventEntry(entry) ? `/event/${entry.eventId}` : undefined;
+    const link = getEntryHref(entry, username) ?? undefined;
 
     const artists =
         entry.type === 'event' && entry.lineup?.length > 0
@@ -39,6 +40,6 @@ function toTimelineEntry(entry: ContentEntry): TimelineEntry {
     return { date, title: entry.title || 'Untitled', venue, link, artists };
 }
 
-export function ListView({ entries }: ListViewProps) {
-    return <Timeline entries={entries.map(toTimelineEntry)} />;
+export function ListView({ entries, username }: ListViewProps) {
+    return <Timeline entries={entries.map((e) => toTimelineEntry(e, username))} />;
 }

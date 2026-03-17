@@ -115,7 +115,7 @@ export default function UserPageContent({
             </div>
 
             {sections.map((section) => (
-                <SectionRenderer key={section.id} section={section} />
+                <SectionRenderer key={section.id} section={section} username={user.username} />
             ))}
         </DnaPageShell>
     );

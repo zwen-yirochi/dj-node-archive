@@ -1,7 +1,8 @@
 import Link from 'next/link';
 
-import { isEventEntry, isPublicEventEntry, type ContentEntry } from '@/types/domain';
-import { formatDateCompact, venueCode } from '@/lib/formatters';
+import type { ContentEntry } from '@/types/domain';
+import { formatDateCompact } from '@/lib/formatters';
+import { getEntryHref } from '@/lib/utils/entry-link';
 
 import { TypeBadge } from './TypeBadge';
 import { VenueLink } from './VenueLink';
@@ -9,6 +10,7 @@ import { VenueLink } from './VenueLink';
 interface EntryCardProps {
     entry: ContentEntry;
     index: number;
+    username: string;
     className?: string;
 }
 
@@ -59,9 +61,8 @@ function getDateValue(entry: ContentEntry): string {
     return formatDateCompact(entry.createdAt);
 }
 
-export function EntryCard({ entry, index }: EntryCardProps) {
-    const href =
-        isEventEntry(entry) && isPublicEventEntry(entry) ? `/event/${entry.eventId}` : null;
+export function EntryCard({ entry, index, username }: EntryCardProps) {
+    const href = getEntryHref(entry, username);
     const typeLabel = getTypeLabel(entry.type);
     const imageUrl = getImageUrl(entry);
 
