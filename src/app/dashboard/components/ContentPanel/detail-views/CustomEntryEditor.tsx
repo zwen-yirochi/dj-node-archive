@@ -22,8 +22,8 @@ import { useCallback, useId, useState, type ReactNode } from 'react';
 import { Plus } from 'lucide-react';
 
 import type { ContentBlock, ContentBlockDataMap, ContentBlockType, CustomEntry } from '@/types';
-import { defaultDropAnimation, sortableAnimateLayoutChanges } from '@/lib/dnd/animate';
 import { parseEmbedUrl } from '@/lib/embed';
+import { defaultDropAnimation, sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
 import { Button } from '@/components/ui/button';
 
 import {

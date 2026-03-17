@@ -3,8 +3,8 @@ import { CSS } from '@dnd-kit/utilities';
 import type { ReactNode } from 'react';
 
 import type { Section } from '@/types/domain';
-import { sortableAnimateLayoutChanges } from '@/lib/dnd/animate';
 import { cn } from '@/lib/utils';
+import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
 
 interface Props {
     section: Section;

@@ -7,7 +7,7 @@ import Image from 'next/image';
 
 import { GripVertical, ImagePlus, Trash2 } from 'lucide-react';
 
-import { sortableAnimateLayoutChanges } from '@/lib/dnd/animate';
+import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
 
 import type { ImageItem } from '../types';
 

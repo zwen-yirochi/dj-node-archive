@@ -2,6 +2,7 @@ import type { ContentEntry } from '@/types/domain';
 import { toast } from '@/hooks/use-toast';
 import { computeReorderedPositions } from '@/app/dashboard/hooks/entries.api';
 import { entryKeys } from '@/app/dashboard/hooks/use-editor-data';
+import { useDndBridgeStore } from '@/app/dashboard/stores/dndBridgeStore';
 
 import type { DragContext, DragData, DragStrategy } from '../types';
 
@@ -51,6 +52,15 @@ export const sidebarEntryReorder: DragStrategy = {
         );
         if (!updates) return;
 
+        // Bridge: 동기적으로 새 순서 설정 → 드롭 시 점프 방지
+        const reorderedIds = [...typeEntries];
+        const [moved] = reorderedIds.splice(
+            reorderedIds.findIndex((e) => e.id === active.id),
+            1
+        );
+        reorderedIds.splice(overIndex, 0, moved);
+        useDndBridgeStore.getState().setTempEntryOrder(reorderedIds.map((e) => e.id));
+
         const posMap = new Map(updates.map((u) => [u.id, u.position]));
         ctx.queryClient.setQueryData<ContentEntry[]>(entryKeys.all, (prev) =>
             prev?.map((e) => {
@@ -60,7 +70,10 @@ export const sidebarEntryReorder: DragStrategy = {
         );
         ctx.reorderEntriesMutation.mutate(
             { updates },
-            { onError: () => toast({ variant: 'destructive', title: 'Failed to reorder' }) }
+            {
+                onError: () => toast({ variant: 'destructive', title: 'Failed to reorder' }),
+                onSettled: () => useDndBridgeStore.getState().setTempEntryOrder(null),
+            }
         );
     },
 };

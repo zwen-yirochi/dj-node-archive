@@ -10,17 +10,17 @@ import {
     useSensors,
     type CollisionDetection,
     type DragEndEvent,
-    type DragOverEvent,
     type DragStartEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { useCallback, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useId, useMemo, useState, type ReactNode } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ContentEntry } from '@/types/domain';
-import { dashboardStrategies } from '@/lib/dnd/strategies';
-import type { DragContext, DragData } from '@/lib/dnd/types';
+import { defaultDropAnimation } from '@/app/dashboard/dnd/animate';
+import { dashboardStrategies } from '@/app/dashboard/dnd/strategies';
+import type { DragContext, DragData } from '@/app/dashboard/dnd/types';
 
 import { useEntryMutations } from '../hooks';
 import { entryKeys, pageKeys, type PageMeta } from '../hooks/use-editor-data';
@@ -81,41 +81,14 @@ export default function DashboardDndProvider({ children }: { children: ReactNode
     }, []);
 
     // ── Drag lifecycle ──
-    const dragReadyRef = useRef(false);
-    const lastOverIdRef = useRef<string | null>(null);
-
     const handleDragStart = (event: DragStartEvent) => {
         const data = event.active.data.current as DragData | undefined;
         if (data) {
             const el = document.getElementById(`section-${event.active.id}`);
             const rect = el?.getBoundingClientRect();
             setDragState({ item: data, width: rect?.width ?? null });
-            lastOverIdRef.current = null;
-            dragReadyRef.current = false;
-            requestAnimationFrame(() => {
-                dragReadyRef.current = true;
-            });
         }
     };
-
-    const handleDragOver = useCallback(
-        (event: DragOverEvent) => {
-            if (!dragReadyRef.current) return;
-            const { active, over } = event;
-            if (!over || active.id === over.id) return;
-            if (lastOverIdRef.current === over.id) return;
-            lastOverIdRef.current = String(over.id);
-
-            const activeData = active.data.current as DragData | undefined;
-            if (!activeData) return;
-
-            const strategy = dashboardStrategies.find((s) =>
-                s.activeTypes.includes(activeData.type)
-            );
-            strategy?.onOver?.(event, ctx);
-        },
-        [ctx]
-    );
 
     const handleDragEnd = (event: DragEndEvent) => {
         setDragState(null);
@@ -134,11 +107,10 @@ export default function DashboardDndProvider({ children }: { children: ReactNode
             sensors={sensors}
             collisionDetection={collisionDetection}
             onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
             {children}
-            <DragOverlay dropAnimation={null}>
+            <DragOverlay dropAnimation={defaultDropAnimation}>
                 {activeItem?.entry && (
                     <div className="drag-overlay-card px-3 py-1 pl-8">
                         <span className="text-sm text-dashboard-text">

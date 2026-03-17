@@ -7,11 +7,11 @@ import { memo } from 'react';
 import { AlertTriangle, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
-import { sortableAnimateLayoutChanges } from '@/lib/dnd/animate';
 import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { validateEntry } from '@/app/dashboard/config/entry/entry-validation';
 import { resolveMenuItems, TREE_ENTRY_MENU } from '@/app/dashboard/config/ui/menu';
+import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryMutations } from '../../hooks';

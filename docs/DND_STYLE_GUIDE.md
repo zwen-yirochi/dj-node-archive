@@ -14,7 +14,7 @@
 | `.drag-overlay-card`    | DragOverlay 카드 기반 스타일                     | `rounded-lg border border-dashboard-border bg-dashboard-bg-card shadow-lg animate-[fade-in_150ms_ease-out]`     |
 | `.drop-zone-active`     | 드롭 대상 하이라이트                             | `border-blue-400 bg-blue-400/5`                                                                                 |
 
-## JS 상수 (`src/lib/dnd/animate.ts`)
+## JS 상수 (`src/app/dashboard/dnd/animate.ts`)
 
 | 상수                           | 용도                                                        |
 | ------------------------------ | ----------------------------------------------------------- |
@@ -81,31 +81,37 @@
 
 DashboardDndProvider는 Strategy 패턴을 사용합니다.
 
-**파일 위치:** `src/lib/dnd/strategies/`
+**파일 위치:** `src/app/dashboard/dnd/strategies/`
 
 **현재 전략:**
 
-| 전략                  | activeTypes     | 역할                                  |
-| --------------------- | --------------- | ------------------------------------- |
-| `sidebarEntryReorder` | `entry`         | 엔트리 정렬 + 섹션에 추가             |
-| `sectionReorder`      | `section`       | 섹션 순서 변경 (onOver 실시간 리오더) |
-| `sectionEntryReorder` | `section-entry` | 섹션 내 엔트리 정렬/이동              |
+| 전략                  | activeTypes     | 역할                      |
+| --------------------- | --------------- | ------------------------- |
+| `sidebarEntryReorder` | `entry`         | 엔트리 정렬 + 섹션에 추가 |
+| `sectionReorder`      | `section`       | 섹션 순서 변경            |
+| `sectionEntryReorder` | `section-entry` | 섹션 내 엔트리 정렬/이동  |
 
 **새 전략 추가 순서:**
 
-1. `src/lib/dnd/strategies/<name>.ts` 파일 생성
-2. `DragStrategy` 인터페이스 구현: `activeTypes`, `acceptsOver`, `onEnd` (필요 시 `onOver`)
-3. `src/lib/dnd/strategies/index.ts`의 `dashboardStrategies` 배열에 추가
-4. Provider 수정 불필요 — 전략 배열에 추가만 하면 자동 매칭
+1. `src/app/dashboard/dnd/strategies/<name>.ts` 파일 생성
+2. `DragStrategy` 인터페이스 구현: `activeTypes`, `acceptsOver`, `onEnd`
+3. `src/app/dashboard/dnd/strategies/index.ts`의 `dashboardStrategies` 배열에 추가
+4. TQ 캐시 업데이트 시 `useDndBridgeStore`로 temp order 설정 (드롭 점프 방지)
+5. Provider 수정 불필요 — 전략 배열에 추가만 하면 자동 매칭
 
-**전략 인터페이스 (`src/lib/dnd/types.ts`):**
+**전략 인터페이스 (`src/app/dashboard/dnd/types.ts`):**
 
 | 필드          | 용도                                            |
 | ------------- | ----------------------------------------------- |
 | `activeTypes` | 이 전략이 처리할 드래그 아이템 타입             |
 | `acceptsOver` | collision detection: 허용할 droppable 타입 필터 |
-| `onOver?`     | 드래그 중 실시간 처리 (optional)                |
 | `onEnd`       | 드롭 시 처리                                    |
+
+**DND Bridge Store (`src/app/dashboard/stores/dndBridgeStore.ts`):**
+
+TQ `setQueryData` → 리렌더 비동기 갭으로 인한 드롭 점프를 방지하는 Zustand store.
+전략의 `onEnd`에서 동기적으로 temp order를 설정하고, mutation의 `onSettled`에서 해제.
+TreeSidebar와 PageSectionEditor가 temp order를 구독하여 정렬에 반영.
 
 ## 예외 (토큰 미적용, 의도적)
 

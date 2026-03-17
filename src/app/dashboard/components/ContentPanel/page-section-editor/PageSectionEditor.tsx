@@ -1,13 +1,14 @@
 'use client';
 
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
 import { ALL_VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
 import { useEntries, usePageMeta } from '@/app/dashboard/hooks/use-editor-data';
 import { useSectionMutations } from '@/app/dashboard/hooks/use-section-mutations';
+import { useDndBridgeStore } from '@/app/dashboard/stores/dndBridgeStore';
 
 import { FeatureSectionCard } from './FeatureSectionCard';
 import { SectionCard } from './SectionCard';
@@ -30,7 +31,16 @@ export default function PageSectionEditor() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showTypeSelect]);
 
-    const sections = pageMeta?.sections ?? [];
+    // DND bridge — 드롭 순간 동기적 순서 보정
+    const tempSectionOrder = useDndBridgeStore((s) => s.tempSectionOrder);
+    const rawSections = pageMeta?.sections ?? [];
+    const sections = useMemo(() => {
+        if (!tempSectionOrder) return rawSections;
+        const orderMap = new Map(tempSectionOrder.map((id, i) => [id, i]));
+        return [...rawSections].sort(
+            (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)
+        );
+    }, [rawSections, tempSectionOrder]);
     const entryMap = new Map(entries.map((e) => [e.id, e]));
 
     const resolveEntries = (entryIds: string[]) =>

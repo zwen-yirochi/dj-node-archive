@@ -6,8 +6,8 @@ import type { KeyboardEvent } from 'react';
 
 import { GripVertical, X } from 'lucide-react';
 
-import { sortableAnimateLayoutChanges } from '@/lib/dnd/animate';
 import { cn } from '@/lib/utils';
+import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
 import { Input } from '@/components/ui/input';
 
 import type { LinkItem } from './links.utils';

@@ -1,4 +1,4 @@
-import type { DragEndEvent, DragOverEvent } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 
 import type { QueryClient } from '@tanstack/react-query';
 
@@ -48,9 +48,6 @@ export interface DragStrategy {
 
     /** collision detection: 이 active 타입일 때 허용할 droppable 필터 */
     acceptsOver: (activeData: DragData, overData: DragData) => boolean;
-
-    /** onDragOver — 드래그 중 실시간 처리 (optional) */
-    onOver?: (event: DragOverEvent, ctx: DragContext) => void;
 
     /** onDragEnd — 드롭 처리 */
     onEnd: (event: DragEndEvent, ctx: DragContext) => void;

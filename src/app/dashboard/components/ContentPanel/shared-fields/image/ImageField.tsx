@@ -15,8 +15,8 @@ import Image from 'next/image';
 
 import { Pencil } from 'lucide-react';
 
-import { defaultDropAnimation } from '@/lib/dnd/animate';
 import { useHorizontalScroll } from '@/hooks/use-horizontal-scroll';
+import { defaultDropAnimation } from '@/app/dashboard/dnd/animate';
 
 import type { ImageFieldProps } from '../types';
 import ImageCard from './ImageCard';
