@@ -33,10 +33,7 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
                 <>
                     {/* Header — drag handle + entry title + feature label + delete */}
                     <div className="flex items-center gap-2 px-2 py-2">
-                        <button
-                            {...dragHandleProps}
-                            className="cursor-grab text-dashboard-text-placeholder"
-                        >
+                        <button {...dragHandleProps} className="drag-handle">
                             <GripVertical className="h-4 w-4" />
                         </button>
                         {featured ? (
@@ -122,7 +119,7 @@ function FeatureDropTarget({ sectionId }: { sectionId: string }) {
         <div
             ref={setNodeRef}
             className={`flex items-center justify-center rounded-lg border border-dashed py-6 transition-colors ${
-                isOver ? 'border-blue-400 bg-blue-400/5' : 'border-dashboard-border'
+                isOver ? 'drop-zone-active' : 'border-dashboard-border'
             }`}
         >
             <p className="text-xs text-dashboard-text-placeholder">

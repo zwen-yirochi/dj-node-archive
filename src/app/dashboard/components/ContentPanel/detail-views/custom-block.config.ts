@@ -1,7 +1,7 @@
 /**
  * Custom block configuration — section block types for custom entries
  *
- * Maps each SectionBlockType to its label, icon, Zod schema, and default data factory.
+ * Maps each ContentBlockType to its label, icon, Zod schema, and default data factory.
  * Component mapping is handled separately in the editor (lazy imports).
  */
 
@@ -18,18 +18,18 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 
-import type { SectionBlockDataMap, SectionBlockType } from '@/types';
+import type { ContentBlockDataMap, ContentBlockType } from '@/types';
 
 // ============================================
 // Block Config Interface
 // ============================================
 
-export interface SectionBlockConfig<T extends SectionBlockType = SectionBlockType> {
+export interface ContentBlockConfig<T extends ContentBlockType = ContentBlockType> {
     type: T;
     label: string;
     icon: LucideIcon;
     schema: ZodSchema;
-    defaultData: () => SectionBlockDataMap[T];
+    defaultData: () => ContentBlockDataMap[T];
 }
 
 // ============================================
@@ -62,7 +62,7 @@ export const blockSchemas = {
 // Block Config Registry
 // ============================================
 
-export const SECTION_BLOCK_CONFIG: Record<SectionBlockType, SectionBlockConfig> = {
+export const CONTENT_BLOCK_CONFIG: Record<ContentBlockType, ContentBlockConfig> = {
     header: {
         type: 'header',
         label: 'Header',
@@ -104,10 +104,10 @@ export const SECTION_BLOCK_CONFIG: Record<SectionBlockType, SectionBlockConfig> 
 // Helpers
 // ============================================
 
-export const SECTION_BLOCK_TYPES = Object.keys(SECTION_BLOCK_CONFIG) as SectionBlockType[];
+export const CONTENT_BLOCK_TYPES = Object.keys(CONTENT_BLOCK_CONFIG) as ContentBlockType[];
 
-export function createBlock<T extends SectionBlockType>(type: T) {
-    const config = SECTION_BLOCK_CONFIG[type];
+export function createBlock<T extends ContentBlockType>(type: T) {
+    const config = CONTENT_BLOCK_CONFIG[type];
     return {
         id: uuidv4(),
         type,

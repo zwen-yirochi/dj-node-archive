@@ -255,7 +255,7 @@ export default function DashboardDndProvider({ children }: { children: ReactNode
             {children}
             <DragOverlay dropAnimation={null}>
                 {activeItem?.entry && (
-                    <div className="animate-[fade-in_150ms_ease-out] rounded-lg border border-dashboard-border bg-dashboard-bg-card px-3 py-1 pl-8 shadow-lg">
+                    <div className="drag-overlay-card px-3 py-1 pl-8">
                         <span className="text-sm text-dashboard-text">
                             {activeItem.entry.title || 'Untitled'}
                         </span>
@@ -263,7 +263,7 @@ export default function DashboardDndProvider({ children }: { children: ReactNode
                 )}
                 {activeItem?.type === 'section' && activeItem.section && (
                     <div
-                        className="animate-[fade-in_150ms_ease-out] rounded-xl border border-dashboard-border bg-dashboard-bg-card px-3 py-2.5 shadow-xl"
+                        className="drag-overlay-card rounded-xl px-3 py-2.5 shadow-xl"
                         style={{ width: dragWidth ?? undefined }}
                     >
                         <div className="flex items-center gap-2">

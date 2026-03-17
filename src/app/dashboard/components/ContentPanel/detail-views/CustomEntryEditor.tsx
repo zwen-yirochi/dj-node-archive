@@ -21,7 +21,8 @@ import { useCallback, useId, useState, type ReactNode } from 'react';
 
 import { Plus } from 'lucide-react';
 
-import type { CustomEntry, SectionBlock, SectionBlockDataMap, SectionBlockType } from '@/types';
+import type { ContentBlock, ContentBlockDataMap, ContentBlockType, CustomEntry } from '@/types';
+import { defaultDropAnimation, sortableAnimateLayoutChanges } from '@/lib/dnd/animate';
 import { parseEmbedUrl } from '@/lib/embed';
 import { Button } from '@/components/ui/button';
 
@@ -38,15 +39,15 @@ import {
 } from '../shared-fields';
 import type { ImageItem } from '../shared-fields/types';
 import BlockWrapper from './BlockWrapper';
-import { createBlock, SECTION_BLOCK_CONFIG, SECTION_BLOCK_TYPES } from './custom-block.config';
+import { CONTENT_BLOCK_CONFIG, CONTENT_BLOCK_TYPES, createBlock } from './custom-block.config';
 
 // ============================================
 // Block Renderers
 // ============================================
 
 interface BlockRenderProps {
-    data: SectionBlockDataMap[SectionBlockType];
-    onChange: (data: SectionBlockDataMap[SectionBlockType]) => void;
+    data: ContentBlockDataMap[ContentBlockType];
+    onChange: (data: ContentBlockDataMap[ContentBlockType]) => void;
     disabled?: boolean;
 }
 
@@ -64,9 +65,9 @@ const KV_COLUMNS = [
 ];
 const EMPTY_KV = { key: '', value: '' };
 
-const BLOCK_RENDERERS: Record<SectionBlockType, (props: BlockRenderProps) => ReactNode> = {
+const BLOCK_RENDERERS: Record<ContentBlockType, (props: BlockRenderProps) => ReactNode> = {
     header: ({ data, onChange, disabled }) => {
-        const d = data as SectionBlockDataMap['header'];
+        const d = data as ContentBlockDataMap['header'];
         return (
             <div className="space-y-1">
                 <SyncedField
@@ -95,7 +96,7 @@ const BLOCK_RENDERERS: Record<SectionBlockType, (props: BlockRenderProps) => Rea
         );
     },
     richtext: ({ data, onChange, disabled }) => {
-        const d = data as SectionBlockDataMap['richtext'];
+        const d = data as ContentBlockDataMap['richtext'];
         return (
             <SyncedField
                 config={TEXT_FIELD_CONFIG}
@@ -113,7 +114,7 @@ const BLOCK_RENDERERS: Record<SectionBlockType, (props: BlockRenderProps) => Rea
         );
     },
     image: ({ data, onChange, disabled }) => {
-        const d = data as SectionBlockDataMap['image'];
+        const d = data as ContentBlockDataMap['image'];
         return (
             <SyncedField
                 config={IMAGE_FIELD_CONFIG}
@@ -125,7 +126,7 @@ const BLOCK_RENDERERS: Record<SectionBlockType, (props: BlockRenderProps) => Rea
         );
     },
     embed: ({ data, onChange, disabled }) => {
-        const d = data as SectionBlockDataMap['embed'];
+        const d = data as ContentBlockDataMap['embed'];
         return (
             <SyncedField
                 config={URL_FIELD_CONFIG}
@@ -140,7 +141,7 @@ const BLOCK_RENDERERS: Record<SectionBlockType, (props: BlockRenderProps) => Rea
         );
     },
     keyvalue: ({ data, onChange, disabled }) => {
-        const d = data as SectionBlockDataMap['keyvalue'];
+        const d = data as ContentBlockDataMap['keyvalue'];
         return (
             <SyncedField
                 config={KEYVALUE_FIELD_CONFIG}
@@ -164,8 +165,8 @@ const BLOCK_RENDERERS: Record<SectionBlockType, (props: BlockRenderProps) => Rea
 // ============================================
 
 interface SortableBlockProps {
-    block: SectionBlock;
-    onUpdate: (id: string, data: SectionBlockDataMap[SectionBlockType]) => void;
+    block: ContentBlock;
+    onUpdate: (id: string, data: ContentBlockDataMap[ContentBlockType]) => void;
     onRemove: (id: string) => void;
     disabled?: boolean;
 }
@@ -173,6 +174,7 @@ interface SortableBlockProps {
 function SortableBlock({ block, onUpdate, onRemove, disabled }: SortableBlockProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: block.id,
+        animateLayoutChanges: sortableAnimateLayoutChanges,
     });
 
     const style = {
@@ -180,7 +182,7 @@ function SortableBlock({ block, onUpdate, onRemove, disabled }: SortableBlockPro
         transition,
     };
 
-    const config = SECTION_BLOCK_CONFIG[block.type];
+    const config = CONTENT_BLOCK_CONFIG[block.type];
     const render = BLOCK_RENDERERS[block.type];
 
     if (!config || !render) return null;
@@ -209,7 +211,7 @@ function BlockToolbar({
     onAdd,
     disabled,
 }: {
-    onAdd: (type: SectionBlockType) => void;
+    onAdd: (type: ContentBlockType) => void;
     disabled?: boolean;
 }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -229,8 +231,8 @@ function BlockToolbar({
 
             {isOpen && (
                 <div className="absolute left-0 right-0 top-full z-10 mt-1 rounded-lg border border-dashboard-border bg-dashboard-bg-card p-1 shadow-lg">
-                    {SECTION_BLOCK_TYPES.map((type) => {
-                        const config = SECTION_BLOCK_CONFIG[type];
+                    {CONTENT_BLOCK_TYPES.map((type) => {
+                        const config = CONTENT_BLOCK_CONFIG[type];
                         const Icon = config.icon;
                         return (
                             <button
@@ -258,7 +260,7 @@ function BlockToolbar({
 
 interface CustomEntryEditorProps {
     entry: CustomEntry;
-    onBlocksChange: (blocks: SectionBlock[]) => void;
+    onBlocksChange: (blocks: ContentBlock[]) => void;
     disabled?: boolean;
 }
 
@@ -278,7 +280,7 @@ export default function CustomEntryEditor({
     const blocks = entry.blocks;
 
     const handleAddBlock = useCallback(
-        (type: SectionBlockType) => {
+        (type: ContentBlockType) => {
             const newBlock = createBlock(type);
             onBlocksChange([...blocks, newBlock]);
         },
@@ -286,7 +288,7 @@ export default function CustomEntryEditor({
     );
 
     const handleUpdateBlock = useCallback(
-        (id: string, data: SectionBlockDataMap[SectionBlockType]) => {
+        (id: string, data: ContentBlockDataMap[ContentBlockType]) => {
             const updated = blocks.map((b) => (b.id === id ? { ...b, data } : b));
             onBlocksChange(updated);
         },
@@ -345,11 +347,11 @@ export default function CustomEntryEditor({
                         ))}
                     </SortableContext>
 
-                    <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
+                    <DragOverlay dropAnimation={defaultDropAnimation}>
                         {activeBlock && (
-                            <div className="rounded-lg border border-dashboard-border bg-dashboard-bg-card p-3 shadow-lg">
+                            <div className="drag-overlay-card p-3">
                                 <span className="text-sm text-dashboard-text">
-                                    {SECTION_BLOCK_CONFIG[activeBlock.type].label}
+                                    {CONTENT_BLOCK_CONFIG[activeBlock.type].label}
                                 </span>
                             </div>
                         )}

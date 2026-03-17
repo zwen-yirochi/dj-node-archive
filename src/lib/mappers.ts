@@ -13,6 +13,7 @@ import type {
 } from '@/types/database';
 import {
     isPublicEventEntry,
+    type ContentBlock,
     type ContentEntry,
     type CustomEntry,
     type Event,
@@ -21,7 +22,6 @@ import {
     type LinkEntry,
     type MixsetEntry,
     type PublicEventEntry,
-    type SectionBlock,
     type User,
     type Venue,
 } from '@/types/domain';
@@ -162,7 +162,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
                 ...base,
                 type: 'custom',
                 title: (data.title as string) || '',
-                blocks: (data.blocks as SectionBlock[]) || [],
+                blocks: (data.blocks as ContentBlock[]) || [],
             } as CustomEntry;
         }
 

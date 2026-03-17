@@ -1,16 +1,13 @@
 'use client';
 
-import {
-    defaultAnimateLayoutChanges,
-    useSortable,
-    type AnimateLayoutChanges,
-} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { memo } from 'react';
 
 import { AlertTriangle, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry } from '@/types';
+import { sortableAnimateLayoutChanges } from '@/lib/dnd/animate';
 import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { validateEntry } from '@/app/dashboard/config/entry/entry-validation';
@@ -27,13 +24,6 @@ interface TreeItemProps {
     entry: ContentEntry;
     isInSection: boolean;
 }
-
-const animateLayoutChanges: AnimateLayoutChanges = (args) => {
-    const { isSorting, wasDragging } = args;
-    if (wasDragging) return false;
-    if (isSorting) return true;
-    return defaultAnimateLayoutChanges(args);
-};
 
 function TreeItem({ entry, isInSection }: TreeItemProps) {
     // Dashboard Store
@@ -52,7 +42,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: entry.id,
-        animateLayoutChanges,
+        animateLayoutChanges: sortableAnimateLayoutChanges,
         data: { type: 'entry', entry },
     });
 
@@ -96,7 +86,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                     isSelected
                         ? 'bg-dashboard-bg-active text-dashboard-text'
                         : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover hover:text-dashboard-text',
-                    isDragging && 'opacity-50'
+                    isDragging && 'drag-source-ghost'
                 )}
                 onClick={handleClick}
             >

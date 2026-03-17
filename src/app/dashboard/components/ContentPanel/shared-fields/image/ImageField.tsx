@@ -15,6 +15,7 @@ import Image from 'next/image';
 
 import { Pencil } from 'lucide-react';
 
+import { defaultDropAnimation } from '@/lib/dnd/animate';
 import { useHorizontalScroll } from '@/hooks/use-horizontal-scroll';
 
 import type { ImageFieldProps } from '../types';
@@ -26,9 +27,7 @@ import { useImageUpload } from './useImageUpload';
 // Constants
 // ============================================
 
-/** 갤러리 카드 고정 높이 (px) */
 const CARD_HEIGHT = 160;
-/** 빈 상태 드롭존 높이 (px) */
 const EMPTY_HEIGHT = 128;
 const DEFAULT_MAX_COUNT = 10;
 
@@ -178,7 +177,7 @@ export default function ImageField({
                             ))}
                         </SortableContext>
 
-                        <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
+                        <DragOverlay dropAnimation={defaultDropAnimation}>
                             {activeItem && (
                                 <Image
                                     src={activeItem.url}
