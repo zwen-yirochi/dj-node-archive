@@ -12,13 +12,17 @@ import { create } from 'zustand';
 interface DndBridgeState {
     tempEntryOrder: string[] | null;
     tempSectionOrder: string[] | null;
+    tempSectionEntryOrder: Record<string, string[]> | null;
     setTempEntryOrder: (ids: string[] | null) => void;
     setTempSectionOrder: (ids: string[] | null) => void;
+    setTempSectionEntryOrder: (order: Record<string, string[]> | null) => void;
 }
 
 export const useDndBridgeStore = create<DndBridgeState>((set) => ({
     tempEntryOrder: null,
     tempSectionOrder: null,
+    tempSectionEntryOrder: null,
     setTempEntryOrder: (ids) => set({ tempEntryOrder: ids }),
     setTempSectionOrder: (ids) => set({ tempSectionOrder: ids }),
+    setTempSectionEntryOrder: (order) => set({ tempSectionEntryOrder: order }),
 }));
