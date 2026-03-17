@@ -12,6 +12,7 @@ export interface DragData {
     entry?: ContentEntry;
     sectionId?: string;
     section?: Section;
+    variant?: 'list' | 'card';
 }
 
 // ── Drag Context (전략이 접근하는 의존성 번들) ──

@@ -33,7 +33,7 @@ export function SectionEntryItem({ entry, sectionId, variant = 'list', onRemove 
     };
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: `${sectionId}:${entry.id}`,
-        data: { type: 'section-entry', entry, sectionId },
+        data: { type: 'section-entry', entry, sectionId, variant },
         animateLayoutChanges: sortableAnimateLayoutChanges,
     });
 
