@@ -34,15 +34,24 @@
 ### 설정 객체 구조
 
 ```typescript
+type DetailableEntryType = Exclude<EntryType, 'link'>;
+
 const entryDetailConfig: Record<
-    EntryType,
+    DetailableEntryType,
     {
         sections: Array<{
-            component: ComponentType<any>;
-            dataKey?: string;
+            component: ComponentType<{ entry: ContentEntry }>;
+            dataKey?: keyof ContentEntry;
             fields?: MetaFieldConfig[];
         }>;
-        generateMeta: (entry: Entry) => OGMetadata;
+        generateMeta: (
+            entry: ContentEntry,
+            user: User
+        ) => {
+            title: string;
+            description: string;
+            images: string[];
+        };
     }
 >;
 ```
