@@ -18,9 +18,11 @@ import { useCallback, useId, useMemo, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ContentEntry } from '@/types/domain';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { defaultDropAnimation } from '@/app/dashboard/dnd/animate';
 import { dashboardStrategies } from '@/app/dashboard/dnd/strategies';
 import type { DragContext, DragData } from '@/app/dashboard/dnd/types';
+import { TypeBadge } from '@/components/dna';
 
 import { useEntryMutations } from '../hooks';
 import { entryKeys, pageKeys, type PageMeta } from '../hooks/use-editor-data';
@@ -111,7 +113,10 @@ export default function DashboardDndProvider({ children }: { children: ReactNode
         >
             {children}
             <DragOverlay dropAnimation={defaultDropAnimation}>
-                {activeItem?.entry && (
+                {activeItem?.type === 'section-entry' && activeItem.entry && (
+                    <SectionEntryOverlay entry={activeItem.entry} />
+                )}
+                {activeItem?.type === 'entry' && activeItem.entry && (
                     <div className="drag-overlay-card px-3 py-1 pl-8">
                         <span className="text-sm text-dashboard-text">
                             {activeItem.entry.title || 'Untitled'}
@@ -143,5 +148,32 @@ export default function DashboardDndProvider({ children }: { children: ReactNode
                 )}
             </DragOverlay>
         </DndContext>
+    );
+}
+
+// ── Section Entry DragOverlay — 실제 카드 모양과 동일 ──
+
+function SectionEntryOverlay({ entry }: { entry: ContentEntry }) {
+    const config = ENTRY_TYPE_CONFIG[entry.type];
+    const imageUrl = entry.type !== 'custom' ? entry.imageUrls[0] : undefined;
+
+    return (
+        <div className="w-28 rounded-md border border-dashboard-border bg-dashboard-bg-muted shadow-lg">
+            <div className="aspect-[4/3] w-full overflow-hidden rounded-t-md bg-dashboard-bg-hover">
+                {imageUrl ? (
+                    <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                        <TypeBadge type={config.badgeType} size="sm" />
+                    </div>
+                )}
+            </div>
+            <div className="flex items-center gap-1.5 px-1.5 py-1">
+                <TypeBadge type={config.badgeType} size="sm" />
+                <span className="flex-1 truncate text-xs text-dashboard-text">
+                    {entry.title || 'Untitled'}
+                </span>
+            </div>
+        </div>
     );
 }
