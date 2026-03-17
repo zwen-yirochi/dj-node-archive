@@ -60,7 +60,7 @@ export function SectionEntryItem({ entry, sectionId, variant = 'list', onRemove 
                 <button
                     {...attributes}
                     {...listeners}
-                    className="drag-handle-hover absolute left-0.5 top-0.5 z-10 rounded bg-dashboard-bg-card/80 p-0.5"
+                    className="drag-handle absolute left-0.5 top-0.5 z-10 rounded bg-dashboard-bg-card/80 p-0.5 opacity-0 transition-opacity group-hover/card:opacity-100"
                 >
                     <GripVertical className="h-4 w-4" />
                 </button>
