@@ -24,7 +24,7 @@ export interface DragContext {
     reorderEntriesMutation: {
         mutate: (
             variables: { updates: { id: string; position: number }[] },
-            options?: { onError?: () => void }
+            options?: { onError?: () => void; onSettled?: () => void }
         ) => void;
     };
     sectionMutations: {
