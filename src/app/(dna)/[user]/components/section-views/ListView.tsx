@@ -32,12 +32,14 @@ function toTimelineEntry(entry: ContentEntry, username: string): TimelineEntry {
 
     const link = getEntryHref(entry, username) ?? undefined;
 
+    const imageUrl = entry.type !== 'custom' && entry.imageUrls[0] ? entry.imageUrls[0] : undefined;
+
     const artists =
         entry.type === 'event' && entry.lineup?.length > 0
             ? entry.lineup.map((a) => ({ name: a.name }))
             : undefined;
 
-    return { date, title: entry.title || 'Untitled', venue, link, artists };
+    return { date, title: entry.title || 'Untitled', venue, link, imageUrl, artists };
 }
 
 export function ListView({ entries, username }: ListViewProps) {

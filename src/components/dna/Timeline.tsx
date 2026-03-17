@@ -1,4 +1,5 @@
 import Link from 'next/link';
+
 import { cn } from '@/lib/utils';
 import { LineupText, type LineupArtist } from '@/components/dna/LineupText';
 
@@ -7,6 +8,7 @@ export interface TimelineEntry {
     title: string;
     venue: string;
     link?: string;
+    imageUrl?: string;
     stackLabel?: string;
     stackLink?: string;
     artists?: LineupArtist[];
@@ -35,34 +37,47 @@ export function Timeline({ entries, className }: TimelineProps) {
                         {i === 0 ? '*' : '+'}
                     </span>
 
-                    <div className="dna-text-meta">{entry.date}</div>
-                    <div className="my-0.5 text-dna-item font-semibold">
-                        {entry.link ? (
-                            <Link href={entry.link} className="text-inherit no-underline">
-                                {entry.title}
-                            </Link>
-                        ) : (
-                            entry.title
+                    <div className="flex gap-3">
+                        {entry.imageUrl && (
+                            <div className="h-[50px] w-[40px] flex-shrink-0 overflow-hidden border border-dna-ink-faint bg-dna-bg-dark">
+                                <img
+                                    src={entry.imageUrl}
+                                    alt=""
+                                    className="h-full w-full object-cover"
+                                />
+                            </div>
                         )}
-                    </div>
-                    {entry.stackLabel && entry.stackLink && (
-                        <div className="text-dna-system text-dna-ink-light">
-                            {'→ '}
-                            <Link
-                                href={entry.stackLink}
-                                className="border-b border-dotted border-dna-ink-light no-underline hover:border-solid hover:text-dna-ink"
-                            >
-                                {entry.stackLabel} series
-                            </Link>
+                        <div className="min-w-0 flex-1">
+                            <div className="dna-text-meta">{entry.date}</div>
+                            <div className="my-0.5 text-dna-item font-semibold">
+                                {entry.link ? (
+                                    <Link href={entry.link} className="text-inherit no-underline">
+                                        {entry.title}
+                                    </Link>
+                                ) : (
+                                    entry.title
+                                )}
+                            </div>
+                            {entry.stackLabel && entry.stackLink && (
+                                <div className="text-dna-system text-dna-ink-light">
+                                    {'→ '}
+                                    <Link
+                                        href={entry.stackLink}
+                                        className="border-b border-dotted border-dna-ink-light no-underline hover:border-solid hover:text-dna-ink"
+                                    >
+                                        {entry.stackLabel} series
+                                    </Link>
+                                </div>
+                            )}
+                            <div className="text-dna-ui text-dna-ink-light">
+                                @{' '}
+                                {entry.artists && entry.artists.length > 0 ? (
+                                    <LineupText artists={entry.artists} fallback={entry.venue} />
+                                ) : (
+                                    entry.venue
+                                )}
+                            </div>
                         </div>
-                    )}
-                    <div className="text-dna-ui text-dna-ink-light">
-                        @{' '}
-                        {entry.artists && entry.artists.length > 0 ? (
-                            <LineupText artists={entry.artists} fallback={entry.venue} />
-                        ) : (
-                            entry.venue
-                        )}
                     </div>
                 </div>
             ))}
