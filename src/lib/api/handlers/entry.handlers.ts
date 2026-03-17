@@ -15,6 +15,7 @@ import {
 import {
     createEntry,
     deleteEntry,
+    ensureUniqueSlug,
     getEntryById,
     getMaxPosition,
     updateEntry,
@@ -23,6 +24,7 @@ import {
 import { createEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
 import { findUserByAuthId } from '@/lib/db/queries/user.queries';
 import { mapEntryToDatabase, mapEntryToDomain } from '@/lib/mappers';
+import { generateSlug } from '@/lib/utils/slug';
 import {
     createEntryRequestSchema,
     publishEventSchema,
@@ -106,6 +108,11 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
 
     const dbEntry = mapEntryToDatabase(entry, newPosition);
 
+    // Slug 자동 생성
+    const title = ((entry as Record<string, unknown>).title as string) || 'untitled';
+    const rawSlug = generateSlug(title);
+    const slug = await ensureUniqueSlug(rawSlug, pageId);
+
     // Option B: 둘 다 유지 - entries.data에 전체 데이터, reference_id는 플래그
     const result = await createEntry(entry.id, {
         page_id: pageId,
@@ -113,6 +120,7 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
         position: dbEntry.position,
         reference_id: referenceId,
         data: dbEntry.data, // 항상 전체 데이터 저장
+        slug,
     });
 
     if (!isSuccess(result)) {
