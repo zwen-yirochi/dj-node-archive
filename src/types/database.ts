@@ -116,6 +116,7 @@ export interface Entry {
     position: number;
     reference_id: string | null; // events/mixsets 테이블 참조 ID
     data: EntryData;
+    slug: string | null;
     created_at: ISODateString;
     updated_at: ISODateString;
 }
