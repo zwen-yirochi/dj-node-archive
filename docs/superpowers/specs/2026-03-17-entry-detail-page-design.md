@@ -6,16 +6,28 @@
 ## 개요
 
 사용자 공개 페이지에서 엔트리 클릭 시 `/:user/:slug`로 라우팅되는 상세 페이지를 구현한다.
-대상 엔트리 타입: Event, Mixset, Custom (Link 제외).
-기존 `/event/:id` 라우트와 `/:user/:entryId` placeholder를 삭제하고 통합한다.
+대상 엔트리 타입: self-contained Event, Mixset, Custom (Link, reference Event 제외).
+
+- `/event/:id` (위키 이벤트 페이지)는 **유지** — publish된 공개 이벤트 전용
+- `/:user/:entryId` (기존 placeholder)는 삭제하고 `/:user/:slug`로 교체
 
 ## URL & Slug 시스템
 
 ### 라우트
 
-- `/:user/:slug` — Event, Mixset, Custom 엔트리의 상세 페이지
-- `/event/:id` — **삭제**
+- `/:user/:slug` — self-contained Event, Mixset, Custom 엔트리의 상세 페이지
+- `/event/:id` — **유지** (위키 이벤트 페이지, publish된 공개 이벤트 전용)
 - `/:user/:entryId` (기존 placeholder) — **삭제** (`[slug]`로 직접 교체, 동시 공존 불가)
+
+### 엔트리 타입별 링크 전략
+
+| 엔트리 타입            | 조건                                      | 링크 대상                       |
+| ---------------------- | ----------------------------------------- | ------------------------------- |
+| Event (reference)      | `isPublicEventEntry` — events 테이블 참조 | `/event/:eventId` (위키 페이지) |
+| Event (self-contained) | eventId 없음 — 사용자 직접 입력           | `/:user/:slug` (상세 페이지)    |
+| Mixset                 | —                                         | `/:user/:slug`                  |
+| Custom                 | —                                         | `/:user/:slug`                  |
+| Link                   | —                                         | 링크 없음 (외부 URL 직접 연결)  |
 
 ### 마이그레이션 순서
 
@@ -23,7 +35,6 @@
 2. 백필 스크립트: 기존 entries에 title 기반 slug 생성
 3. `slug` 컬럼을 `NOT NULL`로 변경
 4. `[entryId]` 폴더를 `[slug]`로 **교체** (rename, 동시 공존 불가 — Next.js 동적 세그먼트 충돌)
-5. `/event/[id]` 라우트 삭제
 
 ### Slug 생성 규칙
 
@@ -92,7 +103,7 @@ lib/utils/slug.ts
 
 ### 타입별 구성
 
-**Event**:
+**Event (self-contained)** — reference event는 `/event/:id` 위키 페이지를 사용:
 
 | 순서 | 컴포넌트            | 데이터              |
 | ---- | ------------------- | ------------------- |
@@ -260,15 +271,22 @@ src/
 ### 삭제
 
 ```
-src/app/(dna)/event/[id]/           # 기존 Event 상세 라우트 전체
 src/app/(dna)/[user]/[entryId]/     # 기존 placeholder 페이지
+```
+
+### 유지
+
+```
+src/app/(dna)/event/[id]/           # 위키 이벤트 페이지 (변경 없음)
 ```
 
 ### 수정
 
 - `entries` 테이블 마이그레이션 (slug 컬럼 추가 + 백필)
-- 공개 페이지 뷰 컴포넌트들 (`ListView`, `CarouselView`, `FeatureView`) — 링크를 `/:user/:slug`로 변경
-- `EntryCard` — 모든 상세 가능 엔트리(Event, Mixset, Custom)를 클릭 가능하게 변경
+- 공개 페이지 뷰 컴포넌트들 (`ListView`, `CarouselView`, `FeatureView`) — 링크 로직 변경:
+    - reference event (`isPublicEventEntry`) → `/event/:eventId` 유지
+    - self-contained event / mixset / custom → `/:user/:slug` 추가
+- `EntryCard` — 동일한 링크 분기 로직 적용
 - 엔트리 생성 mutation — slug 자동 생성 로직 추가
 
 ## 스코프 외 (향후)

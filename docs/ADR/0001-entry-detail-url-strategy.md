@@ -6,7 +6,8 @@
 
 ## 컨텍스트
 
-사용자 공개 페이지에서 Mixset, Custom 엔트리의 상세 페이지를 구현해야 한다.
+사용자 공개 페이지에서 self-contained Event, Mixset, Custom 엔트리의 상세 페이지를 구현해야 한다.
+reference Event(publish된 공개 이벤트)는 기존 `/event/:id` 위키 페이지를 사용한다.
 URL 구조로 `/:user/:identifier`를 사용하며, identifier로 무엇을 쓸지 결정이 필요했다.
 
 ## 검토한 옵션
