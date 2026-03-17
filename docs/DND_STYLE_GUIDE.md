@@ -77,6 +77,36 @@
 4. DragOverlay 사용 시 → 카드면 `drag-overlay-card`, `dropAnimation={defaultDropAnimation}`
 5. 드롭 대상 → `drop-zone-active` 적용
 
+## 새 드래그 시나리오 추가 시 (DashboardDndProvider)
+
+DashboardDndProvider는 Strategy 패턴을 사용합니다.
+
+**파일 위치:** `src/lib/dnd/strategies/`
+
+**현재 전략:**
+
+| 전략                  | activeTypes     | 역할                                  |
+| --------------------- | --------------- | ------------------------------------- |
+| `sidebarEntryReorder` | `entry`         | 엔트리 정렬 + 섹션에 추가             |
+| `sectionReorder`      | `section`       | 섹션 순서 변경 (onOver 실시간 리오더) |
+| `sectionEntryReorder` | `section-entry` | 섹션 내 엔트리 정렬/이동              |
+
+**새 전략 추가 순서:**
+
+1. `src/lib/dnd/strategies/<name>.ts` 파일 생성
+2. `DragStrategy` 인터페이스 구현: `activeTypes`, `acceptsOver`, `onEnd` (필요 시 `onOver`)
+3. `src/lib/dnd/strategies/index.ts`의 `dashboardStrategies` 배열에 추가
+4. Provider 수정 불필요 — 전략 배열에 추가만 하면 자동 매칭
+
+**전략 인터페이스 (`src/lib/dnd/types.ts`):**
+
+| 필드          | 용도                                            |
+| ------------- | ----------------------------------------------- |
+| `activeTypes` | 이 전략이 처리할 드래그 아이템 타입             |
+| `acceptsOver` | collision detection: 허용할 droppable 타입 필터 |
+| `onOver?`     | 드래그 중 실시간 처리 (optional)                |
+| `onEnd`       | 드롭 시 처리                                    |
+
 ## 예외 (토큰 미적용, 의도적)
 
 | 컴포넌트               | 항목                          | 이유                                                                                                                                                                         |
