@@ -52,7 +52,11 @@ export default async function EventPage({ params }: PageProps) {
     return (
         <DnaPageShell
             pathBar={{
-                path: `root / events / ${event.title.toLowerCase()}`,
+                items: [
+                    { label: 'root', href: '/' },
+                    { label: 'events' },
+                    { label: event.title.toLowerCase() },
+                ],
                 meta: `type: event // ${formatEventDate(event.date)}`,
             }}
             footerMeta={[`DJ-NODE-ARCHIVE // EVENT: ${event.title.toUpperCase()}`]}

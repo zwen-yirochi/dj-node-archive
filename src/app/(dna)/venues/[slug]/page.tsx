@@ -1,23 +1,24 @@
-import { AsciiBox } from '@/components/dna/AsciiBox';
-import { AsciiDivider } from '@/components/dna/AsciiDivider';
-import { Button } from '@/components/dna/Button';
-import { ExternalLinks } from '@/components/dna/ExternalLinks';
-import { DnaPageShell } from '@/components/dna/DnaPageShell';
-import { MetaTable } from '@/components/dna/MetaTable';
-import { NodeLabel } from '@/components/dna/NodeLabel';
-import { SectionLabel } from '@/components/dna/SectionLabel';
-import { StatsRow } from '@/components/dna/StatsRow';
-import { findEventsByVenueId } from '@/lib/db/queries/event.queries';
-import { findStacksByVenueId } from '@/lib/db/queries/event-stack.queries';
-import { formatEventDate, venueCode } from '@/lib/formatters';
-import { findVenueBySlug } from '@/lib/db/queries/venue.queries';
-import type { Event as DBEvent, EventPerformer, EventStack, Venue } from '@/types/database';
-import { isSuccess } from '@/types/result';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+
+import type { Event as DBEvent, EventPerformer, EventStack, Venue } from '@/types/database';
+import { isSuccess } from '@/types/result';
+import { findStacksByVenueId } from '@/lib/db/queries/event-stack.queries';
+import { findEventsByVenueId } from '@/lib/db/queries/event.queries';
+import { findVenueBySlug } from '@/lib/db/queries/venue.queries';
+import { formatEventDate, venueCode } from '@/lib/formatters';
+import { AsciiBox } from '@/components/dna/AsciiBox';
+import { AsciiDivider } from '@/components/dna/AsciiDivider';
+import { Button } from '@/components/dna/Button';
+import { DnaPageShell } from '@/components/dna/DnaPageShell';
+import { ExternalLinks } from '@/components/dna/ExternalLinks';
 import type { LineupArtist } from '@/components/dna/LineupText';
+import { MetaTable } from '@/components/dna/MetaTable';
+import { NodeLabel } from '@/components/dna/NodeLabel';
 import PaginatedTimeline from '@/components/dna/PaginatedTimeline';
+import { SectionLabel } from '@/components/dna/SectionLabel';
+import { StatsRow } from '@/components/dna/StatsRow';
 import GraphView from '@/components/graph/GraphView';
 import DesktopOnly from '@/components/ui/DesktopOnly';
 
@@ -113,7 +114,12 @@ export default async function VenuePage({ params }: PageProps) {
     return (
         <DnaPageShell
             pathBar={{
-                path: `root / discover / venues / ${venue.name.toLowerCase()}`,
+                items: [
+                    { label: 'root', href: '/' },
+                    { label: 'discover', href: '/discover' },
+                    { label: 'venues' },
+                    { label: venue.name.toLowerCase() },
+                ],
                 meta: `node: ${vcode} // type: venue`,
             }}
             footerMeta={[`DJ-NODE-ARCHIVE // VENUE: ${venue.name.toUpperCase()} [${vcode}]`]}

@@ -1,10 +1,10 @@
 import { Footer } from './Footer';
-import { PathBar } from './PathBar';
+import { PathBar, type PathBarItem } from './PathBar';
 import { TopNav } from './TopNav';
 
 interface DnaPageShellProps {
     activeLink?: 'archive' | 'discover';
-    pathBar?: { path: string; meta?: string };
+    pathBar?: { items: PathBarItem[]; meta?: string };
     footerMeta: string[];
     footerRight?: string;
     children: React.ReactNode;
@@ -29,7 +29,7 @@ export function DnaPageShell({
 
             {pathBar && (
                 <div className="hidden md:block">
-                    <PathBar path={pathBar.path} meta={pathBar.meta} />
+                    <PathBar items={pathBar.items} meta={pathBar.meta} />
                 </div>
             )}
 

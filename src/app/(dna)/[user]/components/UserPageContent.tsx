@@ -51,7 +51,7 @@ export default function UserPageContent({
     return (
         <DnaPageShell
             pathBar={{
-                path: `root / nodes / ${user.username}`,
+                items: [{ label: 'root', href: '/' }, { label: user.username }],
                 meta: 'node type: artist // status: active',
             }}
             footerMeta={[`DJ-NODE-ARCHIVE // NODE: ${user.username.toUpperCase()}`]}

@@ -1,6 +1,5 @@
 import type { ContentEntry, User } from '@/types/domain';
 
-import { DnaBreadcrumb } from './DnaBreadcrumb';
 import { DnaPageShell } from './DnaPageShell';
 import { entryDetailConfig, type DetailableEntryType } from './entry-detail/entry-detail.config';
 import { NodeLabel } from './NodeLabel';
@@ -24,23 +23,18 @@ export function EntryDetailShell({ entry, user, username }: EntryDetailShellProp
     return (
         <DnaPageShell
             pathBar={{
-                path: `root / ${username} / ${entry.title.toLowerCase()}`,
+                items: [
+                    { label: 'root', href: '/' },
+                    { label: username, href: `/${username}` },
+                    { label: entry.title },
+                ],
                 meta: `type: ${entry.type}`,
             }}
             footerMeta={[
                 `DJ-NODE-ARCHIVE // ${getTypeLabel(entry.type).toUpperCase()}: ${entry.title.toUpperCase()}`,
             ]}
         >
-            <div className="pb-4 pt-2">
-                <DnaBreadcrumb
-                    items={[
-                        { label: user.displayName, href: `/${username}` },
-                        { label: entry.title },
-                    ]}
-                />
-            </div>
-
-            <section className="pb-6">
+            <section className="pb-6 pt-4">
                 <NodeLabel right={getTypeLabel(entry.type)}>
                     {getTypeLabel(entry.type)} Node
                 </NodeLabel>

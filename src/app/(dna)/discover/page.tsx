@@ -1,5 +1,7 @@
-import { DnaPageShell } from '@/components/dna/DnaPageShell';
 import { Metadata } from 'next';
+
+import { DnaPageShell } from '@/components/dna/DnaPageShell';
+
 import { DnaDiscoveryContent } from './DnaDiscoveryContent';
 
 export const metadata: Metadata = {
@@ -11,7 +13,7 @@ export default function DiscoverPage() {
     return (
         <DnaPageShell
             activeLink="discover"
-            pathBar={{ path: 'root / discovery' }}
+            pathBar={{ items: [{ label: 'root', href: '/' }, { label: 'discovery' }] }}
             footerMeta={['DJ-NODE-ARCHIVE // MODULE: DISCOVERY']}
         >
             <section className="pb-4 pt-8">
