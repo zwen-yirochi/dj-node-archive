@@ -202,3 +202,28 @@ export async function getMaxPosition(pageId: string): Promise<Result<number>> {
         );
     }
 }
+
+export async function getEntryBySlug(pageId: string, slug: string): Promise<Result<Entry>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('entries')
+            .select()
+            .eq('page_id', pageId)
+            .eq('slug', slug)
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                return failure(createNotFoundError('엔트리를 찾을 수 없습니다.', 'entry'));
+            }
+            return failure(createDatabaseError(error.message, 'getEntryBySlug', error));
+        }
+
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError('엔트리 조회 중 오류가 발생했습니다.', 'getEntryBySlug', err)
+        );
+    }
+}
