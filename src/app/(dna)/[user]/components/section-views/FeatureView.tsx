@@ -1,5 +1,5 @@
 import type { ContentEntry } from '@/types/domain';
-import { EntryCard } from '@/components/dna/EntryCard';
+import { EntryFeatureCard } from '@/components/dna/entry-renderers/EntryFeatureCard';
 
 interface FeatureViewProps {
     entries: ContentEntry[];
@@ -13,7 +13,7 @@ export function FeatureView({ entries, username }: FeatureViewProps) {
 
     return (
         <div className="my-3">
-            <EntryCard entry={featured} index={0} username={username} />
+            <EntryFeatureCard entry={featured} username={username} />
         </div>
     );
 }
