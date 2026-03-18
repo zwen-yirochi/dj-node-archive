@@ -12,6 +12,7 @@ export interface TimelineEntry {
     stackLabel?: string;
     stackLink?: string;
     artists?: LineupArtist[];
+    showAtPrefix?: boolean; // default true for backward compat
 }
 
 interface TimelineProps {
@@ -69,14 +70,19 @@ export function Timeline({ entries, className }: TimelineProps) {
                                     </Link>
                                 </div>
                             )}
-                            <div className="text-dna-ui text-dna-ink-light">
-                                @{' '}
-                                {entry.artists && entry.artists.length > 0 ? (
-                                    <LineupText artists={entry.artists} fallback={entry.venue} />
-                                ) : (
-                                    entry.venue
-                                )}
-                            </div>
+                            {entry.venue && (
+                                <div className="text-dna-ui text-dna-ink-light">
+                                    {(entry.showAtPrefix ?? true) && '@ '}
+                                    {entry.artists && entry.artists.length > 0 ? (
+                                        <LineupText
+                                            artists={entry.artists}
+                                            fallback={entry.venue}
+                                        />
+                                    ) : (
+                                        entry.venue
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
