@@ -51,6 +51,7 @@ export async function findUserWithPages(username: string): Promise<Result<UserWi
                         type,
                         position,
                         reference_id,
+                        slug,
                         data,
                         created_at,
                         updated_at
@@ -113,6 +114,7 @@ export async function findUserWithPagesById(userId: string): Promise<Result<User
                         type,
                         position,
                         reference_id,
+                        slug,
                         data,
                         created_at,
                         updated_at
@@ -155,6 +157,7 @@ export async function findUserWithPagesByAuthId(
                         type,
                         position,
                         reference_id,
+                        slug,
                         data,
                         created_at,
                         updated_at

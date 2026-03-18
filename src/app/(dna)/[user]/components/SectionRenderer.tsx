@@ -10,6 +10,7 @@ import { ListView } from './section-views/ListView';
 interface SectionViewProps {
     entries: ContentEntry[];
     options: Record<string, unknown>;
+    username: string;
 }
 
 const VIEW_RENDERERS: Record<ViewType, ComponentType<SectionViewProps>> = {
@@ -20,9 +21,10 @@ const VIEW_RENDERERS: Record<ViewType, ComponentType<SectionViewProps>> = {
 
 interface Props {
     section: ResolvedSection;
+    username: string;
 }
 
-export function SectionRenderer({ section }: Props) {
+export function SectionRenderer({ section, username }: Props) {
     const View = VIEW_RENDERERS[section.viewType];
 
     return (
@@ -32,7 +34,7 @@ export function SectionRenderer({ section }: Props) {
                     {section.title}
                 </SectionLabel>
             )}
-            <View entries={section.entries} options={section.options} />
+            <View entries={section.entries} options={section.options} username={username} />
         </section>
     );
 }

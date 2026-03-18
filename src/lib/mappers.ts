@@ -73,6 +73,7 @@ export function mapEntryToDomain(dbEntry: Entry): ContentEntry {
     const base = {
         id: dbEntry.id,
         position: dbEntry.position,
+        slug: dbEntry.slug ?? undefined,
         createdAt: dbEntry.created_at,
         updatedAt: dbEntry.updated_at,
     };
@@ -180,7 +181,7 @@ type EntryMapperInput = ContentEntry | ({ type: ContentEntry['type'] } & Record<
 export function mapEntryToDatabase(
     entry: EntryMapperInput,
     position: number
-): Omit<Entry, 'id' | 'created_at' | 'updated_at' | 'page_id' | 'reference_id'> {
+): Omit<Entry, 'id' | 'created_at' | 'updated_at' | 'page_id' | 'reference_id' | 'slug'> {
     switch (entry.type) {
         case 'event': {
             const eventEntry = entry as EventEntry;

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
+
 import { Timeline } from './Timeline';
 
 const meta: Meta<typeof Timeline> = {
@@ -35,6 +36,47 @@ export const WithLinks: Story = {
                 link: '/venue/faust',
             },
             { date: '21 OCT 2024', title: 'SUBTERRANEAN', venue: 'Contra' },
+        ],
+    },
+};
+
+export const WithImages: Story = {
+    args: {
+        entries: [
+            {
+                date: '15 DEC 2024',
+                title: 'NOCTURNAL FREQUENCIES',
+                venue: 'Cakeshop',
+                imageUrl: 'https://picsum.photos/seed/evt1/96/96',
+                link: '/demo-dj/nocturnal-frequencies',
+            },
+            {
+                date: '08 NOV 2024',
+                title: 'DEEP STATE',
+                venue: 'Faust',
+                imageUrl: 'https://picsum.photos/seed/evt2/96/96',
+            },
+            { date: '21 OCT 2024', title: 'SUBTERRANEAN', venue: 'Contra' },
+        ],
+    },
+};
+
+export const MixedTypes: Story = {
+    args: {
+        entries: [
+            {
+                date: '15 DEC 2024',
+                title: 'NOCTURNAL FREQUENCIES',
+                venue: 'Cakeshop',
+                showAtPrefix: true,
+            },
+            { date: '45min', title: 'DEEP HOUSE MIX VOL.3', venue: '', showAtPrefix: false },
+            {
+                date: '',
+                title: 'SoundCloud Playlist',
+                venue: 'soundcloud.com',
+                showAtPrefix: false,
+            },
         ],
     },
 };

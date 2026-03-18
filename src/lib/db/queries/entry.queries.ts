@@ -16,6 +16,7 @@ export interface CreateEntryInput {
     position: number;
     reference_id?: string | null; // events.id 또는 mixsets.id 참조
     data: EntryData;
+    slug?: string;
 }
 
 export interface UpdateEntryInput {
@@ -35,6 +36,7 @@ export async function createEntry(id: string, input: CreateEntryInput): Promise<
                 position: input.position,
                 reference_id: input.reference_id ?? null,
                 data: input.data,
+                slug: input.slug ?? null,
             })
             .select()
             .single();
@@ -200,5 +202,50 @@ export async function getMaxPosition(pageId: string): Promise<Result<number>> {
         return failure(
             createDatabaseError('최대 position 조회 중 오류가 발생했습니다.', 'getMaxPosition', err)
         );
+    }
+}
+
+export async function getEntryBySlug(pageId: string, slug: string): Promise<Result<Entry>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('entries')
+            .select()
+            .eq('page_id', pageId)
+            .eq('slug', slug)
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                return failure(createNotFoundError('엔트리를 찾을 수 없습니다.', 'entry'));
+            }
+            return failure(createDatabaseError(error.message, 'getEntryBySlug', error));
+        }
+
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError('엔트리 조회 중 오류가 발생했습니다.', 'getEntryBySlug', err)
+        );
+    }
+}
+
+export async function ensureUniqueSlug(slug: string, pageId: string): Promise<string> {
+    const supabase = await createClient();
+    let candidate = slug;
+    let suffix = 1;
+
+    while (true) {
+        const { data } = await supabase
+            .from('entries')
+            .select('id')
+            .eq('page_id', pageId)
+            .eq('slug', candidate)
+            .single();
+
+        if (!data) return candidate;
+
+        suffix++;
+        candidate = `${slug}-${suffix}`;
     }
 }

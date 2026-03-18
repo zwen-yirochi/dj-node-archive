@@ -1,12 +1,11 @@
 import { NodeLabel } from '@/components/dna/NodeLabel';
 
 import type { HeaderProps } from '.';
-import { HeaderTags, SocialLinks } from './MinimalHeader';
+import { HeaderTags, SocialLinks, toTagLinks } from './MinimalHeader';
 
 /** Portrait — large centered portrait with profile info below */
 export function PortraitHeader({ user, entries, links }: HeaderProps) {
-    const hasEvents = entries.some((e) => e.type === 'event');
-    const hasMixsets = entries.some((e) => e.type === 'mixset');
+    const activeLinks = toTagLinks(links);
 
     return (
         <section className="pb-6 pt-6 md:pt-8">
@@ -47,7 +46,7 @@ export function PortraitHeader({ user, entries, links }: HeaderProps) {
                     <p className="dna-text-body mx-auto mt-3 max-w-[480px] md:mt-4">{user.bio}</p>
                 )}
 
-                <HeaderTags hasEvents={hasEvents} hasMixsets={hasMixsets} />
+                <HeaderTags links={activeLinks} />
             </div>
         </section>
     );

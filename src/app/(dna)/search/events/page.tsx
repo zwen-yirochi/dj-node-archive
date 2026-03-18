@@ -2,12 +2,13 @@
 
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+
+import { useEventSearch } from '@/hooks/use-search';
 import { DnaPageShell } from '@/components/dna/DnaPageShell';
 import { InputField } from '@/components/dna/InputField';
-import { SectionLabel } from '@/components/dna/SectionLabel';
 import { NodeItem } from '@/components/dna/NodeItem';
+import { SectionLabel } from '@/components/dna/SectionLabel';
 import QueryProvider from '@/components/providers/QueryProvider';
-import { useEventSearch } from '@/hooks/use-search';
 
 function EventSearchContent() {
     const searchParams = useSearchParams();
@@ -21,7 +22,7 @@ function EventSearchContent() {
         <DnaPageShell
             activeLink="discover"
             pathBar={{
-                path: 'root / search / events',
+                items: [{ label: 'root', href: '/' }, { label: 'search' }, { label: 'events' }],
                 meta: data ? `${data.total_count} found` : '',
             }}
             footerMeta={['DJ-NODE-ARCHIVE // MODULE: SEARCH']}

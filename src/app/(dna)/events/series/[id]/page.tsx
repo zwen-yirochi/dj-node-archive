@@ -1,21 +1,22 @@
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+
+import type { Event as DBEvent, EventPerformer } from '@/types/database';
+import { isSuccess } from '@/types/result';
+import { findStackById } from '@/lib/db/queries/event-stack.queries';
+import { findEventsByStackId } from '@/lib/db/queries/event.queries';
+import { findVenueById } from '@/lib/db/queries/venue.queries';
+import { formatEventDate } from '@/lib/formatters';
 import { AsciiBox } from '@/components/dna/AsciiBox';
 import { AsciiDivider } from '@/components/dna/AsciiDivider';
 import { DnaPageShell } from '@/components/dna/DnaPageShell';
+import type { LineupArtist } from '@/components/dna/LineupText';
 import { MetaTable } from '@/components/dna/MetaTable';
 import { NodeLabel } from '@/components/dna/NodeLabel';
+import PaginatedTimeline from '@/components/dna/PaginatedTimeline';
 import { SectionLabel } from '@/components/dna/SectionLabel';
 import { StatsRow } from '@/components/dna/StatsRow';
 import { VenueLink } from '@/components/dna/VenueLink';
-import { findEventsByStackId } from '@/lib/db/queries/event.queries';
-import { findStackById } from '@/lib/db/queries/event-stack.queries';
-import { findVenueById } from '@/lib/db/queries/venue.queries';
-import { formatEventDate } from '@/lib/formatters';
-import type { LineupArtist } from '@/components/dna/LineupText';
-import type { Event as DBEvent, EventPerformer } from '@/types/database';
-import { isSuccess } from '@/types/result';
-import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import PaginatedTimeline from '@/components/dna/PaginatedTimeline';
 import GraphView from '@/components/graph/GraphView';
 import DesktopOnly from '@/components/ui/DesktopOnly';
 
@@ -84,7 +85,12 @@ export default async function StackSeriesPage({ params }: PageProps) {
     return (
         <DnaPageShell
             pathBar={{
-                path: `root / discover / series / ${stack.title.toLowerCase()}`,
+                items: [
+                    { label: 'root', href: '/' },
+                    { label: 'discover', href: '/discover' },
+                    { label: 'series' },
+                    { label: stack.title.toLowerCase() },
+                ],
                 meta: `type: event_stack // ${events.length} events`,
             }}
             footerMeta={[`DJ-NODE-ARCHIVE // SERIES: ${stack.title.toUpperCase()}`]}
@@ -130,7 +136,7 @@ export default async function StackSeriesPage({ params }: PageProps) {
             />
 
             {/* ── Metadata ── */}
-            <div className="grid grid-cols-1 gap-dna-gap md:grid-cols-2">
+            <div className="hidden gap-dna-gap md:grid md:grid-cols-2">
                 <div>
                     <SectionLabel right="META">Series Info</SectionLabel>
                     <MetaTable

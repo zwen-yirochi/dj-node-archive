@@ -51,7 +51,7 @@ export default function UserPageContent({
     return (
         <DnaPageShell
             pathBar={{
-                path: `root / nodes / ${user.username}`,
+                items: [{ label: 'root', href: '/' }, { label: user.username }],
                 meta: 'node type: artist // status: active',
             }}
             footerMeta={[`DJ-NODE-ARCHIVE // NODE: ${user.username.toUpperCase()}`]}
@@ -74,7 +74,7 @@ export default function UserPageContent({
                 />
             </div>
 
-            <div className="grid grid-cols-1 gap-dna-gap md:grid-cols-2">
+            <div className="hidden gap-dna-gap md:grid md:grid-cols-2">
                 <div>
                     <SectionLabel right="META">Node Info</SectionLabel>
                     <MetaTable
@@ -115,7 +115,7 @@ export default function UserPageContent({
             </div>
 
             {sections.map((section) => (
-                <SectionRenderer key={section.id} section={section} />
+                <SectionRenderer key={section.id} section={section} username={user.username} />
             ))}
         </DnaPageShell>
     );

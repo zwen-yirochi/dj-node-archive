@@ -52,7 +52,11 @@ export default async function EventPage({ params }: PageProps) {
     return (
         <DnaPageShell
             pathBar={{
-                path: `root / events / ${event.title.toLowerCase()}`,
+                items: [
+                    { label: 'root', href: '/' },
+                    { label: 'events' },
+                    { label: event.title.toLowerCase() },
+                ],
                 meta: `type: event // ${formatEventDate(event.date)}`,
             }}
             footerMeta={[`DJ-NODE-ARCHIVE // EVENT: ${event.title.toUpperCase()}`]}
@@ -92,7 +96,7 @@ export default async function EventPage({ params }: PageProps) {
             </section>
 
             {/* ── Metadata ── */}
-            <div className="grid grid-cols-1 gap-dna-gap md:grid-cols-2">
+            <div className="hidden gap-dna-gap md:grid md:grid-cols-2">
                 <div>
                     <SectionLabel right="META">Event Info</SectionLabel>
                     <MetaTable

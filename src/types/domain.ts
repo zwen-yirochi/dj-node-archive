@@ -120,6 +120,7 @@ export interface ContentBlock<T extends ContentBlockType = ContentBlockType> {
 interface EntryBase {
     id: string;
     position: number;
+    slug?: string;
     createdAt: string;
     updatedAt: string;
 }
