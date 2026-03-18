@@ -1,12 +1,11 @@
 import { NodeLabel } from '@/components/dna/NodeLabel';
 
 import type { HeaderProps } from '.';
-import { HeaderTags, SocialLinks } from './MinimalHeader';
+import { HeaderTags, SocialLinks, toTagLinks } from './MinimalHeader';
 
 /** Banner — wide banner area with side-by-side layout */
 export function BannerHeader({ user, entries, links }: HeaderProps) {
-    const hasEvents = entries.some((e) => e.type === 'event');
-    const hasMixsets = entries.some((e) => e.type === 'mixset');
+    const activeLinks = toTagLinks(links);
 
     return (
         <section className="pb-6 pt-6 md:pt-8">
@@ -57,7 +56,7 @@ export function BannerHeader({ user, entries, links }: HeaderProps) {
                         @{user.username}
                     </div>
                     {user.bio && <p className="dna-text-body mt-3 md:max-w-[520px]">{user.bio}</p>}
-                    <HeaderTags hasEvents={hasEvents} hasMixsets={hasMixsets} />
+                    <HeaderTags links={activeLinks} />
                 </div>
             </div>
         </section>

@@ -6,8 +6,7 @@ import type { HeaderProps } from '.';
 
 /** Minimal — clean centered/left layout with avatar and bio (default) */
 export function MinimalHeader({ user, entries, links }: HeaderProps) {
-    const eventEntries = entries.filter((e) => e.type === 'event') as EventEntry[];
-    const otherEntries = entries.filter((e) => e.type !== 'event');
+    const activeLinks = toTagLinks(links);
 
     return (
         <section className="pb-6 pt-6 md:pt-8">
@@ -32,10 +31,7 @@ export function MinimalHeader({ user, entries, links }: HeaderProps) {
                         <p className="dna-text-body mt-3 md:mt-4 md:max-w-[520px]">{user.bio}</p>
                     )}
 
-                    <HeaderTags
-                        hasEvents={eventEntries.length > 0}
-                        hasMixsets={otherEntries.some((e) => e.type === 'mixset')}
-                    />
+                    <HeaderTags links={activeLinks} />
                 </div>
             </div>
         </section>
@@ -44,26 +40,21 @@ export function MinimalHeader({ user, entries, links }: HeaderProps) {
 
 // ── Shared sub-components ──
 
-export function HeaderTags({ hasEvents, hasMixsets }: { hasEvents: boolean; hasMixsets: boolean }) {
-    const tags = [
-        { label: 'DJ', active: true },
-        ...(hasEvents ? [{ label: 'Events' }] : []),
-        ...(hasMixsets ? [{ label: 'Mixset' }] : []),
-    ];
+export function HeaderTags({ links }: { links: { label: string; href: string }[] }) {
+    if (links.length === 0) return null;
 
     return (
         <div className="my-3.5 flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-                <span
-                    key={tag.label}
-                    className={`border px-2.5 py-1 text-dna-label uppercase tracking-dna-system ${
-                        'active' in tag && tag.active
-                            ? 'border-dna-ink bg-dna-ink text-dna-bg'
-                            : 'border-dna-ink-faint text-dna-ink-mid'
-                    }`}
+            {links.map((link) => (
+                <a
+                    key={link.label}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="border border-dna-ink-faint px-2.5 py-1 text-dna-label uppercase tracking-dna-system text-dna-ink-mid no-underline hover:border-dna-ink hover:text-dna-ink"
                 >
-                    {tag.label}
-                </span>
+                    {link.label}
+                </a>
             ))}
         </div>
     );
@@ -76,6 +67,15 @@ const PLATFORM_LABELS: Record<string, string> = {
     apple_music: 'Apple Music',
     soundcloud: 'SoundCloud',
 };
+
+export function toTagLinks(links: ProfileLink[]) {
+    return links
+        .filter((l) => l.url && l.enabled !== false)
+        .map((l) => ({
+            label: l.type === 'custom' ? l.label || 'Link' : (PLATFORM_LABELS[l.type] ?? l.type),
+            href: l.url,
+        }));
+}
 
 export function SocialLinks({ links, className }: { links: ProfileLink[]; className?: string }) {
     if (links.length === 0) return null;

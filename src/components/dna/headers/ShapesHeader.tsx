@@ -1,12 +1,11 @@
 import { NodeLabel } from '@/components/dna/NodeLabel';
 
 import type { HeaderProps } from '.';
-import { HeaderTags, SocialLinks } from './MinimalHeader';
+import { HeaderTags, SocialLinks, toTagLinks } from './MinimalHeader';
 
 /** Shapes — geometric decorative header with grid pattern */
 export function ShapesHeader({ user, entries, links }: HeaderProps) {
-    const hasEvents = entries.some((e) => e.type === 'event');
-    const hasMixsets = entries.some((e) => e.type === 'mixset');
+    const activeLinks = toTagLinks(links);
 
     return (
         <section className="pb-6 pt-6 md:pt-8">
@@ -65,9 +64,9 @@ export function ShapesHeader({ user, entries, links }: HeaderProps) {
                 </div>
             </div>
 
-            {/* Tags, links, share below the box */}
+            {/* Links below the box */}
             <div className="flex flex-col items-center text-center md:items-start md:text-left">
-                <HeaderTags hasEvents={hasEvents} hasMixsets={hasMixsets} />
+                <HeaderTags links={activeLinks} />
             </div>
         </section>
     );
