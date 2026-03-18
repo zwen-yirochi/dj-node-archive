@@ -7,6 +7,7 @@ import { TypeBadge } from '@/components/dna';
 
 import { carouselCardConfig } from './entry-carousel-card.config';
 import { resolveHref } from './shared';
+import type { EntrySpec } from './types';
 
 const IMG_HEIGHT = 180;
 
@@ -16,7 +17,7 @@ interface Props {
 }
 
 export function EntryCarouselCard({ entry, username }: Props) {
-    const spec = carouselCardConfig[entry.type];
+    const spec = carouselCardConfig[entry.type] as EntrySpec;
     const image = spec.getImage?.(entry as never) ?? null;
     const date = spec.getDate?.(entry as never) ?? null;
     const subtitle = spec.getSubtitle?.(entry as never) ?? null;
