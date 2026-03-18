@@ -37,16 +37,18 @@ function EventDetail({ entry }: { entry: ContentEntry }) {
     return (
         <>
             <CoverImage src={entry.imageUrls?.[0]} alt={entry.title} />
-            <MetaSection
-                label="Event Info"
-                labelRight="META"
-                items={[
-                    { key: 'Title', value: entry.title },
-                    { key: 'Date', value: formatEventDate(entry.date) },
-                    { key: 'Venue', value: entry.venue?.name || 'NULL' },
-                    { key: 'Lineup', value: `${entry.lineup.length} artists` },
-                ]}
-            />
+            <div className="hidden md:block">
+                <MetaSection
+                    label="Event Info"
+                    labelRight="META"
+                    items={[
+                        { key: 'Title', value: entry.title },
+                        { key: 'Date', value: formatEventDate(entry.date) },
+                        { key: 'Venue', value: entry.venue?.name || 'NULL' },
+                        { key: 'Lineup', value: `${entry.lineup.length} artists` },
+                    ]}
+                />
+            </div>
             {entry.description && <RichtextBlockView data={{ content: entry.description }} />}
             {entry.links && <ExternalLinks links={entry.links} />}
         </>
@@ -58,16 +60,18 @@ function MixsetDetail({ entry }: { entry: ContentEntry }) {
     return (
         <>
             <CoverImage src={entry.imageUrls?.[0]} alt={entry.title} />
-            <MetaSection
-                label="Mixset Info"
-                labelRight="META"
-                items={[
-                    ...(entry.durationMinutes
-                        ? [{ key: 'Duration', value: `${entry.durationMinutes} min` }]
-                        : []),
-                    ...(entry.url ? [{ key: 'URL', value: entry.url, href: entry.url }] : []),
-                ]}
-            />
+            <div className="hidden md:block">
+                <MetaSection
+                    label="Mixset Info"
+                    labelRight="META"
+                    items={[
+                        ...(entry.durationMinutes
+                            ? [{ key: 'Duration', value: `${entry.durationMinutes} min` }]
+                            : []),
+                        ...(entry.url ? [{ key: 'URL', value: entry.url, href: entry.url }] : []),
+                    ]}
+                />
+            </div>
             <TracklistTimeline tracklist={entry.tracklist} />
             {entry.description && <RichtextBlockView data={{ content: entry.description }} />}
         </>

@@ -96,7 +96,7 @@ export default async function EventPage({ params }: PageProps) {
             </section>
 
             {/* ── Metadata ── */}
-            <div className="grid grid-cols-1 gap-dna-gap md:grid-cols-2">
+            <div className="hidden gap-dna-gap md:grid md:grid-cols-2">
                 <div>
                     <SectionLabel right="META">Event Info</SectionLabel>
                     <MetaTable

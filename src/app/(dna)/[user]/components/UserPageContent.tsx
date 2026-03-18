@@ -74,7 +74,7 @@ export default function UserPageContent({
                 />
             </div>
 
-            <div className="grid grid-cols-1 gap-dna-gap md:grid-cols-2">
+            <div className="hidden gap-dna-gap md:grid md:grid-cols-2">
                 <div>
                     <SectionLabel right="META">Node Info</SectionLabel>
                     <MetaTable
