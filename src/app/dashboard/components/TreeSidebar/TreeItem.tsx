@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 
 import { AlertTriangle, MoreHorizontal } from 'lucide-react';
 
@@ -54,10 +54,14 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
     const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
     const { isValid } = validateEntry(entry, 'create');
 
+    // 메뉴 열림 상태 — 열려있으면 드래그 비활성화 (dnd-kit ↔ Radix 서브메뉴 충돌 방지)
+    const [menuOpen, setMenuOpen] = useState(false);
+
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: entry.id,
         animateLayoutChanges: sortableAnimateLayoutChanges,
         data: { type: 'entry', entry },
+        disabled: menuOpen,
     });
 
     const style = {
@@ -125,7 +129,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                     {!isValid && (
                         <AlertTriangle className="h-3 w-3 text-amber-500/70 transition-opacity group-hover:opacity-0" />
                     )}
-                    <DropdownMenu>
+                    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
                         <DropdownMenuTrigger asChild>
                             <button
                                 onClick={(e) => e.stopPropagation()}
@@ -138,7 +142,6 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                         <DropdownMenuContent
                             align="end"
                             className="w-48 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl"
-                            onClick={(e) => e.stopPropagation()}
                         >
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger
@@ -147,10 +150,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                                 >
                                     Add to section
                                 </DropdownMenuSubTrigger>
-                                <DropdownMenuSubContent
-                                    className="w-44 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
+                                <DropdownMenuSubContent className="w-44 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl">
                                     {sections.length === 0 ? (
                                         <DropdownMenuItem
                                             disabled
