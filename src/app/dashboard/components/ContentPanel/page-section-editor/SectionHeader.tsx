@@ -84,9 +84,11 @@ export function SectionHeader({
             >
                 {isVisible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
             </button>
+            <div className="h-3.5 w-px bg-dashboard-border" />
             <button
                 onClick={onDelete}
                 className="text-dashboard-text-placeholder hover:text-dashboard-danger"
+                title="Delete section"
             >
                 <Trash2 className="h-3.5 w-3.5" />
             </button>
