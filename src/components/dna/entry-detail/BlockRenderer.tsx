@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 
-import type { SectionBlock, SectionBlockType } from '@/types/domain';
+import type { ContentBlock, ContentBlockType } from '@/types/domain';
 
 import { EmbedBlockView } from './block-views/EmbedBlockView';
 import { HeaderBlockView } from './block-views/HeaderBlockView';
@@ -9,7 +9,7 @@ import { KeyvalueBlockView } from './block-views/KeyvalueBlockView';
 import { RichtextBlockView } from './block-views/RichtextBlockView';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const blockViewMap: Record<SectionBlockType, ComponentType<{ data: any }>> = {
+const blockViewMap: Record<ContentBlockType, ComponentType<{ data: any }>> = {
     header: HeaderBlockView,
     richtext: RichtextBlockView,
     image: ImageBlockView,
@@ -18,7 +18,7 @@ const blockViewMap: Record<SectionBlockType, ComponentType<{ data: any }>> = {
 };
 
 interface BlockRendererProps {
-    blocks: SectionBlock[];
+    blocks: ContentBlock[];
 }
 
 export function BlockRenderer({ blocks }: BlockRendererProps) {
