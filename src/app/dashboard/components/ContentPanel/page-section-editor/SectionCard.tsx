@@ -9,7 +9,7 @@ import { SortableSectionWrapper } from './SortableSectionWrapper';
 interface Props {
     section: Section;
     entries: ContentEntry[];
-    onUpdateField: (field: Partial<Pick<Section, 'title' | 'viewType'>>) => void;
+    onUpdateField: (field: Partial<Pick<Section, 'title' | 'viewType' | 'isVisible'>>) => void;
     onDelete: () => void;
     onRemoveEntry: (entryId: string) => void;
 }
@@ -31,9 +31,11 @@ export const SectionCard = memo(function SectionCard({
                     <SectionHeader
                         title={section.title}
                         viewType={section.viewType}
+                        isVisible={section.isVisible}
                         dragHandleProps={dragHandleProps}
                         onTitleChange={(title) => onUpdateField({ title })}
                         onViewTypeChange={(viewType) => onUpdateField({ viewType })}
+                        onToggleVisibility={() => onUpdateField({ isVisible: !section.isVisible })}
                         onDelete={onDelete}
                     />
                     <div className="pb-2 pl-8 pr-2">

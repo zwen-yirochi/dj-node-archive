@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
 import type { ConfirmStrategy } from '@/app/dashboard/config/ui/menu';
 import { ALL_VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
 import { useEntries, usePageMeta } from '@/app/dashboard/hooks/use-editor-data';
@@ -121,32 +122,38 @@ export default function PageSectionEditor() {
                         items={sections.map((s) => s.id)}
                         strategy={verticalListSortingStrategy}
                     >
-                        {sections.map((section) =>
-                            section.viewType === 'feature' ? (
-                                <FeatureSectionCard
-                                    key={section.id}
-                                    section={section}
-                                    entries={resolveEntries(section.id, section.entryIds)}
-                                    onDelete={() => setPendingDeleteId(section.id)}
-                                    onRemoveEntry={(entryId) =>
-                                        mutations.removeEntryFromSection(section.id, entryId)
-                                    }
-                                />
-                            ) : (
-                                <SectionCard
-                                    key={section.id}
-                                    section={section}
-                                    entries={resolveEntries(section.id, section.entryIds)}
-                                    onUpdateField={(field) =>
-                                        mutations.updateSectionField(section.id, field)
-                                    }
-                                    onDelete={() => setPendingDeleteId(section.id)}
-                                    onRemoveEntry={(entryId) =>
-                                        mutations.removeEntryFromSection(section.id, entryId)
-                                    }
-                                />
-                            )
-                        )}
+                        {sections.map((section) => (
+                            <div
+                                key={section.id}
+                                className={cn(!section.isVisible && 'opacity-50')}
+                            >
+                                {section.viewType === 'feature' ? (
+                                    <FeatureSectionCard
+                                        section={section}
+                                        entries={resolveEntries(section.id, section.entryIds)}
+                                        onDelete={() => setPendingDeleteId(section.id)}
+                                        onRemoveEntry={(entryId) =>
+                                            mutations.removeEntryFromSection(section.id, entryId)
+                                        }
+                                        onUpdateField={(field) =>
+                                            mutations.updateSectionField(section.id, field)
+                                        }
+                                    />
+                                ) : (
+                                    <SectionCard
+                                        section={section}
+                                        entries={resolveEntries(section.id, section.entryIds)}
+                                        onUpdateField={(field) =>
+                                            mutations.updateSectionField(section.id, field)
+                                        }
+                                        onDelete={() => setPendingDeleteId(section.id)}
+                                        onRemoveEntry={(entryId) =>
+                                            mutations.removeEntryFromSection(section.id, entryId)
+                                        }
+                                    />
+                                )}
+                            </div>
+                        ))}
                     </SortableContext>
                 )}
             </div>

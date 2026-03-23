@@ -1,7 +1,7 @@
 import { useDroppable } from '@dnd-kit/core';
 import { memo } from 'react';
 
-import { GripVertical, Sparkles, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, GripVertical, Sparkles, Trash2, X } from 'lucide-react';
 
 import type { ContentEntry, Section } from '@/types/domain';
 import { formatDateCompact } from '@/lib/formatters';
@@ -16,6 +16,7 @@ interface Props {
     entries: ContentEntry[];
     onDelete: () => void;
     onRemoveEntry: (entryId: string) => void;
+    onUpdateField: (field: Partial<Pick<Section, 'isVisible'>>) => void;
 }
 
 export const FeatureSectionCard = memo(function FeatureSectionCard({
@@ -23,6 +24,7 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
     entries,
     onDelete,
     onRemoveEntry,
+    onUpdateField,
 }: Props) {
     const featured = entries[0];
 
@@ -59,6 +61,17 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
                             <Sparkles className="h-3.5 w-3.5" />
                             <span className="text-[10px]">Feature</span>
                         </div>
+                        <button
+                            onClick={() => onUpdateField({ isVisible: !section.isVisible })}
+                            className="text-dashboard-text-placeholder hover:text-dashboard-text"
+                            title={section.isVisible ? 'Hide section' : 'Show section'}
+                        >
+                            {section.isVisible ? (
+                                <Eye className="h-3.5 w-3.5" />
+                            ) : (
+                                <EyeOff className="h-3.5 w-3.5" />
+                            )}
+                        </button>
                         <button
                             onClick={onDelete}
                             className="text-dashboard-text-placeholder hover:text-red-400"
