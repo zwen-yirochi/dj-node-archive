@@ -1,5 +1,7 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+
 import type { FieldComponentProps } from './types';
 
 interface TextFieldProps extends FieldComponentProps<string> {
@@ -20,7 +22,10 @@ export default function TextField({
     className,
     'aria-label': ariaLabel,
 }: TextFieldProps) {
-    const baseClass = `w-full bg-transparent outline-none placeholder:text-dashboard-text-placeholder ${className ?? 'text-sm text-dashboard-text-secondary'}`;
+    const baseClass = cn(
+        'w-full bg-transparent outline-none placeholder:text-dashboard-text-placeholder',
+        className ?? 'text-sm text-dashboard-text-secondary'
+    );
 
     if (variant === 'textarea') {
         return (
@@ -31,7 +36,7 @@ export default function TextField({
                 placeholder={placeholder}
                 rows={rows}
                 aria-label={ariaLabel}
-                className={`${baseClass} resize-none leading-relaxed`}
+                className={cn(baseClass, 'resize-none leading-relaxed')}
             />
         );
     }

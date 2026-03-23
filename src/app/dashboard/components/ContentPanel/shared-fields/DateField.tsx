@@ -1,5 +1,7 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+
 import type { FieldComponentProps } from './types';
 
 interface DateFieldProps extends FieldComponentProps<string> {
@@ -21,7 +23,7 @@ function formatDate(dateStr: string): string | null {
 
 export default function DateField({ value = '', onChange, disabled, className }: DateFieldProps) {
     return (
-        <div className={`rounded-md border border-dashboard-border px-3 py-1.5 ${className ?? ''}`}>
+        <div className={cn('rounded-md border border-dashboard-border px-3 py-1.5', className)}>
             <input
                 type="date"
                 value={value}

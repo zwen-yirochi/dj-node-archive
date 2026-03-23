@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import { ImagePlus, Loader2 } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
+
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 interface ImageDropZoneProps {
@@ -63,11 +65,13 @@ export default function ImageDropZone({
                     ? { height: `${height}px` }
                     : { height: `${height}px`, width: `${height}px` }
             }
-            className={`flex ${fullWidth ? 'w-full' : ''} flex-shrink-0 flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed transition-colors ${
+            className={cn(
+                'flex flex-shrink-0 flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                fullWidth && 'w-full',
                 isDragOver
                     ? 'border-dashboard-accent bg-dashboard-accent/5'
                     : 'border-dashboard-border hover:border-dashboard-border-hover hover:bg-dashboard-bg-muted/30'
-            } disabled:cursor-not-allowed disabled:opacity-50`}
+            )}
         >
             {isUploading ? (
                 <Loader2 className="h-5 w-5 animate-spin text-dashboard-text-muted" />

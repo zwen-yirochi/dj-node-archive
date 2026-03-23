@@ -18,6 +18,7 @@ import { useCallback, useId, useMemo, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ContentEntry } from '@/types/domain';
+import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { defaultDropAnimation } from '@/app/dashboard/dnd/animate';
 import { dashboardStrategies } from '@/app/dashboard/dnd/strategies';
@@ -133,7 +134,14 @@ export default function DashboardDndProvider({ children }: { children: ReactNode
                     >
                         <div className="flex items-center gap-2">
                             <span
-                                className={`text-sm font-medium ${activeItem.section.title || (activeItem.section.viewType === 'feature' && activeItem.section.entryIds.length > 0) ? 'text-dashboard-text' : 'text-dashboard-text-placeholder'}`}
+                                className={cn(
+                                    'text-sm font-medium',
+                                    activeItem.section.title ||
+                                        (activeItem.section.viewType === 'feature' &&
+                                            activeItem.section.entryIds.length > 0)
+                                        ? 'text-dashboard-text'
+                                        : 'text-dashboard-text-placeholder'
+                                )}
                             >
                                 {activeItem.section.viewType === 'feature'
                                     ? getEntries().find(

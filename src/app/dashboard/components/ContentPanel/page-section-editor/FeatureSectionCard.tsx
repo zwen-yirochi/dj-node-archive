@@ -5,6 +5,7 @@ import { GripVertical, Sparkles, Trash2, X } from 'lucide-react';
 
 import type { ContentEntry, Section } from '@/types/domain';
 import { formatDateCompact } from '@/lib/formatters';
+import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { TypeBadge } from '@/components/dna';
 
@@ -127,9 +128,10 @@ function FeatureDropTarget({ sectionId }: { sectionId: string }) {
     return (
         <div
             ref={setNodeRef}
-            className={`flex items-center justify-center rounded-lg border border-dashed py-6 transition-colors ${
+            className={cn(
+                'flex items-center justify-center rounded-lg border border-dashed py-6 transition-colors',
                 isOver ? 'drop-zone-active' : 'border-dashboard-border'
-            }`}
+            )}
         >
             <p className="text-xs text-dashboard-text-placeholder">
                 Drag an entry here to feature it

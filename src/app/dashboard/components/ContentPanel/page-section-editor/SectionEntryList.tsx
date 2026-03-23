@@ -6,6 +6,7 @@ import {
 } from '@dnd-kit/sortable';
 
 import type { ContentEntry, ViewType } from '@/types/domain';
+import { cn } from '@/lib/utils';
 
 import { SectionEntryItem } from './SectionEntryItem';
 
@@ -29,9 +30,10 @@ export function SectionEntryList({ sectionId, viewType, entries, onRemoveEntry }
     return (
         <div
             ref={setNodeRef}
-            className={`min-h-[40px] rounded-md border border-dashed transition-colors ${
+            className={cn(
+                'min-h-[40px] rounded-md border border-dashed transition-colors',
                 isOver ? 'drop-zone-active' : 'border-transparent'
-            }`}
+            )}
         >
             <SortableContext
                 items={sortableIds}

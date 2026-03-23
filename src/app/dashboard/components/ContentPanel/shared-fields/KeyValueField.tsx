@@ -4,6 +4,8 @@ import { useRef } from 'react';
 
 import { Plus, X } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
+
 import type { FieldComponentProps } from './types';
 
 export interface KeyValueColumn {
@@ -65,7 +67,10 @@ export default function KeyValueField<T extends Record<string, string>>({
                                 onChange={(e) => updateCell(rowIndex, col.key, e.target.value)}
                                 disabled={disabled}
                                 placeholder={col.placeholder}
-                                className={`w-full bg-transparent outline-none placeholder:text-dashboard-text-placeholder ${col.className ?? 'text-dashboard-text-secondary'}`}
+                                className={cn(
+                                    'w-full bg-transparent outline-none placeholder:text-dashboard-text-placeholder',
+                                    col.className ?? 'text-dashboard-text-secondary'
+                                )}
                             />
                         </div>
                     ))}

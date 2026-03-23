@@ -2,6 +2,7 @@
 
 import { Loader2 } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
 import { EVENT_FORM_CONFIG } from '@/app/dashboard/config/entry/entry-forms';
 import { searchArtists, searchVenues } from '@/app/dashboard/services/search';
 import { Button } from '@/components/ui/button';
@@ -169,7 +170,7 @@ export default function CreateEventForm() {
                                     {...field}
                                     placeholder="Enter event description"
                                     rows={4}
-                                    className={`${inputClassName} resize-none`}
+                                    className={cn(inputClassName, 'resize-none')}
                                 />
                             </FormControl>
                             <FormMessage />

@@ -7,6 +7,7 @@ import Image from 'next/image';
 
 import { GripVertical, ImagePlus, Trash2 } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
 import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
 
 import type { ImageItem } from '../types';
@@ -48,7 +49,10 @@ export default function ImageCard({
         <div
             ref={setNodeRef}
             style={style}
-            className={`group/card relative w-fit flex-shrink-0 ${isDragging ? 'drag-source-ghost' : ''}`}
+            className={cn(
+                'group/card relative w-fit flex-shrink-0',
+                isDragging && 'drag-source-ghost'
+            )}
         >
             {isEditing && (
                 <input
