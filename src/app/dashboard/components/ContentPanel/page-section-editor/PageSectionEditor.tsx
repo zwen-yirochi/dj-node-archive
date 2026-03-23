@@ -1,17 +1,26 @@
 'use client';
 
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
+import type { ConfirmStrategy } from '@/app/dashboard/config/ui/menu';
 import { ALL_VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
 import { useEntries, usePageMeta } from '@/app/dashboard/hooks/use-editor-data';
 import { useSectionMutations } from '@/app/dashboard/hooks/use-section-mutations';
 import { useDndBridgeStore } from '@/app/dashboard/stores/dndBridgeStore';
 
+import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { FeatureSectionCard } from './FeatureSectionCard';
 import { SectionCard } from './SectionCard';
+
+const SECTION_DELETE_CONFIRM: ConfirmStrategy = {
+    type: 'simple',
+    title: 'Delete this section?',
+    description:
+        'All entry assignments in this section will be lost. The entries themselves will not be deleted.',
+};
 
 export default function PageSectionEditor() {
     const { data: pageMeta } = usePageMeta();
@@ -19,6 +28,20 @@ export default function PageSectionEditor() {
     const mutations = useSectionMutations();
     const [showTypeSelect, setShowTypeSelect] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Section delete confirm
+    const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+    const pendingConfirm = pendingDeleteId
+        ? {
+              strategy: SECTION_DELETE_CONFIRM,
+              onConfirm: () => mutations.removeSection(pendingDeleteId),
+          }
+        : null;
+    const handleConfirmDelete = useCallback(() => {
+        pendingConfirm?.onConfirm();
+        setPendingDeleteId(null);
+    }, [pendingConfirm]);
+    const handleCloseConfirm = useCallback(() => setPendingDeleteId(null), []);
 
     useEffect(() => {
         if (!showTypeSelect) return;
@@ -104,7 +127,7 @@ export default function PageSectionEditor() {
                                     key={section.id}
                                     section={section}
                                     entries={resolveEntries(section.id, section.entryIds)}
-                                    onDelete={() => mutations.removeSection(section.id)}
+                                    onDelete={() => setPendingDeleteId(section.id)}
                                     onRemoveEntry={(entryId) =>
                                         mutations.removeEntryFromSection(section.id, entryId)
                                     }
@@ -117,7 +140,7 @@ export default function PageSectionEditor() {
                                     onUpdateField={(field) =>
                                         mutations.updateSectionField(section.id, field)
                                     }
-                                    onDelete={() => mutations.removeSection(section.id)}
+                                    onDelete={() => setPendingDeleteId(section.id)}
                                     onRemoveEntry={(entryId) =>
                                         mutations.removeEntryFromSection(section.id, entryId)
                                     }
@@ -127,6 +150,13 @@ export default function PageSectionEditor() {
                     </SortableContext>
                 )}
             </div>
+
+            <ConfirmDialog
+                pending={pendingConfirm}
+                matchValue=""
+                onConfirm={handleConfirmDelete}
+                onClose={handleCloseConfirm}
+            />
         </div>
     );
 }
