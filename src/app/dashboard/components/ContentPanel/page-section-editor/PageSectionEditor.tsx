@@ -1,16 +1,18 @@
 'use client';
 
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 import { ALL_VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
 import { useEntries, usePageMeta } from '@/app/dashboard/hooks/use-editor-data';
 import { useSectionMutations } from '@/app/dashboard/hooks/use-section-mutations';
 import { useDndBridgeStore } from '@/app/dashboard/stores/dndBridgeStore';
 import { getAddableEntries } from '@/app/dashboard/utils/section-helpers';
+import { ToastAction } from '@/components/ui/toast';
 
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { FeatureSectionCard } from './FeatureSectionCard';
@@ -32,6 +34,24 @@ export default function PageSectionEditor() {
             setPendingDeleteId(null);
         }
     };
+
+    const handleRemoveEntry = useCallback(
+        (sectionId: string, entryId: string) => {
+            mutations.removeEntryFromSection(sectionId, entryId);
+            toast({
+                description: 'Entry removed from section',
+                action: (
+                    <ToastAction
+                        altText="Undo"
+                        onClick={() => mutations.addEntryToSection(sectionId, entryId)}
+                    >
+                        Undo
+                    </ToastAction>
+                ),
+            });
+        },
+        [mutations]
+    );
 
     useEffect(() => {
         if (!showTypeSelect) return;
@@ -122,7 +142,7 @@ export default function PageSectionEditor() {
                                         entries={resolveEntries(section.id, section.entryIds)}
                                         onDelete={() => setPendingDeleteId(section.id)}
                                         onRemoveEntry={(entryId) =>
-                                            mutations.removeEntryFromSection(section.id, entryId)
+                                            handleRemoveEntry(section.id, entryId)
                                         }
                                         onUpdateField={(field) =>
                                             mutations.updateSectionField(section.id, field)
@@ -141,7 +161,7 @@ export default function PageSectionEditor() {
                                         }
                                         onDelete={() => setPendingDeleteId(section.id)}
                                         onRemoveEntry={(entryId) =>
-                                            mutations.removeEntryFromSection(section.id, entryId)
+                                            handleRemoveEntry(section.id, entryId)
                                         }
                                         addableEntries={getAddableEntries(section, entries)}
                                         onAddEntry={(entryId) =>
