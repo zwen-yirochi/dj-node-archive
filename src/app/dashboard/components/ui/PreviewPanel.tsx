@@ -32,15 +32,20 @@ function viewToPreviewTarget(view: ContentView, hasDetailPage: boolean): Preview
 
 function usePreviewUrl(username: string): string {
     const contentView = useDashboardStore(selectContentView);
+    const { data: entries } = useEntries();
     const hasDetailPage = useDetailHasPage(
         contentView.kind === 'detail' ? contentView.entryId : undefined
     );
     return useMemo(() => {
         if (contentView.kind === 'detail' && hasDetailPage) {
-            return `/${username}/${contentView.entryId}?preview=true`;
+            const entry = entries?.find((e) => e.id === contentView.entryId);
+            const slug = entry?.slug;
+            if (slug) {
+                return `/${username}/${slug}?preview=true`;
+            }
         }
         return `/${username}?preview=true`;
-    }, [username, contentView, hasDetailPage]);
+    }, [username, contentView, hasDetailPage, entries]);
 }
 
 export default function PreviewPanel() {
