@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, GripVertical, Loader2, Trash2 } from 'lucide-react';
 
 import type { ViewType } from '@/types/domain';
 import { cn } from '@/lib/utils';
@@ -28,9 +28,15 @@ export function SectionHeader({
     onDelete,
 }: Props) {
     const [localTitle, setLocalTitle] = useState(title ?? '');
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleBlur = () => {
-        onTitleChange(localTitle.trim() || null);
+        const trimmed = localTitle.trim() || null;
+        if (trimmed !== title) {
+            onTitleChange(trimmed);
+            setIsSaving(true);
+            setTimeout(() => setIsSaving(false), 600);
+        }
     };
 
     const isFeature = viewType === 'feature';
@@ -41,14 +47,19 @@ export function SectionHeader({
             <button {...dragHandleProps} className="drag-handle">
                 <GripVertical className="h-4 w-4" />
             </button>
-            <input
-                value={localTitle}
-                onChange={(e) => setLocalTitle(e.target.value)}
-                onBlur={handleBlur}
-                onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                placeholder="Section title (optional)"
-                className="flex-1 bg-transparent text-sm font-medium text-dashboard-text placeholder:text-dashboard-text-placeholder focus:outline-none"
-            />
+            <div className="flex flex-1 items-center gap-1.5">
+                <input
+                    value={localTitle}
+                    onChange={(e) => setLocalTitle(e.target.value)}
+                    onBlur={handleBlur}
+                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                    placeholder="Section title (optional)"
+                    className="min-w-0 flex-1 bg-transparent text-sm font-medium text-dashboard-text placeholder:text-dashboard-text-placeholder focus:outline-none"
+                />
+                {isSaving && (
+                    <Loader2 className="h-3 w-3 shrink-0 animate-spin text-dashboard-text-muted" />
+                )}
+            </div>
             {isFeature ? (
                 <div className="flex items-center gap-1 rounded-md border border-dashboard-border px-2 py-1 text-dashboard-text-placeholder">
                     <FeatureIcon className="h-3.5 w-3.5" />
