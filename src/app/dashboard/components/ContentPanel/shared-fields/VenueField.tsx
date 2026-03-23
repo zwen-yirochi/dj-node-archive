@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 
 import { Loader2, MapPin, X } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
 import { useClickOutside } from '@/hooks/ui/useClickOutside';
 import { useScrollIntoView } from '@/hooks/ui/useScrollIntoView';
 
@@ -88,7 +89,7 @@ export default function VenueField({
     const isSelected = !!(value.id && value.name);
 
     return (
-        <div ref={containerRef} className={`relative p-2 ${className ?? ''}`}>
+        <div ref={containerRef} className={cn('relative p-2', className)}>
             {isSelected ? (
                 <div className="flex items-center gap-2">
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-dashboard-text-placeholder" />
@@ -135,11 +136,12 @@ export default function VenueField({
                                     key={result.id}
                                     role="option"
                                     aria-selected={highlightedIndex === index}
-                                    className={`flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
+                                    className={cn(
+                                        'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm',
                                         highlightedIndex === index
                                             ? 'bg-dashboard-bg-hover text-dashboard-text'
                                             : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
-                                    }`}
+                                    )}
                                     onClick={() => handleSelect(result)}
                                     onMouseEnter={() => setHighlightedIndex(index)}
                                 >

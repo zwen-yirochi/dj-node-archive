@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { GripVertical, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
 
 import type { ViewType } from '@/types/domain';
 import { cn } from '@/lib/utils';
@@ -9,18 +9,22 @@ import { CONVERTIBLE_VIEW_TYPES, FEATURE_VIEW_TYPE } from '@/app/dashboard/confi
 interface Props {
     title: string | null;
     viewType: ViewType;
+    isVisible: boolean;
     dragHandleProps: Record<string, unknown>;
     onTitleChange: (title: string | null) => void;
     onViewTypeChange: (viewType: ViewType) => void;
+    onToggleVisibility: () => void;
     onDelete: () => void;
 }
 
 export function SectionHeader({
     title,
     viewType,
+    isVisible,
     dragHandleProps,
     onTitleChange,
     onViewTypeChange,
+    onToggleVisibility,
     onDelete,
 }: Props) {
     const [localTitle, setLocalTitle] = useState(title ?? '');
@@ -73,6 +77,13 @@ export function SectionHeader({
                     })}
                 </div>
             )}
+            <button
+                onClick={onToggleVisibility}
+                className="text-dashboard-text-placeholder hover:text-dashboard-text"
+                title={isVisible ? 'Hide section' : 'Show section'}
+            >
+                {isVisible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+            </button>
             <button
                 onClick={onDelete}
                 className="text-dashboard-text-placeholder hover:text-red-400"

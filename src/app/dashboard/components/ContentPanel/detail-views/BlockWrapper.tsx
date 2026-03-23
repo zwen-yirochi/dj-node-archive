@@ -6,6 +6,8 @@ import type { ReactNode } from 'react';
 
 import { GripVertical, Trash2, type LucideIcon } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
+
 interface BlockWrapperProps {
     /** 블록 라벨 */
     label: string;
@@ -35,9 +37,10 @@ export default function BlockWrapper({
 }: BlockWrapperProps) {
     return (
         <div
-            className={`group relative rounded-lg border border-transparent p-3 transition-colors hover:border-dashboard-border/50 hover:bg-dashboard-bg-muted/30 ${
-                isDragging ? 'drag-source-ghost' : ''
-            }`}
+            className={cn(
+                'group relative rounded-lg border border-transparent p-3 transition-colors hover:border-dashboard-border/50 hover:bg-dashboard-bg-muted/30',
+                isDragging && 'drag-source-ghost'
+            )}
         >
             {/* Block Header */}
             <div className="mb-2 flex items-center gap-2">

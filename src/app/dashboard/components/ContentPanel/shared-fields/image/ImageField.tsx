@@ -15,6 +15,7 @@ import Image from 'next/image';
 
 import { Pencil } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
 import { useHorizontalScroll } from '@/hooks/use-horizontal-scroll';
 import { defaultDropAnimation } from '@/app/dashboard/dnd/animate';
 
@@ -133,11 +134,12 @@ export default function ImageField({
                     <button
                         type="button"
                         onClick={() => setIsEditing(!isEditing)}
-                        className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+                        className={cn(
+                            'flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
                             isEditing
                                 ? 'border-dashboard-accent text-dashboard-accent hover:bg-dashboard-accent/10'
                                 : 'border-transparent text-dashboard-text-muted hover:bg-dashboard-bg-muted hover:text-dashboard-text'
-                        }`}
+                        )}
                     >
                         {isEditing ? (
                             'Done'

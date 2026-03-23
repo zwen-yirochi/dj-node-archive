@@ -14,10 +14,12 @@ import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryDetail, useEntryMutations } from '../../../hooks';
 import { useConfirmAction } from '../../../hooks/use-confirm-action';
+import { selectSetView, useDashboardStore } from '../../../stores/dashboardStore';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import EventDetailView from '../detail-views/EventDetailView';
 import LinkDetailView from '../detail-views/LinkDetailView';
 import MixsetDetailView from '../detail-views/MixsetDetailView';
+import { SyncedField, TEXT_FIELD_CONFIG, TextField } from '../shared-fields';
 import CustomEntryEditor from './CustomEntryEditor';
 
 // ============================================
@@ -69,6 +71,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     const { data: entry } = useEntryDetail(entryId);
     const { updateField, remove: deleteMutation } = useEntryMutations();
 
+    const setView = useDashboardStore(selectSetView);
     const confirmAction = useConfirmAction();
 
     // Field-level save — SyncedField debounce 후 직접 호출됨
@@ -89,8 +92,16 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
 
     // Delete handler
     const handleDelete = async () => {
-        await deleteMutation.mutateAsync(entry.id);
-        onBack?.();
+        try {
+            await deleteMutation.mutateAsync(entry.id);
+            if (onBack) {
+                onBack();
+            } else {
+                setView({ kind: 'page' });
+            }
+        } catch {
+            // mutateAsync error is handled by TanStack Query's onError
+        }
     };
 
     const config = ENTRY_TYPE_CONFIG[entry.type];
@@ -148,12 +159,18 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
             <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
                 {entry.type === 'custom' ? (
                     <>
-                        <input
-                            value={entry.title}
-                            onChange={(e) => handleFieldSave('title', e.target.value)}
-                            placeholder="Untitled"
-                            className="mb-6 w-full bg-transparent text-xl font-semibold text-dashboard-text outline-none placeholder:text-dashboard-text-placeholder"
-                        />
+                        <div className="mb-6">
+                            <SyncedField
+                                config={TEXT_FIELD_CONFIG}
+                                value={entry.title}
+                                onSave={(v) => handleFieldSave('title', v)}
+                            >
+                                <TextField
+                                    placeholder="Untitled"
+                                    className="text-xl font-semibold text-dashboard-text"
+                                />
+                            </SyncedField>
+                        </div>
                         <CustomEntryEditor
                             entry={entry as CustomEntry}
                             onBlocksChange={handleBlocksSave}

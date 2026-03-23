@@ -5,11 +5,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
 import { ALL_VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
 import { useEntries, usePageMeta } from '@/app/dashboard/hooks/use-editor-data';
 import { useSectionMutations } from '@/app/dashboard/hooks/use-section-mutations';
 import { useDndBridgeStore } from '@/app/dashboard/stores/dndBridgeStore';
+import { getAddableEntries } from '@/app/dashboard/utils/section-helpers';
 
+import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { FeatureSectionCard } from './FeatureSectionCard';
 import { SectionCard } from './SectionCard';
 
@@ -19,6 +22,16 @@ export default function PageSectionEditor() {
     const mutations = useSectionMutations();
     const [showTypeSelect, setShowTypeSelect] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Section delete confirm
+    const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+    const handleConfirmDelete = () => {
+        if (pendingDeleteId) {
+            mutations.removeSection(pendingDeleteId);
+            setPendingDeleteId(null);
+        }
+    };
 
     useEffect(() => {
         if (!showTypeSelect) return;
@@ -98,35 +111,68 @@ export default function PageSectionEditor() {
                         items={sections.map((s) => s.id)}
                         strategy={verticalListSortingStrategy}
                     >
-                        {sections.map((section) =>
-                            section.viewType === 'feature' ? (
-                                <FeatureSectionCard
-                                    key={section.id}
-                                    section={section}
-                                    entries={resolveEntries(section.id, section.entryIds)}
-                                    onDelete={() => mutations.removeSection(section.id)}
-                                    onRemoveEntry={(entryId) =>
-                                        mutations.removeEntryFromSection(section.id, entryId)
-                                    }
-                                />
-                            ) : (
-                                <SectionCard
-                                    key={section.id}
-                                    section={section}
-                                    entries={resolveEntries(section.id, section.entryIds)}
-                                    onUpdateField={(field) =>
-                                        mutations.updateSectionField(section.id, field)
-                                    }
-                                    onDelete={() => mutations.removeSection(section.id)}
-                                    onRemoveEntry={(entryId) =>
-                                        mutations.removeEntryFromSection(section.id, entryId)
-                                    }
-                                />
-                            )
-                        )}
+                        {sections.map((section) => (
+                            <div
+                                key={section.id}
+                                className={cn(!section.isVisible && 'opacity-50')}
+                            >
+                                {section.viewType === 'feature' ? (
+                                    <FeatureSectionCard
+                                        section={section}
+                                        entries={resolveEntries(section.id, section.entryIds)}
+                                        onDelete={() => setPendingDeleteId(section.id)}
+                                        onRemoveEntry={(entryId) =>
+                                            mutations.removeEntryFromSection(section.id, entryId)
+                                        }
+                                        onUpdateField={(field) =>
+                                            mutations.updateSectionField(section.id, field)
+                                        }
+                                        addableEntries={getAddableEntries(section, entries)}
+                                        onAddEntry={(entryId) =>
+                                            mutations.addEntryToSection(section.id, entryId)
+                                        }
+                                    />
+                                ) : (
+                                    <SectionCard
+                                        section={section}
+                                        entries={resolveEntries(section.id, section.entryIds)}
+                                        onUpdateField={(field) =>
+                                            mutations.updateSectionField(section.id, field)
+                                        }
+                                        onDelete={() => setPendingDeleteId(section.id)}
+                                        onRemoveEntry={(entryId) =>
+                                            mutations.removeEntryFromSection(section.id, entryId)
+                                        }
+                                        addableEntries={getAddableEntries(section, entries)}
+                                        onAddEntry={(entryId) =>
+                                            mutations.addEntryToSection(section.id, entryId)
+                                        }
+                                    />
+                                )}
+                            </div>
+                        ))}
                     </SortableContext>
                 )}
             </div>
+
+            <ConfirmDialog
+                pending={
+                    pendingDeleteId
+                        ? {
+                              strategy: {
+                                  type: 'simple',
+                                  title: 'Delete this section?',
+                                  description:
+                                      'All entry assignments in this section will be lost. The entries themselves will not be deleted.',
+                              },
+                              onConfirm: handleConfirmDelete,
+                          }
+                        : null
+                }
+                matchValue=""
+                onConfirm={handleConfirmDelete}
+                onClose={() => setPendingDeleteId(null)}
+            />
         </div>
     );
 }

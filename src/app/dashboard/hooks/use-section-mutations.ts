@@ -92,7 +92,7 @@ export function useSectionMutations() {
     );
 
     const updateSectionField = useCallback(
-        (sectionId: string, field: Partial<Pick<Section, 'title' | 'viewType'>>) => {
+        (sectionId: string, field: Partial<Pick<Section, 'title' | 'viewType' | 'isVisible'>>) => {
             updateSections((prev) =>
                 prev.map((s) => (s.id === sectionId ? { ...s, ...field } : s))
             );

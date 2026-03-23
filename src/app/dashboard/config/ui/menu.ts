@@ -126,7 +126,7 @@ export const EDITOR_MENU_CONFIG: Record<EntryType, MenuConfig> = {
 // ============================================
 
 const TREE_EDIT: MenuItemConfig = { actionKey: 'edit', label: 'Edit' };
-const TREE_DELETE: MenuItemConfig = {
+export const TREE_DELETE: MenuItemConfig = {
     actionKey: 'delete',
     label: 'Delete',
     variant: 'danger',
