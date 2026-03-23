@@ -8,7 +8,7 @@ import Skeleton from './components/Skeleton';
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
         <QueryProvider>
-            <main className="min-h-screen bg-neutral-200 font-inter">
+            <main className="h-screen overflow-hidden bg-neutral-200 font-inter">
                 <ErrorBoundaryWithQueryReset>
                     <Suspense fallback={<Skeleton />}>{children}</Suspense>
                 </ErrorBoundaryWithQueryReset>

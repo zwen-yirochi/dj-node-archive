@@ -25,8 +25,8 @@ export default function Dashboard({ pageId }: DashboardProps) {
             <DashboardSettingsModal />
 
             <DashboardDndProvider>
-                <div className="flex h-screen overflow-hidden p-3">
-                    <div className="flex flex-1 overflow-hidden rounded-2xl bg-dashboard-bg-base shadow-lg backdrop-blur-sm">
+                <div className="flex h-screen overflow-hidden">
+                    <div className="flex flex-1 overflow-hidden bg-dashboard-bg-base">
                         {/* TreeSidebar */}
                         <TreeSidebar />
 
