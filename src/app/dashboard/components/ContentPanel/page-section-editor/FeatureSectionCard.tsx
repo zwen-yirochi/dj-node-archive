@@ -1,7 +1,7 @@
 import { useDroppable } from '@dnd-kit/core';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 
-import { Eye, EyeOff, GripVertical, Sparkles, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, GripVertical, Plus, Sparkles, Trash2, X } from 'lucide-react';
 
 import type { ContentEntry, Section } from '@/types/domain';
 import { formatDateCompact } from '@/lib/formatters';
@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { TypeBadge } from '@/components/dna';
 
+import { AddEntryModal } from './AddEntryModal';
 import { SortableSectionWrapper } from './SortableSectionWrapper';
 
 interface Props {
@@ -17,6 +18,8 @@ interface Props {
     onDelete: () => void;
     onRemoveEntry: (entryId: string) => void;
     onUpdateField: (field: Partial<Pick<Section, 'isVisible'>>) => void;
+    addableEntries?: ContentEntry[];
+    onAddEntry?: (entryId: string) => void;
 }
 
 export const FeatureSectionCard = memo(function FeatureSectionCard({
@@ -25,7 +28,10 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
     onDelete,
     onRemoveEntry,
     onUpdateField,
+    addableEntries,
+    onAddEntry,
 }: Props) {
+    const [addModalOpen, setAddModalOpen] = useState(false);
     const featured = entries[0];
 
     return (
@@ -85,7 +91,21 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
                         {featured ? (
                             <FeatureEntryDetail entry={featured} />
                         ) : (
-                            <FeatureDropTarget sectionId={section.id} />
+                            <>
+                                <FeatureDropTarget
+                                    sectionId={section.id}
+                                    showAdd={!!onAddEntry && !!addableEntries?.length}
+                                    onClickAdd={() => setAddModalOpen(true)}
+                                />
+                                {onAddEntry && addableEntries && addableEntries.length > 0 && (
+                                    <AddEntryModal
+                                        open={addModalOpen}
+                                        onOpenChange={setAddModalOpen}
+                                        entries={addableEntries}
+                                        onSelect={onAddEntry}
+                                    />
+                                )}
+                            </>
                         )}
                     </div>
                 </>
@@ -132,7 +152,15 @@ function FeatureEntryDetail({ entry }: { entry: ContentEntry }) {
 
 // ─── Empty drop target ─────────────────────────────────────────
 
-function FeatureDropTarget({ sectionId }: { sectionId: string }) {
+function FeatureDropTarget({
+    sectionId,
+    showAdd,
+    onClickAdd,
+}: {
+    sectionId: string;
+    showAdd?: boolean;
+    onClickAdd?: () => void;
+}) {
     const { setNodeRef, isOver } = useDroppable({
         id: `droppable:${sectionId}`,
         data: { type: 'section-drop', sectionId },
@@ -142,13 +170,22 @@ function FeatureDropTarget({ sectionId }: { sectionId: string }) {
         <div
             ref={setNodeRef}
             className={cn(
-                'flex items-center justify-center rounded-lg border border-dashed py-6 transition-colors',
+                'flex flex-col items-center justify-center rounded-lg border border-dashed py-6 transition-colors',
                 isOver ? 'drop-zone-active' : 'border-dashboard-border'
             )}
         >
             <p className="text-xs text-dashboard-text-placeholder">
                 Drag an entry here to feature it
             </p>
+            {showAdd && (
+                <button
+                    onClick={onClickAdd}
+                    className="mt-1 inline-flex items-center gap-1 text-xs text-dashboard-text-placeholder hover:text-dashboard-text-secondary"
+                >
+                    <Plus className="h-3 w-3" />
+                    or click to add
+                </button>
+            )}
         </div>
     );
 }

@@ -12,6 +12,8 @@ interface Props {
     onUpdateField: (field: Partial<Pick<Section, 'title' | 'viewType' | 'isVisible'>>) => void;
     onDelete: () => void;
     onRemoveEntry: (entryId: string) => void;
+    addableEntries?: ContentEntry[];
+    onAddEntry?: (entryId: string) => void;
 }
 
 export const SectionCard = memo(function SectionCard({
@@ -20,6 +22,8 @@ export const SectionCard = memo(function SectionCard({
     onUpdateField,
     onDelete,
     onRemoveEntry,
+    addableEntries,
+    onAddEntry,
 }: Props) {
     return (
         <SortableSectionWrapper
@@ -44,6 +48,8 @@ export const SectionCard = memo(function SectionCard({
                             viewType={section.viewType}
                             entries={entries}
                             onRemoveEntry={onRemoveEntry}
+                            addableEntries={addableEntries}
+                            onAddEntry={onAddEntry}
                         />
                     </div>
                 </>

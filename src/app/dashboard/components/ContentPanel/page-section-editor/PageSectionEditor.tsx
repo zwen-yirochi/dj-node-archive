@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
+import type { ContentEntry, Section } from '@/types/domain';
 import { cn } from '@/lib/utils';
 import type { ConfirmStrategy } from '@/app/dashboard/config/ui/menu';
 import { ALL_VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
@@ -15,6 +16,14 @@ import { useDndBridgeStore } from '@/app/dashboard/stores/dndBridgeStore';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { FeatureSectionCard } from './FeatureSectionCard';
 import { SectionCard } from './SectionCard';
+
+function getAddableEntries(section: Section, allEntries: ContentEntry[]): ContentEntry[] {
+    return allEntries.filter((e) => {
+        if (section.entryIds.includes(e.id)) return false;
+        if (section.viewType === 'feature' && section.entryIds.length >= 1) return false;
+        return true;
+    });
+}
 
 const SECTION_DELETE_CONFIRM: ConfirmStrategy = {
     type: 'simple',
@@ -138,6 +147,10 @@ export default function PageSectionEditor() {
                                         onUpdateField={(field) =>
                                             mutations.updateSectionField(section.id, field)
                                         }
+                                        addableEntries={getAddableEntries(section, entries)}
+                                        onAddEntry={(entryId) =>
+                                            mutations.addEntryToSection(section.id, entryId)
+                                        }
                                     />
                                 ) : (
                                     <SectionCard
@@ -149,6 +162,10 @@ export default function PageSectionEditor() {
                                         onDelete={() => setPendingDeleteId(section.id)}
                                         onRemoveEntry={(entryId) =>
                                             mutations.removeEntryFromSection(section.id, entryId)
+                                        }
+                                        addableEntries={getAddableEntries(section, entries)}
+                                        onAddEntry={(entryId) =>
+                                            mutations.addEntryToSection(section.id, entryId)
                                         }
                                     />
                                 )}
