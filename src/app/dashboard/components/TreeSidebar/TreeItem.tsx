@@ -129,6 +129,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                         <DropdownMenuTrigger asChild>
                             <button
                                 onClick={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
                                 className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-dashboard-bg-active group-hover:opacity-100"
                             >
                                 <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
@@ -137,6 +138,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                         <DropdownMenuContent
                             align="end"
                             className="w-48 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl"
+                            onClick={(e) => e.stopPropagation()}
                         >
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger
@@ -145,7 +147,10 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                                 >
                                     Add to section
                                 </DropdownMenuSubTrigger>
-                                <DropdownMenuSubContent className="w-44 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl">
+                                <DropdownMenuSubContent
+                                    className="w-44 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
                                     {sections.length === 0 ? (
                                         <DropdownMenuItem
                                             disabled
