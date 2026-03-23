@@ -85,8 +85,13 @@ export default function PageSectionEditor() {
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-dashboard-border px-4 py-3">
-                <h2 className="text-sm font-medium text-dashboard-text">Page Sections</h2>
+            <div className="flex items-center justify-between border-b border-dashboard-border/50 px-6 py-5">
+                <div>
+                    <h2 className="text-lg font-medium text-dashboard-text">Page Sections</h2>
+                    <p className="text-sm text-dashboard-text-muted">
+                        Organize entries into sections for your page
+                    </p>
+                </div>
                 <div ref={dropdownRef} className="relative">
                     <button
                         onClick={() => setShowTypeSelect(!showTypeSelect)}
@@ -119,7 +124,7 @@ export default function PageSectionEditor() {
             </div>
 
             {/* Section List */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-6">
                 {sections.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                         <p className="text-sm text-dashboard-text-placeholder">
