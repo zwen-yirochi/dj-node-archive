@@ -122,8 +122,10 @@ function TreeItem({ entry, isInSection, sections }: TreeItemProps) {
                 <span className="ml-2 flex min-w-0 flex-1 items-center gap-1.5 truncate text-sm">
                     <span
                         className={cn(
-                            'inline-block h-1.5 w-1.5 shrink-0 rounded-full',
-                            isInSection ? 'bg-green-500/70' : 'bg-dashboard-text-placeholder/30'
+                            'inline-block h-2 w-2 shrink-0 rounded-full',
+                            isInSection
+                                ? 'bg-dashboard-success/80 ring-1 ring-dashboard-success/20'
+                                : 'bg-dashboard-text-placeholder/20'
                         )}
                         title={isInSection ? 'On page' : 'Not on page'}
                     />
