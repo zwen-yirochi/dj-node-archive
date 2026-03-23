@@ -18,6 +18,7 @@ import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import EventDetailView from '../detail-views/EventDetailView';
 import LinkDetailView from '../detail-views/LinkDetailView';
 import MixsetDetailView from '../detail-views/MixsetDetailView';
+import { SyncedField, TEXT_FIELD_CONFIG, TextField } from '../shared-fields';
 import CustomEntryEditor from './CustomEntryEditor';
 
 // ============================================
@@ -148,12 +149,18 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
             <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
                 {entry.type === 'custom' ? (
                     <>
-                        <input
-                            value={entry.title}
-                            onChange={(e) => handleFieldSave('title', e.target.value)}
-                            placeholder="Untitled"
-                            className="mb-6 w-full bg-transparent text-xl font-semibold text-dashboard-text outline-none placeholder:text-dashboard-text-placeholder"
-                        />
+                        <div className="mb-6">
+                            <SyncedField
+                                config={TEXT_FIELD_CONFIG}
+                                value={entry.title}
+                                onSave={(v) => handleFieldSave('title', v)}
+                            >
+                                <TextField
+                                    placeholder="Untitled"
+                                    className="text-xl font-semibold text-dashboard-text"
+                                />
+                            </SyncedField>
+                        </div>
                         <CustomEntryEditor
                             entry={entry as CustomEntry}
                             onBlocksChange={handleBlocksSave}
