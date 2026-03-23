@@ -20,16 +20,21 @@
 ### 1.2 실행 순서
 
 ```
+[0] File Verifier ────── 분석 대상 파일 존재 확인, 누락/이동 파일 보정
+         │
+         ▼
 [1] Visual Auditor ──┐
 [2] Info Architect ──┼── 병렬 실행 (각자 전체 대시보드 코드 분석)
 [3] Interaction Critic┘
          │
          ▼
-[4] Critical Reviewer ── 3명의 결과를 종합 검증
+[4] Critical Reviewer ── 3명의 결과를 종합 검증 + 4분면 매트릭스 생성
          │
          ▼
    최종 결과 문서 (docs/strategy/dashboard-ui-deep-dive-result.md)
 ```
+
+**Step 0**: 분석 시작 전, 1.3에 나열된 모든 파일의 존재를 확인한다. 누락되거나 경로가 변경된 파일은 실제 경로로 대체하고, 새로 추가된 관련 파일이 있으면 목록에 포함한다.
 
 ### 1.3 분석 대상 파일
 
@@ -78,7 +83,9 @@
 - `src/app/dashboard/components/ContentPanel/shared-fields/SyncedField.tsx`
 - `src/app/dashboard/components/ContentPanel/shared-fields/TextField.tsx`
 - `src/app/dashboard/components/ContentPanel/shared-fields/DateField.tsx`
-- `src/app/dashboard/components/ContentPanel/shared-fields/ImageField.tsx` (shared-fields/image/)
+- `src/app/dashboard/components/ContentPanel/shared-fields/image/ImageField.tsx`
+- `src/app/dashboard/components/ContentPanel/shared-fields/image/ImageCard.tsx`
+- `src/app/dashboard/components/ContentPanel/shared-fields/image/ImageDropZone.tsx`
 - `src/app/dashboard/components/ContentPanel/shared-fields/VenueField.tsx`
 - `src/app/dashboard/components/ContentPanel/shared-fields/LinkField.tsx`
 - `src/app/dashboard/components/ContentPanel/shared-fields/EmbedField.tsx`
@@ -100,7 +107,9 @@
 - `src/app/dashboard/components/Dashboard.tsx`
 - `src/app/dashboard/components/DashboardDndProvider.tsx`
 
-**Config:**
+**Config (참조용 — UI 분석 대상이 아닌 아키텍처 레퍼런스):**
+
+Config 파일은 직접적인 UI 감사 대상이 아니다. 다만 레이블/용어 일관성(I4) 검사 시 하드코딩된 표시 문자열을 확인하는 데 참조한다.
 
 - `src/app/dashboard/config/ui/sidebar.ts`
 - `src/app/dashboard/config/ui/menu.ts`
@@ -115,9 +124,21 @@
 
 ---
 
-## 2. 에이전트별 분석 체크리스트
+## 2. 공통 심각도 척도
 
-### 2.1 Visual Auditor
+모든 에이전트가 동일한 척도를 사용:
+
+| 심각도   | 정의                                           | 예시                                                          |
+| -------- | ---------------------------------------------- | ------------------------------------------------------------- |
+| **높음** | 유저 에러, 데이터 손실, 또는 핵심 태스크 차단  | 저장 실패 표시 없음, 클릭 타겟 혼동으로 잘못된 항목 삭제      |
+| **중간** | 일상적 작업에서 혼란 또는 불필요한 마찰 발생   | 현재 편집 중인 항목이 어디인지 파악 어려움, 빈 상태 안내 부재 |
+| **낮음** | 시각적 완성도/일관성 이슈 — 기능적 임팩트 없음 | 아이콘 크기 불일치, border-radius 패턴 예외                   |
+
+---
+
+## 3. 에이전트별 분석 체크리스트
+
+### 3.1 Visual Auditor
 
 | ID  | 검사 항목              | 구체적으로 보는 것                                                                    |
 | --- | ---------------------- | ------------------------------------------------------------------------------------- |
@@ -131,7 +152,7 @@
 
 **이슈 ID 형식**: VIS-01, VIS-02, ...
 
-### 2.2 Information Architect
+### 3.2 Information Architect
 
 | ID  | 검사 항목              | 구체적으로 보는 것                                                                 |
 | --- | ---------------------- | ---------------------------------------------------------------------------------- |
@@ -145,7 +166,7 @@
 
 **이슈 ID 형식**: INFO-01, INFO-02, ...
 
-### 2.3 Interaction Critic
+### 3.3 Interaction Critic
 
 | ID  | 검사 항목               | 구체적으로 보는 것                                                    |
 | --- | ----------------------- | --------------------------------------------------------------------- |
@@ -161,9 +182,9 @@
 
 ---
 
-## 3. Critical Reviewer 검증 프로토콜
+## 4. Critical Reviewer 검증 프로토콜
 
-### 3.1 검증 질문 (각 발견사항에 적용)
+### 4.1 검증 질문 (각 발견사항에 적용)
 
 | #   | 검증 질문                                | "가짜 문제" 판정 기준                              |
 | --- | ---------------------------------------- | -------------------------------------------------- |
@@ -173,33 +194,48 @@
 | R4  | **수정 비용 대비 임팩트가 있는가?**      | 대규모 리팩토링 필요한데 임팩트 미미               |
 | R5  | **이전 deep dive 발견과 중복되는가?**    | GAP-01~12로 이미 식별된 것                         |
 
-### 3.2 판정 카테고리
+### 4.2 전수 판정 원칙
+
+Critical Reviewer는 Visual Auditor, Information Architect, Interaction Critic이 보고한 **모든 발견사항을 개별적으로** 판정해야 한다. 어떤 발견사항도 묵시적으로 생략할 수 없다. 각 VIS-XX, INFO-XX, INT-XX에 대해 아래 3개 카테고리 중 하나를 배정한다.
+
+### 4.3 판정 카테고리
 
 - **진짜 문제**: 즉시 수정 필요 — 유저 경험을 직접 해침
 - **가짜 문제**: 수정 불필요 — 의도된 설계이거나 실제 임팩트 없음
 - **데이터 수집 필요**: 판단 보류 — 유저 테스트로 확인 필요
 
-### 3.3 이전 deep dive 참조
+### 4.4 4분면 매트릭스 생성
 
-Critical Reviewer는 아래 항목들이 이미 해결되었거나 진행 중임을 인지:
+Critical Reviewer는 "진짜 문제"로 판정된 항목들을 4분면 매트릭스에 배치한다.
 
-- GAP-06: Custom entry title debounce (해결됨)
-- GAP-03: 섹션 삭제 확인 모달 (해결됨)
-- GAP-05: 삭제 후 navigation fallback (해결됨)
-- GAP-04: Feature 섹션 엔트리 제거 UI (해결됨)
-- GAP-12/IDEA-08: isInSection 시각적 표시 (해결됨)
-- GAP-02: 섹션 선택 서브메뉴 (Phase 2 예정)
-- IDEA-12: 섹션 가시성 토글 (Phase 2 예정)
+- **X축**: 노력 (코드 변경 범위) — 낮은 노력 ← → 높은 노력
+- **Y축**: 임팩트 (유저 마찰 감소) — 낮은 임팩트 ← → 높은 임팩트
+- **Quick Win**: 높은 임팩트 + 낮은 노력 → 즉시 실행
+- **Strategic**: 높은 임팩트 + 높은 노력 → 계획 후 실행
+- **Nice to Have**: 낮은 임팩트 + 낮은 노력 → 여유 시
+- **Money Pit**: 낮은 임팩트 + 높은 노력 → 하지 말 것 (거부 근거 명시)
+
+### 4.5 이전 deep dive 참조
+
+Critical Reviewer는 아래 항목들의 상태를 인지한다. **코드 검사로 실제 해결 여부를 확인**한 뒤에만 중복으로 분류할 수 있다. "계획됨"과 "코드에서 확인됨"은 구분한다.
+
+- GAP-06: Custom entry title debounce — 코드 확인 필요 (커밋 ee5d783)
+- GAP-03: 섹션 삭제 확인 모달 — 코드 확인 필요 (커밋 147bfd1)
+- GAP-05: 삭제 후 navigation fallback — 코드 확인 필요 (커밋 5e7b6e5)
+- GAP-04: Feature 섹션 엔트리 제거 UI — 코드 확인 필요 (staged, 미커밋)
+- GAP-12/IDEA-08: isInSection 시각적 표시 — 코드 확인 필요 (staged, 미커밋)
+- GAP-02: 섹션 선택 서브메뉴 (Phase 2 예정 — 미구현)
+- IDEA-12: 섹션 가시성 토글 (Phase 2 예정 — 미구현)
 
 ---
 
-## 4. 결과물
+## 5. 결과물
 
-### 4.1 출력 파일
+### 5.1 출력 파일
 
 `docs/strategy/dashboard-ui-deep-dive-result.md`
 
-### 4.2 결과 문서 구조
+### 5.2 결과 문서 구조
 
 ```markdown
 # Dashboard UI Deep Dive 결과
@@ -210,27 +246,39 @@ Critical Reviewer는 아래 항목들이 이미 해결되었거나 진행 중임
 
 ## 1. Visual Auditor 발견사항
 
-(VIS-01 ~ VIS-N: 설명, 심각도, 해당 파일/라인)
+| ID | 이슈 | 심각도 | 체크리스트 항목 | 해당 파일:라인 |
+(VIS-01 ~ VIS-N)
 
 ## 2. Information Architect 발견사항
 
-(INFO-01 ~ INFO-N: 설명, 심각도, 해당 파일/라인)
+| ID | 이슈 | 심각도 | 체크리스트 항목 | 해당 파일:라인 |
+(INFO-01 ~ INFO-N)
 
 ## 3. Interaction Critic 발견사항
 
-(INT-01 ~ INT-N: 설명, 심각도, 해당 파일/라인)
+| ID | 이슈 | 심각도 | 체크리스트 항목 | 해당 파일:라인 |
+(INT-01 ~ INT-N)
 
 ## 4. Critical Reviewer 검증
 
-### 진짜 문제 (테이블: ID, 이슈, 심각도, 근거)
+**전수 판정**: 위 1~3 섹션의 모든 발견사항에 대해 개별 판정. 생략 불가.
 
-### 가짜 문제 (테이블: ID, 이슈, 거부 근거)
+### 진짜 문제
 
-### 데이터 수집 필요 (테이블: ID, 이슈, 측정 방법)
+| ID | 이슈 | 심각도 | 판정 근거 |
+
+### 가짜 문제
+
+| ID | 이슈 | 거부 근거 |
+
+### 데이터 수집 필요
+
+| ID | 이슈 | 측정 방법 |
 
 ## 5. 4분면 매트릭스
 
-(Quick Win / Strategic / Nice to Have / Money Pit)
+(Critical Reviewer가 생성. 축: 노력 vs 임팩트)
+Quick Win / Strategic / Nice to Have / Money Pit
 
 ## 6. 채택 실행 순서
 
@@ -242,12 +290,13 @@ Critical Reviewer는 아래 항목들이 이미 해결되었거나 진행 중임
 
 ## 7. 이전 deep dive와의 관계
 
-(중복/보완/신규 분류)
+| 이전 ID | 현재 ID | 관계 | 비고 |
+(중복 / 보완 / 신규)
 ```
 
 ---
 
-## 5. 제약사항
+## 6. 제약사항
 
 - 코드만 분석 (실제 렌더링된 화면은 보지 않음 — 코드 기반 추론)
 - Tailwind 클래스에서 시각적 속성을 역추론
