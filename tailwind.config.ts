@@ -112,6 +112,8 @@ const config: Config = {
                     warning: 'rgb(245 158 11)', // amber-500
                     // Success (뷰 추가됨 표시 등)
                     success: 'rgb(34 197 94)', // green-500
+                    // Accent (선택/활성 강조)
+                    accent: 'rgb(59 130 246)', // blue-500 — ImageField 편집모드, 드래그 활성 등
                 },
             },
             fontFamily: {
