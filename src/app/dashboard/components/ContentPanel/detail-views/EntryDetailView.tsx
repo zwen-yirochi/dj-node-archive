@@ -14,6 +14,7 @@ import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryDetail, useEntryMutations } from '../../../hooks';
 import { useConfirmAction } from '../../../hooks/use-confirm-action';
+import { selectSetView, useDashboardStore } from '../../../stores/dashboardStore';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import EventDetailView from '../detail-views/EventDetailView';
 import LinkDetailView from '../detail-views/LinkDetailView';
@@ -70,6 +71,7 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     const { data: entry } = useEntryDetail(entryId);
     const { updateField, remove: deleteMutation } = useEntryMutations();
 
+    const setView = useDashboardStore(selectSetView);
     const confirmAction = useConfirmAction();
 
     // Field-level save — SyncedField debounce 후 직접 호출됨
@@ -91,7 +93,11 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
     // Delete handler
     const handleDelete = async () => {
         await deleteMutation.mutateAsync(entry.id);
-        onBack?.();
+        if (onBack) {
+            onBack();
+        } else {
+            setView({ kind: 'page' });
+        }
     };
 
     const config = ENTRY_TYPE_CONFIG[entry.type];
