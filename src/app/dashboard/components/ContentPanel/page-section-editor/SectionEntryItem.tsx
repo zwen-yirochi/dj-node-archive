@@ -70,7 +70,7 @@ export function SectionEntryItem({ entry, sectionId, variant = 'list', onRemove 
                         e.stopPropagation();
                         onRemove();
                     }}
-                    className="absolute right-0.5 top-0.5 z-10 rounded bg-dashboard-bg-card/80 p-0.5 text-dashboard-text-placeholder opacity-0 hover:text-red-400 group-hover/card:opacity-100"
+                    className="absolute right-0.5 top-0.5 z-10 rounded bg-dashboard-bg-card/80 p-0.5 text-dashboard-text-placeholder opacity-0 hover:text-dashboard-danger group-hover/card:opacity-100"
                 >
                     <X className="h-3 w-3" />
                 </button>
@@ -114,7 +114,7 @@ export function SectionEntryItem({ entry, sectionId, variant = 'list', onRemove 
             </span>
             <button
                 onClick={onRemove}
-                className="invisible text-dashboard-text-placeholder hover:text-red-400 group-hover:visible"
+                className="invisible text-dashboard-text-placeholder hover:text-dashboard-danger group-hover:visible"
             >
                 <X className="h-3.5 w-3.5" />
             </button>

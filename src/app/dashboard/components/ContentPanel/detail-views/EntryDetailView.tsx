@@ -134,6 +134,9 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                         </button>
                     )}
                     <TypeBadge type={config.badgeType} size="sm" />
+                    <span className="max-w-[200px] truncate text-sm font-medium text-dashboard-text">
+                        {entry.title || 'Untitled'}
+                    </span>
                     <HeaderSaveIndicator status={updateField.status} />
                     {!isViewReady && (
                         <span
