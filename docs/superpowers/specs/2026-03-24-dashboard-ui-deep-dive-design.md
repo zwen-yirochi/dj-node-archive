@@ -36,7 +36,19 @@
 
 **Step 0**: 분석 시작 전, 1.3에 나열된 모든 파일의 존재를 확인한다. 누락되거나 경로가 변경된 파일은 실제 경로로 대체하고, 새로 추가된 관련 파일이 있으면 목록에 포함한다.
 
-### 1.3 분석 대상 파일
+### 1.3 참조 스크린샷
+
+코드 분석과 함께 실제 렌더링된 화면을 참조한다. 에이전트는 코드에서 추론한 내용을 스크린샷으로 교차 검증해야 한다.
+
+| #   | 화면                       | 경로                                           |
+| --- | -------------------------- | ---------------------------------------------- |
+| 1   | 전체 대시보드 (3패널 풀샷) | `docs/strategy/screenshots/dashboard-full.png` |
+| 2   | Bio Design 뷰              | `docs/strategy/screenshots/bio-design.png`     |
+| 3   | Page Sections 뷰           | `docs/strategy/screenshots/page-sections.png`  |
+| 4   | Entry Detail 뷰            | `docs/strategy/screenshots/entry-detail.png`   |
+| 5   | Create Entry 뷰            | `docs/strategy/screenshots/create-entry.png`   |
+
+### 1.4 분석 대상 파일
 
 모든 에이전트가 동일한 파일셋을 분석:
 
