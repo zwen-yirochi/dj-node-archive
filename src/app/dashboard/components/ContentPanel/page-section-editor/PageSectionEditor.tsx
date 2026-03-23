@@ -50,7 +50,7 @@ export default function PageSectionEditor() {
                 ),
             });
         },
-        [mutations]
+        [mutations.removeEntryFromSection, mutations.addEntryToSection]
     );
 
     useEffect(() => {
