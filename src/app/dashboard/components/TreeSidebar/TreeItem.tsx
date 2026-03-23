@@ -91,7 +91,14 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                 onClick={handleClick}
             >
                 {/* Title */}
-                <span className="ml-2 min-w-0 flex-1 truncate text-sm">
+                <span className="ml-2 flex min-w-0 flex-1 items-center gap-1.5 truncate text-sm">
+                    <span
+                        className={cn(
+                            'inline-block h-1.5 w-1.5 shrink-0 rounded-full',
+                            isInSection ? 'bg-green-500/70' : 'bg-dashboard-text-placeholder/30'
+                        )}
+                        title={isInSection ? 'On page' : 'Not on page'}
+                    />
                     {entry.title || 'Untitled'}
                 </span>
 
