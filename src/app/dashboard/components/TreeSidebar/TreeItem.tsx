@@ -150,6 +150,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                         <DropdownMenuContent
                             align="end"
                             className="w-48 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl"
+                            onClick={(e) => e.stopPropagation()}
                         >
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger
