@@ -16,6 +16,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuPortal,
     DropdownMenuSeparator,
     DropdownMenuSub,
     DropdownMenuSubContent,
@@ -159,39 +160,41 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                                 >
                                     Add to section
                                 </DropdownMenuSubTrigger>
-                                <DropdownMenuSubContent className="w-44 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl">
-                                    {sections.length === 0 ? (
-                                        <DropdownMenuItem
-                                            disabled
-                                            className="text-dashboard-text-placeholder"
-                                        >
-                                            No sections yet
-                                        </DropdownMenuItem>
-                                    ) : availableSections.length === 0 ? (
-                                        <DropdownMenuItem
-                                            disabled
-                                            className="text-dashboard-text-placeholder"
-                                        >
-                                            On all sections
-                                        </DropdownMenuItem>
-                                    ) : (
-                                        availableSections.map((s) => (
+                                <DropdownMenuPortal>
+                                    <DropdownMenuSubContent className="w-44 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl">
+                                        {sections.length === 0 ? (
                                             <DropdownMenuItem
-                                                key={s.id}
-                                                onClick={() =>
-                                                    sectionMutations.addEntryToSection(
-                                                        s.id,
-                                                        entry.id
-                                                    )
-                                                }
-                                                className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
+                                                disabled
+                                                className="text-dashboard-text-placeholder"
                                             >
-                                                {s.title ||
-                                                    `${s.viewType.charAt(0).toUpperCase() + s.viewType.slice(1)} section`}
+                                                No sections yet
                                             </DropdownMenuItem>
-                                        ))
-                                    )}
-                                </DropdownMenuSubContent>
+                                        ) : availableSections.length === 0 ? (
+                                            <DropdownMenuItem
+                                                disabled
+                                                className="text-dashboard-text-placeholder"
+                                            >
+                                                On all sections
+                                            </DropdownMenuItem>
+                                        ) : (
+                                            availableSections.map((s) => (
+                                                <DropdownMenuItem
+                                                    key={s.id}
+                                                    onClick={() =>
+                                                        sectionMutations.addEntryToSection(
+                                                            s.id,
+                                                            entry.id
+                                                        )
+                                                    }
+                                                    className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
+                                                >
+                                                    {s.title ||
+                                                        `${s.viewType.charAt(0).toUpperCase() + s.viewType.slice(1)} section`}
+                                                </DropdownMenuItem>
+                                            ))
+                                        )}
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuPortal>
                             </DropdownMenuSub>
 
                             <DropdownMenuSeparator className="bg-dashboard-border" />
