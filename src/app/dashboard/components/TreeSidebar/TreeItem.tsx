@@ -10,15 +10,18 @@ import type { ContentEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { validateEntry } from '@/app/dashboard/config/entry/entry-validation';
-import {
-    resolveMenuItems,
-    TREE_DELETE,
-    type MenuConfig,
-    type MenuItemConfig,
-    type MenuSeparatorConfig,
-} from '@/app/dashboard/config/ui/menu';
+import { TREE_DELETE, type MenuConfig } from '@/app/dashboard/config/ui/menu';
 import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
-import { SimpleDropdown } from '@/components/ui/simple-dropdown';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 import { useEntryMutations } from '../../hooks';
 import { useConfirmAction } from '../../hooks/use-confirm-action';
@@ -66,44 +69,18 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
         setView({ kind: 'detail', entryId: entry.id });
     };
 
-    // Dynamic section menu: show available sections for entry placement
-    const SEPARATOR: MenuSeparatorConfig = { type: 'separator' };
-
+    // Available sections for "Add to section" submenu
     const availableSections = sections.filter((s) => {
         if (s.entryIds.includes(entry.id)) return false;
         if (s.viewType === 'feature' && s.entryIds.length >= 1) return false;
         return true;
     });
 
-    const sectionMenuItems: (MenuItemConfig | MenuSeparatorConfig)[] = (() => {
-        if (sections.length === 0) {
-            return [{ actionKey: '_no-sections', label: 'No sections yet' }];
-        }
-        if (availableSections.length === 0) {
-            return [{ actionKey: '_on-all', label: 'On all sections' }];
-        }
-        return availableSections.map((s) => ({
-            actionKey: `add-to:${s.id}`,
-            label: s.title || `${s.viewType.charAt(0).toUpperCase() + s.viewType.slice(1)} section`,
-        }));
-    })();
-
-    const dynamicMenu: MenuConfig = [...sectionMenuItems, SEPARATOR, TREE_DELETE];
-
-    // Build handlers dynamically
-    const sectionHandlers: Record<string, () => void> = {};
-    for (const s of availableSections) {
-        sectionHandlers[`add-to:${s.id}`] = () => {
-            sectionMutations.addEntryToSection(s.id, entry.id);
-        };
-    }
-    sectionHandlers['_no-sections'] = () => {};
-    sectionHandlers['_on-all'] = () => {};
-
-    const allHandlers = confirmAction.wrapHandlers(
-        dynamicMenu,
+    // Delete handler with confirm (reuse wrapHandlers for TREE_DELETE confirm strategy)
+    const DELETE_ONLY_MENU: MenuConfig = [TREE_DELETE];
+    const deleteHandlers = confirmAction.wrapHandlers(
+        DELETE_ONLY_MENU,
         {
-            ...sectionHandlers,
             delete: () => {
                 const cv = useDashboardStore.getState().contentView;
                 if (cv.kind === 'detail' && cv.entryId === entry.id) {
@@ -114,15 +91,6 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
         },
         entry as unknown as Record<string, unknown>
     );
-    const menuItems = resolveMenuItems(dynamicMenu, allHandlers).map((item) => {
-        if (
-            'label' in item &&
-            (item.label === 'No sections yet' || item.label === 'On all sections')
-        ) {
-            return { ...item, disabled: true };
-        }
-        return item;
-    });
 
     return (
         <>
@@ -157,18 +125,71 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                     {!isValid && (
                         <AlertTriangle className="h-3 w-3 text-amber-500/70 transition-opacity group-hover:opacity-0" />
                     )}
-                    <SimpleDropdown
-                        trigger={
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                             <button
                                 onClick={(e) => e.stopPropagation()}
                                 className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-dashboard-bg-active group-hover:opacity-100"
                             >
                                 <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
                             </button>
-                        }
-                        items={menuItems}
-                        contentClassName="w-44"
-                    />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            className="w-48 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl"
+                        >
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger
+                                    className="text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
+                                    disabled={sections.length === 0}
+                                >
+                                    Add to section
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent className="w-44 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl">
+                                    {sections.length === 0 ? (
+                                        <DropdownMenuItem
+                                            disabled
+                                            className="text-dashboard-text-placeholder"
+                                        >
+                                            No sections yet
+                                        </DropdownMenuItem>
+                                    ) : availableSections.length === 0 ? (
+                                        <DropdownMenuItem
+                                            disabled
+                                            className="text-dashboard-text-placeholder"
+                                        >
+                                            On all sections
+                                        </DropdownMenuItem>
+                                    ) : (
+                                        availableSections.map((s) => (
+                                            <DropdownMenuItem
+                                                key={s.id}
+                                                onClick={() =>
+                                                    sectionMutations.addEntryToSection(
+                                                        s.id,
+                                                        entry.id
+                                                    )
+                                                }
+                                                className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
+                                            >
+                                                {s.title ||
+                                                    `${s.viewType.charAt(0).toUpperCase() + s.viewType.slice(1)} section`}
+                                            </DropdownMenuItem>
+                                        ))
+                                    )}
+                                </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+
+                            <DropdownMenuSeparator className="bg-dashboard-border" />
+
+                            <DropdownMenuItem
+                                onClick={deleteHandlers.delete}
+                                className="cursor-pointer text-dashboard-danger focus:bg-dashboard-danger-bg"
+                            >
+                                Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
 
