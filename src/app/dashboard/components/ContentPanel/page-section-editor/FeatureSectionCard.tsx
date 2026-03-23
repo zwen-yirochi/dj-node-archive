@@ -1,7 +1,7 @@
 import { useDroppable } from '@dnd-kit/core';
 import { memo } from 'react';
 
-import { GripVertical, Sparkles, Trash2 } from 'lucide-react';
+import { GripVertical, Sparkles, Trash2, X } from 'lucide-react';
 
 import type { ContentEntry, Section } from '@/types/domain';
 import { formatDateCompact } from '@/lib/formatters';
@@ -21,6 +21,7 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
     section,
     entries,
     onDelete,
+    onRemoveEntry,
 }: Props) {
     const featured = entries[0];
 
@@ -32,14 +33,22 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
             {(dragHandleProps) => (
                 <>
                     {/* Header — drag handle + entry title + feature label + delete */}
-                    <div className="flex items-center gap-2 px-2 py-2">
+                    <div className="group flex items-center gap-2 px-2 py-2">
                         <button {...dragHandleProps} className="drag-handle">
                             <GripVertical className="h-4 w-4" />
                         </button>
                         {featured ? (
-                            <span className="flex-1 truncate text-sm font-medium text-dashboard-text">
-                                {featured.title || 'Untitled'}
-                            </span>
+                            <div className="flex min-w-0 flex-1 items-center gap-1">
+                                <span className="truncate text-sm font-medium text-dashboard-text">
+                                    {featured.title || 'Untitled'}
+                                </span>
+                                <button
+                                    onClick={() => onRemoveEntry(featured.id)}
+                                    className="invisible shrink-0 text-dashboard-text-placeholder hover:text-red-400 group-hover:visible"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
                         ) : (
                             <span className="flex-1 text-sm text-dashboard-text-placeholder">
                                 No entry
