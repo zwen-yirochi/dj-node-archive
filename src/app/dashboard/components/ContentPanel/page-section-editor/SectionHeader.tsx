@@ -86,7 +86,7 @@ export function SectionHeader({
             </button>
             <button
                 onClick={onDelete}
-                className="text-dashboard-text-placeholder hover:text-red-400"
+                className="text-dashboard-text-placeholder hover:text-dashboard-danger"
             >
                 <Trash2 className="h-3.5 w-3.5" />
             </button>

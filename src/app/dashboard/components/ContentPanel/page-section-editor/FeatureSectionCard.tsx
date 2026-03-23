@@ -53,7 +53,7 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
                                 </span>
                                 <button
                                     onClick={() => onRemoveEntry(featured.id)}
-                                    className="invisible shrink-0 text-dashboard-text-placeholder hover:text-red-400 group-hover:visible"
+                                    className="invisible shrink-0 text-dashboard-text-placeholder hover:text-dashboard-danger group-hover:visible"
                                 >
                                     <X className="h-3.5 w-3.5" />
                                 </button>
@@ -80,7 +80,7 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
                         </button>
                         <button
                             onClick={onDelete}
-                            className="text-dashboard-text-placeholder hover:text-red-400"
+                            className="text-dashboard-text-placeholder hover:text-dashboard-danger"
                         >
                             <Trash2 className="h-3.5 w-3.5" />
                         </button>
