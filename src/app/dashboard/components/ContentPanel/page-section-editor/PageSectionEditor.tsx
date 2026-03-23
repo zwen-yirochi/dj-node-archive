@@ -1,36 +1,20 @@
 'use client';
 
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Plus } from 'lucide-react';
 
-import type { ContentEntry, Section } from '@/types/domain';
 import { cn } from '@/lib/utils';
-import type { ConfirmStrategy } from '@/app/dashboard/config/ui/menu';
 import { ALL_VIEW_TYPE_OPTIONS } from '@/app/dashboard/config/ui/view-types';
 import { useEntries, usePageMeta } from '@/app/dashboard/hooks/use-editor-data';
 import { useSectionMutations } from '@/app/dashboard/hooks/use-section-mutations';
 import { useDndBridgeStore } from '@/app/dashboard/stores/dndBridgeStore';
+import { getAddableEntries } from '@/app/dashboard/utils/section-helpers';
 
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { FeatureSectionCard } from './FeatureSectionCard';
 import { SectionCard } from './SectionCard';
-
-function getAddableEntries(section: Section, allEntries: ContentEntry[]): ContentEntry[] {
-    return allEntries.filter((e) => {
-        if (section.entryIds.includes(e.id)) return false;
-        if (section.viewType === 'feature' && section.entryIds.length >= 1) return false;
-        return true;
-    });
-}
-
-const SECTION_DELETE_CONFIRM: ConfirmStrategy = {
-    type: 'simple',
-    title: 'Delete this section?',
-    description:
-        'All entry assignments in this section will be lost. The entries themselves will not be deleted.',
-};
 
 export default function PageSectionEditor() {
     const { data: pageMeta } = usePageMeta();
@@ -41,17 +25,13 @@ export default function PageSectionEditor() {
 
     // Section delete confirm
     const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-    const pendingConfirm = pendingDeleteId
-        ? {
-              strategy: SECTION_DELETE_CONFIRM,
-              onConfirm: () => mutations.removeSection(pendingDeleteId),
-          }
-        : null;
-    const handleConfirmDelete = useCallback(() => {
-        pendingConfirm?.onConfirm();
-        setPendingDeleteId(null);
-    }, [pendingConfirm]);
-    const handleCloseConfirm = useCallback(() => setPendingDeleteId(null), []);
+
+    const handleConfirmDelete = () => {
+        if (pendingDeleteId) {
+            mutations.removeSection(pendingDeleteId);
+            setPendingDeleteId(null);
+        }
+    };
 
     useEffect(() => {
         if (!showTypeSelect) return;
@@ -176,10 +156,22 @@ export default function PageSectionEditor() {
             </div>
 
             <ConfirmDialog
-                pending={pendingConfirm}
+                pending={
+                    pendingDeleteId
+                        ? {
+                              strategy: {
+                                  type: 'simple',
+                                  title: 'Delete this section?',
+                                  description:
+                                      'All entry assignments in this section will be lost. The entries themselves will not be deleted.',
+                              },
+                              onConfirm: handleConfirmDelete,
+                          }
+                        : null
+                }
                 matchValue=""
                 onConfirm={handleConfirmDelete}
-                onClose={handleCloseConfirm}
+                onClose={() => setPendingDeleteId(null)}
             />
         </div>
     );

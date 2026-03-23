@@ -92,11 +92,15 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
 
     // Delete handler
     const handleDelete = async () => {
-        await deleteMutation.mutateAsync(entry.id);
-        if (onBack) {
-            onBack();
-        } else {
-            setView({ kind: 'page' });
+        try {
+            await deleteMutation.mutateAsync(entry.id);
+            if (onBack) {
+                onBack();
+            } else {
+                setView({ kind: 'page' });
+            }
+        } catch {
+            // mutateAsync error is handled by TanStack Query's onError
         }
     };
 

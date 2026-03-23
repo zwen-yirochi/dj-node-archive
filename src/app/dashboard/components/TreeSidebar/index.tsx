@@ -143,6 +143,7 @@ export default function TreeSidebar() {
                                                 key={entry.id}
                                                 entry={entry}
                                                 isInSection={sectionEntryIds.has(entry.id)}
+                                                sections={pageMeta?.sections ?? []}
                                             />
                                         ))
                                     )}

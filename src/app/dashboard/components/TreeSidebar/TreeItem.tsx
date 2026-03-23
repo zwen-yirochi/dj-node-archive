@@ -6,12 +6,13 @@ import { memo, useRef, useState } from 'react';
 
 import { AlertTriangle, MoreHorizontal } from 'lucide-react';
 
-import type { ContentEntry } from '@/types';
+import type { ContentEntry, Section } from '@/types';
 import { cn } from '@/lib/utils';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { validateEntry } from '@/app/dashboard/config/entry/entry-validation';
 import { TREE_DELETE, type MenuConfig } from '@/app/dashboard/config/ui/menu';
 import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
+import { formatSectionLabel, getAvailableSections } from '@/app/dashboard/utils/section-helpers';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -26,17 +27,22 @@ import {
 
 import { useEntryMutations } from '../../hooks';
 import { useConfirmAction } from '../../hooks/use-confirm-action';
-import { usePageMeta } from '../../hooks/use-editor-data';
 import { useSectionMutations } from '../../hooks/use-section-mutations';
 import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 
+const MENU_CONTENT_CLASS =
+    'rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl';
+
+const DELETE_ONLY_MENU: MenuConfig = [TREE_DELETE];
+
 interface TreeItemProps {
     entry: ContentEntry;
     isInSection: boolean;
+    sections: Section[];
 }
 
-function TreeItem({ entry, isInSection }: TreeItemProps) {
+function TreeItem({ entry, isInSection, sections }: TreeItemProps) {
     // Dashboard Store
     const contentView = useDashboardStore(selectContentView);
     const setView = useDashboardStore(selectSetView);
@@ -47,10 +53,6 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
     // Mutations
     const { remove } = useEntryMutations();
     const sectionMutations = useSectionMutations();
-
-    // Sections data for dynamic menu
-    const { data: pageMeta } = usePageMeta();
-    const sections = pageMeta?.sections ?? [];
 
     const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
     const { isValid } = validateEntry(entry, 'create');
@@ -83,14 +85,9 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
     };
 
     // Available sections for "Add to section" submenu
-    const availableSections = sections.filter((s) => {
-        if (s.entryIds.includes(entry.id)) return false;
-        if (s.viewType === 'feature' && s.entryIds.length >= 1) return false;
-        return true;
-    });
+    const availableSections = getAvailableSections(sections, entry.id);
 
     // Delete handler with confirm (reuse wrapHandlers for TREE_DELETE confirm strategy)
-    const DELETE_ONLY_MENU: MenuConfig = [TREE_DELETE];
     const deleteHandlers = confirmAction.wrapHandlers(
         DELETE_ONLY_MENU,
         {
@@ -150,7 +147,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                             align="end"
-                            className="w-48 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl"
+                            className={cn('w-48', MENU_CONTENT_CLASS)}
                             onClick={(e) => e.stopPropagation()}
                         >
                             <DropdownMenuSub>
@@ -161,7 +158,9 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                                     Add to section
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
-                                    <DropdownMenuSubContent className="w-44 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl">
+                                    <DropdownMenuSubContent
+                                        className={cn('w-44', MENU_CONTENT_CLASS)}
+                                    >
                                         {sections.length === 0 ? (
                                             <DropdownMenuItem
                                                 disabled
@@ -188,8 +187,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                                                     }
                                                     className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
                                                 >
-                                                    {s.title ||
-                                                        `${s.viewType.charAt(0).toUpperCase() + s.viewType.slice(1)} section`}
+                                                    {formatSectionLabel(s)}
                                                 </DropdownMenuItem>
                                             ))
                                         )}

@@ -30,8 +30,13 @@ export function AddEntryModal({ open, onOpenChange, entries, onSelect }: AddEntr
         setSearch('');
     };
 
+    const handleOpenChange = (nextOpen: boolean) => {
+        if (!nextOpen) setSearch('');
+        onOpenChange(nextOpen);
+    };
+
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DashboardDialogContent size="sm">
                 <DialogTitle className="text-sm font-medium text-dashboard-text">
                     Add entry to section
