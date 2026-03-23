@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { memo, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 
 import { AlertTriangle, MoreHorizontal } from 'lucide-react';
 
@@ -56,6 +56,12 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
 
     // 메뉴 열림 상태 — 열려있으면 드래그 비활성화 (dnd-kit ↔ Radix 서브메뉴 충돌 방지)
     const [menuOpen, setMenuOpen] = useState(false);
+    const menuClosedAtRef = useRef(0);
+
+    const handleMenuChange = (open: boolean) => {
+        setMenuOpen(open);
+        if (!open) menuClosedAtRef.current = Date.now();
+    };
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: entry.id,
@@ -70,6 +76,8 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
     };
 
     const handleClick = () => {
+        // 메뉴가 닫힌 직후 클릭은 무시 (메뉴 닫힘 → click 버블링 방지)
+        if (Date.now() - menuClosedAtRef.current < 200) return;
         setView({ kind: 'detail', entryId: entry.id });
     };
 
@@ -129,7 +137,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                     {!isValid && (
                         <AlertTriangle className="h-3 w-3 text-amber-500/70 transition-opacity group-hover:opacity-0" />
                     )}
-                    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+                    <DropdownMenu open={menuOpen} onOpenChange={handleMenuChange}>
                         <DropdownMenuTrigger asChild>
                             <button
                                 onClick={(e) => e.stopPropagation()}
