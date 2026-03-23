@@ -137,7 +137,7 @@ function TreeItem({ entry, isInSection }: TreeItemProps) {
                     {!isValid && (
                         <AlertTriangle className="h-3 w-3 text-amber-500/70 transition-opacity group-hover:opacity-0" />
                     )}
-                    <DropdownMenu open={menuOpen} onOpenChange={handleMenuChange}>
+                    <DropdownMenu onOpenChange={handleMenuChange}>
                         <DropdownMenuTrigger asChild>
                             <button
                                 onClick={(e) => e.stopPropagation()}
