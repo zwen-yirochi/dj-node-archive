@@ -132,7 +132,7 @@ Response: {
 
 ```
 POST /api/import/artist/confirm
-Body: { ra_url: "https://ra.co/dj/xxxxx" }
+Body: { ra_url: "https://ra.co/dj/xxxxx", page_id: string }
 Response: {
   artist: { name: string },
   totalEvents: number,
@@ -209,7 +209,7 @@ Entry creation uses `EventReferenceData: { event_id: string }` — the entry ref
 | ---------------------------------------- | ------------------------------------------------------------------- |
 | Same RA event already in `events` table  | Reuse existing event, create entry only                             |
 | Entry already references same `event_id` | Skip, report as "duplicate"                                         |
-| Venue already in DB                      | Reuse existing venue                                                |
+| Venue exists in DB                       | Store venue name as text in event data (no venue linking)           |
 | Venue not in DB                          | Store venue name as text in event data only (no venue row creation) |
 
 ### Error Cases
@@ -285,8 +285,60 @@ CreateEntryPanel.tsx (existing — replace "coming soon")
 
 ---
 
+## Prerequisites
+
+### DB Migration
+
+- Add `metadata` JSONB column to `import_logs` table (for artist migration result data)
+- Add `import_type` values: `'artist'`, `'event'` (currently only `'venue'` exists)
+
+### RA GraphQL Spike
+
+Before implementation, verify that the RA GraphQL API supports:
+
+1. Artist event listing query (by artist ID or URL-safe name)
+2. Single event detail query (by event ID)
+
+If the artist query is unavailable, fallback: HTML scraping of `ra.co/dj/xxxxx/past-events`.
+
+---
+
 ## Technical Notes
 
-- RA GraphQL artist events query needs to be verified during implementation. If the query shape differs from venue events, the mapper will need adjustment.
-- Artist migration may take 10-30 seconds for large event histories (300+ events). The progress UI is essential.
+### Bulk Import Strategy
+
+Artist migration can involve 300+ events. To avoid Vercel function timeouts:
+
+- **Chunked processing**: Client sends confirm request. Handler fetches all events from RA in one call, then processes in batches of 50 (create event + entry per batch). Single HTTP response with full report.
+- If total processing exceeds Vercel Pro timeout (60s), consider splitting into multiple API calls with client-side orchestration (batch 1 of N, batch 2 of N...). Start with single-request approach and optimize if needed.
+
+### Entry Position & Slug
+
+- **Position**: Bulk-imported entries are appended after existing entries. Ordered by event date (oldest first = lowest position).
+- **Slug**: Generated using existing `generateSlug(title)-{dateStr}-{timestamp}` pattern from `mappers.ts`.
+
+### Deduplication
+
+- RA events are identified by `source = 'ra_import'` + matching title/date/venue combination on the `events` table.
+- For single event import: also check `data->>'ra_event_id'` if available in the RA response.
+
+### Rate Limiting Scope
+
+- Artist migration has its own limit (1 per user lifetime), separate from the 5/hour single-event rate limit.
+- Single event imports count only `import_type = 'event'` logs, not venue or artist.
+- System-wide rate limit (30/hr) applies to all RA API calls across all import types.
+
+### Partial Import
+
+- A partial import (`status = 'partial'`) still counts as completed — no retry allowed.
+- Rationale: partial means some events succeeded and are already entries. Retrying would create duplicates for the succeeded ones. Users can add missed events individually via single event import.
+
+### Cancellation
+
+- If user closes the modal mid-import, the server-side processing continues to completion.
+- The `import_log` is written at the end. If the response is lost, the next Settings modal open will show the completed state.
+- If the server crashes mid-import (no log written), the user can retry since no `import_log` exists.
+
+### Other
+
 - All UI text in English.
