@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { AlertCircle, ArrowLeft, Check, Loader2, MoreHorizontal } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, Info, Loader2, MoreHorizontal } from 'lucide-react';
 
 import type { CustomEntry } from '@/types';
 import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
@@ -12,7 +12,7 @@ import { TypeBadge } from '@/components/dna';
 import { Button } from '@/components/ui/button';
 import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
-import { useEntryDetail, useEntryMutations } from '../../../hooks';
+import { useEntryDetail, useEntryMutations, usePageMeta } from '../../../hooks';
 import { useConfirmAction } from '../../../hooks/use-confirm-action';
 import { selectSetView, useDashboardStore } from '../../../stores/dashboardStore';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
@@ -69,7 +69,13 @@ interface EntryDetailViewProps {
 
 export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProps) {
     const { data: entry } = useEntryDetail(entryId);
+    const { data: pageMeta } = usePageMeta();
     const { updateField, remove: deleteMutation } = useEntryMutations();
+
+    const isInSection = useMemo(() => {
+        if (!pageMeta?.sections || !entry) return false;
+        return pageMeta.sections.some((s) => s.entryIds.includes(entry.id));
+    }, [pageMeta?.sections, entry]);
 
     const setView = useDashboardStore(selectSetView);
     const confirmAction = useConfirmAction();
@@ -157,6 +163,16 @@ export default function EntryDetailView({ entryId, onBack }: EntryDetailViewProp
                     items={menuItems}
                 />
             </div>
+
+            {/* Not-on-page Banner */}
+            {!isInSection && entry && (
+                <div className="flex items-center gap-2 border-b border-dashboard-border/30 bg-dashboard-bg-hover/50 px-6 py-2">
+                    <Info className="h-3.5 w-3.5 shrink-0 text-dashboard-text-muted" />
+                    <span className="text-xs text-dashboard-text-muted">
+                        Not on your page yet — add this entry to a section in Page Layout
+                    </span>
+                </div>
+            )}
 
             {/* Detail View Content */}
             <div className="scrollbar-thin flex-1 overflow-y-auto p-6">
