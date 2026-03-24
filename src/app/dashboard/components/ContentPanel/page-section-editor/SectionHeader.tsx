@@ -76,13 +76,14 @@ export function SectionHeader({
                                 onClick={() => onViewTypeChange(opt.value)}
                                 title={opt.label}
                                 className={cn(
-                                    'rounded p-1 transition-colors',
+                                    'flex items-center gap-1 rounded px-1.5 py-1 transition-colors',
                                     isActive
                                         ? 'bg-dashboard-bg-active text-dashboard-text'
                                         : 'text-dashboard-text-placeholder hover:text-dashboard-text-secondary'
                                 )}
                             >
                                 <Icon className="h-3.5 w-3.5" />
+                                <span className="text-[10px]">{opt.label}</span>
                             </button>
                         );
                     })}
