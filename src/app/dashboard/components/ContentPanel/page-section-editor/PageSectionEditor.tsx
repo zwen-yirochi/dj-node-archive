@@ -87,7 +87,7 @@ export default function PageSectionEditor() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-dashboard-border/50 px-6 py-5">
                 <div>
-                    <h2 className="text-lg font-medium text-dashboard-text">Page Sections</h2>
+                    <h2 className="text-lg font-medium text-dashboard-text">Page Layout</h2>
                     <p className="text-sm text-dashboard-text-muted">
                         Organize entries into sections for your page
                     </p>

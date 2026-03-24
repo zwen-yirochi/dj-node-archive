@@ -50,7 +50,7 @@ export default function BioDesignPanel() {
         <div className="flex h-full flex-col">
             {/* Header */}
             <div className="border-b border-dashboard-border/50 px-6 py-5">
-                <h2 className="text-lg font-medium text-dashboard-text">Bio Design</h2>
+                <h2 className="text-lg font-medium text-dashboard-text">Profile</h2>
                 <p className="text-sm text-dashboard-text-muted">
                     Configure your profile and page style
                 </p>
