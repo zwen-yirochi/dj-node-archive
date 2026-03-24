@@ -91,7 +91,11 @@ export function SectionEntryList({
                         open={addModalOpen}
                         onOpenChange={setAddModalOpen}
                         entries={addableEntries}
-                        onSelect={onAddEntry}
+                        onSelect={(entryIds: string[]) => {
+                            for (const id of entryIds) {
+                                onAddEntry(id);
+                            }
+                        }}
                     />
                 </>
             )}

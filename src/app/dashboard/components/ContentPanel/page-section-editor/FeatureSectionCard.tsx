@@ -102,7 +102,10 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
                                         open={addModalOpen}
                                         onOpenChange={setAddModalOpen}
                                         entries={addableEntries}
-                                        onSelect={onAddEntry}
+                                        onSelect={(entryIds: string[]) => {
+                                            if (entryIds[0]) onAddEntry(entryIds[0]);
+                                        }}
+                                        singleSelect
                                     />
                                 )}
                             </>

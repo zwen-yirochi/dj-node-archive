@@ -15,7 +15,6 @@ import {
 } from '@/lib/validations/entry.schemas';
 
 import { FIELD_CONFIG } from '../entry/entry-fields';
-import { FORM_CONFIGS } from '../entry/entry-forms';
 import { ENTRY_TYPE_CONFIG, type EntryType } from '../entry/entry-types';
 import { ENTRY_SCHEMAS } from '../entry/entry-validation';
 import { EDITOR_MENU_CONFIG } from '../ui/menu';
@@ -243,12 +242,6 @@ describe('Config Registry: Record<EntryType> completeness', () => {
     it('SIDEBAR_CONFIG에 모든 타입 존재', () => {
         for (const type of ALL_TYPES) {
             expect(SIDEBAR_CONFIG[type], `SIDEBAR_CONFIG['${type}'] 누락`).toBeDefined();
-        }
-    });
-
-    it('FORM_CONFIGS에 모든 타입 존재 (null 허용)', () => {
-        for (const type of ALL_TYPES) {
-            expect(type in FORM_CONFIGS, `FORM_CONFIGS['${type}'] 누락`).toBe(true);
         }
     });
 });

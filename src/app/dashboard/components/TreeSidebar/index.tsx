@@ -82,7 +82,7 @@ export default function TreeSidebar() {
 
             {/* Tree Content */}
             <div className="scrollbar-thin flex-1 overflow-y-auto px-3 pb-3">
-                {/* Bio Design */}
+                {/* Profile */}
                 <button
                     onClick={() => setView({ kind: 'bio' })}
                     className={cn(
@@ -93,7 +93,7 @@ export default function TreeSidebar() {
                     )}
                 >
                     <Palette className="h-4 w-4 text-dashboard-text-muted" />
-                    <span className="flex-1 text-sm">Bio design</span>
+                    <span className="flex-1 text-sm">Profile</span>
                 </button>
 
                 {/* Page */}
@@ -107,15 +107,15 @@ export default function TreeSidebar() {
                     )}
                 >
                     <FileText className="h-4 w-4 text-dashboard-text-muted" />
-                    <span className="flex-1 text-sm">Page</span>
+                    <span className="flex-1 text-sm">Page Layout</span>
                 </button>
 
                 {/* Divider */}
                 <div className="my-2" />
 
-                {/* Components */}
+                {/* Archive */}
                 <p className="mb-2 px-2 text-[10px] font-medium uppercase tracking-wider text-dashboard-text-placeholder">
-                    Components
+                    Archive
                 </p>
 
                 {/* Entry Sections */}
