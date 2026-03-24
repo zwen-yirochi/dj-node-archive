@@ -1,42 +1,135 @@
-// ==============================================
-// types/database.ts - DB 스키마 타입 정의
-// ==============================================
+// types/database.ts
+// DB 테이블과 1:1 대응 (snake_case)
 
-// ----------------------------------------------
-// Users
-// ----------------------------------------------
-export interface DBUser {
+type ISODateString = string;
+
+// ============================================
+// User & Page
+// ============================================
+export interface User {
     id: string;
-    auth_user_id?: string;
-    email: string;
+    auth_user_id: string;
     username: string;
-    display_name: string;
-    avatar_url?: string;
+    email?: string;
+    display_name?: string;
+    avatar_url: string;
     bio?: string;
-    instagram?: string;
-    soundcloud?: string;
-    created_at: string;
-    updated_at: string;
+    region?: string;
+    created_at: ISODateString;
+    updated_at: ISODateString;
 }
 
-// ----------------------------------------------
-// Pages
-// ----------------------------------------------
-export interface DBPage {
+export interface ProfileLinkData {
+    type: string;
+    url: string;
+    label?: string;
+    enabled?: boolean;
+}
+
+export interface Page {
     id: string;
     user_id: string;
     slug: string;
     title?: string;
     bio?: string;
     avatar_url?: string;
-    created_at: string;
-    updated_at: string;
+    theme_color?: string;
+    header_style?: string;
+    links?: ProfileLinkData[];
+    sections: unknown; // jsonb — parsed to Section[] in service layer
+    created_at: ISODateString;
+    updated_at: ISODateString;
 }
 
-// ----------------------------------------------
-// Venues
-// ----------------------------------------------
-export interface DBVenue {
+// ============================================
+// Entry Data Types (entries.data JSONB)
+// ============================================
+
+/** type='link' */
+export interface LinkEntryData {
+    title: string;
+    url: string;
+    image_urls?: string[];
+    icon?: string;
+    description?: string;
+}
+
+/** type='event' 참조형 - events 테이블 참조 */
+export interface EventReferenceData {
+    event_id: string;
+    custom_title?: string;
+}
+
+/** type='event' 자체형 - 프라이빗 이벤트 */
+export interface EventSelfData {
+    title: string;
+    date: string;
+    venue: { venue_id?: string; name: string };
+    lineup?: { artist_id?: string; name: string }[];
+    poster_urls?: string[];
+    description?: string;
+    links?: { title: string; url: string }[];
+}
+
+/** type='mixset' 참조형 - mixsets 테이블 참조 */
+export interface MixsetReferenceData {
+    mixset_id: string;
+}
+
+/** type='mixset' 자체형 - 프라이빗 믹스셋 */
+export interface MixsetSelfData {
+    title: string;
+    tracklist?: Track[];
+    cover_url?: string;
+    url?: string;
+    description?: string;
+    duration_minutes?: number;
+}
+
+export type MixsetEntryData = MixsetReferenceData | MixsetSelfData;
+
+/** type='custom' - 커스텀 블록 엔트리 */
+export interface CustomEntryData {
+    title: string;
+    blocks: {
+        id: string;
+        type: string;
+        data: Record<string, unknown>;
+    }[];
+}
+
+export type EntryType = 'link' | 'event' | 'mixset' | 'custom';
+export type EntryData =
+    | LinkEntryData
+    | EventReferenceData
+    | EventSelfData
+    | MixsetEntryData
+    | CustomEntryData;
+
+// ============================================
+// Entry
+// ============================================
+export interface Entry {
+    id: string;
+    page_id: string;
+    type: EntryType;
+    position: number;
+    reference_id: string | null; // events/mixsets 테이블 참조 ID
+    data: EntryData;
+    slug: string | null;
+    created_at: ISODateString;
+    updated_at: ISODateString;
+}
+
+// ============================================
+// Venue
+// ============================================
+export interface VenueExternalSources {
+    ra_url?: string;
+    ra_venue_id?: string;
+}
+
+export interface Venue {
     id: string;
     name: string;
     slug: string;
@@ -47,25 +140,16 @@ export interface DBVenue {
     instagram?: string;
     website?: string;
     claimed_by?: string;
-    created_at: string;
-    updated_at: string;
+    source: string;
+    external_sources: VenueExternalSources;
+    created_at: ISODateString;
+    updated_at: ISODateString;
 }
 
-export interface DBVenueSearchResult {
-    id: string;
-    name: string;
-    slug: string;
-    city?: string;
-    country?: string;
-    instagram?: string;
-    website?: string;
-    event_count?: number;
-}
-
-// ----------------------------------------------
-// Artists
-// ----------------------------------------------
-export interface DBArtist {
+// ============================================
+// Artist
+// ============================================
+export interface Artist {
     id: string;
     name: string;
     slug: string;
@@ -74,157 +158,181 @@ export interface DBArtist {
     soundcloud?: string;
     spotify?: string;
     claimed_by?: string;
-    created_at: string;
-    updated_at: string;
+    created_at: ISODateString;
+    updated_at: ISODateString;
 }
 
-// ----------------------------------------------
-// Events
-// ----------------------------------------------
-export interface DBEventVenue {
+// ============================================
+// Event JSONB Types
+// ============================================
+export interface EventVenue {
     venue_id?: string;
     name: string;
 }
 
-export interface DBEventLineupItem {
+export interface EventPerformer {
     artist_id?: string;
     name: string;
 }
 
-export interface DBEventData {
-    poster_url?: string;
-    description?: string;
-    links?: { title: string; url: string }[];
+export interface EventLink {
+    title: string;
+    url: string;
 }
 
-export interface DBEvent {
+export interface EventData {
+    poster_urls?: string[];
+    description?: string;
+    links?: EventLink[];
+}
+
+// ============================================
+// Event Stack
+// ============================================
+export interface EventStack {
+    id: string;
+    venue_id: string;
+    title: string;
+    event_count: number;
+    first_event_date: string | null;
+    last_event_date: string | null;
+    created_at: ISODateString;
+    updated_at: ISODateString;
+}
+
+// ============================================
+// Event
+// ============================================
+export interface Event {
     id: string;
     title: string;
     slug: string;
     date: string;
-    venue: DBEventVenue;
-    lineup: DBEventLineupItem[];
-    data: DBEventData;
+    venue: EventVenue;
+    lineup: EventPerformer[];
+    data: EventData;
     is_public: boolean;
     created_by: string;
-    created_at: string;
-    updated_at: string;
+    source: string;
+    stack_id?: string | null;
+    created_at: ISODateString;
+    updated_at: ISODateString;
 }
 
-// ----------------------------------------------
-// Mixsets
-// ----------------------------------------------
-export interface DBMixsetTrack {
+// ============================================
+// Mixset
+// ============================================
+export interface Track {
     track: string;
     artist: string;
     time: string;
 }
 
-export interface DBMixset {
+export interface Mixset {
     id: string;
     title: string;
     slug: string;
     date?: string;
     duration_minutes?: number;
-    tracklist: DBMixsetTrack[];
+    tracklist: Track[];
     audio_url?: string;
     cover_url?: string;
     soundcloud_url?: string;
     mixcloud_url?: string;
     created_by: string;
-    created_at: string;
-    updated_at: string;
+    created_at: ISODateString;
+    updated_at: ISODateString;
 }
 
-// ----------------------------------------------
-// Entries
-// ----------------------------------------------
-export type DBEntryType = 'link' | 'event' | 'mixset';
+// ============================================
+// Mention (백링크)
+// ============================================
+export type MentionSourceType = 'event' | 'entry' | 'page';
+export type MentionTargetType = 'venue' | 'artist' | 'event' | 'user';
+export type MentionContext = 'venue' | 'lineup' | 'description_mention' | 'event_reference';
 
-export interface DBLinkData {
-    url: string;
-    title: string;
-    icon?: string;
-}
-
-export interface DBEventRefData {
-    event_id: string;
-    custom_title?: string;
-}
-
-export interface DBInlineEventData {
-    title: string;
-    date: string;
-    venue: DBEventVenue;
-    lineup?: DBEventLineupItem[];
-    poster_url?: string;
-    description?: string;
-    links?: { title: string; url: string }[];
-}
-
-export interface DBMixsetRefData {
-    mixset_id: string;
-}
-
-export type DBEntryData = DBLinkData | DBEventRefData | DBInlineEventData | DBMixsetRefData;
-
-export interface DBEntry {
+export interface Mention {
     id: string;
-    page_id: string;
-    type: DBEntryType;
-    position: number;
-    is_visible: boolean;
-    data: DBEntryData;
-    created_at: string;
-    updated_at: string;
-}
-
-// ----------------------------------------------
-// Mentions
-// ----------------------------------------------
-export type DBMentionSourceType = 'event' | 'entry' | 'page';
-export type DBMentionTargetType = 'venue' | 'artist' | 'event' | 'user';
-export type DBMentionContext = 'venue' | 'lineup' | 'description_mention' | 'event_reference';
-
-export interface DBMention {
-    id: string;
-    source_type: DBMentionSourceType;
+    source_type: MentionSourceType;
     source_id: string;
-    target_type: DBMentionTargetType;
+    target_type: MentionTargetType;
     target_id: string;
-    context: DBMentionContext;
-    created_at: string;
+    context: MentionContext;
+    created_at: ISODateString;
 }
 
-// ----------------------------------------------
-// Joined Types
-// ----------------------------------------------
-export interface DBPageWithEntries extends DBPage {
-    entries: DBEntry[];
+// ============================================
+// Composed Types
+// ============================================
+export interface PageWithEntries extends Page {
+    entries: Entry[];
 }
 
-export interface DBUserWithPages extends DBUser {
-    pages: DBPageWithEntries[];
+export interface UserWithPage extends User {
+    page: Page;
 }
 
-// ----------------------------------------------
-// Legacy Aliases (migration compatibility)
-// ----------------------------------------------
-/** @deprecated Use DBUser instead */
-export type User = DBUser;
-/** @deprecated Use DBPage instead */
-export type Page = DBPage;
-/** @deprecated Use DBEntry instead */
-export type Entry = DBEntry;
-/** @deprecated Use DBEntryType instead */
-export type EntryType = DBEntryType;
-/** @deprecated Use DBPageWithEntries instead */
-export type PageWithEntries = DBPageWithEntries;
-/** @deprecated Use DBUserWithPages instead */
-export type UserWithPages = DBUserWithPages;
-/** @deprecated Use DBVenue instead */
-export type DBVenueReference = DBVenue;
-/** @deprecated Use DBArtist instead */
-export type DBArtistReference = DBArtist;
-/** @deprecated Use DBEvent instead */
-export type DBEventWithVenue = DBEvent;
+export interface UserWithPages extends User {
+    pages: PageWithEntries[];
+}
+
+export interface EventWithRelations extends Event {
+    venue_detail?: Venue;
+    performers?: Artist[];
+}
+
+// ============================================
+// Type Guards
+// ============================================
+export function isEventReference(data: EntryData): data is EventReferenceData {
+    return 'event_id' in data;
+}
+
+export function isEventSelf(data: EntryData): data is EventSelfData {
+    return 'title' in data && 'date' in data && 'venue' in data && !('event_id' in data);
+}
+
+export function isLinkEntry(data: EntryData): data is LinkEntryData {
+    return 'url' in data && !('event_id' in data) && !('mixset_id' in data);
+}
+
+export function isMixsetReference(data: EntryData): data is MixsetReferenceData {
+    return 'mixset_id' in data;
+}
+
+export function isMixsetSelf(data: EntryData): data is MixsetSelfData {
+    return (
+        'title' in data &&
+        'tracklist' in data &&
+        !('event_id' in data) &&
+        !('mixset_id' in data) &&
+        !('url' in data)
+    );
+}
+
+export function isMixsetEntry(data: EntryData): data is MixsetEntryData {
+    return isMixsetReference(data) || isMixsetSelf(data);
+}
+
+// ============================================
+// Legacy Aliases (호환성)
+// ============================================
+export type DBUser = User;
+export type DBPage = Page;
+export type DBEntry = Entry;
+export type DBEntryType = EntryType;
+export type DBPageWithEntries = PageWithEntries;
+export type DBUserWithPages = UserWithPages;
+
+export type VenueReference = Venue;
+export type DBVenueReference = Venue;
+export type DBVenueSearchResult = Venue & { event_count: number };
+
+export type ArtistReference = Artist;
+export type DBArtistReference = Artist;
+
+export type DBEvent = Event;
+export type DBEventWithVenue = EventWithRelations;
+
+export type PerformanceType = 'dj_set' | 'live' | 'b2b';
+export type DBEventPerformer = EventPerformer;

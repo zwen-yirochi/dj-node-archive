@@ -31,6 +31,7 @@
 		--chart-4: 43 74% 66%;
 		--chart-5: 27 87% 67%;
 		--radius: 0.5rem;
+		--scrollbar-thumb: rgb(0 0 0 / 0.12);
 	}
 
 	@media (prefers-color-scheme: dark) {
@@ -84,4 +85,118 @@
   body {
     @apply bg-background text-foreground;
 	}
+}
+
+/* ─── DNA Design System ─── */
+@layer components {
+  /* ── Heading ── */
+
+  /* 랜딩 히어로 전용 — 32px → 56px */
+  .dna-heading-hero {
+    @apply font-mono-alt text-[32px] font-bold uppercase leading-none tracking-dna-tight md:text-[56px];
+  }
+
+  /* 페이지 제목 (유저/이벤트/베뉴) — 24px → 40px */
+  .dna-heading-page {
+    @apply font-mono-alt text-[24px] font-bold uppercase leading-none tracking-dna-tight md:text-[40px];
+  }
+
+  /* 섹션 제목 — 20px → 28px */
+  .dna-heading-section {
+    @apply font-mono-alt text-[20px] font-bold uppercase tracking-dna-tight md:text-[28px];
+  }
+
+  /* ── Text ── */
+
+  /* 본문 — 설명, 단락 */
+  .dna-text-body {
+    @apply text-dna-body text-dna-ink-mid;
+  }
+
+  /* 노드 라벨 — "Event Node", "Artist Node" 등 상위 카테고리 표시 */
+  .dna-text-node {
+    @apply text-dna-label uppercase tracking-dna-label text-dna-ink-light;
+  }
+
+  /* 시스템 라벨 — 타입 표시, 로딩, 빈 상태 */
+  .dna-text-system {
+    @apply text-dna-label uppercase tracking-dna-system text-dna-ink-ghost;
+  }
+
+  /* 메타 라벨 — 날짜, 위치 등 부가 정보 */
+  .dna-text-meta {
+    @apply text-dna-label uppercase tracking-dna-meta text-dna-ink-light;
+  }
+
+  /* 외부 링크 — 소셜, 웹사이트 등 */
+  .dna-text-link {
+    @apply text-dna-meta-val font-medium uppercase tracking-dna-system text-dna-ink-mid no-underline;
+  }
+
+  /* ── Border ── */
+
+  /* 구조 보더 — 페이지 레벨 구분 (TopNav, Footer, AsciiDivider) */
+  .dna-border-structure {
+    @apply border-dashed border-dna-ink-ghost;
+  }
+
+  /* 관계 보더 — 콘텐츠 내부 구분 (SectionLabel, MetaTable, Timeline) */
+  .dna-border-relation {
+    @apply border-dotted border-dna-ink-ghost;
+  }
+
+  /* 약한 관계 보더 — 리스트 행 구분 (NodeItem, EntryCard) */
+  .dna-border-row {
+    @apply border-dotted border-dna-ink-faint;
+  }
+}
+
+@layer utilities {
+  /* ── DND ── */
+  .drag-handle          { @apply cursor-grab touch-none text-dashboard-text-placeholder hover:text-dashboard-text-muted active:cursor-grabbing; }
+  .drag-handle-hover    { @apply drag-handle opacity-0 transition-opacity group-hover:opacity-100; }
+  .drag-source-ghost    { @apply opacity-50; }
+  .drag-source-hidden   { @apply pointer-events-none opacity-0; }
+  .drag-source-elevated { @apply z-10 bg-dashboard-bg-surface shadow-md; }
+  .drag-overlay-card    { @apply rounded-lg border border-dashboard-border bg-dashboard-bg-card shadow-lg animate-[fade-in_150ms_ease-out]; }
+  .drop-zone-active     { @apply border-blue-400 bg-blue-400/5; }
+
+  .shadow-panel {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  }
+  .shadow-panel-hover {
+    box-shadow: 0 2px 6px 0 rgb(0 0 0 / 0.06), 0 1px 3px -1px rgb(0 0 0 / 0.05);
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    scrollbar-gutter: stable;
+  }
+  .scrollbar-thin:hover {
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
+  /* Webkit */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 2px;
+  }
+  .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+  }
 }

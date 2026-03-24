@@ -1,6 +1,8 @@
 // lib/api/responses.ts
 import { NextResponse } from 'next/server';
 
+import type { z } from 'zod';
+
 /**
  * API 에러 정의
  */
@@ -89,4 +91,24 @@ export function validationErrorResponse(field: string) {
 export function internalErrorResponse(message?: string) {
     const error = message ? { ...ApiErrors.INTERNAL, message } : ApiErrors.INTERNAL;
     return errorResponse(error);
+}
+
+/**
+ * Zod 유효성 검증 실패 응답
+ */
+export function zodValidationErrorResponse(zodError: z.ZodError) {
+    return NextResponse.json(
+        {
+            success: false,
+            error: {
+                code: 'VALIDATION_ERROR',
+                message: 'Validation failed',
+                details: zodError.errors.map((err) => ({
+                    path: err.path.join('.'),
+                    message: err.message,
+                })),
+            },
+        },
+        { status: 400 }
+    );
 }

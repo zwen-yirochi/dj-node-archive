@@ -9,6 +9,7 @@ export {
     notFoundResponse,
     validationErrorResponse,
     internalErrorResponse,
+    zodValidationErrorResponse,
 } from './responses';
 export {
     verifyEntryOwnership,

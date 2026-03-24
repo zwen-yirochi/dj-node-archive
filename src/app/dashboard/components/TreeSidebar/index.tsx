@@ -1,353 +1,167 @@
+// app/dashboard/components/TreeSidebar/index.tsx
 'use client';
 
-import { cn } from '@/lib/utils';
-import { canAddToView } from '@/lib/validators';
-import { useContentEntryStore } from '@/stores/contentEntryStore';
-import { useUIStore } from '@/stores/uiStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
-import type { ContentEntry } from '@/types';
-import {
-    closestCenter,
-    DndContext,
-    DragOverlay,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    type DragEndEvent,
-    type DragOverEvent,
-    type DragStartEvent,
-} from '@dnd-kit/core';
-import {
-    SortableContext,
-    sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
-    Calendar,
-    ChevronDown,
-    ChevronRight,
-    FileText,
-    Headphones,
-    Link as LinkIcon,
-    Palette,
-} from 'lucide-react';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useMemo } from 'react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+
+import { FileText, Palette } from 'lucide-react';
+
+import type { ContentEntry } from '@/types';
+import { cn } from '@/lib/utils';
+import { COMPONENT_GROUPS } from '@/app/dashboard/config/ui/sidebar';
+import { useDndBridgeStore } from '@/app/dashboard/stores/dndBridgeStore';
+import { TypeBadge } from '@/components/dna';
+
+import { useEntries, usePageMeta, useUser } from '../../hooks';
+import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
+import { CommandPalette } from '../ui/CommandPalette';
 import AccountSection from './AccountSection';
-import SectionItem from './SectionItem';
+import ComponentGroup from './ComponentGroup';
 import TreeItem from './TreeItem';
-import ViewSection from './ViewSection';
 
-interface TreeSidebarProps {
-    onAddEntry: (type: 'event' | 'mixset' | 'link') => void;
-    onDeleteEntry?: (id: string) => void;
-    username: string;
-}
+export default function TreeSidebar() {
+    // TanStack Query
+    const { data: entries } = useEntries();
+    const { data: pageMeta } = usePageMeta();
+    const user = useUser();
 
-export default function TreeSidebar({ onAddEntry, onDeleteEntry, username }: TreeSidebarProps) {
-    // Content Entry Store
-    const entries = useContentEntryStore((state) => state.entries);
-    const pageId = useContentEntryStore((state) => state.pageId);
-    const reorderSectionItems = useContentEntryStore((state) => state.reorderSectionItems);
-
-    // Display Entry Store
-    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
-    const addToView = useDisplayEntryStore((state) => state.addToView);
-    const reorderView = useDisplayEntryStore((state) => state.reorderView);
-
-    // UI Store
-    const activePanel = useUIStore((state) => state.activePanel);
-    const setActivePanel = useUIStore((state) => state.setActivePanel);
-    const sidebarSections = useUIStore((state) => state.sidebarSections);
-    const toggleSection = useUIStore((state) => state.toggleSection);
-
-    // Page 섹션 접힘 상태
-    const isPageCollapsed = sidebarSections.view.collapsed;
-
-    // useMemo로 필터링하여 무한 루프 방지
-    const events = useMemo(() => entries.filter((e) => e.type === 'event'), [entries]);
-    const mixsets = useMemo(() => entries.filter((e) => e.type === 'mixset'), [entries]);
-    const links = useMemo(() => entries.filter((e) => e.type === 'link'), [entries]);
-
-    const [activeItem, setActiveItem] = useState<{
-        entry: ContentEntry;
-        isDisplayEntry: boolean;
-        displayEntryId?: string;
-    } | null>(null);
-
-    const [isDraggingOverView, setIsDraggingOverView] = useState(false);
-
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
-
-    const handleDragStart = (event: DragStartEvent) => {
-        const { active } = event;
-        const data = active.data.current;
-
-        if (data?.entry) {
-            setActiveItem({
-                entry: data.entry,
-                isDisplayEntry: data.type === 'display-entry',
-                displayEntryId: data.displayEntryId,
-            });
+    // Section membership — computed once, passed as prop
+    const sectionEntryIds = useMemo(() => {
+        const ids = new Set<string>();
+        for (const s of pageMeta?.sections ?? []) {
+            for (const id of s.entryIds) ids.add(id);
         }
-    };
+        return ids;
+    }, [pageMeta?.sections]);
 
-    const handleDragOver = (event: DragOverEvent) => {
-        const { over } = event;
-        setIsDraggingOverView(over?.id === 'view-drop-zone');
-    };
+    // Dashboard Store
+    const contentView = useDashboardStore(selectContentView);
+    const setView = useDashboardStore(selectSetView);
 
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        setActiveItem(null);
-        setIsDraggingOverView(false);
+    // Derive sidebar highlight state from contentView
+    const isBioActive = contentView.kind === 'bio';
+    const isPageActive = contentView.kind === 'page';
 
-        if (!over) return;
+    // DND bridge — 드롭 순간 동기적 순서 보정
+    const tempEntryOrder = useDndBridgeStore((s) => s.tempEntryOrder);
 
-        const activeData = active.data.current;
-        const overData = over.data.current;
-
-        // View 드롭존에 드롭한 경우
-        if (over.id === 'view-drop-zone' && activeData?.type === 'entry' && pageId) {
-            const entry = activeData.entry as ContentEntry;
-            // 유효성 검사: 필수 필드가 채워진 엔트리만 View에 추가 가능
-            if (!canAddToView(entry)) {
-                // TODO: Toast로 사용자에게 알림
-                console.warn('엔트리를 완성해야 Page에 추가할 수 있습니다.');
-                return;
+    // Filter & sort by type (bridge가 있으면 bridge 순서 우선)
+    const entriesByType = useMemo(() => {
+        const map: Record<string, ContentEntry[]> = {};
+        for (const cfg of COMPONENT_GROUPS) {
+            const typed = entries.filter((e) => e.type === cfg.entryType);
+            if (tempEntryOrder) {
+                const orderMap = new Map(tempEntryOrder.map((id, i) => [id, i]));
+                typed.sort((a, b) => {
+                    const aIdx = orderMap.get(a.id) ?? a.position;
+                    const bIdx = orderMap.get(b.id) ?? b.position;
+                    return aIdx - bIdx;
+                });
+            } else {
+                typed.sort((a, b) => a.position - b.position);
             }
-            addToView(pageId, entry.id);
-            return;
+            map[cfg.entryType] = typed;
         }
-
-        // View 섹션 내에서 순서 변경
-        if (activeData?.type === 'display-entry') {
-            if (overData?.type === 'display-entry') {
-                const overIndex = displayEntries.findIndex((item) => item.id === over.id);
-                if (overIndex !== -1) {
-                    reorderView(active.id as string, overIndex);
-                }
-            }
-            return;
-        }
-
-        // 섹션 내 엔트리 순서 변경
-        if (activeData?.type === 'entry' && overData?.type === 'entry') {
-            const activeEntry = activeData.entry as ContentEntry;
-            const overEntry = overData.entry as ContentEntry;
-
-            if (activeEntry.type === overEntry.type && active.id !== over.id) {
-                const sectionType = activeEntry.type as 'event' | 'mixset' | 'link';
-
-                let sectionEntries: ContentEntry[];
-                if (sectionType === 'event') {
-                    sectionEntries = events;
-                } else if (sectionType === 'mixset') {
-                    sectionEntries = mixsets;
-                } else {
-                    sectionEntries = links;
-                }
-
-                const overIndex = sectionEntries.findIndex((e) => e.id === over.id);
-                if (overIndex !== -1) {
-                    reorderSectionItems(sectionType, activeEntry.id, overIndex);
-                }
-            }
-        }
-    };
-
-    const handleDelete = (entryId: string) => {
-        onDeleteEntry?.(entryId);
-    };
-
-    const handlePageClick = () => {
-        setActivePanel('page');
-    };
-
-    const handlePageToggle = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        toggleSection('view');
-    };
+        return map;
+    }, [entries, tempEntryOrder]);
 
     return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-        >
-            <aside className="flex h-full w-64 flex-col rounded-2xl bg-dashboard-bg-surface shadow-[0_-5px_10px_0_rgba(0,0,0,0.1),0_5px_10px_0_rgba(0,0,0,0.1)]">
-                {/* Header */}
-                <div className="px-4 py-4">
-                    <Link
-                        href="/"
-                        className="font-display text-xl font-semibold text-dashboard-text"
-                    >
-                        DNA
-                    </Link>
-                </div>
+        <aside className="flex h-full w-64 shrink-0 flex-col bg-dashboard-bg-muted">
+            {/* Header */}
+            <div className="px-4 py-4">
+                <Link href="/" className="font-display text-xl font-semibold text-dashboard-text">
+                    DNA
+                </Link>
+            </div>
 
-                {/* Tree Content */}
-                <div className="flex-1 overflow-y-auto px-3 pb-3">
-                    {/* Bio Design */}
-                    <button
-                        onClick={() => setActivePanel('bio')}
-                        className={cn(
-                            'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
-                            activePanel === 'bio'
-                                ? 'bg-dashboard-bg-active text-dashboard-text'
-                                : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
-                        )}
-                    >
-                        <Palette className="h-4 w-4 text-dashboard-text-muted" />
-                        <span className="flex-1 text-sm font-medium">Bio design</span>
-                    </button>
+            {/* Search */}
+            <div className="px-3 pb-2">
+                <CommandPalette />
+            </div>
 
-                    {/* Page - 클릭하면 패널 전환, 화살표 클릭하면 접기/펼치기 */}
-                    <div
-                        onClick={handlePageClick}
-                        className={cn(
-                            'group mb-1 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
-                            activePanel === 'page'
-                                ? 'bg-dashboard-bg-active text-dashboard-text'
-                                : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover'
-                        )}
-                    >
-                        <FileText className="h-4 w-4 text-dashboard-text-muted" />
-                        <span className="flex-1 text-sm font-medium">Page</span>
-                        {/* {visibleCount > 0 && (
-                            <span className="rounded bg-dashboard-bg-active px-1.5 py-0.5 text-[10px] font-medium text-dashboard-text-muted">
-                                {visibleCount}
-                            </span>
-                        )} */}
-                        {/* 접기/펼치기 화살표 */}
-                        <button
-                            onClick={handlePageToggle}
-                            className="flex h-4 w-4 items-center justify-center text-dashboard-text-placeholder hover:text-dashboard-text-muted"
+            {/* Tree Content */}
+            <div className="scrollbar-thin flex-1 overflow-y-auto px-3 pb-3">
+                {/* Bio Design */}
+                <button
+                    onClick={() => setView({ kind: 'bio' })}
+                    className={cn(
+                        'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
+                        isBioActive
+                            ? 'bg-dashboard-bg-active/70 font-medium text-dashboard-text'
+                            : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover/70'
+                    )}
+                >
+                    <Palette className="h-4 w-4 text-dashboard-text-muted" />
+                    <span className="flex-1 text-sm">Bio design</span>
+                </button>
+
+                {/* Page */}
+                <button
+                    onClick={() => setView({ kind: 'page' })}
+                    className={cn(
+                        'mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
+                        isPageActive
+                            ? 'bg-dashboard-bg-active/70 font-medium text-dashboard-text'
+                            : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover/70'
+                    )}
+                >
+                    <FileText className="h-4 w-4 text-dashboard-text-muted" />
+                    <span className="flex-1 text-sm">Page</span>
+                </button>
+
+                {/* Divider */}
+                <div className="my-2" />
+
+                {/* Components */}
+                <p className="mb-2 px-2 text-[10px] font-medium uppercase tracking-wider text-dashboard-text-placeholder">
+                    Components
+                </p>
+
+                {/* Entry Sections */}
+                {COMPONENT_GROUPS.map((cfg) => {
+                    const items = entriesByType[cfg.entryType] ?? [];
+                    return (
+                        <ComponentGroup
+                            key={cfg.section}
+                            section={cfg.section}
+                            title={cfg.title}
+                            icon={<TypeBadge type={cfg.badgeType} size="sm" />}
+                            count={items.length}
+                            entryType={cfg.entryType}
                         >
-                            {isPageCollapsed ? (
-                                <ChevronRight className="h-3.5 w-3.5" />
-                            ) : (
-                                <ChevronDown className="h-3.5 w-3.5" />
-                            )}
-                        </button>
-                    </div>
+                            <SortableContext
+                                items={items.map((e) => e.id)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                <div className="py-0.5">
+                                    {items.length === 0 ? (
+                                        <SectionEmptyHint label={cfg.emptyLabel} />
+                                    ) : (
+                                        items.map((entry) => (
+                                            <TreeItem
+                                                key={entry.id}
+                                                entry={entry}
+                                                isInSection={sectionEntryIds.has(entry.id)}
+                                                sections={pageMeta?.sections ?? []}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            </SortableContext>
+                        </ComponentGroup>
+                    );
+                })}
+            </div>
 
-                    {/* Page ViewSection - 항상 렌더링 (드롭 가능), 접힘 상태에 따라 표시 */}
-                    <div className="mb-3 ml-3">
-                        <ViewSection
-                            isDraggingOver={isDraggingOverView}
-                            isCollapsed={isPageCollapsed}
-                            onDeleteEntry={handleDelete}
-                        />
-                    </div>
+            {/* Account Section */}
+            <AccountSection username={user.username} />
+        </aside>
+    );
+}
 
-                    {/* Divider */}
-                    <div className="my-3 border-t border-dashboard-border" />
-
-                    {/* Sub Level: Components */}
-                    <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-dashboard-text-placeholder">
-                        Components
-                    </p>
-
-                    {/* Events Section */}
-                    <SectionItem
-                        section="events"
-                        title="Events"
-                        icon={<Calendar className="h-4 w-4" />}
-                        count={events.length}
-                        onAdd={() => onAddEntry('event')}
-                    >
-                        <SortableContext
-                            items={events.map((e) => e.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <div className="py-0.5">
-                                {events.map((entry) => (
-                                    <TreeItem
-                                        key={entry.id}
-                                        entry={entry}
-                                        onDelete={() => handleDelete(entry.id)}
-                                    />
-                                ))}
-                            </div>
-                        </SortableContext>
-                    </SectionItem>
-
-                    {/* Mixsets Section */}
-                    <SectionItem
-                        section="mixsets"
-                        title="Mixsets"
-                        icon={<Headphones className="h-4 w-4" />}
-                        count={mixsets.length}
-                        onAdd={() => onAddEntry('mixset')}
-                    >
-                        <SortableContext
-                            items={mixsets.map((e) => e.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <div className="py-0.5">
-                                {mixsets.map((entry) => (
-                                    <TreeItem
-                                        key={entry.id}
-                                        entry={entry}
-                                        onDelete={() => handleDelete(entry.id)}
-                                    />
-                                ))}
-                            </div>
-                        </SortableContext>
-                    </SectionItem>
-
-                    {/* Links Section */}
-                    <SectionItem
-                        section="links"
-                        title="Links"
-                        icon={<LinkIcon className="h-4 w-4" />}
-                        count={links.length}
-                        onAdd={() => onAddEntry('link')}
-                    >
-                        <SortableContext
-                            items={links.map((e) => e.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <div className="py-0.5">
-                                {links.map((entry) => (
-                                    <TreeItem
-                                        key={entry.id}
-                                        entry={entry}
-                                        onDelete={() => handleDelete(entry.id)}
-                                    />
-                                ))}
-                            </div>
-                        </SortableContext>
-                    </SectionItem>
-                </div>
-
-                {/* Account Section - 하단 */}
-                <AccountSection username={username} />
-            </aside>
-
-            {/* Drag Overlay */}
-            <DragOverlay>
-                {activeItem && (
-                    <div className="rounded-lg border border-dashboard-border bg-dashboard-bg-card px-3 py-2 shadow-lg">
-                        <span className="text-sm text-dashboard-text">
-                            {activeItem.entry.title || '제목 없음'}
-                        </span>
-                    </div>
-                )}
-            </DragOverlay>
-        </DndContext>
+function SectionEmptyHint({ label }: { label: string }) {
+    return (
+        <p className="py-2 pl-6 text-xs text-dashboard-text-placeholder">Use + to add {label}</p>
     );
 }

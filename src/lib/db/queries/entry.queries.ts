@@ -1,28 +1,30 @@
 // lib/db/queries/entry.queries.ts
 // 서버 전용 - Entry DB 쿼리
-import { createClient } from '@/lib/supabase/server';
-import type { DBEntry, DBEntryType, DBEntryData } from '@/types/database';
+import type { Entry, EntryData, EntryType } from '@/types/database';
 import {
-    type Result,
-    success,
-    failure,
     createDatabaseError,
     createNotFoundError,
+    failure,
+    success,
+    type Result,
 } from '@/types/result';
+import { createClient } from '@/lib/supabase/server';
 
 export interface CreateEntryInput {
     page_id: string;
-    type: DBEntryType;
+    type: EntryType;
     position: number;
-    data: DBEntryData;
+    reference_id?: string | null; // events.id 또는 mixsets.id 참조
+    data: EntryData;
+    slug?: string;
 }
 
 export interface UpdateEntryInput {
-    type?: DBEntryType;
-    data?: DBEntryData;
+    type?: EntryType;
+    data?: EntryData;
 }
 
-export async function createEntry(id: string, input: CreateEntryInput): Promise<Result<DBEntry>> {
+export async function createEntry(id: string, input: CreateEntryInput): Promise<Result<Entry>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
@@ -32,7 +34,9 @@ export async function createEntry(id: string, input: CreateEntryInput): Promise<
                 page_id: input.page_id,
                 type: input.type,
                 position: input.position,
+                reference_id: input.reference_id ?? null,
                 data: input.data,
+                slug: input.slug ?? null,
             })
             .select()
             .single();
@@ -49,15 +53,21 @@ export async function createEntry(id: string, input: CreateEntryInput): Promise<
     }
 }
 
-export async function updateEntry(id: string, input: UpdateEntryInput): Promise<Result<DBEntry>> {
+export async function updateEntry(id: string, input: UpdateEntryInput): Promise<Result<Entry>> {
     try {
         const supabase = await createClient();
+
+        // Explicitly build update object to ensure null values are included
+        const updateObj: Record<string, unknown> = {
+            updated_at: new Date().toISOString(),
+        };
+
+        if (input.type !== undefined) updateObj.type = input.type;
+        if (input.data !== undefined) updateObj.data = input.data;
+
         const { data, error } = await supabase
             .from('entries')
-            .update({
-                ...input,
-                updated_at: new Date().toISOString(),
-            })
+            .update(updateObj)
             .eq('id', id)
             .select()
             .single();
@@ -73,6 +83,26 @@ export async function updateEntry(id: string, input: UpdateEntryInput): Promise<
     } catch (err) {
         return failure(
             createDatabaseError('엔트리 수정 중 오류가 발생했습니다.', 'updateEntry', err)
+        );
+    }
+}
+
+export async function getEntryById(id: string): Promise<Result<Entry>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase.from('entries').select().eq('id', id).single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                return failure(createNotFoundError('엔트리를 찾을 수 없습니다.', 'entry'));
+            }
+            return failure(createDatabaseError(error.message, 'getEntryById', error));
+        }
+
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError('엔트리 조회 중 오류가 발생했습니다.', 'getEntryById', err)
         );
     }
 }
@@ -99,7 +129,7 @@ export async function updateEntryPositions(
 ): Promise<Result<void>> {
     try {
         const supabase = await createClient();
-        // 트랜잭션으로 처리하기 위해 Promise.all 사용
+        // 개별 update를 병렬 실행 (트랜잭션 아님 — partial failure 가능)
         const results = await Promise.all(
             updates.map(({ id, position }) =>
                 supabase
@@ -132,6 +162,22 @@ export async function updateEntryPositions(
     }
 }
 
+export async function getEntriesByPageId(pageId: string): Promise<Result<Entry[]>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase.from('entries').select('id').eq('page_id', pageId);
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'getEntriesByPageId', error));
+        }
+        return success((data ?? []) as Entry[]);
+    } catch (err) {
+        return failure(
+            createDatabaseError('엔트리 조회 중 오류가 발생했습니다.', 'getEntriesByPageId', err)
+        );
+    }
+}
+
 export async function getMaxPosition(pageId: string): Promise<Result<number>> {
     try {
         const supabase = await createClient();
@@ -156,5 +202,50 @@ export async function getMaxPosition(pageId: string): Promise<Result<number>> {
         return failure(
             createDatabaseError('최대 position 조회 중 오류가 발생했습니다.', 'getMaxPosition', err)
         );
+    }
+}
+
+export async function getEntryBySlug(pageId: string, slug: string): Promise<Result<Entry>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('entries')
+            .select()
+            .eq('page_id', pageId)
+            .eq('slug', slug)
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                return failure(createNotFoundError('엔트리를 찾을 수 없습니다.', 'entry'));
+            }
+            return failure(createDatabaseError(error.message, 'getEntryBySlug', error));
+        }
+
+        return success(data);
+    } catch (err) {
+        return failure(
+            createDatabaseError('엔트리 조회 중 오류가 발생했습니다.', 'getEntryBySlug', err)
+        );
+    }
+}
+
+export async function ensureUniqueSlug(slug: string, pageId: string): Promise<string> {
+    const supabase = await createClient();
+    let candidate = slug;
+    let suffix = 1;
+
+    while (true) {
+        const { data } = await supabase
+            .from('entries')
+            .select('id')
+            .eq('page_id', pageId)
+            .eq('slug', candidate)
+            .single();
+
+        if (!data) return candidate;
+
+        suffix++;
+        candidate = `${slug}-${suffix}`;
     }
 }

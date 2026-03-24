@@ -2,7 +2,11 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+
 import { type LucideIcon } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,7 +14,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from './dropdown-menu';
-import { cn } from '@/lib/utils';
 
 // 클릭 액션 아이템 타입
 export interface DropdownActionItem {
@@ -88,7 +91,7 @@ export function SimpleDropdown({
                 align={align}
                 side={side}
                 className={cn(
-                    'w-40 border-dashboard-border bg-dashboard-bg-card shadow-lg',
+                    'w-40 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl',
                     contentClassName
                 )}
             >
@@ -107,14 +110,14 @@ export function SimpleDropdown({
                     const itemClassName = cn(
                         'cursor-pointer',
                         isDanger
-                            ? 'text-red-600 focus:bg-red-50 focus:text-red-600'
+                            ? 'text-dashboard-danger focus:bg-dashboard-danger-bg'
                             : 'text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text'
                     );
 
                     // 링크 아이템인 경우
                     if (isLinkItem(item)) {
                         return (
-                            <DropdownMenuItem key={`item-${index}`} asChild>
+                            <DropdownMenuItem key={item.label} asChild>
                                 <Link
                                     href={item.href}
                                     target={item.external ? '_blank' : undefined}
@@ -131,7 +134,7 @@ export function SimpleDropdown({
                     // 액션 아이템인 경우
                     return (
                         <DropdownMenuItem
-                            key={`item-${index}`}
+                            key={item.label}
                             onClick={item.onClick}
                             disabled={item.disabled}
                             className={itemClassName}

@@ -1,15 +1,17 @@
 // lib/db/queries/venue.queries.ts
 // 서버 전용 - 베뉴 관련 DB 쿼리
-import { createClient } from '@/lib/supabase/server';
-import type { DBVenueReference, DBVenueSearchResult } from '@/types/database';
+import type { Venue } from '@/types/database';
 import {
-    type Result,
-    success,
-    failure,
+    createConflictError,
     createDatabaseError,
     createNotFoundError,
-    createConflictError,
+    failure,
+    success,
+    type Result,
 } from '@/types/result';
+import { createClient } from '@/lib/supabase/server';
+
+export type VenueSearchResult = Venue & { event_count: number };
 
 /**
  * 베뉴 검색 (자동완성용)
@@ -19,7 +21,7 @@ import {
 export async function searchVenues(
     query: string,
     limit: number = 10
-): Promise<Result<DBVenueSearchResult[]>> {
+): Promise<Result<VenueSearchResult[]>> {
     try {
         const supabase = await createClient();
         const searchPattern = `%${query}%`;
@@ -48,12 +50,12 @@ export async function searchVenues(
 export async function searchVenuesBasic(
     query: string,
     limit: number = 10
-): Promise<Result<DBVenueReference[]>> {
+): Promise<Result<Venue[]>> {
     try {
         const supabase = await createClient();
 
         const { data, error } = await supabase
-            .from('venue_references')
+            .from('venues')
             .select('*')
             .or(`name.ilike.%${query}%,city.ilike.%${query}%`)
             .order('name')
@@ -74,11 +76,11 @@ export async function searchVenuesBasic(
 /**
  * 베뉴 ID로 조회
  */
-export async function findVenueById(venueId: string): Promise<Result<DBVenueReference>> {
+export async function findVenueById(venueId: string): Promise<Result<Venue>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
-            .from('venue_references')
+            .from('venues')
             .select('*')
             .eq('id', venueId)
             .single();
@@ -101,14 +103,10 @@ export async function findVenueById(venueId: string): Promise<Result<DBVenueRefe
 /**
  * 베뉴 slug로 조회
  */
-export async function findVenueBySlug(slug: string): Promise<Result<DBVenueReference>> {
+export async function findVenueBySlug(slug: string): Promise<Result<Venue>> {
     try {
         const supabase = await createClient();
-        const { data, error } = await supabase
-            .from('venue_references')
-            .select('*')
-            .eq('slug', slug)
-            .single();
+        const { data, error } = await supabase.from('venues').select('*').eq('slug', slug).single();
 
         if (error) {
             if (error.code === 'PGRST116') {
@@ -125,6 +123,29 @@ export async function findVenueBySlug(slug: string): Promise<Result<DBVenueRefer
     }
 }
 
+/**
+ * slug 존재 여부 확인
+ */
+export async function isVenueSlugTaken(slug: string): Promise<Result<boolean>> {
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('venues')
+            .select('id')
+            .eq('slug', slug)
+            .maybeSingle();
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'isVenueSlugTaken', error));
+        }
+        return success(data !== null);
+    } catch (err) {
+        return failure(
+            createDatabaseError('slug 확인 중 오류가 발생했습니다.', 'isVenueSlugTaken', err)
+        );
+    }
+}
+
 export interface CreateVenueInput {
     name: string;
     slug: string;
@@ -134,19 +155,21 @@ export interface CreateVenueInput {
     instagram?: string;
     website?: string;
     google_maps_url?: string;
-    created_by?: string;
+    claimed_by?: string;
+    source?: string;
+    external_sources?: Record<string, string>;
 }
 
 /**
  * 새 베뉴 생성
  */
-export async function createVenue(input: CreateVenueInput): Promise<Result<DBVenueReference>> {
+export async function createVenue(input: CreateVenueInput): Promise<Result<Venue>> {
     try {
         const supabase = await createClient();
 
         // slug 중복 체크
         const { data: existing } = await supabase
-            .from('venue_references')
+            .from('venues')
             .select('id')
             .eq('slug', input.slug)
             .single();
@@ -155,11 +178,7 @@ export async function createVenue(input: CreateVenueInput): Promise<Result<DBVen
             return failure(createConflictError('이미 존재하는 베뉴 slug입니다.', 'venue'));
         }
 
-        const { data, error } = await supabase
-            .from('venue_references')
-            .insert(input)
-            .select()
-            .single();
+        const { data, error } = await supabase.from('venues').insert(input).select().single();
 
         if (error) {
             if (error.code === '23505') {
@@ -179,11 +198,11 @@ export async function createVenue(input: CreateVenueInput): Promise<Result<DBVen
 /**
  * 모든 베뉴 조회 (관리용)
  */
-export async function getAllVenues(limit: number = 100): Promise<Result<DBVenueReference[]>> {
+export async function getAllVenues(limit: number = 100): Promise<Result<Venue[]>> {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
-            .from('venue_references')
+            .from('venues')
             .select('*')
             .order('name')
             .limit(limit);
@@ -199,3 +218,7 @@ export async function getAllVenues(limit: number = 100): Promise<Result<DBVenueR
         );
     }
 }
+
+// Legacy alias
+export type DBVenueReference = Venue;
+export type DBVenueSearchResult = VenueSearchResult;

@@ -6,6 +6,9 @@
 # testing
 /coverage
 /.nyc_output
+/e2e/.auth/
+/test-results/
+/playwright-report/
 
 # next.js
 /.next/
@@ -41,6 +44,9 @@ next-env.d.ts
 *.swo
 *~
 
-docs
 .claude
 .mcp.json
+
+/nextjs-kit
+/docs/study
+commits.json

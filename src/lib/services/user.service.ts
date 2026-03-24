@@ -1,51 +1,66 @@
 // lib/services/user.service.ts
 // 서버 전용 - 'use server' 없어도 됨 (기본이 서버)
-import {
-    getDisplayEntriesByPageId,
-    type DBDisplayEntry,
-} from '@/lib/db/queries/display-entry.queries';
-import { findUserWithPages, findUserWithPagesById } from '@/lib/db/queries/user.queries';
-import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers/user.mapper';
-import type {
-    ContentEntry,
-    EventComponent,
-    LinkComponent,
-    MixsetComponent,
-    Page,
-    User,
-} from '@/types/domain';
-import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
 import { cache } from 'react';
 
-// DisplayEntry 도메인 타입
-export interface DisplayEntry {
+import type { Entry } from '@/types/database';
+import {
+    isEventEntry,
+    isLinkEntry,
+    isMixsetEntry,
+    type ContentEntry,
+    type EventEntry,
+    type HeaderStyle,
+    type LinkEntry,
+    type MixsetEntry,
+    type PageSettings,
+    type ProfileLink,
+    type ResolvedSection,
+    type Section,
+    type User,
+} from '@/types/domain';
+import { createNotFoundError, failure, isSuccess, success, type Result } from '@/types/result';
+import { getEntryBySlug } from '@/lib/db/queries/entry.queries';
+import {
+    findUserWithPages,
+    findUserWithPagesByAuthId,
+    findUserWithPagesById,
+} from '@/lib/db/queries/user.queries';
+import { mapEntryToDomain, mapUserToDomain } from '@/lib/mappers';
+
+const DEFAULT_PAGE_SETTINGS: PageSettings = { headerStyle: 'minimal', links: [] };
+
+function buildPageSettings(dbPage?: { header_style?: string; links?: unknown[] }): PageSettings {
+    return {
+        headerStyle: (dbPage?.header_style as HeaderStyle) ?? 'minimal',
+        links: (dbPage?.links as ProfileLink[]) ?? [],
+    };
+}
+
+// 페이지와 엔트리를 포함한 도메인 타입
+export interface PageWithEntries {
     id: string;
-    entryId: string;
-    order: number;
-    isVisible: boolean;
+    userId: string;
+    slug: string;
+    title?: string;
+    bio?: string;
+    avatarUrl?: string;
+    themeColor?: string;
+    pageSettings: PageSettings;
+    entries: ContentEntry[];
 }
 
 export interface EditorData {
     user: User;
-    components: ContentEntry[];
+    contentEntries: ContentEntry[];
     pageId: string | null;
-    displayEntries: DisplayEntry[];
-}
-
-// DB 타입을 도메인 타입으로 변환
-function mapDisplayEntryToDomain(dbItem: DBDisplayEntry): DisplayEntry {
-    return {
-        id: dbItem.id,
-        entryId: dbItem.entry_id,
-        order: dbItem.order_index,
-        isVisible: dbItem.is_visible,
-    };
+    pageSettings: PageSettings;
+    sections: Section[];
 }
 
 export interface ComponentsByType {
-    events: EventComponent[];
-    mixsets: MixsetComponent[];
-    links: LinkComponent[];
+    events: EventEntry[];
+    mixsets: MixsetEntry[];
+    links: LinkEntry[];
 }
 
 export const getUser = cache(async (username: string): Promise<Result<User>> => {
@@ -58,8 +73,14 @@ export const getUser = cache(async (username: string): Promise<Result<User>> => 
     return success(mapUserToDomain(result.data));
 });
 
+// Helper: pages가 배열 또는 단일 객체일 수 있음
+function getFirstPage<T>(pages: T[] | T | null | undefined): T | undefined {
+    if (!pages) return undefined;
+    return Array.isArray(pages) ? pages[0] : pages;
+}
+
 // React cache로 감싸서 요청당 한 번만 실행
-export const getUserPage = cache(async (username: string): Promise<Result<Page>> => {
+export const getUserPage = cache(async (username: string): Promise<Result<PageWithEntries>> => {
     const result = await findUserWithPages(username);
 
     if (!isSuccess(result)) {
@@ -67,11 +88,12 @@ export const getUserPage = cache(async (username: string): Promise<Result<Page>>
     }
 
     const dbData = result.data;
-    if (!dbData.pages?.[0]) {
+    const dbPage = getFirstPage(dbData.pages);
+
+    if (!dbPage) {
         return failure(createNotFoundError(`'${username}'의 페이지를 찾을 수 없습니다.`, 'page'));
     }
 
-    const dbPage = dbData.pages[0];
     const entries = (dbPage.entries || [])
         .sort((a, b) => a.position - b.position)
         .map(mapEntryToDomain);
@@ -80,6 +102,11 @@ export const getUserPage = cache(async (username: string): Promise<Result<Page>>
         id: dbPage.id,
         userId: dbData.id,
         slug: dbPage.slug,
+        title: dbPage.title ?? undefined,
+        bio: dbPage.bio ?? undefined,
+        avatarUrl: dbPage.avatar_url ?? undefined,
+        themeColor: dbPage.theme_color ?? undefined,
+        pageSettings: buildPageSettings(dbPage),
         entries,
     });
 });
@@ -93,32 +120,28 @@ export const getEditorData = cache(async (username: string): Promise<Result<Edit
 
     const dbData = result.data;
     const user = mapUserToDomain(dbData);
-    const page = dbData.pages?.[0];
+    const page = getFirstPage(dbData.pages);
 
     if (!page) {
         return success({
             user,
-            components: [],
+            contentEntries: [],
             pageId: null,
-            displayEntries: [],
+            pageSettings: DEFAULT_PAGE_SETTINGS,
+            sections: [],
         });
     }
 
-    const components = (page.entries || [])
+    const contentEntries = (page.entries || [])
         .sort((a, b) => a.position - b.position)
         .map(mapEntryToDomain);
 
-    // DisplayEntry 조회
-    const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
-    const displayEntries = isSuccess(displayEntriesResult)
-        ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
-        : [];
-
     return success({
         user,
-        components,
+        contentEntries,
         pageId: page.id,
-        displayEntries,
+        pageSettings: buildPageSettings(page),
+        sections: parseSections(page.sections),
     });
 });
 
@@ -132,55 +155,77 @@ export async function getComponentsByType(username: string): Promise<Result<Comp
 
     const page = result.data;
     return success({
-        events: page.entries.filter((c): c is EventComponent => c.type === 'event'),
-        mixsets: page.entries.filter((c): c is MixsetComponent => c.type === 'mixset'),
-        links: page.entries.filter((c): c is LinkComponent => c.type === 'link'),
+        events: page.entries.filter(isEventEntry),
+        mixsets: page.entries.filter(isMixsetEntry),
+        links: page.entries.filter(isLinkEntry),
     });
 }
 
-// 인증된 사용자 ID로 에디터 데이터 조회
-export const getEditorDataByUserId = cache(async (userId: string): Promise<Result<EditorData>> => {
-    const result = await findUserWithPagesById(userId);
+// 인증된 사용자 Auth ID로 에디터 데이터 조회
+export const getEditorDataByAuthUserId = cache(
+    async (authUserId: string): Promise<Result<EditorData>> => {
+        const result = await findUserWithPagesByAuthId(authUserId);
 
-    if (!isSuccess(result)) {
-        return result;
-    }
+        if (!isSuccess(result)) {
+            return result;
+        }
 
-    const dbData = result.data;
-    const user = mapUserToDomain(dbData);
-    const page = dbData.pages?.[0];
+        const dbData = result.data;
+        const user = mapUserToDomain(dbData);
 
-    if (!page) {
+        const page = getFirstPage(dbData.pages);
+
+        if (!page) {
+            return success({
+                user,
+                contentEntries: [],
+                pageId: null,
+                pageSettings: DEFAULT_PAGE_SETTINGS,
+                sections: [],
+            });
+        }
+
+        const contentEntries = (page.entries || [])
+            .sort((a, b) => a.position - b.position)
+            .map(mapEntryToDomain);
+
         return success({
             user,
-            components: [],
-            pageId: null,
-            displayEntries: [],
+            contentEntries,
+            pageId: page.id,
+            pageSettings: buildPageSettings(page),
+            sections: parseSections(page.sections),
         });
     }
+);
 
-    const components = (page.entries || [])
-        .sort((a, b) => a.position - b.position)
-        .map(mapEntryToDomain);
-
-    // DisplayEntry 조회
-    const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
-    const displayEntries = isSuccess(displayEntriesResult)
-        ? displayEntriesResult.data.map(mapDisplayEntryToDomain)
-        : [];
-
-    return success({
-        user,
-        components,
-        pageId: page.id,
-        displayEntries,
-    });
-});
-
-// 공개 페이지용 - DisplayEntry 항목만 조회
+// 공개 페이지용 - sections 기반 조회
 export interface PublicPageData {
     user: User;
-    components: ContentEntry[];
+    sections: ResolvedSection[];
+    pageSettings: PageSettings;
+}
+
+function parseSections(raw: unknown): Section[] {
+    if (!Array.isArray(raw)) return [];
+    return raw as Section[];
+}
+
+function resolveSections(sections: Section[], dbEntries: Entry[]): ResolvedSection[] {
+    const entryMap = new Map(dbEntries.map((e) => [e.id, e]));
+
+    return sections
+        .filter((s) => s.isVisible)
+        .map((section) => ({
+            id: section.id,
+            viewType: section.viewType,
+            title: section.title,
+            entries: section.entryIds
+                .map((id) => entryMap.get(id))
+                .filter((e): e is Entry => e !== undefined)
+                .map(mapEntryToDomain),
+            options: section.options,
+        }));
 }
 
 export const getPublicPageData = cache(
@@ -193,44 +238,58 @@ export const getPublicPageData = cache(
 
         const dbData = result.data;
         const user = mapUserToDomain(dbData);
-        const page = dbData.pages?.[0];
+        const page = getFirstPage(dbData.pages);
 
         if (!page) {
             return success({
                 user,
-                components: [],
+                sections: [],
+                pageSettings: DEFAULT_PAGE_SETTINGS,
             });
         }
 
-        // DisplayEntry 조회
-        const displayEntriesResult = await getDisplayEntriesByPageId(page.id);
-
-        if (!isSuccess(displayEntriesResult) || displayEntriesResult.data.length === 0) {
-            // DisplayEntry가 없으면 기존 방식대로 모든 컴포넌트 반환
-            const components = (page.entries || [])
-                .sort((a, b) => a.position - b.position)
-                .map(mapEntryToDomain);
-
-            return success({
-                user,
-                components,
-            });
-        }
-
-        // DisplayEntry가 있으면 해당 컴포넌트만 순서대로 반환
-        const displayEntries = displayEntriesResult.data
-            .filter((item) => item.is_visible)
-            .sort((a, b) => a.order_index - b.order_index);
-
-        const componentMap = new Map((page.entries || []).map((c) => [c.id, mapEntryToDomain(c)]));
-
-        const components = displayEntries
-            .map((item) => componentMap.get(item.entry_id))
-            .filter((c): c is ContentEntry => c !== undefined);
+        const sections = resolveSections(parseSections(page.sections), page.entries || []);
 
         return success({
             user,
-            components,
+            sections,
+            pageSettings: buildPageSettings(page),
         });
+    }
+);
+
+export interface EntryDetailData {
+    user: User;
+    entry: ContentEntry;
+    username: string;
+}
+
+export const getEntryDetailData = cache(
+    async (username: string, slug: string): Promise<Result<EntryDetailData>> => {
+        const result = await findUserWithPages(username);
+
+        if (!isSuccess(result)) {
+            return result;
+        }
+
+        const dbData = result.data;
+        const user = mapUserToDomain(dbData);
+        const page = getFirstPage(dbData.pages);
+
+        if (!page) {
+            return failure(
+                createNotFoundError(`'${username}'의 페이지를 찾을 수 없습니다.`, 'page')
+            );
+        }
+
+        const entryResult = await getEntryBySlug(page.id, slug);
+
+        if (!isSuccess(entryResult)) {
+            return entryResult;
+        }
+
+        const entry = mapEntryToDomain(entryResult.data);
+
+        return success({ user, entry, username });
     }
 );

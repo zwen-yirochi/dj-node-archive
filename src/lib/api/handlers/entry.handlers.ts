@@ -1,38 +1,57 @@
 // lib/api/handlers/entry.handlers.ts
 // ContentEntry API 핸들러
+import { isSuccess } from '@/types/result';
+import {
+    forbiddenResponse,
+    internalErrorResponse,
+    notFoundResponse,
+    successResponse,
+    verifyEntriesOwnership,
+    verifyEntryOwnership,
+    verifyPageOwnership,
+    zodValidationErrorResponse,
+    type AuthContext,
+} from '@/lib/api';
 import {
     createEntry,
+    deleteEntry,
+    ensureUniqueSlug,
+    getEntryById,
     getMaxPosition,
     updateEntry,
-    deleteEntry,
     updateEntryPositions,
 } from '@/lib/db/queries/entry.queries';
-import { mapEntryToDatabase } from '@/lib/mappers/user.mapper';
-import { isSuccess } from '@/types/result';
-import type { ContentEntry } from '@/types/domain';
+import { createEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
+import { findUserByAuthId } from '@/lib/db/queries/user.queries';
+import { mapEntryToDatabase, mapEntryToDomain } from '@/lib/mappers';
+import { generateSlug } from '@/lib/utils/slug';
 import {
-    verifyPageOwnership,
-    verifyEntryOwnership,
-    verifyEntriesOwnership,
-    successResponse,
-    forbiddenResponse,
-    notFoundResponse,
-    validationErrorResponse,
-    internalErrorResponse,
-} from '@/lib/api';
-import type { AuthContext } from '@/lib/api';
+    createEntryRequestSchema,
+    publishEventSchema,
+    reorderEntriesRequestSchema,
+    updateEntryRequestSchema,
+} from '@/lib/validations/entry.schemas';
 
 /**
  * POST /api/entries (또는 /api/components)
  * Entry 생성
+ *
+ * publishOption === 'publish' 이고 type === 'event'인 경우:
+ * 1. events 테이블에 이벤트 생성
+ * 2. entries 테이블에 reference_id로 참조하는 엔트리 생성
+ *
+ * 그 외의 경우:
+ * - entries.data에 직접 데이터 저장
  */
 export async function handleCreateEntry(request: Request, { user }: AuthContext) {
     const body = await request.json();
-    const { pageId, entry } = body as { pageId: string; entry: ContentEntry };
+    const parsed = createEntryRequestSchema.safeParse(body);
 
-    if (!pageId || !entry) {
-        return validationErrorResponse('pageId와 entry');
+    if (!parsed.success) {
+        return zodValidationErrorResponse(parsed.error);
     }
+
+    const { pageId, entry, publishOption } = parsed.data;
 
     // 페이지 소유권 검증
     const ownership = await verifyPageOwnership(pageId, user.id);
@@ -47,20 +66,88 @@ export async function handleCreateEntry(request: Request, { user }: AuthContext)
     }
 
     const newPosition = maxPositionResult.data + 1;
+    let referenceId: string | null = null;
+
+    // Publish 옵션이고 event 타입인 경우: events 테이블에 먼저 생성
+    if (publishOption === 'publish' && entry.type === 'event') {
+        // publish 시 이벤트 데이터 검증 — Zod 결과를 직접 사용하여 타입 안전성 확보
+        const eventParsed = publishEventSchema.safeParse(entry);
+        if (!eventParsed.success) {
+            return zodValidationErrorResponse(eventParsed.error);
+        }
+        const eventData = eventParsed.data;
+
+        // user.id는 auth.users.id이므로 users.id로 변환 필요
+        const userResult = await findUserByAuthId(user.id);
+        if (!isSuccess(userResult) || !userResult.data) {
+            return internalErrorResponse('사용자 정보를 찾을 수 없습니다.');
+        }
+        const userId = userResult.data.id;
+
+        const eventResult = await createEvent({
+            title: eventData.title,
+            slug: generateEventSlug(eventData.title, eventData.date),
+            date: eventData.date,
+            venue: eventData.venue || { name: '' },
+            lineup: eventData.lineup || [],
+            data: {
+                poster_urls: eventData.imageUrls?.length ? eventData.imageUrls : undefined,
+                description: eventData.description,
+                links: eventData.links,
+            },
+            is_public: true,
+            created_by: userId,
+        });
+
+        if (!isSuccess(eventResult)) {
+            return internalErrorResponse(eventResult.error.message);
+        }
+
+        referenceId = eventResult.data.id;
+    }
+
     const dbEntry = mapEntryToDatabase(entry, newPosition);
 
+    // Slug 자동 생성
+    const title = ((entry as Record<string, unknown>).title as string) || 'untitled';
+    const rawSlug = generateSlug(title);
+    const slug = await ensureUniqueSlug(rawSlug, pageId);
+
+    // Option B: 둘 다 유지 - entries.data에 전체 데이터, reference_id는 플래그
     const result = await createEntry(entry.id, {
         page_id: pageId,
         type: dbEntry.type,
         position: dbEntry.position,
-        data: dbEntry.data,
+        reference_id: referenceId,
+        data: dbEntry.data, // 항상 전체 데이터 저장
+        slug,
     });
 
     if (!isSuccess(result)) {
         return internalErrorResponse(result.error.message);
     }
 
-    return successResponse(result.data, 201);
+    return successResponse({ ...result.data, referenceId }, 201);
+}
+
+/**
+ * GET /api/entries/[id]
+ * Entry 단건 조회
+ */
+export async function handleGetEntry({ user }: AuthContext, id: string) {
+    const ownership = await verifyEntryOwnership(id, user.id);
+    if (!ownership.ok) {
+        return ownership.reason === 'not_found' ? notFoundResponse('엔트리') : forbiddenResponse();
+    }
+
+    const result = await getEntryById(id);
+    if (!isSuccess(result)) {
+        return result.error.code === 'NOT_FOUND'
+            ? notFoundResponse('엔트리')
+            : internalErrorResponse(result.error.message);
+    }
+
+    return successResponse(mapEntryToDomain(result.data));
 }
 
 /**
@@ -75,11 +162,13 @@ export async function handleUpdateEntry(request: Request, { user }: AuthContext,
     }
 
     const body = await request.json();
-    const { entry } = body as { entry: ContentEntry };
+    const parsed = updateEntryRequestSchema.safeParse(body);
 
-    if (!entry) {
-        return validationErrorResponse('entry');
+    if (!parsed.success) {
+        return zodValidationErrorResponse(parsed.error);
     }
+
+    const { entry } = parsed.data;
 
     // position은 유지하면서 type과 data만 업데이트
     const dbEntry = mapEntryToDatabase(entry, 0);
@@ -118,22 +207,19 @@ export async function handleDeleteEntry({ user }: AuthContext, id: string) {
     return successResponse(null);
 }
 
-interface ReorderItem {
-    id: string;
-    position: number;
-}
-
 /**
- * PATCH /api/entries/reorder (또는 /api/components/reorder)
- * Entry 순서 변경
+ * PATCH /api/entries/reorder
+ * Entry 순서 변경 (Components 섹션 내)
  */
 export async function handleReorderEntries(request: Request, { user }: AuthContext) {
     const body = await request.json();
-    const { updates } = body as { updates: ReorderItem[] };
+    const parsed = reorderEntriesRequestSchema.safeParse(body);
 
-    if (!updates || !Array.isArray(updates) || updates.length === 0) {
-        return validationErrorResponse('updates 배열');
+    if (!parsed.success) {
+        return zodValidationErrorResponse(parsed.error);
     }
+
+    const { updates } = parsed.data;
 
     // 모든 엔트리의 소유권 일괄 검증
     const entryIds = updates.map((u) => u.id);

@@ -1,17 +1,18 @@
-import { getUser } from '@/app/actions/auth';
-import Background from '@/components/Background';
-import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
+
+import QueryProvider from '@/components/providers/QueryProvider';
+
+import ErrorBoundaryWithQueryReset from './components/ErrorBoundary';
+import Skeleton from './components/Skeleton';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const authUser = await getUser();
-
-    if (!authUser) {
-        redirect('/login');
-    }
-
     return (
-        <Background src="/4fc8c0ade8e627922d94ad85cdf74555.jpg">
-            <main className="h-full flex-1 overflow-y-auto font-inter">{children}</main>
-        </Background>
+        <QueryProvider>
+            <main className="h-screen overflow-hidden bg-neutral-200 font-inter">
+                <ErrorBoundaryWithQueryReset>
+                    <Suspense fallback={<Skeleton />}>{children}</Suspense>
+                </ErrorBoundaryWithQueryReset>
+            </main>
+        </QueryProvider>
     );
 }

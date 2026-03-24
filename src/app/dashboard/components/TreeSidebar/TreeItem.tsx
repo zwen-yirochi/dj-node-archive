@@ -1,82 +1,76 @@
 'use client';
 
-import { SimpleDropdown, type DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
-import { COMPONENT_TYPE_CONFIG } from '@/constants/componentConfig';
-import { cn } from '@/lib/utils';
-import { canAddToView, getMissingFieldLabels, getTreeItemStatus } from '@/lib/validators';
-import { useUIStore } from '@/stores/uiStore';
-import { useDisplayEntryStore } from '@/stores/displayEntryStore';
-import type { ContentEntry } from '@/types';
-import type { TreeItemStatus } from '@/types/componentFields';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { AlertCircle, Check, Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { memo, useRef, useState } from 'react';
+
+import { AlertTriangle, MoreHorizontal } from 'lucide-react';
+
+import type { ContentEntry, Section } from '@/types';
+import { cn } from '@/lib/utils';
+import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
+import { validateEntry } from '@/app/dashboard/config/entry/entry-validation';
+import { TREE_DELETE, type MenuConfig } from '@/app/dashboard/config/ui/menu';
+import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
+import { formatSectionLabel, getAvailableSections } from '@/app/dashboard/utils/section-helpers';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuPortal,
+    DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+import { useEntryMutations } from '../../hooks';
+import { useConfirmAction } from '../../hooks/use-confirm-action';
+import { useSectionMutations } from '../../hooks/use-section-mutations';
+import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
+
+const MENU_CONTENT_CLASS =
+    'rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl';
+
+const DELETE_ONLY_MENU: MenuConfig = [TREE_DELETE];
 
 interface TreeItemProps {
     entry: ContentEntry;
-    isInViewSection?: boolean;
-    displayEntryId?: string;
-    isVisible?: boolean;
-    onToggleVisibility?: () => void;
-    onEdit?: () => void;
-    onDelete?: () => void;
+    isInSection: boolean;
+    sections: Section[];
 }
 
-/** 상태별 아이콘 컴포넌트 */
-function StatusIcon({
-    status,
-    missingFields,
-}: {
-    status: TreeItemStatus;
-    missingFields: string[];
-}) {
-    switch (status) {
-        case 'inView':
-            return <Check className="h-3.5 w-3.5 text-dashboard-type-link" />;
-        case 'warning':
-            return (
-                <span title={`Page에 추가하려면 필요: ${missingFields.join(', ')}`}>
-                    <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
-                </span>
-            );
-        default:
-            return null;
-    }
-}
+function TreeItem({ entry, isInSection, sections }: TreeItemProps) {
+    // Dashboard Store
+    const contentView = useDashboardStore(selectContentView);
+    const setView = useDashboardStore(selectSetView);
 
-export default function TreeItem({
-    entry,
-    isInViewSection = false,
-    displayEntryId,
-    isVisible = true,
-    onToggleVisibility,
-    onEdit,
-    onDelete,
-}: TreeItemProps) {
-    // UI Store
-    const selectedEntryId = useUIStore((state) => state.selectedEntryId);
-    const selectEntry = useUIStore((state) => state.selectEntry);
+    // Confirm action (config-driven)
+    const confirmAction = useConfirmAction();
 
-    // Display Entry Store
-    const displayEntries = useDisplayEntryStore((state) => state.displayEntries);
+    // Mutations
+    const { remove } = useEntryMutations();
+    const sectionMutations = useSectionMutations();
 
-    // 상태 계산
-    const isInView = displayEntries.some((item) => item.entryId === entry.id);
-    const isValid = canAddToView(entry);
-    const status = getTreeItemStatus(isInView, isValid);
-    const missingFields = status === 'warning' ? getMissingFieldLabels(entry, 'view') : [];
+    const isSelected = contentView.kind === 'detail' && contentView.entryId === entry.id;
+    const { isValid } = validateEntry(entry, 'create');
 
-    const isSelected = selectedEntryId === entry.id;
-    const config = COMPONENT_TYPE_CONFIG[entry.type];
-    const Icon = config.icon;
+    // 메뉴 열림 상태 — 열려있으면 드래그 비활성화 (dnd-kit ↔ Radix 서브메뉴 충돌 방지)
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuClosedAtRef = useRef(0);
+
+    const handleMenuChange = (open: boolean) => {
+        setMenuOpen(open);
+        if (!open) menuClosedAtRef.current = Date.now();
+    };
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-        id: isInViewSection ? displayEntryId! : entry.id,
-        data: {
-            type: isInViewSection ? 'display-entry' : 'entry',
-            entry,
-            displayEntryId,
-        },
+        id: entry.id,
+        animateLayoutChanges: sortableAnimateLayoutChanges,
+        data: { type: 'entry', entry },
+        disabled: menuOpen,
     });
 
     const style = {
@@ -85,111 +79,145 @@ export default function TreeItem({
     };
 
     const handleClick = () => {
-        selectEntry(entry.id);
+        // 메뉴가 닫힌 직후 클릭은 무시 (메뉴 닫힘 → click 버블링 방지)
+        if (Date.now() - menuClosedAtRef.current < 200) return;
+        setView({ kind: 'detail', entryId: entry.id });
     };
 
-    const handleVisibilityClick = (e?: React.MouseEvent) => {
-        e?.stopPropagation();
-        onToggleVisibility?.();
-    };
+    // Available sections for "Add to section" submenu
+    const availableSections = getAvailableSections(sections, entry.id);
 
-    const handleEdit = () => {
-        selectEntry(entry.id);
-        onEdit?.();
-    };
-
-    const handleDelete = () => {
-        onDelete?.();
-    };
-
-    // 엔트리 섹션용 메뉴 아이템
-    const entryMenuItems: DropdownMenuItemConfig[] = [
-        { label: '편집', onClick: handleEdit, icon: Pencil },
-        { type: 'separator' },
-        { label: '삭제', onClick: handleDelete, icon: Trash2, variant: 'danger' },
-    ];
-
-    // Page 섹션용 메뉴 아이템
-    const viewMenuItems: DropdownMenuItemConfig[] = [
-        { label: '편집', onClick: handleEdit, icon: Pencil },
+    // Delete handler with confirm (reuse wrapHandlers for TREE_DELETE confirm strategy)
+    const deleteHandlers = confirmAction.wrapHandlers(
+        DELETE_ONLY_MENU,
         {
-            label: isVisible ? '숨김' : '표시',
-            onClick: () => handleVisibilityClick(),
-            icon: isVisible ? Eye : EyeOff,
+            delete: () => {
+                const cv = useDashboardStore.getState().contentView;
+                if (cv.kind === 'detail' && cv.entryId === entry.id) {
+                    setView({ kind: 'page' });
+                }
+                remove.mutate(entry.id);
+            },
         },
-        { type: 'separator' },
-        { label: 'Page에서 제거', onClick: handleDelete, icon: Trash2, variant: 'danger' },
-    ];
+        entry as unknown as Record<string, unknown>
+    );
 
     return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-            className={cn(
-                'group relative flex cursor-pointer touch-none items-center rounded-md py-1.5 pl-5 pr-2 transition-colors',
-                isSelected
-                    ? 'bg-dashboard-bg-active text-dashboard-text'
-                    : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover hover:text-dashboard-text',
-                isDragging && 'opacity-50',
-                !isVisible && 'opacity-50'
-            )}
-            onClick={handleClick}
-        >
-            {/* Type Icon - Page 섹션에서만 표시 */}
-            {isInViewSection && (
-                <div
-                    className={cn(
-                        'flex h-5 w-5 shrink-0 items-center justify-center rounded',
-                        config.bgColor
-                    )}
-                >
-                    <Icon className={cn('h-3 w-3', config.color)} />
-                </div>
-            )}
+        <>
+            <div
+                ref={setNodeRef}
+                style={style}
+                {...attributes}
+                {...listeners}
+                className={cn(
+                    'group relative flex cursor-pointer touch-none items-center rounded-md py-1 pl-5 pr-2 transition-colors',
+                    isSelected
+                        ? 'bg-dashboard-bg-active text-dashboard-text'
+                        : 'text-dashboard-text-secondary hover:bg-dashboard-bg-hover hover:text-dashboard-text',
+                    isDragging && 'drag-source-ghost'
+                )}
+                onClick={handleClick}
+            >
+                {/* Title */}
+                <span className="ml-2 flex min-w-0 flex-1 items-center gap-1.5 truncate text-sm">
+                    <span
+                        className={cn(
+                            'inline-block h-1.5 w-1.5 shrink-0 rounded-full',
+                            isInSection
+                                ? 'bg-dashboard-success/80 ring-1 ring-dashboard-success/20'
+                                : 'bg-dashboard-text-placeholder/20'
+                        )}
+                        title={isInSection ? 'On page' : 'Not on page'}
+                    />
+                    {entry.title || 'Untitled'}
+                </span>
 
-            {/* Title */}
-            <span className={cn('ml-2 min-w-0 flex-1 truncate text-sm', isInViewSection && 'ml-2')}>
-                {entry.title || '제목 없음'}
-            </span>
-
-            {/* Right Side - View Section: Menu */}
-            {isInViewSection ? (
-                <SimpleDropdown
-                    trigger={
-                        <button
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
-                        >
-                            <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
-                        </button>
-                    }
-                    items={viewMenuItems}
-                    contentClassName="w-36"
-                />
-            ) : (
-                /* Right Side - Entry Section: Status Icon + Menu (같은 위치) */
+                {/* Right: warning (default) → menu (hover) */}
                 <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
-                    {/* 상태 아이콘 - hover 시 숨김 */}
-                    <div className="absolute transition-opacity group-hover:opacity-0">
-                        <StatusIcon status={status} missingFields={missingFields} />
-                    </div>
-                    {/* 더보기 메뉴 - hover 시 표시 */}
-                    <SimpleDropdown
-                        trigger={
+                    {!isValid && (
+                        <AlertTriangle className="h-3 w-3 text-amber-500/70 transition-opacity group-hover:opacity-0" />
+                    )}
+                    <DropdownMenu onOpenChange={handleMenuChange}>
+                        <DropdownMenuTrigger asChild>
                             <button
                                 onClick={(e) => e.stopPropagation()}
-                                className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-all hover:bg-dashboard-bg-active group-hover:opacity-100"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                className="absolute flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-dashboard-bg-active group-hover:opacity-100"
                             >
                                 <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
                             </button>
-                        }
-                        items={entryMenuItems}
-                        contentClassName="w-36"
-                    />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            className={cn('w-48', MENU_CONTENT_CLASS)}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger
+                                    className="text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
+                                    disabled={sections.length === 0}
+                                >
+                                    Add to section
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuSubContent
+                                        className={cn('w-44', MENU_CONTENT_CLASS)}
+                                    >
+                                        {sections.length === 0 ? (
+                                            <DropdownMenuItem
+                                                disabled
+                                                className="text-dashboard-text-placeholder"
+                                            >
+                                                No sections yet
+                                            </DropdownMenuItem>
+                                        ) : availableSections.length === 0 ? (
+                                            <DropdownMenuItem
+                                                disabled
+                                                className="text-dashboard-text-placeholder"
+                                            >
+                                                On all sections
+                                            </DropdownMenuItem>
+                                        ) : (
+                                            availableSections.map((s) => (
+                                                <DropdownMenuItem
+                                                    key={s.id}
+                                                    onClick={() =>
+                                                        sectionMutations.addEntryToSection(
+                                                            s.id,
+                                                            entry.id
+                                                        )
+                                                    }
+                                                    className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
+                                                >
+                                                    {formatSectionLabel(s)}
+                                                </DropdownMenuItem>
+                                            ))
+                                        )}
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuSub>
+
+                            <DropdownMenuSeparator className="bg-dashboard-border" />
+
+                            <DropdownMenuItem
+                                onClick={deleteHandlers.delete}
+                                className="cursor-pointer text-dashboard-danger focus:bg-dashboard-danger-bg"
+                            >
+                                Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
-            )}
-        </div>
+            </div>
+
+            <ConfirmDialog
+                pending={confirmAction.pending}
+                matchValue={confirmAction.matchValue}
+                onConfirm={confirmAction.confirm}
+                onClose={confirmAction.close}
+            />
+        </>
     );
 }
+
+export default memo(TreeItem);
