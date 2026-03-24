@@ -105,7 +105,7 @@ export const FeatureSectionCard = memo(function FeatureSectionCard({
                                         onSelect={(entryIds: string[]) => {
                                             if (entryIds[0]) onAddEntry(entryIds[0]);
                                         }}
-                                        maxSelection={1}
+                                        singleSelect
                                     />
                                 )}
                             </>

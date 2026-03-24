@@ -34,7 +34,7 @@ function AutoCreateEntry({ type }: { type: EntryType }) {
     const hasCreated = useRef(false);
 
     useEffect(() => {
-        if (hasCreated.current || !pageId) return;
+        if (hasCreated.current || !pageId || !entries) return;
         hasCreated.current = true;
 
         // Untitled prevention: reuse existing untitled entry of same type

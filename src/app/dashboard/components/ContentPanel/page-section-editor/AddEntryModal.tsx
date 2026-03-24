@@ -15,8 +15,8 @@ interface AddEntryModalProps {
     onOpenChange: (open: boolean) => void;
     entries: ContentEntry[];
     onSelect: (entryIds: string[]) => void;
-    /** Set to 1 for single-select mode (e.g. feature sections) */
-    maxSelection?: number;
+    /** Single-select mode (e.g. feature sections) — click selects and confirms immediately */
+    singleSelect?: boolean;
 }
 
 export function AddEntryModal({
@@ -24,12 +24,12 @@ export function AddEntryModal({
     onOpenChange,
     entries,
     onSelect,
-    maxSelection,
+    singleSelect = false,
 }: AddEntryModalProps) {
     const [search, setSearch] = useState('');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-    const isSingleSelect = maxSelection === 1;
+    const isSingleSelect = singleSelect;
 
     const filtered = search
         ? entries.filter((e) => e.title.toLowerCase().includes(search.toLowerCase()))
