@@ -34,6 +34,13 @@ export interface RAEventListingItem {
     venue: RAVenueInfo | null;
 }
 
+/** RA GraphQL - 아티스트 정보 (import용) */
+export interface RAArtistInfo {
+    id: string;
+    name: string;
+    urlSafeName: string | null;
+}
+
 // ============================================
 // Import Preview / Confirm 응답 타입
 // ============================================

@@ -38,3 +38,45 @@ export const venueImportConfirmSchema = z.object({
 
 export type VenueImportPreviewInput = z.infer<typeof venueImportPreviewSchema>;
 export type VenueImportConfirmInput = z.infer<typeof venueImportConfirmSchema>;
+
+const RA_ARTIST_URL_REGEX = /^https?:\/\/(www\.)?ra\.co\/dj\/[\w-]+/;
+const RA_EVENT_URL_REGEX = /^https?:\/\/(www\.)?ra\.co\/events\/\d+/;
+
+/** POST /api/import/artist/preview */
+export const artistImportPreviewSchema = z.object({
+    ra_url: z
+        .string()
+        .min(1, 'RA URL is required')
+        .regex(
+            RA_ARTIST_URL_REGEX,
+            'Invalid RA artist URL. Expected format: https://ra.co/dj/{name}'
+        ),
+});
+
+/** POST /api/import/artist/confirm */
+export const artistImportConfirmSchema = z.object({
+    ra_url: z
+        .string()
+        .min(1, 'RA URL is required')
+        .regex(
+            RA_ARTIST_URL_REGEX,
+            'Invalid RA artist URL. Expected format: https://ra.co/dj/{name}'
+        ),
+    page_id: z.string().uuid('Invalid page ID'),
+});
+
+/** POST /api/import/event */
+export const singleEventImportSchema = z.object({
+    ra_url: z
+        .string()
+        .min(1, 'RA URL is required')
+        .regex(
+            RA_EVENT_URL_REGEX,
+            'Invalid RA event URL. Expected format: https://ra.co/events/{id}'
+        ),
+    page_id: z.string().uuid('Invalid page ID'),
+});
+
+export type ArtistImportPreviewInput = z.infer<typeof artistImportPreviewSchema>;
+export type ArtistImportConfirmInput = z.infer<typeof artistImportConfirmSchema>;
+export type SingleEventImportInput = z.infer<typeof singleEventImportSchema>;
