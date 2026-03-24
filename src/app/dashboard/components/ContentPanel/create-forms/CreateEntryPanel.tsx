@@ -73,14 +73,19 @@ function AutoCreateEntry({ type }: { type: EntryType }) {
 // ============================================
 // EventCreateRouter: Event-specific choice (Create new / Import from RA)
 // ============================================
-type EventCreateOption = 'create' | 'import';
+type EventCreateOption = 'create' | 'import' | 'ra-url';
 
 const EVENT_CREATE_OPTIONS: { id: EventCreateOption; label: string; description: string }[] = [
     { id: 'create', label: 'Create new', description: 'Start from scratch' },
     {
         id: 'import',
-        label: 'Import from RA',
-        description: 'Search and import from Resident Advisor',
+        label: 'Search database',
+        description: 'Search and import from existing events',
+    },
+    {
+        id: 'ra-url',
+        label: 'Import from RA URL',
+        description: 'Paste a Resident Advisor event link (coming soon)',
     },
 ];
 
@@ -129,13 +134,21 @@ function EventCreateRouter() {
                     {option === 'create' && (
                         <button
                             onClick={() => setConfirmed(true)}
-                            className="w-full rounded-md bg-dashboard-accent px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                            className="w-full rounded-md bg-dashboard-text px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-dashboard-text/90"
                         >
                             Create Event
                         </button>
                     )}
 
                     {option === 'import' && <EventImportSearch />}
+
+                    {option === 'ra-url' && (
+                        <div className="rounded-lg border border-dashboard-border bg-dashboard-bg-muted p-4 text-center">
+                            <p className="text-sm text-dashboard-text-muted">
+                                Coming soon — paste an RA event URL to import
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -124,7 +124,7 @@ export function AddEntryModal({
                         <span
                             className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${
                                 allFilteredSelected
-                                    ? 'border-dashboard-accent bg-dashboard-accent'
+                                    ? 'border-dashboard-text bg-dashboard-text'
                                     : 'border-dashboard-border'
                             }`}
                         >
@@ -155,7 +155,7 @@ export function AddEntryModal({
                                             <span
                                                 className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${
                                                     isChecked
-                                                        ? 'border-dashboard-accent bg-dashboard-accent'
+                                                        ? 'border-dashboard-text bg-dashboard-text'
                                                         : 'border-dashboard-border'
                                                 }`}
                                             >
@@ -180,7 +180,7 @@ export function AddEntryModal({
                     <button
                         onClick={handleConfirm}
                         disabled={selectedIds.size === 0}
-                        className="w-full rounded-md bg-dashboard-accent px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="w-full rounded-md bg-dashboard-text px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-dashboard-text/90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         {selectedIds.size === 0
                             ? 'Select entries to add'
