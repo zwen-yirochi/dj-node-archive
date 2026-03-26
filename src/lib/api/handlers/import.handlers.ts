@@ -144,12 +144,15 @@ async function copyImagesToStorage(imageUrls: string[], userId: string): Promise
                 .from('posters')
                 .upload(fileName, buffer, { contentType, upsert: false });
 
-            if (error) continue;
+            if (error) {
+                console.error('[RA Import] Storage upload failed:', error.message, url);
+                continue;
+            }
 
             const { data: urlData } = supabase.storage.from('posters').getPublicUrl(fileName);
             results.push(urlData.publicUrl);
-        } catch {
-            // Skip failed images
+        } catch (err) {
+            console.error('[RA Import] Image copy failed:', url, err);
         }
     }
 
@@ -902,6 +905,19 @@ export async function handleSingleEventImport(request: Request, { user }: AuthCo
         eventDate = existingEvent.data.date;
         eventVenueName = existingEvent.data.venue.name;
         entryData = buildEntryDataFromEvent(dbEventId, existingEvent.data);
+
+        // 기존 event에 이미지가 없으면 RA에서 가져와서 Storage에 복사
+        const existingImages = (entryData.image_urls as string[]) || [];
+        if (existingImages.length === 0) {
+            const raResult = await fetchRAEvent(raEventId);
+            if (raResult.success && raResult.data && raResult.data.imageUrls.length > 0) {
+                const storedUrls = await copyImagesToStorage(raResult.data.imageUrls, userId);
+                if (storedUrls.length > 0) {
+                    entryData.image_urls = storedUrls;
+                }
+            }
+        }
+        entryData.ra_source_url = ra_url;
     } else {
         // 5. Fetch from RA
         const raResult = await fetchRAEvent(raEventId);
