@@ -121,8 +121,8 @@ function toPreviewEvent(raEvent: {
 async function copyImagesToStorage(imageUrls: string[], userId: string): Promise<string[]> {
     if (imageUrls.length === 0) return [];
 
-    const { createClient } = await import('@/lib/supabase/server');
-    const supabase = await createClient();
+    const { createServiceClient } = await import('@/lib/supabase/service');
+    const supabase = createServiceClient();
     const results: string[] = [];
 
     for (const url of imageUrls) {
