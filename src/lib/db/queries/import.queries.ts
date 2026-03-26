@@ -210,9 +210,7 @@ export async function createImportLog(
 /**
  * 유저의 아티스트 마이그레이션 완료 여부 조회
  */
-export async function findArtistMigration(
-    userId: string
-): Promise<
+export async function findArtistMigration(userId: string): Promise<
     Result<{
         status: string;
         metadata: Record<string, unknown>;
@@ -292,7 +290,7 @@ export async function createImportedEntries(
         type: 'event';
         position: number;
         reference_id: string;
-        data: { event_id: string };
+        data: Record<string, unknown>;
         slug: string;
     }[]
 ): Promise<Result<Entry[]>> {

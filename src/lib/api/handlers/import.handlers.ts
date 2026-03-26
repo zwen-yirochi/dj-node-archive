@@ -115,6 +115,43 @@ function toPreviewEvent(raEvent: {
 }
 
 /**
+ * DB event → entry.data 전체 데이터 (참조형이지만 전체 데이터도 저장하는 Option B 패턴)
+ */
+function buildEntryDataFromEvent(eventId: string, dbEvent: DBEvent): Record<string, unknown> {
+    return {
+        event_id: eventId,
+        title: dbEvent.title,
+        date: dbEvent.date,
+        venue: dbEvent.venue,
+        lineup: dbEvent.lineup,
+        image_urls: (dbEvent.data as Record<string, unknown>)?.poster_urls,
+        description: (dbEvent.data as Record<string, unknown>)?.description,
+        links: (dbEvent.data as Record<string, unknown>)?.links,
+    };
+}
+
+/**
+ * RA event listing → entry.data 전체 데이터 (DB event 없이 RA 데이터에서 직접 생성)
+ */
+function buildEntryDataFromRAEvent(
+    eventId: string,
+    raEvent: {
+        title: string;
+        date: string;
+        venue?: { name: string } | null;
+        artists: { name: string }[];
+    }
+): Record<string, unknown> {
+    return {
+        event_id: eventId,
+        title: raEvent.title,
+        date: raEvent.date,
+        venue: { name: raEvent.venue?.name ?? 'Unknown Venue' },
+        lineup: raEvent.artists.map((a) => ({ name: a.name })),
+    };
+}
+
+/**
  * POST /api/import/venue/preview
  * RA URL → 미리보기 데이터 반환 (DB 저장 없음)
  */
@@ -641,7 +678,7 @@ export async function handleArtistImportConfirm(request: Request, { user }: Auth
             type: 'event' as const,
             position: currentPosition,
             reference_id: eventId,
-            data: { event_id: eventId },
+            data: buildEntryDataFromRAEvent(eventId, raEvent),
             slug,
         });
 
@@ -801,12 +838,14 @@ export async function handleSingleEventImport(request: Request, { user }: AuthCo
     let eventTitle: string;
     let eventDate: string;
     let eventVenueName: string;
+    let entryData: Record<string, unknown>;
 
     if (existingEvent.data) {
         dbEventId = existingEvent.data.id;
         eventTitle = existingEvent.data.title;
         eventDate = existingEvent.data.date;
         eventVenueName = existingEvent.data.venue.name;
+        entryData = buildEntryDataFromEvent(dbEventId, existingEvent.data);
     } else {
         // 5. Fetch from RA
         const raResult = await fetchRAEvent(raEventId);
@@ -844,6 +883,7 @@ export async function handleSingleEventImport(request: Request, { user }: AuthCo
         eventTitle = raEvent.title;
         eventDate = raEvent.date;
         eventVenueName = raEvent.venue?.name ?? '';
+        entryData = buildEntryDataFromRAEvent(dbEventId, raEvent);
     }
 
     // 6. Check if entry already exists
@@ -872,7 +912,7 @@ export async function handleSingleEventImport(request: Request, { user }: AuthCo
         type: 'event',
         position: maxPosResult.data + 1,
         reference_id: dbEventId,
-        data: { event_id: dbEventId },
+        data: entryData as unknown as import('@/types/database').EntryData,
         slug,
     });
 
