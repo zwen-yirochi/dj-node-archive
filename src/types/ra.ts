@@ -30,6 +30,7 @@ export interface RAEventListingItem {
     title: string;
     date: string; // ISO date string
     contentUrl: string | null; // e.g., "/events/1234567"
+    imageUrls: string[];
     artists: RAArtist[];
     venue: RAVenueInfo | null;
 }

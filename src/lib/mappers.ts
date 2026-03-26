@@ -186,14 +186,25 @@ export function mapEntryToDatabase(
         case 'event': {
             const eventEntry = entry as EventEntry;
 
-            // 참조형
+            // 참조형 — Option B: event_id 참조 + 전체 데이터 보존
             if (isPublicEventEntry(eventEntry)) {
                 return {
                     type: 'event',
                     position,
                     data: {
                         event_id: eventEntry.eventId,
-                        custom_title: eventEntry.title || undefined,
+                        title: eventEntry.title,
+                        date: eventEntry.date,
+                        venue: eventEntry.venue.id
+                            ? { venue_id: eventEntry.venue.id, name: eventEntry.venue.name }
+                            : { name: eventEntry.venue.name },
+                        lineup: eventEntry.lineup.map((p) =>
+                            p.id ? { artist_id: p.id, name: p.name } : { name: p.name }
+                        ),
+                        image_urls:
+                            eventEntry.imageUrls.length > 0 ? eventEntry.imageUrls : undefined,
+                        description: eventEntry.description || undefined,
+                        links: eventEntry.links || undefined,
                     },
                 };
             }
@@ -567,6 +578,7 @@ export function mapRAEventToDbInput(
     // RA 메타데이터를 data에 추가
     const extendedData = {
         ...data,
+        poster_urls: raEvent.imageUrls.length > 0 ? raEvent.imageUrls : undefined,
         ra_event_url: raEvent.contentUrl ? `https://ra.co${raEvent.contentUrl}` : undefined,
         ra_event_id: raEvent.id,
         lineup_text: lineupText,

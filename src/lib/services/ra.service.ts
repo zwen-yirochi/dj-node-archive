@@ -105,6 +105,9 @@ const ARTIST_WITH_EVENTS_QUERY = `
         title
         date
         contentUrl
+        images {
+          filename
+        }
         venue {
           id
           name
@@ -134,6 +137,9 @@ const SINGLE_EVENT_QUERY = `
       title
       date
       contentUrl
+      images {
+        filename
+      }
       venue {
         id
         name
@@ -190,6 +196,7 @@ interface RAArtistResponse {
                 title: string;
                 date: string;
                 contentUrl: string | null;
+                images?: Array<{ filename: string }>;
                 venue: {
                     id: string;
                     name: string;
@@ -216,6 +223,7 @@ interface RASingleEventResponse {
             title: string;
             date: string;
             contentUrl: string | null;
+            images?: Array<{ filename: string }>;
             venue: {
                 id: string;
                 name: string;
@@ -353,6 +361,7 @@ function extractEvents(
         title: e.title,
         date: e.date,
         contentUrl: e.contentUrl,
+        imageUrls: [],
         artists: e.artists.map((a) => ({
             name: a.name,
             urlSafeName: a.urlSafeName,
@@ -464,6 +473,7 @@ function extractArtistEvents(
             title: e.title,
             date: e.date,
             contentUrl: e.contentUrl,
+            imageUrls: e.images?.map((img) => img.filename).filter(Boolean) ?? [],
             artists: e.artists.map((a) => ({
                 name: a.name,
                 urlSafeName: a.urlSafeName,
@@ -589,6 +599,7 @@ export async function fetchRAEvent(eventId: string): Promise<Result<RAEventListi
         title: event.title,
         date: event.date,
         contentUrl: event.contentUrl,
+        imageUrls: event.images?.map((img) => img.filename).filter(Boolean) ?? [],
         artists: event.artists.map((a) => ({
             name: a.name,
             urlSafeName: a.urlSafeName,

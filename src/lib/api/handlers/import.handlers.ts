@@ -138,6 +138,7 @@ function buildEntryDataFromRAEvent(
     raEvent: {
         title: string;
         date: string;
+        imageUrls?: string[];
         venue?: { name: string } | null;
         artists: { name: string }[];
     }
@@ -148,6 +149,7 @@ function buildEntryDataFromRAEvent(
         date: raEvent.date,
         venue: { name: raEvent.venue?.name ?? 'Unknown Venue' },
         lineup: raEvent.artists.map((a) => ({ name: a.name })),
+        image_urls: raEvent.imageUrls?.length ? raEvent.imageUrls : undefined,
     };
 }
 
