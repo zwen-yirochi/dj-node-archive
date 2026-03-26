@@ -32,6 +32,7 @@ export function useMigrationStatus() {
             const json = await res.json();
             return json.data;
         },
+        staleTime: 1000 * 60 * 5, // 5분간 캐시 — 마이그레이션 상태는 자주 변하지 않음
     });
 }
 

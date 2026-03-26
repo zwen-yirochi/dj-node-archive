@@ -11,16 +11,7 @@ import { useArtistConfirm, useArtistPreview, useMigrationStatus } from '../../ho
 import { selectPageId, useDashboardStore } from '../../stores/dashboardStore';
 
 export default function SettingsRAImport() {
-    const { data: migrationStatus, isLoading: statusLoading } = useMigrationStatus();
-
-    if (statusLoading) {
-        return (
-            <div className="flex items-center gap-2 text-sm text-dashboard-text-muted">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading...
-            </div>
-        );
-    }
+    const { data: migrationStatus } = useMigrationStatus();
 
     if (migrationStatus?.completed) {
         return <MigrationCompleted status={migrationStatus} />;
