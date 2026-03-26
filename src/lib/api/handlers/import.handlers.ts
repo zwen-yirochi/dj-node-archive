@@ -118,11 +118,11 @@ function toPreviewEvent(raEvent: {
  * RA 이미지 URL → Supabase Storage에 복사, 새 URL 배열 반환
  * 실패한 이미지는 건너뛰고 성공한 것만 반환
  */
-async function copyImagesToStorage(imageUrls: string[], userId: string): Promise<string[]> {
+async function copyImagesToStorage(imageUrls: string[], authUserId: string): Promise<string[]> {
     if (imageUrls.length === 0) return [];
 
-    const { createServiceClient } = await import('@/lib/supabase/service');
-    const supabase = createServiceClient();
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = await createClient();
     const results: string[] = [];
 
     for (const url of imageUrls) {
@@ -138,7 +138,7 @@ async function copyImagesToStorage(imageUrls: string[], userId: string): Promise
                 : contentType.includes('webp')
                   ? 'webp'
                   : 'jpg';
-            const fileName = `${userId}/ra-import-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+            const fileName = `${authUserId}/ra-import-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
             const { error } = await supabase.storage
                 .from('posters')
@@ -721,8 +721,8 @@ export async function handleArtistImportConfirm(request: Request, { user }: Auth
         const rawSlug = generateSlug(raEvent.title || 'event');
         const slug = await ensureUniqueSlug(rawSlug, page_id);
 
-        // Copy images to Supabase Storage
-        const storedImageUrls = await copyImagesToStorage(raEvent.imageUrls, userId);
+        // Copy images to Supabase Storage (use auth user ID for RLS-compatible path)
+        const storedImageUrls = await copyImagesToStorage(raEvent.imageUrls, user.id);
         const entryData = buildEntryDataFromRAEvent(eventId, {
             ...raEvent,
             imageUrls: storedImageUrls,
@@ -911,7 +911,7 @@ export async function handleSingleEventImport(request: Request, { user }: AuthCo
         if (existingImages.length === 0) {
             const raResult = await fetchRAEvent(raEventId);
             if (raResult.success && raResult.data && raResult.data.imageUrls.length > 0) {
-                const storedUrls = await copyImagesToStorage(raResult.data.imageUrls, userId);
+                const storedUrls = await copyImagesToStorage(raResult.data.imageUrls, user.id);
                 if (storedUrls.length > 0) {
                     entryData.image_urls = storedUrls;
                 }
@@ -956,8 +956,8 @@ export async function handleSingleEventImport(request: Request, { user }: AuthCo
         eventDate = raEvent.date;
         eventVenueName = raEvent.venue?.name ?? '';
 
-        // Copy images to Supabase Storage
-        const storedImageUrls = await copyImagesToStorage(raEvent.imageUrls, userId);
+        // Copy images to Supabase Storage (use auth user ID for RLS-compatible path)
+        const storedImageUrls = await copyImagesToStorage(raEvent.imageUrls, user.id);
         entryData = buildEntryDataFromRAEvent(dbEventId, {
             ...raEvent,
             imageUrls: storedImageUrls,
