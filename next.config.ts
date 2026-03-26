@@ -20,10 +20,6 @@ const nextConfig: NextConfig = {
                 protocol: 'https',
                 hostname: 'images.unsplash.com',
             },
-            {
-                protocol: 'https',
-                hostname: 'images.ra.co',
-            },
         ],
         dangerouslyAllowSVG: true,
         contentDispositionType: 'attachment',

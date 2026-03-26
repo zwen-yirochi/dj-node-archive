@@ -67,6 +67,7 @@ function MigrationCompleted({
 function MigrationForm() {
     const [url, setUrl] = useState('');
     const [error, setError] = useState('');
+    const [agreed, setAgreed] = useState(false);
     const pageId = useDashboardStore(selectPageId);
 
     const previewMutation = useArtistPreview();
@@ -114,10 +115,23 @@ function MigrationForm() {
 
                     {error && <p className="text-xs text-dashboard-danger">{error}</p>}
 
+                    <label className="flex items-start gap-2 text-xs text-dashboard-text-muted">
+                        <input
+                            type="checkbox"
+                            checked={agreed}
+                            onChange={(e) => setAgreed(e.target.checked)}
+                            className="mt-0.5 rounded border-dashboard-border"
+                        />
+                        <span>
+                            I confirm that I have the right to use the imported content, including
+                            images, for my personal archive.
+                        </span>
+                    </label>
+
                     {!preview && (
                         <button
                             onClick={handlePreview}
-                            disabled={!isValidUrl || previewMutation.isPending}
+                            disabled={!isValidUrl || !agreed || previewMutation.isPending}
                             className="flex items-center gap-2 rounded-md bg-dashboard-bg-active px-3 py-1.5 text-sm text-dashboard-text transition-colors hover:bg-dashboard-bg-hover disabled:opacity-50"
                         >
                             {previewMutation.isPending && (

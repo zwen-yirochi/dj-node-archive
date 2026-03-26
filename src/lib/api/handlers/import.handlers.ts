@@ -115,6 +115,48 @@ function toPreviewEvent(raEvent: {
 }
 
 /**
+ * RA 이미지 URL → Supabase Storage에 복사, 새 URL 배열 반환
+ * 실패한 이미지는 건너뛰고 성공한 것만 반환
+ */
+async function copyImagesToStorage(imageUrls: string[], userId: string): Promise<string[]> {
+    if (imageUrls.length === 0) return [];
+
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = await createClient();
+    const results: string[] = [];
+
+    for (const url of imageUrls) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) continue;
+
+            const contentType = response.headers.get('content-type') || 'image/jpeg';
+            const buffer = await response.arrayBuffer();
+
+            const ext = contentType.includes('png')
+                ? 'png'
+                : contentType.includes('webp')
+                  ? 'webp'
+                  : 'jpg';
+            const fileName = `${userId}/ra-import-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+            const { error } = await supabase.storage
+                .from('posters')
+                .upload(fileName, buffer, { contentType, upsert: false });
+
+            if (error) continue;
+
+            const { data: urlData } = supabase.storage.from('posters').getPublicUrl(fileName);
+            results.push(urlData.publicUrl);
+        } catch {
+            // Skip failed images
+        }
+    }
+
+    return results;
+}
+
+/**
  * DB event → entry.data 전체 데이터 (참조형이지만 전체 데이터도 저장하는 Option B 패턴)
  */
 function buildEntryDataFromEvent(eventId: string, dbEvent: DBEvent): Record<string, unknown> {
@@ -676,13 +718,23 @@ export async function handleArtistImportConfirm(request: Request, { user }: Auth
         const rawSlug = generateSlug(raEvent.title || 'event');
         const slug = await ensureUniqueSlug(rawSlug, page_id);
 
+        // Copy images to Supabase Storage
+        const storedImageUrls = await copyImagesToStorage(raEvent.imageUrls, userId);
+        const entryData = buildEntryDataFromRAEvent(eventId, {
+            ...raEvent,
+            imageUrls: storedImageUrls,
+        });
+        entryData.ra_source_url = raEvent.contentUrl
+            ? `https://ra.co${raEvent.contentUrl}`
+            : undefined;
+
         entryInputs.push({
             id: entryId,
             page_id,
             type: 'event' as const,
             position: currentPosition,
             reference_id: eventId,
-            data: buildEntryDataFromRAEvent(eventId, raEvent),
+            data: entryData,
             slug,
         });
 
@@ -887,7 +939,14 @@ export async function handleSingleEventImport(request: Request, { user }: AuthCo
         eventTitle = raEvent.title;
         eventDate = raEvent.date;
         eventVenueName = raEvent.venue?.name ?? '';
-        entryData = buildEntryDataFromRAEvent(dbEventId, raEvent);
+
+        // Copy images to Supabase Storage
+        const storedImageUrls = await copyImagesToStorage(raEvent.imageUrls, userId);
+        entryData = buildEntryDataFromRAEvent(dbEventId, {
+            ...raEvent,
+            imageUrls: storedImageUrls,
+        });
+        entryData.ra_source_url = ra_url;
     }
 
     // 6. Check if entry already exists
