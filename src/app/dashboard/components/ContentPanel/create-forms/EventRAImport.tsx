@@ -4,12 +4,11 @@ import { useState } from 'react';
 
 import { Loader2 } from 'lucide-react';
 
+import { RA_EVENT_URL_REGEX } from '@/lib/validations/import.schemas';
 import { Input } from '@/components/ui/input';
 
 import { useSingleEventImport } from '../../../hooks/use-ra-import';
 import { selectPageId, selectSetView, useDashboardStore } from '../../../stores/dashboardStore';
-
-const RA_EVENT_URL_REGEX = /^https?:\/\/(www\.)?ra\.co\/events\/\d+/;
 
 export default function EventRAImport() {
     const [url, setUrl] = useState('');

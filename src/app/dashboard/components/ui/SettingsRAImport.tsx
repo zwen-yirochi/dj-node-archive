@@ -4,12 +4,11 @@ import { useState } from 'react';
 
 import { Check, Loader2 } from 'lucide-react';
 
+import { RA_ARTIST_URL_REGEX } from '@/lib/validations/import.schemas';
 import { Input } from '@/components/ui/input';
 
 import { useArtistConfirm, useArtistPreview, useMigrationStatus } from '../../hooks/use-ra-import';
 import { selectPageId, useDashboardStore } from '../../stores/dashboardStore';
-
-const RA_ARTIST_URL_REGEX = /^https?:\/\/(www\.)?ra\.co\/dj\/[\w-]+/;
 
 export default function SettingsRAImport() {
     const { data: migrationStatus, isLoading: statusLoading } = useMigrationStatus();

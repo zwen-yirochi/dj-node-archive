@@ -795,6 +795,8 @@ export async function handleArtistImportConfirm(request: Request, { user }: Auth
             success: successList.length,
             failed: failedList.length,
             failed_events: failedList,
+            user_consent: true,
+            consent_timestamp: new Date().toISOString(),
         },
     });
 
@@ -1021,6 +1023,10 @@ export async function handleSingleEventImport(request: Request, { user }: AuthCo
         import_type: 'event',
         ra_url,
         event_count: 1,
+        metadata: {
+            user_consent: true,
+            consent_timestamp: new Date().toISOString(),
+        },
     });
 
     // 9. Response
