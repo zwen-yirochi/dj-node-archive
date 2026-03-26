@@ -151,26 +151,6 @@ export async function countEntriesByReferenceId(referenceId: string): Promise<Re
     }
 }
 
-/**
- * Event 삭제 (events 테이블)
- */
-export async function deleteEvent(eventId: string): Promise<Result<void>> {
-    try {
-        const supabase = await createClient();
-        const { error } = await supabase.from('events').delete().eq('id', eventId);
-
-        if (error) {
-            return failure(createDatabaseError(error.message, 'deleteEvent', error));
-        }
-
-        return success(undefined);
-    } catch (err) {
-        return failure(
-            createDatabaseError('이벤트 삭제 중 오류가 발생했습니다.', 'deleteEvent', err)
-        );
-    }
-}
-
 export async function updateEntryPositions(
     updates: { id: string; position: number }[]
 ): Promise<Result<void>> {

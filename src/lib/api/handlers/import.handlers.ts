@@ -94,6 +94,24 @@ async function checkRateLimit(userId: string): Promise<{ allowed: boolean; messa
 }
 
 /**
+ * 시스템 전체 Rate Limit만 체크 (artist migration, single event import용)
+ * 유저별 제한은 각 handler에서 import_type별로 별도 체크
+ */
+async function checkSystemRateLimit(): Promise<{ allowed: boolean; message?: string }> {
+    const systemCountResult = await countSystemImportsInWindow(RATE_LIMIT_WINDOW_HOURS);
+    if (!isSuccess(systemCountResult)) {
+        return { allowed: false, message: 'Rate limit 확인 중 오류가 발생했습니다.' };
+    }
+    if (systemCountResult.data >= SYSTEM_RATE_LIMIT) {
+        return {
+            allowed: false,
+            message: '현재 Import 요청이 많습니다. 잠시 후 다시 시도해주세요.',
+        };
+    }
+    return { allowed: true };
+}
+
+/**
  * RA 이벤트를 Preview 형식으로 변환
  */
 function toPreviewEvent(raEvent: {
@@ -618,8 +636,8 @@ export async function handleArtistImportConfirm(request: Request, { user }: Auth
         );
     }
 
-    // System rate limit
-    const systemRateLimit = await checkRateLimit(userId);
+    // System-wide rate limit only (per-user is handled by one-time migration check)
+    const systemRateLimit = await checkSystemRateLimit();
     if (!systemRateLimit.allowed) {
         return NextResponse.json(
             { success: false, error: { code: 'RATE_LIMIT', message: systemRateLimit.message } },
@@ -880,8 +898,8 @@ export async function handleSingleEventImport(request: Request, { user }: AuthCo
         );
     }
 
-    // System-wide rate limit
-    const systemRateLimit = await checkRateLimit(userId);
+    // System-wide rate limit only (per-user event limit already checked above)
+    const systemRateLimit = await checkSystemRateLimit();
     if (!systemRateLimit.allowed) {
         return NextResponse.json(
             { success: false, error: { code: 'RATE_LIMIT', message: systemRateLimit.message } },

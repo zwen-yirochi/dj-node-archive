@@ -16,14 +16,13 @@ import {
     countEntriesByReferenceId,
     createEntry,
     deleteEntry,
-    deleteEvent,
     ensureUniqueSlug,
     getEntryById,
     getMaxPosition,
     updateEntry,
     updateEntryPositions,
 } from '@/lib/db/queries/entry.queries';
-import { createEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
+import { createEvent, deleteEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
 import { findUserByAuthId } from '@/lib/db/queries/user.queries';
 import { mapEntryToDatabase, mapEntryToDomain } from '@/lib/mappers';
 import { generateSlug } from '@/lib/utils/slug';
@@ -214,10 +213,14 @@ export async function handleDeleteEntry({ user }: AuthContext, id: string) {
     }
 
     // 참조형 event cleanup: 이 event를 참조하는 다른 entry가 0개면 event도 삭제
+    // deleteEvent는 created_by 소유권 검증 포함 — 타인의 event는 삭제하지 않음
     if (referenceId) {
         const refCount = await countEntriesByReferenceId(referenceId);
         if (isSuccess(refCount) && refCount.data === 0) {
-            await deleteEvent(referenceId);
+            const userResult = await findUserByAuthId(user.id);
+            if (isSuccess(userResult) && userResult.data) {
+                await deleteEvent(referenceId, userResult.data.id);
+            }
         }
     }
 
