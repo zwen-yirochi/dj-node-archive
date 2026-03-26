@@ -70,7 +70,7 @@ export default function AccountSection({ username }: AccountSectionProps) {
                         </button>
                     }
                     items={accountMenuItems}
-                    align="start"
+                    align="end"
                     side="top"
                     contentClassName="w-56"
                 />
