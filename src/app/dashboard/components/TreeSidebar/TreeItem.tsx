@@ -8,7 +8,6 @@ import { AlertTriangle, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry, Section } from '@/types';
 import { cn } from '@/lib/utils';
-import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { validateEntry } from '@/app/dashboard/config/entry/entry-validation';
 import {
     resolveMenuItems,
