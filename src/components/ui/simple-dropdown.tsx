@@ -208,6 +208,7 @@ export function SimpleDropdown({
             <DropdownMenuContent
                 align={align}
                 side={side}
+                onClick={(e) => e.stopPropagation()}
                 className={cn(
                     'w-40 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl',
                     contentClassName
