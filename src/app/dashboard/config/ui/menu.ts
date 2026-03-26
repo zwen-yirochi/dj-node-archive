@@ -7,7 +7,7 @@
  * - confirm이 있으면 모달 확인 후 handler 실행
  */
 
-import type { DropdownMenuItemConfig } from '@/components/ui/simple-dropdown';
+import type { DropdownMenuItemConfig, DropdownSubmenuItem } from '@/components/ui/simple-dropdown';
 
 import type { EntryType } from '../entry/entry-types';
 
@@ -37,6 +37,8 @@ export interface MenuItemConfig {
     dynamicLabel?: (ctx: Record<string, unknown>) => string;
     /** 액션 실행 전 확인 모달 전략. 함수면 entry 상태에 따라 동적 결정. 없으면 즉시 실행 */
     confirm?: ConfirmStrategy | ((ctx: Record<string, unknown>) => ConfirmStrategy | undefined);
+    /** 서브메뉴 resolver 키. SimpleDropdown의 resolvers prop에서 매칭 */
+    submenu?: { resolver: string };
 }
 
 export interface MenuSeparatorConfig {
@@ -57,6 +59,15 @@ export function resolveMenuItems(
 ): DropdownMenuItemConfig[] {
     return items.map((item) => {
         if ('type' in item) return item;
+
+        if (item.submenu) {
+            return {
+                type: 'submenu',
+                label: (ctx && item.dynamicLabel?.(ctx)) ?? item.label,
+                resolverKey: item.submenu.resolver,
+            } satisfies DropdownSubmenuItem;
+        }
+
         return {
             label: (ctx && item.dynamicLabel?.(ctx)) ?? item.label,
             variant: item.variant,
@@ -135,6 +146,7 @@ export const TREE_DELETE: MenuItemConfig = {
 const TREE_ADD_TO_SECTION: MenuItemConfig = {
     actionKey: 'add-to-section',
     label: 'Add to section',
+    submenu: { resolver: 'sectionResolver' },
 };
 /** Component section: Add to section + Delete */
 export const TREE_ENTRY_MENU: MenuConfig = [TREE_ADD_TO_SECTION, SEPARATOR, TREE_DELETE];

@@ -8,31 +8,22 @@ import { AlertTriangle, MoreHorizontal } from 'lucide-react';
 
 import type { ContentEntry, Section } from '@/types';
 import { cn } from '@/lib/utils';
-import { ENTRY_TYPE_CONFIG } from '@/app/dashboard/config/entry/entry-types';
 import { validateEntry } from '@/app/dashboard/config/entry/entry-validation';
-import { TREE_DELETE, type MenuConfig } from '@/app/dashboard/config/ui/menu';
-import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
-import { formatSectionLabel, getAvailableSections } from '@/app/dashboard/utils/section-helpers';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuPortal,
-    DropdownMenuSeparator,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+    resolveMenuItems,
+    TREE_DELETE,
+    TREE_ENTRY_MENU,
+    type MenuConfig,
+} from '@/app/dashboard/config/ui/menu';
+import { sortableAnimateLayoutChanges } from '@/app/dashboard/dnd/animate';
+import { createSectionResolver } from '@/app/dashboard/resolvers/section-resolver';
+import { SimpleDropdown } from '@/components/ui/simple-dropdown';
 
 import { useEntryMutations } from '../../hooks';
 import { useConfirmAction } from '../../hooks/use-confirm-action';
 import { useSectionMutations } from '../../hooks/use-section-mutations';
 import { selectContentView, selectSetView, useDashboardStore } from '../../stores/dashboardStore';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
-
-const MENU_CONTENT_CLASS =
-    'rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl';
 
 const DELETE_ONLY_MENU: MenuConfig = [TREE_DELETE];
 
@@ -84,9 +75,6 @@ function TreeItem({ entry, isInSection, sections }: TreeItemProps) {
         setView({ kind: 'detail', entryId: entry.id });
     };
 
-    // Available sections for "Add to section" submenu
-    const availableSections = getAvailableSections(sections, entry.id);
-
     // Delete handler with confirm (reuse wrapHandlers for TREE_DELETE confirm strategy)
     const deleteHandlers = confirmAction.wrapHandlers(
         DELETE_ONLY_MENU,
@@ -101,6 +89,16 @@ function TreeItem({ entry, isInSection, sections }: TreeItemProps) {
         },
         entry as unknown as Record<string, unknown>
     );
+
+    // Resolvers for submenu
+    const sectionResolver = createSectionResolver(
+        sections,
+        entry.id,
+        sectionMutations.addEntryToSection
+    );
+
+    // Menu items (config-driven)
+    const menuItems = resolveMenuItems(TREE_ENTRY_MENU, deleteHandlers);
 
     return (
         <>
@@ -137,8 +135,8 @@ function TreeItem({ entry, isInSection, sections }: TreeItemProps) {
                     {!isValid && (
                         <AlertTriangle className="h-3 w-3 text-amber-500/70 transition-opacity group-hover:opacity-0" />
                     )}
-                    <DropdownMenu onOpenChange={handleMenuChange}>
-                        <DropdownMenuTrigger asChild>
+                    <SimpleDropdown
+                        trigger={
                             <button
                                 onClick={(e) => e.stopPropagation()}
                                 onPointerDown={(e) => e.stopPropagation()}
@@ -146,67 +144,12 @@ function TreeItem({ entry, isInSection, sections }: TreeItemProps) {
                             >
                                 <MoreHorizontal className="h-3.5 w-3.5 text-dashboard-text-muted" />
                             </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            align="end"
-                            className={cn('w-48', MENU_CONTENT_CLASS)}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <DropdownMenuSub>
-                                <DropdownMenuSubTrigger
-                                    className="text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
-                                    disabled={sections.length === 0}
-                                >
-                                    Add to section
-                                </DropdownMenuSubTrigger>
-                                <DropdownMenuPortal>
-                                    <DropdownMenuSubContent
-                                        className={cn('w-44', MENU_CONTENT_CLASS)}
-                                    >
-                                        {sections.length === 0 ? (
-                                            <DropdownMenuItem
-                                                disabled
-                                                className="text-dashboard-text-placeholder"
-                                            >
-                                                No sections yet
-                                            </DropdownMenuItem>
-                                        ) : availableSections.length === 0 ? (
-                                            <DropdownMenuItem
-                                                disabled
-                                                className="text-dashboard-text-placeholder"
-                                            >
-                                                On all sections
-                                            </DropdownMenuItem>
-                                        ) : (
-                                            availableSections.map((s) => (
-                                                <DropdownMenuItem
-                                                    key={s.id}
-                                                    onClick={() =>
-                                                        sectionMutations.addEntryToSection(
-                                                            s.id,
-                                                            entry.id
-                                                        )
-                                                    }
-                                                    className="cursor-pointer text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
-                                                >
-                                                    {formatSectionLabel(s)}
-                                                </DropdownMenuItem>
-                                            ))
-                                        )}
-                                    </DropdownMenuSubContent>
-                                </DropdownMenuPortal>
-                            </DropdownMenuSub>
-
-                            <DropdownMenuSeparator className="bg-dashboard-border" />
-
-                            <DropdownMenuItem
-                                onClick={deleteHandlers.delete}
-                                className="cursor-pointer text-dashboard-danger focus:bg-dashboard-danger-bg"
-                            >
-                                Delete
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        }
+                        items={menuItems}
+                        resolvers={{ sectionResolver }}
+                        onOpenChange={handleMenuChange}
+                        contentClassName="w-48"
+                    />
                 </div>
             </div>
 
