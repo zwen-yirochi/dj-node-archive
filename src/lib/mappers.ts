@@ -572,7 +572,7 @@ export function mapRAEventToDbInput(
     const lineup = raEvent.artists.map((a) => ({ name: a.name }));
 
     const data: EventData = {
-        description: lineupText ? `Lineup: ${lineupText}` : undefined,
+        description: raEvent.description || (lineupText ? `Lineup: ${lineupText}` : undefined),
     };
 
     // RA 메타데이터를 data에 추가

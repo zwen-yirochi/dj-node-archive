@@ -104,6 +104,7 @@ const ARTIST_WITH_EVENTS_QUERY = `
         id
         title
         date
+        content
         contentUrl
         images {
           filename
@@ -136,6 +137,7 @@ const SINGLE_EVENT_QUERY = `
       id
       title
       date
+      content
       contentUrl
       images {
         filename
@@ -195,6 +197,7 @@ interface RAArtistResponse {
                 id: string;
                 title: string;
                 date: string;
+                content: string | null;
                 contentUrl: string | null;
                 images?: Array<{ filename: string }>;
                 venue: {
@@ -222,6 +225,7 @@ interface RASingleEventResponse {
             id: string;
             title: string;
             date: string;
+            content: string | null;
             contentUrl: string | null;
             images?: Array<{ filename: string }>;
             venue: {
@@ -246,6 +250,14 @@ const PREVIEW_LIMIT = 50;
 const MAX_EVENTS_DEFAULT = 500;
 const UPCOMING_LIMIT = 100;
 const ARTIST_MAX_EVENTS = 500;
+
+/**
+ * RA 날짜 형식 → YYYY-MM-DD 변환
+ * @example "2026-03-14T00:00:00.000" → "2026-03-14"
+ */
+function normalizeRADate(date: string): string {
+    return date.split('T')[0];
+}
 
 /**
  * RA 베뉴 URL에서 venue ID 추출
@@ -359,7 +371,8 @@ function extractEvents(
     return events.map((e) => ({
         id: e.id,
         title: e.title,
-        date: e.date,
+        date: normalizeRADate(e.date),
+        description: null,
         contentUrl: e.contentUrl,
         imageUrls: [],
         artists: e.artists.map((a) => ({
@@ -471,7 +484,8 @@ function extractArtistEvents(
         return {
             id: e.id,
             title: e.title,
-            date: e.date,
+            date: normalizeRADate(e.date),
+            description: e.content || null,
             contentUrl: e.contentUrl,
             imageUrls: e.images?.map((img) => img.filename).filter(Boolean) ?? [],
             artists: e.artists.map((a) => ({
@@ -597,7 +611,8 @@ export async function fetchRAEvent(eventId: string): Promise<Result<RAEventListi
     return success({
         id: event.id,
         title: event.title,
-        date: event.date,
+        date: normalizeRADate(event.date),
+        description: event.content || null,
         contentUrl: event.contentUrl,
         imageUrls: event.images?.map((img) => img.filename).filter(Boolean) ?? [],
         artists: event.artists.map((a) => ({
