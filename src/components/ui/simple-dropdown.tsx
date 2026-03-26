@@ -92,7 +92,8 @@ function SubmenuItem({
     item: DropdownSubmenuItem;
     resolvers?: Record<string, SubmenuResolver>;
 }) {
-    const children = item.children ?? (item.resolverKey && resolvers?.[item.resolverKey]?.()) ?? [];
+    const resolved = item.resolverKey ? resolvers?.[item.resolverKey]?.() : undefined;
+    const children: DropdownMenuItemConfig[] = item.children ?? resolved ?? [];
 
     const Icon = item.icon;
 
