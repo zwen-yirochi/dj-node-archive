@@ -34,8 +34,10 @@ import {
     createImportedVenue,
     createImportLog,
     findArtistMigration,
+    findEntriesByEventReferences,
     findEntryByEventReference,
     findEventByRAId,
+    findEventsByRAIds,
     findVenueByRAUrl,
 } from '@/lib/db/queries/import.queries';
 import { findUserByAuthId } from '@/lib/db/queries/user.queries';
@@ -50,6 +52,7 @@ import {
     parseRAEventUrl,
     parseRAVenueUrl,
 } from '@/lib/services/ra.service';
+import { createClient } from '@/lib/supabase/server';
 import { generateSlug } from '@/lib/utils/slug';
 import {
     artistImportConfirmSchema,
@@ -112,6 +115,20 @@ async function checkSystemRateLimit(): Promise<{ allowed: boolean; message?: str
 }
 
 /**
+ * request.json() 안전 파싱 — malformed JSON → 400 응답
+ */
+async function parseRequestBody(request: Request): Promise<unknown | NextResponse> {
+    try {
+        return await request.json();
+    } catch {
+        return NextResponse.json(
+            { success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON body' } },
+            { status: 400 }
+        );
+    }
+}
+
+/**
  * RA 이벤트를 Preview 형식으로 변환
  */
 function toPreviewEvent(raEvent: {
@@ -136,41 +153,68 @@ function toPreviewEvent(raEvent: {
  * RA 이미지 URL → Supabase Storage에 복사, 새 URL 배열 반환
  * 실패한 이미지는 건너뛰고 성공한 것만 반환
  */
+const IMAGE_FETCH_TIMEOUT_MS = 10_000;
+const IMAGE_MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const IMAGE_COPY_CONCURRENCY = 5;
+
 async function copyImagesToStorage(imageUrls: string[], authUserId: string): Promise<string[]> {
     if (imageUrls.length === 0) return [];
 
-    const { createClient } = await import('@/lib/supabase/server');
     const supabase = await createClient();
     const results: string[] = [];
 
-    for (const url of imageUrls) {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) continue;
+    // Process in parallel batches of IMAGE_COPY_CONCURRENCY
+    for (let i = 0; i < imageUrls.length; i += IMAGE_COPY_CONCURRENCY) {
+        const batch = imageUrls.slice(i, i + IMAGE_COPY_CONCURRENCY);
+        const batchResults = await Promise.allSettled(
+            batch.map(async (url) => {
+                const response = await fetch(url, {
+                    signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS),
+                });
+                if (!response.ok) return null;
 
-            const contentType = response.headers.get('content-type') || 'image/jpeg';
-            const buffer = await response.arrayBuffer();
+                // Size check
+                const contentLength = response.headers.get('content-length');
+                if (contentLength && parseInt(contentLength) > IMAGE_MAX_SIZE_BYTES) {
+                    console.error('[RA Import] Image too large:', url, contentLength);
+                    return null;
+                }
 
-            const ext = contentType.includes('png')
-                ? 'png'
-                : contentType.includes('webp')
-                  ? 'webp'
-                  : 'jpg';
-            const fileName = `${authUserId}/ra-import-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                // Content-type check
+                const contentType = response.headers.get('content-type') || 'image/jpeg';
+                if (!contentType.startsWith('image/')) {
+                    console.error('[RA Import] Not an image:', url, contentType);
+                    return null;
+                }
 
-            const { error } = await supabase.storage
-                .from('posters')
-                .upload(fileName, buffer, { contentType, upsert: false });
+                const buffer = await response.arrayBuffer();
+                if (buffer.byteLength > IMAGE_MAX_SIZE_BYTES) return null;
 
-            if (error) {
-                console.error('[RA Import] Storage upload failed:', error.message, url);
-                continue;
+                const ext = contentType.includes('png')
+                    ? 'png'
+                    : contentType.includes('webp')
+                      ? 'webp'
+                      : 'jpg';
+                const fileName = `${authUserId}/ra-import-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+                const { error } = await supabase.storage
+                    .from('posters')
+                    .upload(fileName, buffer, { contentType, upsert: false });
+
+                if (error) {
+                    console.error('[RA Import] Storage upload failed:', error.message, url);
+                    return null;
+                }
+
+                const { data: urlData } = supabase.storage.from('posters').getPublicUrl(fileName);
+                return urlData.publicUrl;
+            })
+        );
+
+        for (const result of batchResults) {
+            if (result.status === 'fulfilled' && result.value) {
+                results.push(result.value);
             }
-
-            const { data: urlData } = supabase.storage.from('posters').getPublicUrl(fileName);
-            results.push(urlData.publicUrl);
-        } catch (err) {
-            console.error('[RA Import] Image copy failed:', url, err);
         }
     }
 
@@ -514,7 +558,8 @@ async function createStacksForEvents(events: DBEvent[], venueId: string): Promis
  */
 export async function handleArtistImportPreview(request: Request, { user }: AuthContext) {
     // 1. Parse
-    const body = await request.json();
+    const body = await parseRequestBody(request);
+    if (body instanceof NextResponse) return body;
 
     // 2. Validate
     const parsed = artistImportPreviewSchema.safeParse(body);
@@ -585,7 +630,8 @@ export async function handleArtistImportPreview(request: Request, { user }: Auth
  */
 export async function handleArtistImportConfirm(request: Request, { user }: AuthContext) {
     // 1. Parse
-    const body = await request.json();
+    const body = await parseRequestBody(request);
+    if (body instanceof NextResponse) return body;
 
     // 2. Validate
     const parsed = artistImportConfirmSchema.safeParse(body);
@@ -624,6 +670,9 @@ export async function handleArtistImportConfirm(request: Request, { user }: Auth
               );
     }
 
+    // NOTE: Race condition possible if two requests pass this check simultaneously.
+    // Mitigated by adding a partial unique index in DB:
+    // CREATE UNIQUE INDEX idx_import_logs_artist_unique ON import_logs (user_id) WHERE import_type = 'artist' AND status IN ('completed', 'partial');
     const migrationResult = await findArtistMigration(userId);
     if (!isSuccess(migrationResult)) return internalErrorResponse(migrationResult.error.message);
     if (migrationResult.data) {
@@ -685,22 +734,28 @@ export async function handleArtistImportConfirm(request: Request, { user }: Auth
     const successList: string[] = [];
     const failedList: { title: string; reason: string }[] = [];
 
-    // Phase 1: Create events in DB (batch insert new ones, skip duplicates)
-    const newEventInputs: ReturnType<typeof mapRAEventToDbInput>[] = [];
+    // Phase 1: Batch lookup existing events by RA ID
+    const raEventIds = sortedEvents.map((e) => e.id);
+    const existingEventsResult = await findEventsByRAIds(raEventIds);
     const existingEventMap = new Map<string, string>(); // raEventId → dbEventId
 
+    if (isSuccess(existingEventsResult)) {
+        for (const dbEvent of existingEventsResult.data) {
+            const raId = (dbEvent.data as Record<string, unknown>)?.ra_event_id as string;
+            if (raId) existingEventMap.set(raId, dbEvent.id);
+        }
+    }
+
+    // Create new events for those not in DB
+    const newEventInputs: ReturnType<typeof mapRAEventToDbInput>[] = [];
     for (const raEvent of sortedEvents) {
-        const existing = await findEventByRAId(raEvent.id);
-        if (isSuccess(existing) && existing.data) {
-            existingEventMap.set(raEvent.id, existing.data.id);
-        } else {
+        if (!existingEventMap.has(raEvent.id)) {
             const eventInput = mapRAEventToDbInput(
                 raEvent,
                 '',
                 raEvent.venue?.name ?? 'Unknown Venue',
                 userId
             );
-            // Override venue to text-only (no venue row creation)
             eventInput.venue = { name: raEvent.venue?.name ?? 'Unknown Venue' };
             newEventInputs.push(eventInput);
         }
@@ -717,7 +772,17 @@ export async function handleArtistImportConfirm(request: Request, { user }: Auth
         }
     }
 
-    // Phase 2: Create entries in batch
+    // Phase 2: Batch check existing entry references
+    const allEventIds = [...existingEventMap.values()];
+    const existingEntriesResult = await findEntriesByEventReferences(page_id, allEventIds);
+    const existingEntryEventIds = new Set<string>();
+    if (isSuccess(existingEntriesResult)) {
+        for (const entry of existingEntriesResult.data) {
+            if (entry.reference_id) existingEntryEventIds.add(entry.reference_id);
+        }
+    }
+
+    // Build entry inputs, skipping duplicates
     const entryInputs: Parameters<typeof createImportedEntries>[0] = [];
 
     for (const raEvent of sortedEvents) {
@@ -727,17 +792,16 @@ export async function handleArtistImportConfirm(request: Request, { user }: Auth
             continue;
         }
 
-        // Check if entry already exists for this event
-        const existingEntry = await findEntryByEventReference(page_id, eventId);
-        if (isSuccess(existingEntry) && existingEntry.data) {
+        if (existingEntryEventIds.has(eventId)) {
             failedList.push({ title: raEvent.title, reason: 'duplicate' });
             continue;
         }
 
         currentPosition += 1;
         const entryId = uuidv4();
+        // Use timestamp-based slug to avoid N+1 ensureUniqueSlug queries
         const rawSlug = generateSlug(raEvent.title || 'event');
-        const slug = await ensureUniqueSlug(rawSlug, page_id);
+        const slug = `${rawSlug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
         // Copy images to Supabase Storage (use auth user ID for RLS-compatible path)
         const storedImageUrls = await copyImagesToStorage(raEvent.imageUrls, user.id);
@@ -848,7 +912,8 @@ export async function handleArtistMigrationStatus(_request: Request, { user }: A
  */
 export async function handleSingleEventImport(request: Request, { user }: AuthContext) {
     // 1. Parse
-    const body = await request.json();
+    const body = await parseRequestBody(request);
+    if (body instanceof NextResponse) return body;
 
     // 2. Validate
     const parsed = singleEventImportSchema.safeParse(body);

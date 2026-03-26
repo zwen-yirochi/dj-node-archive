@@ -317,6 +317,58 @@ export async function createImportedEntries(
 }
 
 /**
+ * RA event ID 배열로 기존 이벤트 일괄 조회 (N+1 방지)
+ */
+export async function findEventsByRAIds(raEventIds: string[]): Promise<Result<Event[]>> {
+    if (raEventIds.length === 0) return success([]);
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('events')
+            .select('*')
+            .in('data->>ra_event_id', raEventIds)
+            .eq('source', 'ra_import');
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'findEventsByRAIds', error));
+        }
+        return success(data || []);
+    } catch (err) {
+        return failure(createDatabaseError('이벤트 일괄 조회 오류', 'findEventsByRAIds', err));
+    }
+}
+
+/**
+ * 페이지의 entries에서 event_id 배열에 해당하는 reference entry 일괄 조회 (N+1 방지)
+ */
+export async function findEntriesByEventReferences(
+    pageId: string,
+    eventIds: string[]
+): Promise<Result<Entry[]>> {
+    if (eventIds.length === 0) return success([]);
+    try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('entries')
+            .select('*')
+            .eq('page_id', pageId)
+            .eq('type', 'event')
+            .in('reference_id', eventIds);
+
+        if (error) {
+            return failure(
+                createDatabaseError(error.message, 'findEntriesByEventReferences', error)
+            );
+        }
+        return success(data || []);
+    } catch (err) {
+        return failure(
+            createDatabaseError('엔트리 일괄 조회 오류', 'findEntriesByEventReferences', err)
+        );
+    }
+}
+
+/**
  * RA event ID로 기존 이벤트 조회 (중복 체크)
  */
 export async function findEventByRAId(raEventId: string): Promise<Result<Event | null>> {

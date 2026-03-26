@@ -63,7 +63,7 @@ export function useArtistConfirm() {
             const res = await fetch('/api/import/artist/confirm', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ra_url: raUrl, page_id: pageId }),
+                body: JSON.stringify({ ra_url: raUrl, page_id: pageId, consent: true }),
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error?.message || 'Import failed');
@@ -88,7 +88,7 @@ export function useSingleEventImport() {
             const res = await fetch('/api/import/event', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ra_url: raUrl, page_id: pageId }),
+                body: JSON.stringify({ ra_url: raUrl, page_id: pageId, consent: true }),
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error?.message || 'Import failed');
