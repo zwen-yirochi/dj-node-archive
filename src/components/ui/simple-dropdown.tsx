@@ -82,6 +82,50 @@ interface SimpleDropdownProps {
     onOpenChange?: (open: boolean) => void;
 }
 
+const SUBMENU_CONTENT_CLASS =
+    'w-44 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl';
+
+function SubmenuItem({
+    item,
+    resolvers,
+}: {
+    item: DropdownSubmenuItem;
+    resolvers?: Record<string, SubmenuResolver>;
+}) {
+    const children = item.children ?? (item.resolverKey && resolvers?.[item.resolverKey]?.()) ?? [];
+
+    const Icon = item.icon;
+
+    return (
+        <DropdownMenuSub>
+            <DropdownMenuSubTrigger
+                disabled={item.disabled || children.length === 0}
+                className="text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
+            >
+                {Icon && <Icon className="mr-2 h-3.5 w-3.5" />}
+                {item.label}
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+                <DropdownMenuSubContent className={SUBMENU_CONTENT_CLASS}>
+                    {children.length === 0 ? (
+                        <DropdownMenuItem disabled className="text-dashboard-text-placeholder">
+                            No items
+                        </DropdownMenuItem>
+                    ) : (
+                        children.map((child, index) => (
+                            <RenderItem
+                                key={'label' in child ? child.label : `sep-${index}`}
+                                item={child}
+                                resolvers={resolvers}
+                            />
+                        ))
+                    )}
+                </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+        </DropdownMenuSub>
+    );
+}
+
 function RenderItem({
     item,
     resolvers,
@@ -130,46 +174,6 @@ function RenderItem({
     );
 }
 
-const SUBMENU_CONTENT_CLASS =
-    'w-44 rounded-lg border-dashboard-border/40 bg-white/90 shadow-md backdrop-blur-xl';
-
-function SubmenuItem({
-    item,
-    resolvers,
-}: {
-    item: DropdownSubmenuItem;
-    resolvers?: Record<string, SubmenuResolver>;
-}) {
-    const children = item.children ?? (item.resolverKey && resolvers?.[item.resolverKey]?.()) ?? [];
-
-    const Icon = item.icon;
-
-    return (
-        <DropdownMenuSub>
-            <DropdownMenuSubTrigger
-                disabled={item.disabled || children.length === 0}
-                className="text-dashboard-text-secondary focus:bg-dashboard-bg-muted focus:text-dashboard-text"
-            >
-                {Icon && <Icon className="mr-2 h-3.5 w-3.5" />}
-                {item.label}
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-                <DropdownMenuSubContent className={SUBMENU_CONTENT_CLASS}>
-                    {children.length === 0 ? (
-                        <DropdownMenuItem disabled className="text-dashboard-text-placeholder">
-                            No items
-                        </DropdownMenuItem>
-                    ) : (
-                        children.map((child, index) => (
-                            <RenderItem key={index} item={child} resolvers={resolvers} />
-                        ))
-                    )}
-                </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-        </DropdownMenuSub>
-    );
-}
-
 /**
  * 선언적 드롭다운 메뉴 컴포넌트
  *
@@ -209,7 +213,11 @@ export function SimpleDropdown({
                 )}
             >
                 {items.map((item, index) => (
-                    <RenderItem key={index} item={item} resolvers={resolvers} />
+                    <RenderItem
+                        key={'label' in item ? item.label : `sep-${index}`}
+                        item={item}
+                        resolvers={resolvers}
+                    />
                 ))}
             </DropdownMenuContent>
         </DropdownMenu>
