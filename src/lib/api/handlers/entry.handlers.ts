@@ -13,6 +13,7 @@ import {
     type AuthContext,
 } from '@/lib/api';
 import {
+    countEntriesByReferenceId,
     createEntry,
     deleteEntry,
     ensureUniqueSlug,
@@ -21,7 +22,7 @@ import {
     updateEntry,
     updateEntryPositions,
 } from '@/lib/db/queries/entry.queries';
-import { createEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
+import { createEvent, deleteEvent, generateEventSlug } from '@/lib/db/queries/event.queries';
 import { findUserByAuthId } from '@/lib/db/queries/user.queries';
 import { mapEntryToDatabase, mapEntryToDomain } from '@/lib/mappers';
 import { generateSlug } from '@/lib/utils/slug';
@@ -198,10 +199,29 @@ export async function handleDeleteEntry({ user }: AuthContext, id: string) {
         return ownership.reason === 'not_found' ? notFoundResponse('엔트리') : forbiddenResponse();
     }
 
+    // 삭제 전 entry 조회 (참조형 event cleanup용)
+    const entryResult = await getEntryById(id);
+    const referenceId =
+        isSuccess(entryResult) && entryResult.data.reference_id
+            ? entryResult.data.reference_id
+            : null;
+
     const result = await deleteEntry(id);
 
     if (!isSuccess(result)) {
         return internalErrorResponse(result.error.message);
+    }
+
+    // 참조형 event cleanup: 이 event를 참조하는 다른 entry가 0개면 event도 삭제
+    // deleteEvent는 created_by 소유권 검증 포함 — 타인의 event는 삭제하지 않음
+    if (referenceId) {
+        const refCount = await countEntriesByReferenceId(referenceId);
+        if (isSuccess(refCount) && refCount.data === 0) {
+            const userResult = await findUserByAuthId(user.id);
+            if (isSuccess(userResult) && userResult.data) {
+                await deleteEvent(referenceId, userResult.data.id);
+            }
+        }
     }
 
     return successResponse(null);

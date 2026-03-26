@@ -124,6 +124,33 @@ export async function deleteEntry(id: string): Promise<Result<void>> {
     }
 }
 
+/**
+ * 특정 event를 참조하는 entry 수 조회 (orphan event 삭제 판단용)
+ */
+export async function countEntriesByReferenceId(referenceId: string): Promise<Result<number>> {
+    try {
+        const supabase = await createClient();
+        const { count, error } = await supabase
+            .from('entries')
+            .select('*', { count: 'exact', head: true })
+            .eq('reference_id', referenceId);
+
+        if (error) {
+            return failure(createDatabaseError(error.message, 'countEntriesByReferenceId', error));
+        }
+
+        return success(count ?? 0);
+    } catch (err) {
+        return failure(
+            createDatabaseError(
+                '참조 엔트리 수 조회 중 오류가 발생했습니다.',
+                'countEntriesByReferenceId',
+                err
+            )
+        );
+    }
+}
+
 export async function updateEntryPositions(
     updates: { id: string; position: number }[]
 ): Promise<Result<void>> {

@@ -20,6 +20,7 @@ import {
     useDashboardStore,
 } from '../../../stores/dashboardStore';
 import EventImportSearch from './EventImportSearch';
+import EventRAImport from './EventRAImport';
 
 // ============================================
 // AutoCreateEntry: create immediately and navigate to editor
@@ -85,7 +86,7 @@ const EVENT_CREATE_OPTIONS: { id: EventCreateOption; label: string; description:
     {
         id: 'ra-url',
         label: 'Import from RA URL',
-        description: 'Paste a Resident Advisor event link (coming soon)',
+        description: 'Paste a Resident Advisor event link',
     },
 ];
 
@@ -142,13 +143,7 @@ function EventCreateRouter() {
 
                     {option === 'import' && <EventImportSearch />}
 
-                    {option === 'ra-url' && (
-                        <div className="rounded-lg border border-dashboard-border bg-dashboard-bg-muted p-4 text-center">
-                            <p className="text-sm text-dashboard-text-muted">
-                                Coming soon — paste an RA event URL to import
-                            </p>
-                        </div>
-                    )}
+                    {option === 'ra-url' && <EventRAImport />}
                 </div>
             </div>
         </div>

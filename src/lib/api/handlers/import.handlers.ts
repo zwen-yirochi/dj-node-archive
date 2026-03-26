@@ -1,40 +1,66 @@
 // lib/api/handlers/import.handlers.ts
 // Import 관련 핸들러 (7-step 패턴)
 
-import type { AuthContext } from '@/lib/api/withAuth';
-import {
-    successResponse,
-    internalErrorResponse,
-    zodValidationErrorResponse,
-} from '@/lib/api/responses';
-import { isSuccess } from '@/types/result';
-import {
-    venueImportPreviewSchema,
-    venueImportConfirmSchema,
-} from '@/lib/validations/import.schemas';
-import {
-    parseRAVenueUrl,
-    fetchRAVenueEvents,
-    fetchAllRAVenueEvents,
-} from '@/lib/services/ra.service';
-import {
-    findVenueByRAUrl,
-    createImportedVenue,
-    createImportedEvents,
-    countUserImportsInWindow,
-    countSystemImportsInWindow,
-    createImportLog,
-} from '@/lib/db/queries/import.queries';
-import {
-    upsertEventStack,
-    assignStackToEvents,
-    refreshStackSummary,
-} from '@/lib/db/queries/event-stack.queries';
-import { findUserByAuthId } from '@/lib/db/queries/user.queries';
-import { mapRAVenueToDbInput, mapRAEventToDbInput } from '@/lib/mappers';
+import { v4 as uuidv4 } from 'uuid';
+import { NextResponse } from 'next/server';
+
 import type { Event as DBEvent } from '@/types/database';
 import type { PreviewEventItem, VenueImportPreview, VenueImportResult } from '@/types/ra';
-import { NextResponse } from 'next/server';
+import type {
+    ArtistImportPreview,
+    ArtistImportResult,
+    SingleEventImportResult,
+} from '@/types/ra-import';
+import { isSuccess } from '@/types/result';
+import { verifyPageOwnership } from '@/lib/api/ownership';
+import {
+    internalErrorResponse,
+    successResponse,
+    zodValidationErrorResponse,
+} from '@/lib/api/responses';
+import type { AuthContext } from '@/lib/api/withAuth';
+import { createEntry, ensureUniqueSlug, getMaxPosition } from '@/lib/db/queries/entry.queries';
+import {
+    assignStackToEvents,
+    refreshStackSummary,
+    upsertEventStack,
+} from '@/lib/db/queries/event-stack.queries';
+import {
+    countSystemImportsInWindow,
+    countUserEventImportsInWindow,
+    countUserImportsInWindow,
+    createImportedEntries,
+    createImportedEvents,
+    createImportedVenue,
+    createImportLog,
+    findArtistMigration,
+    findEntriesByEventReferences,
+    findEntryByEventReference,
+    findEventByRAId,
+    findEventsByRAIds,
+    findVenueByRAUrl,
+} from '@/lib/db/queries/import.queries';
+import { findUserByAuthId } from '@/lib/db/queries/user.queries';
+import { mapRAEventToDbInput, mapRAVenueToDbInput } from '@/lib/mappers';
+import {
+    fetchAllRAArtistEvents,
+    fetchAllRAVenueEvents,
+    fetchRAArtistEvents,
+    fetchRAEvent,
+    fetchRAVenueEvents,
+    parseRAArtistUrl,
+    parseRAEventUrl,
+    parseRAVenueUrl,
+} from '@/lib/services/ra.service';
+import { createClient } from '@/lib/supabase/server';
+import { generateSlug } from '@/lib/utils/slug';
+import {
+    artistImportConfirmSchema,
+    artistImportPreviewSchema,
+    singleEventImportSchema,
+    venueImportConfirmSchema,
+    venueImportPreviewSchema,
+} from '@/lib/validations/import.schemas';
 
 // Rate limit constants
 const USER_RATE_LIMIT = 5; // 유저당 5회/시간
@@ -71,6 +97,38 @@ async function checkRateLimit(userId: string): Promise<{ allowed: boolean; messa
 }
 
 /**
+ * 시스템 전체 Rate Limit만 체크 (artist migration, single event import용)
+ * 유저별 제한은 각 handler에서 import_type별로 별도 체크
+ */
+async function checkSystemRateLimit(): Promise<{ allowed: boolean; message?: string }> {
+    const systemCountResult = await countSystemImportsInWindow(RATE_LIMIT_WINDOW_HOURS);
+    if (!isSuccess(systemCountResult)) {
+        return { allowed: false, message: 'Rate limit 확인 중 오류가 발생했습니다.' };
+    }
+    if (systemCountResult.data >= SYSTEM_RATE_LIMIT) {
+        return {
+            allowed: false,
+            message: '현재 Import 요청이 많습니다. 잠시 후 다시 시도해주세요.',
+        };
+    }
+    return { allowed: true };
+}
+
+/**
+ * request.json() 안전 파싱 — malformed JSON → 400 응답
+ */
+async function parseRequestBody(request: Request): Promise<unknown | NextResponse> {
+    try {
+        return await request.json();
+    } catch {
+        return NextResponse.json(
+            { success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON body' } },
+            { status: 400 }
+        );
+    }
+}
+
+/**
  * RA 이벤트를 Preview 형식으로 변환
  */
 function toPreviewEvent(raEvent: {
@@ -88,6 +146,119 @@ function toPreviewEvent(raEvent: {
             raUrl: a.urlSafeName ? `https://ra.co/dj/${a.urlSafeName}` : null,
         })),
         raEventUrl: raEvent.contentUrl ? `https://ra.co${raEvent.contentUrl}` : null,
+    };
+}
+
+/**
+ * RA 이미지 URL → Supabase Storage에 복사, 새 URL 배열 반환
+ * 실패한 이미지는 건너뛰고 성공한 것만 반환
+ */
+const IMAGE_FETCH_TIMEOUT_MS = 10_000;
+const IMAGE_MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const IMAGE_COPY_CONCURRENCY = 5;
+
+async function copyImagesToStorage(imageUrls: string[], authUserId: string): Promise<string[]> {
+    if (imageUrls.length === 0) return [];
+
+    const supabase = await createClient();
+    const results: string[] = [];
+
+    // Process in parallel batches of IMAGE_COPY_CONCURRENCY
+    for (let i = 0; i < imageUrls.length; i += IMAGE_COPY_CONCURRENCY) {
+        const batch = imageUrls.slice(i, i + IMAGE_COPY_CONCURRENCY);
+        const batchResults = await Promise.allSettled(
+            batch.map(async (url) => {
+                const response = await fetch(url, {
+                    signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS),
+                });
+                if (!response.ok) return null;
+
+                // Size check
+                const contentLength = response.headers.get('content-length');
+                if (contentLength && parseInt(contentLength) > IMAGE_MAX_SIZE_BYTES) {
+                    console.error('[RA Import] Image too large:', url, contentLength);
+                    return null;
+                }
+
+                // Content-type check
+                const contentType = response.headers.get('content-type') || 'image/jpeg';
+                if (!contentType.startsWith('image/')) {
+                    console.error('[RA Import] Not an image:', url, contentType);
+                    return null;
+                }
+
+                const buffer = await response.arrayBuffer();
+                if (buffer.byteLength > IMAGE_MAX_SIZE_BYTES) return null;
+
+                const ext = contentType.includes('png')
+                    ? 'png'
+                    : contentType.includes('webp')
+                      ? 'webp'
+                      : 'jpg';
+                const fileName = `${authUserId}/ra-import-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+                const { error } = await supabase.storage
+                    .from('posters')
+                    .upload(fileName, buffer, { contentType, upsert: false });
+
+                if (error) {
+                    console.error('[RA Import] Storage upload failed:', error.message, url);
+                    return null;
+                }
+
+                const { data: urlData } = supabase.storage.from('posters').getPublicUrl(fileName);
+                return urlData.publicUrl;
+            })
+        );
+
+        for (const result of batchResults) {
+            if (result.status === 'fulfilled' && result.value) {
+                results.push(result.value);
+            }
+        }
+    }
+
+    return results;
+}
+
+/**
+ * DB event → entry.data 전체 데이터 (참조형이지만 전체 데이터도 저장하는 Option B 패턴)
+ */
+function buildEntryDataFromEvent(eventId: string, dbEvent: DBEvent): Record<string, unknown> {
+    return {
+        event_id: eventId,
+        title: dbEvent.title,
+        date: dbEvent.date,
+        venue: dbEvent.venue,
+        lineup: dbEvent.lineup,
+        image_urls: (dbEvent.data as Record<string, unknown>)?.poster_urls,
+        description: (dbEvent.data as Record<string, unknown>)?.description,
+        links: (dbEvent.data as Record<string, unknown>)?.links,
+    };
+}
+
+/**
+ * RA event listing → entry.data 전체 데이터 (DB event 없이 RA 데이터에서 직접 생성)
+ */
+function buildEntryDataFromRAEvent(
+    eventId: string,
+    raEvent: {
+        title: string;
+        date: string;
+        description?: string | null;
+        imageUrls?: string[];
+        venue?: { name: string } | null;
+        artists: { name: string }[];
+    }
+): Record<string, unknown> {
+    return {
+        event_id: eventId,
+        title: raEvent.title,
+        date: raEvent.date,
+        venue: { name: raEvent.venue?.name ?? 'Unknown Venue' },
+        lineup: raEvent.artists.map((a) => ({ name: a.name })),
+        image_urls: raEvent.imageUrls?.length ? raEvent.imageUrls : undefined,
+        description: raEvent.description || undefined,
     };
 }
 
@@ -375,4 +546,559 @@ async function createStacksForEvents(events: DBEvent[], venueId: string): Promis
     }
 
     return stackCount;
+}
+
+// ============================================
+// Artist Import Handlers
+// ============================================
+
+/**
+ * POST /api/import/artist/preview
+ * RA 아티스트 URL → 미리보기 데이터 (DB 저장 없음)
+ */
+export async function handleArtistImportPreview(request: Request, { user }: AuthContext) {
+    // 1. Parse
+    const body = await parseRequestBody(request);
+    if (body instanceof NextResponse) return body;
+
+    // 2. Validate
+    const parsed = artistImportPreviewSchema.safeParse(body);
+    if (!parsed.success) return zodValidationErrorResponse(parsed.error);
+    const { ra_url } = parsed.data;
+
+    const urlResult = parseRAArtistUrl(ra_url);
+    if (!urlResult.success) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: { code: 'VALIDATION_ERROR', message: urlResult.error.message },
+            },
+            { status: 400 }
+        );
+    }
+    const { artistSlug } = urlResult.data;
+
+    // 3. Verify — user lookup + migration check
+    const userResult = await findUserByAuthId(user.id);
+    if (!isSuccess(userResult) || !userResult.data) {
+        return internalErrorResponse('사용자 정보를 찾을 수 없습니다.');
+    }
+    const userId = userResult.data.id;
+
+    const migrationResult = await findArtistMigration(userId);
+    if (!isSuccess(migrationResult)) return internalErrorResponse(migrationResult.error.message);
+    if (migrationResult.data) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: { code: 'CONFLICT', message: 'Artist migration already completed.' },
+            },
+            { status: 409 }
+        );
+    }
+
+    // 4. RA API 호출
+    const raResult = await fetchRAArtistEvents(artistSlug);
+    if (!raResult.success) {
+        return NextResponse.json(
+            { success: false, error: { code: 'NETWORK_ERROR', message: raResult.error.message } },
+            { status: 502 }
+        );
+    }
+
+    const { artist, events, totalResults } = raResult.data;
+    if (!artist) {
+        return NextResponse.json(
+            { success: false, error: { code: 'NOT_FOUND', message: 'Artist not found on RA.' } },
+            { status: 404 }
+        );
+    }
+
+    // 5. Preview 변환
+    const preview: ArtistImportPreview = {
+        artist: { name: artist.name, eventCount: totalResults },
+        sampleEvents: events.slice(0, 10).map(toPreviewEvent),
+    };
+
+    // 6. 응답
+    return successResponse(preview);
+}
+
+/**
+ * POST /api/import/artist/confirm
+ * RA 아티스트 전체 이벤트 → events + entries 생성
+ */
+export async function handleArtistImportConfirm(request: Request, { user }: AuthContext) {
+    // 1. Parse
+    const body = await parseRequestBody(request);
+    if (body instanceof NextResponse) return body;
+
+    // 2. Validate
+    const parsed = artistImportConfirmSchema.safeParse(body);
+    if (!parsed.success) return zodValidationErrorResponse(parsed.error);
+    const { ra_url, page_id } = parsed.data;
+
+    const urlResult = parseRAArtistUrl(ra_url);
+    if (!urlResult.success) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: { code: 'VALIDATION_ERROR', message: urlResult.error.message },
+            },
+            { status: 400 }
+        );
+    }
+    const { artistSlug } = urlResult.data;
+
+    // 3. Verify — user, page ownership, migration check, system rate limit
+    const userResult = await findUserByAuthId(user.id);
+    if (!isSuccess(userResult) || !userResult.data) {
+        return internalErrorResponse('사용자 정보를 찾을 수 없습니다.');
+    }
+    const userId = userResult.data.id;
+
+    const ownership = await verifyPageOwnership(page_id, user.id);
+    if (!ownership.ok) {
+        return ownership.reason === 'not_found'
+            ? NextResponse.json(
+                  { success: false, error: { code: 'NOT_FOUND', message: 'Page not found.' } },
+                  { status: 404 }
+              )
+            : NextResponse.json(
+                  { success: false, error: { code: 'FORBIDDEN', message: 'Not your page.' } },
+                  { status: 403 }
+              );
+    }
+
+    // NOTE: Race condition possible if two requests pass this check simultaneously.
+    // Mitigated by adding a partial unique index in DB:
+    // CREATE UNIQUE INDEX idx_import_logs_artist_unique ON import_logs (user_id) WHERE import_type = 'artist' AND status IN ('completed', 'partial');
+    const migrationResult = await findArtistMigration(userId);
+    if (!isSuccess(migrationResult)) return internalErrorResponse(migrationResult.error.message);
+    if (migrationResult.data) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: { code: 'CONFLICT', message: 'Artist migration already completed.' },
+            },
+            { status: 409 }
+        );
+    }
+
+    // System-wide rate limit only (per-user is handled by one-time migration check)
+    const systemRateLimit = await checkSystemRateLimit();
+    if (!systemRateLimit.allowed) {
+        return NextResponse.json(
+            { success: false, error: { code: 'RATE_LIMIT', message: systemRateLimit.message } },
+            { status: 429 }
+        );
+    }
+
+    // 4. RA API 전체 수집
+    const raResult = await fetchAllRAArtistEvents(artistSlug);
+    if (!raResult.success) {
+        return NextResponse.json(
+            { success: false, error: { code: 'NETWORK_ERROR', message: raResult.error.message } },
+            { status: 502 }
+        );
+    }
+
+    const { artist, events: raEvents } = raResult.data;
+    if (!artist) {
+        return NextResponse.json(
+            { success: false, error: { code: 'NOT_FOUND', message: 'Artist not found on RA.' } },
+            { status: 404 }
+        );
+    }
+
+    if (raEvents.length === 0) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: { code: 'NOT_FOUND', message: 'No events found for this artist.' },
+            },
+            { status: 404 }
+        );
+    }
+
+    // 5. Get current max position
+    const maxPosResult = await getMaxPosition(page_id);
+    if (!isSuccess(maxPosResult)) return internalErrorResponse(maxPosResult.error.message);
+    let currentPosition = maxPosResult.data;
+
+    // 6. Process events — sort by date (oldest first), then batch
+    const sortedEvents = [...raEvents].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    const successList: string[] = [];
+    const failedList: { title: string; reason: string }[] = [];
+
+    // Phase 1: Batch lookup existing events by RA ID
+    const raEventIds = sortedEvents.map((e) => e.id);
+    const existingEventsResult = await findEventsByRAIds(raEventIds);
+    const existingEventMap = new Map<string, string>(); // raEventId → dbEventId
+
+    if (isSuccess(existingEventsResult)) {
+        for (const dbEvent of existingEventsResult.data) {
+            const raId = (dbEvent.data as Record<string, unknown>)?.ra_event_id as string;
+            if (raId) existingEventMap.set(raId, dbEvent.id);
+        }
+    }
+
+    // Create new events for those not in DB
+    const newEventInputs: ReturnType<typeof mapRAEventToDbInput>[] = [];
+    for (const raEvent of sortedEvents) {
+        if (!existingEventMap.has(raEvent.id)) {
+            const eventInput = mapRAEventToDbInput(
+                raEvent,
+                '',
+                raEvent.venue?.name ?? 'Unknown Venue',
+                userId
+            );
+            eventInput.venue = { name: raEvent.venue?.name ?? 'Unknown Venue' };
+            newEventInputs.push(eventInput);
+        }
+    }
+
+    // Batch insert new events
+    if (newEventInputs.length > 0) {
+        const batchResult = await createImportedEvents(newEventInputs);
+        if (isSuccess(batchResult)) {
+            for (const dbEvent of batchResult.data) {
+                const raId = (dbEvent.data as Record<string, unknown>)?.ra_event_id as string;
+                if (raId) existingEventMap.set(raId, dbEvent.id);
+            }
+        }
+    }
+
+    // Phase 2: Batch check existing entry references
+    const allEventIds = [...existingEventMap.values()];
+    const existingEntriesResult = await findEntriesByEventReferences(page_id, allEventIds);
+    const existingEntryEventIds = new Set<string>();
+    if (isSuccess(existingEntriesResult)) {
+        for (const entry of existingEntriesResult.data) {
+            if (entry.reference_id) existingEntryEventIds.add(entry.reference_id);
+        }
+    }
+
+    // Build entry inputs, skipping duplicates
+    const entryInputs: Parameters<typeof createImportedEntries>[0] = [];
+
+    for (const raEvent of sortedEvents) {
+        const eventId = existingEventMap.get(raEvent.id);
+        if (!eventId) {
+            failedList.push({ title: raEvent.title, reason: 'Event creation failed' });
+            continue;
+        }
+
+        if (existingEntryEventIds.has(eventId)) {
+            failedList.push({ title: raEvent.title, reason: 'duplicate' });
+            continue;
+        }
+
+        currentPosition += 1;
+        const entryId = uuidv4();
+        // Use timestamp-based slug to avoid N+1 ensureUniqueSlug queries
+        const rawSlug = generateSlug(raEvent.title || 'event');
+        const slug = `${rawSlug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+        // Copy images to Supabase Storage (use auth user ID for RLS-compatible path)
+        const storedImageUrls = await copyImagesToStorage(raEvent.imageUrls, user.id);
+        const entryData = buildEntryDataFromRAEvent(eventId, {
+            ...raEvent,
+            imageUrls: storedImageUrls,
+        });
+        entryData.ra_source_url = raEvent.contentUrl
+            ? `https://ra.co${raEvent.contentUrl}`
+            : undefined;
+
+        entryInputs.push({
+            id: entryId,
+            page_id,
+            type: 'event' as const,
+            position: currentPosition,
+            reference_id: eventId,
+            data: entryData,
+            slug,
+        });
+
+        successList.push(raEvent.title);
+    }
+
+    // Batch insert entries (in chunks of 50 to avoid payload limits)
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < entryInputs.length; i += BATCH_SIZE) {
+        const batch = entryInputs.slice(i, i + BATCH_SIZE);
+        const batchResult = await createImportedEntries(batch);
+        if (!isSuccess(batchResult)) {
+            for (const entry of batch) {
+                const idx = successList.indexOf(
+                    sortedEvents.find((e) => existingEventMap.get(e.id) === entry.reference_id)
+                        ?.title ?? ''
+                );
+                if (idx >= 0) {
+                    const title = successList.splice(idx, 1)[0];
+                    failedList.push({ title, reason: 'Entry batch creation failed' });
+                }
+            }
+        }
+    }
+
+    // 7. Write import log
+    const status = failedList.length === 0 ? 'completed' : 'partial';
+    await createImportLog({
+        user_id: userId,
+        import_type: 'artist',
+        ra_url,
+        event_count: successList.length,
+        status,
+        metadata: {
+            artist_name: artist.name,
+            total: sortedEvents.length,
+            success: successList.length,
+            failed: failedList.length,
+            failed_events: failedList,
+            user_consent: true,
+            consent_timestamp: new Date().toISOString(),
+        },
+    });
+
+    // 8. Response
+    const result: ArtistImportResult = {
+        artist: { name: artist.name },
+        totalEvents: sortedEvents.length,
+        successCount: successList.length,
+        failedCount: failedList.length,
+        failedEvents: failedList,
+    };
+
+    return successResponse(result, 201);
+}
+
+/**
+ * GET /api/import/artist/status
+ * 현재 유저의 아티스트 마이그레이션 상태 조회
+ */
+export async function handleArtistMigrationStatus(_request: Request, { user }: AuthContext) {
+    const userResult = await findUserByAuthId(user.id);
+    if (!isSuccess(userResult) || !userResult.data) {
+        return internalErrorResponse('사용자 정보를 찾을 수 없습니다.');
+    }
+
+    const migrationResult = await findArtistMigration(userResult.data.id);
+    if (!isSuccess(migrationResult)) return internalErrorResponse(migrationResult.error.message);
+
+    if (!migrationResult.data) {
+        return successResponse({ completed: false });
+    }
+
+    const metadata = migrationResult.data.metadata as Record<string, unknown>;
+    return successResponse({
+        completed: true,
+        artistName: metadata?.artist_name,
+        eventCount: migrationResult.data.event_count,
+        completedAt: migrationResult.data.created_at,
+    });
+}
+
+// ============================================
+// Single Event Import Handler
+// ============================================
+
+/**
+ * POST /api/import/event
+ * RA 이벤트 URL → event + entry 생성
+ */
+export async function handleSingleEventImport(request: Request, { user }: AuthContext) {
+    // 1. Parse
+    const body = await parseRequestBody(request);
+    if (body instanceof NextResponse) return body;
+
+    // 2. Validate
+    const parsed = singleEventImportSchema.safeParse(body);
+    if (!parsed.success) return zodValidationErrorResponse(parsed.error);
+    const { ra_url, page_id } = parsed.data;
+
+    const urlResult = parseRAEventUrl(ra_url);
+    if (!urlResult.success) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: { code: 'VALIDATION_ERROR', message: urlResult.error.message },
+            },
+            { status: 400 }
+        );
+    }
+    const { eventId: raEventId } = urlResult.data;
+
+    // 3. Verify — user, page ownership, rate limits
+    const userResult = await findUserByAuthId(user.id);
+    if (!isSuccess(userResult) || !userResult.data) {
+        return internalErrorResponse('사용자 정보를 찾을 수 없습니다.');
+    }
+    const userId = userResult.data.id;
+
+    const ownership = await verifyPageOwnership(page_id, user.id);
+    if (!ownership.ok) {
+        return ownership.reason === 'not_found'
+            ? NextResponse.json(
+                  { success: false, error: { code: 'NOT_FOUND', message: 'Page not found.' } },
+                  { status: 404 }
+              )
+            : NextResponse.json(
+                  { success: false, error: { code: 'FORBIDDEN', message: 'Not your page.' } },
+                  { status: 403 }
+              );
+    }
+
+    // User-level event rate limit
+    const eventRateCount = await countUserEventImportsInWindow(userId, RATE_LIMIT_WINDOW_HOURS);
+    if (!isSuccess(eventRateCount)) return internalErrorResponse('Rate limit check failed.');
+    if (eventRateCount.data >= USER_RATE_LIMIT) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: { code: 'RATE_LIMIT', message: 'Rate limit exceeded, try again later.' },
+            },
+            { status: 429 }
+        );
+    }
+
+    // System-wide rate limit only (per-user event limit already checked above)
+    const systemRateLimit = await checkSystemRateLimit();
+    if (!systemRateLimit.allowed) {
+        return NextResponse.json(
+            { success: false, error: { code: 'RATE_LIMIT', message: systemRateLimit.message } },
+            { status: 429 }
+        );
+    }
+
+    // 4. Check dedup
+    const existingEvent = await findEventByRAId(raEventId);
+    if (!isSuccess(existingEvent)) return internalErrorResponse(existingEvent.error.message);
+
+    let dbEventId: string;
+    let eventTitle: string;
+    let eventDate: string;
+    let eventVenueName: string;
+    let entryData: Record<string, unknown>;
+
+    if (existingEvent.data) {
+        dbEventId = existingEvent.data.id;
+        eventTitle = existingEvent.data.title;
+        eventDate = existingEvent.data.date;
+        eventVenueName = existingEvent.data.venue.name;
+        entryData = buildEntryDataFromEvent(dbEventId, existingEvent.data);
+
+        // 기존 event에 이미지가 없으면 RA에서 가져와서 Storage에 복사
+        const existingImages = (entryData.image_urls as string[]) || [];
+        if (existingImages.length === 0) {
+            const raResult = await fetchRAEvent(raEventId);
+            if (raResult.success && raResult.data && raResult.data.imageUrls.length > 0) {
+                const storedUrls = await copyImagesToStorage(raResult.data.imageUrls, user.id);
+                if (storedUrls.length > 0) {
+                    entryData.image_urls = storedUrls;
+                }
+            }
+        }
+        entryData.ra_source_url = ra_url;
+    } else {
+        // 5. Fetch from RA
+        const raResult = await fetchRAEvent(raEventId);
+        if (!raResult.success) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: { code: 'NETWORK_ERROR', message: raResult.error.message },
+                },
+                { status: 502 }
+            );
+        }
+        if (!raResult.data) {
+            return NextResponse.json(
+                { success: false, error: { code: 'NOT_FOUND', message: 'Event not found on RA.' } },
+                { status: 404 }
+            );
+        }
+
+        const raEvent = raResult.data;
+        const eventInput = mapRAEventToDbInput(
+            raEvent,
+            '',
+            raEvent.venue?.name ?? 'Unknown Venue',
+            userId
+        );
+        eventInput.venue = { name: raEvent.venue?.name ?? 'Unknown Venue' };
+
+        const createResult = await createImportedEvents([eventInput]);
+        if (!isSuccess(createResult) || createResult.data.length === 0) {
+            return internalErrorResponse('Event creation failed.');
+        }
+
+        dbEventId = createResult.data[0].id;
+        eventTitle = raEvent.title;
+        eventDate = raEvent.date;
+        eventVenueName = raEvent.venue?.name ?? '';
+
+        // Copy images to Supabase Storage (use auth user ID for RLS-compatible path)
+        const storedImageUrls = await copyImagesToStorage(raEvent.imageUrls, user.id);
+        entryData = buildEntryDataFromRAEvent(dbEventId, {
+            ...raEvent,
+            imageUrls: storedImageUrls,
+        });
+        entryData.ra_source_url = ra_url;
+    }
+
+    // 6. Check if entry already exists
+    const existingEntry = await findEntryByEventReference(page_id, dbEventId);
+    if (!isSuccess(existingEntry)) return internalErrorResponse(existingEntry.error.message);
+    if (existingEntry.data) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: { code: 'CONFLICT', message: 'This event is already in your archive.' },
+            },
+            { status: 409 }
+        );
+    }
+
+    // 7. Create entry
+    const maxPosResult = await getMaxPosition(page_id);
+    if (!isSuccess(maxPosResult)) return internalErrorResponse(maxPosResult.error.message);
+
+    const entryId = uuidv4();
+    const rawSlug = generateSlug(eventTitle || 'event');
+    const slug = await ensureUniqueSlug(rawSlug, page_id);
+
+    const entryResult = await createEntry(entryId, {
+        page_id,
+        type: 'event',
+        position: maxPosResult.data + 1,
+        reference_id: dbEventId,
+        data: entryData as unknown as import('@/types/database').EntryData,
+        slug,
+    });
+
+    if (!isSuccess(entryResult)) return internalErrorResponse(entryResult.error.message);
+
+    // 8. Log
+    await createImportLog({
+        user_id: userId,
+        import_type: 'event',
+        ra_url,
+        event_count: 1,
+        metadata: {
+            user_consent: true,
+            consent_timestamp: new Date().toISOString(),
+        },
+    });
+
+    // 9. Response
+    const result: SingleEventImportResult = {
+        entry: { id: entryId, slug },
+        event: { title: eventTitle, date: eventDate, venue: eventVenueName },
+    };
+
+    return successResponse(result, 201);
 }

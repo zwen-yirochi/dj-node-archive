@@ -2,13 +2,13 @@
 // RA(Resident Advisor) GraphQL API 클라이언트
 // venue(id) 쿼리 기반 — 베뉴 정보 + 과거 이벤트를 단일 쿼리로 조회
 
-import type { RAEventListingItem, RAVenueInfo } from '@/types/ra';
+import type { RAArtistInfo, RAEventListingItem, RAVenueInfo } from '@/types/ra';
 import {
-    type Result,
-    success,
-    failure,
     createNetworkError,
     createValidationError,
+    failure,
+    success,
+    type Result,
 } from '@/types/result';
 
 const RA_GRAPHQL_ENDPOINT = 'https://ra.co/graphql';
@@ -93,6 +93,75 @@ const VENUE_INFO_QUERY = `
   }
 `;
 
+// artist(slug) 쿼리 — 아티스트 정보 + 과거 이벤트
+const ARTIST_WITH_EVENTS_QUERY = `
+  query GET_ARTIST($slug: String!, $eventLimit: Int!) {
+    artist(slug: $slug) {
+      id
+      name
+      urlSafeName
+      events(type: PREVIOUS, limit: $eventLimit) {
+        id
+        title
+        date
+        content
+        contentUrl
+        images {
+          filename
+        }
+        venue {
+          id
+          name
+          address
+          area {
+            name
+            country {
+              name
+            }
+          }
+        }
+        artists {
+          id
+          name
+          urlSafeName
+        }
+      }
+    }
+  }
+`;
+
+// event(id) 쿼리 — 단일 이벤트 상세
+const SINGLE_EVENT_QUERY = `
+  query GET_EVENT($id: ID!) {
+    event(id: $id) {
+      id
+      title
+      date
+      content
+      contentUrl
+      images {
+        filename
+      }
+      venue {
+        id
+        name
+        address
+        area {
+          name
+          country {
+            name
+          }
+        }
+      }
+      artists {
+        id
+        name
+        urlSafeName
+      }
+    }
+  }
+`;
+
 interface RAVenueResponse {
     data: {
         venue: {
@@ -118,9 +187,77 @@ interface RAVenueResponse {
     };
 }
 
+interface RAArtistResponse {
+    data: {
+        artist: {
+            id: string;
+            name: string;
+            urlSafeName: string | null;
+            events?: Array<{
+                id: string;
+                title: string;
+                date: string;
+                content: string | null;
+                contentUrl: string | null;
+                images?: Array<{ filename: string }>;
+                venue: {
+                    id: string;
+                    name: string;
+                    address: string | null;
+                    area: {
+                        name: string;
+                        country: { name: string };
+                    } | null;
+                } | null;
+                artists: Array<{
+                    id: string;
+                    name: string;
+                    urlSafeName: string | null;
+                }>;
+            }>;
+        } | null;
+    };
+}
+
+interface RASingleEventResponse {
+    data: {
+        event: {
+            id: string;
+            title: string;
+            date: string;
+            content: string | null;
+            contentUrl: string | null;
+            images?: Array<{ filename: string }>;
+            venue: {
+                id: string;
+                name: string;
+                address: string | null;
+                area: {
+                    name: string;
+                    country: { name: string };
+                } | null;
+            } | null;
+            artists: Array<{
+                id: string;
+                name: string;
+                urlSafeName: string | null;
+            }>;
+        } | null;
+    };
+}
+
 const PREVIEW_LIMIT = 50;
 const MAX_EVENTS_DEFAULT = 500;
 const UPCOMING_LIMIT = 100;
+const ARTIST_MAX_EVENTS = 500;
+
+/**
+ * RA 날짜 형식 → YYYY-MM-DD 변환
+ * @example "2026-03-14T00:00:00.000" → "2026-03-14"
+ */
+function normalizeRADate(date: string): string {
+    return date.split('T')[0];
+}
 
 /**
  * RA 베뉴 URL에서 venue ID 추출
@@ -137,6 +274,40 @@ export function parseRAVenueUrl(url: string): Result<{ venueId: string }> {
         );
     }
     return success({ venueId: match[1] });
+}
+
+/**
+ * RA 아티스트 URL에서 slug 추출
+ * @example "https://ra.co/dj/benklock" → "benklock"
+ */
+export function parseRAArtistUrl(url: string): Result<{ artistSlug: string }> {
+    const match = url.match(/ra\.co\/dj\/([\w-]+)/);
+    if (!match) {
+        return failure(
+            createValidationError(
+                'Invalid RA artist URL. Expected format: https://ra.co/dj/{name}',
+                'ra_url'
+            )
+        );
+    }
+    return success({ artistSlug: match[1] });
+}
+
+/**
+ * RA 이벤트 URL에서 event ID 추출
+ * @example "https://ra.co/events/1234567" → "1234567"
+ */
+export function parseRAEventUrl(url: string): Result<{ eventId: string }> {
+    const match = url.match(/ra\.co\/events\/(\d+)/);
+    if (!match) {
+        return failure(
+            createValidationError(
+                'Invalid RA event URL. Expected format: https://ra.co/events/{id}',
+                'ra_url'
+            )
+        );
+    }
+    return success({ eventId: match[1] });
 }
 
 /**
@@ -200,8 +371,10 @@ function extractEvents(
     return events.map((e) => ({
         id: e.id,
         title: e.title,
-        date: e.date,
+        date: normalizeRADate(e.date),
+        description: null,
         contentUrl: e.contentUrl,
+        imageUrls: [],
         artists: e.artists.map((a) => ({
             name: a.name,
             urlSafeName: a.urlSafeName,
@@ -293,6 +466,38 @@ export async function fetchAllRAVenueEvents(
 }
 
 /**
+ * RA 아티스트 이벤트를 RAEventListingItem[]으로 변환
+ */
+function extractArtistEvents(
+    events: NonNullable<NonNullable<RAArtistResponse['data']['artist']>['events']>
+): RAEventListingItem[] {
+    if (!events) return [];
+    return events.map((e) => {
+        const venue: RAVenueInfo | null = e.venue
+            ? {
+                  id: e.venue.id,
+                  name: e.venue.name,
+                  address: e.venue.address,
+                  area: e.venue.area,
+              }
+            : null;
+        return {
+            id: e.id,
+            title: e.title,
+            date: normalizeRADate(e.date),
+            description: e.content || null,
+            contentUrl: e.contentUrl,
+            imageUrls: e.images?.map((img) => img.filename).filter(Boolean) ?? [],
+            artists: e.artists.map((a) => ({
+                name: a.name,
+                urlSafeName: a.urlSafeName,
+            })),
+            venue,
+        };
+    });
+}
+
+/**
  * RA 베뉴 예정 이벤트만 조회 (Cron refresh용)
  */
 export async function fetchRAVenueUpcomingEvents(
@@ -315,4 +520,105 @@ export async function fetchRAVenueUpcomingEvents(
     const events = extractEvents(venue.events, venueInfo);
 
     return success({ venue: venueInfo, events });
+}
+
+/**
+ * RA 아티스트 이벤트 미리보기 (Preview용)
+ */
+export async function fetchRAArtistEvents(
+    artistSlug: string
+): Promise<
+    Result<{ artist: RAArtistInfo | null; events: RAEventListingItem[]; totalResults: number }>
+> {
+    const result = await queryRA<RAArtistResponse>(ARTIST_WITH_EVENTS_QUERY, {
+        slug: artistSlug,
+        eventLimit: PREVIEW_LIMIT,
+    });
+
+    if (!result.success) return result;
+
+    const artist = result.data.data.artist;
+    if (!artist) {
+        return success({ artist: null, events: [], totalResults: 0 });
+    }
+
+    const artistInfo: RAArtistInfo = {
+        id: artist.id,
+        name: artist.name,
+        urlSafeName: artist.urlSafeName,
+    };
+
+    const events = extractArtistEvents(artist.events ?? []);
+
+    return success({
+        artist: artistInfo,
+        events,
+        totalResults: events.length,
+    });
+}
+
+/**
+ * RA 아티스트 전체 이벤트 수집 (Confirm용)
+ */
+export async function fetchAllRAArtistEvents(
+    artistSlug: string
+): Promise<Result<{ artist: RAArtistInfo | null; events: RAEventListingItem[] }>> {
+    const result = await queryRA<RAArtistResponse>(ARTIST_WITH_EVENTS_QUERY, {
+        slug: artistSlug,
+        eventLimit: ARTIST_MAX_EVENTS,
+    });
+
+    if (!result.success) return result;
+
+    const artist = result.data.data.artist;
+    if (!artist) {
+        return success({ artist: null, events: [] });
+    }
+
+    const artistInfo: RAArtistInfo = {
+        id: artist.id,
+        name: artist.name,
+        urlSafeName: artist.urlSafeName,
+    };
+
+    const events = extractArtistEvents(artist.events ?? []);
+
+    return success({ artist: artistInfo, events });
+}
+
+/**
+ * RA 단일 이벤트 조회
+ */
+export async function fetchRAEvent(eventId: string): Promise<Result<RAEventListingItem | null>> {
+    const result = await queryRA<RASingleEventResponse>(SINGLE_EVENT_QUERY, {
+        id: eventId,
+    });
+
+    if (!result.success) return result;
+
+    const event = result.data.data.event;
+    if (!event) return success(null);
+
+    const venue: RAVenueInfo | null = event.venue
+        ? {
+              id: event.venue.id,
+              name: event.venue.name,
+              address: event.venue.address,
+              area: event.venue.area,
+          }
+        : null;
+
+    return success({
+        id: event.id,
+        title: event.title,
+        date: normalizeRADate(event.date),
+        description: event.content || null,
+        contentUrl: event.contentUrl,
+        imageUrls: event.images?.map((img) => img.filename).filter(Boolean) ?? [],
+        artists: event.artists.map((a) => ({
+            name: a.name,
+            urlSafeName: a.urlSafeName,
+        })),
+        venue,
+    });
 }

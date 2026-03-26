@@ -2,7 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Camera, Check, Loader2, LogOut, Trash2, User as UserIcon, X } from 'lucide-react';
+import {
+    Camera,
+    Check,
+    Download,
+    Loader2,
+    LogOut,
+    Trash2,
+    User as UserIcon,
+    X,
+} from 'lucide-react';
 
 import type { User } from '@/types';
 import { createClient } from '@/lib/supabase/client';
@@ -16,6 +25,7 @@ import { checkUsernameAvailable } from '../../hooks/use-user';
 import SyncedField from '../ContentPanel/shared-fields/SyncedField';
 import TextField from '../ContentPanel/shared-fields/TextField';
 import { DashboardDialogContent, Dialog, DialogHeader, DialogTitle } from './DashboardDialog';
+import SettingsRAImport from './SettingsRAImport';
 
 const USERNAME_REGEX = /^[a-z0-9_-]{3,30}$/;
 
@@ -23,10 +33,11 @@ const USERNAME_REGEX = /^[a-z0-9_-]{3,30}$/;
 // Settings section config
 // ---------------------------------------------------------------------------
 
-type SettingsSection = 'profile' | 'account';
+type SettingsSection = 'profile' | 'ra-import' | 'account';
 
 const SETTINGS_SECTIONS: { key: SettingsSection; label: string; icon: typeof UserIcon }[] = [
     { key: 'profile', label: 'Profile', icon: UserIcon },
+    { key: 'ra-import', label: 'RA Import', icon: Download },
     { key: 'account', label: 'Account', icon: LogOut },
 ];
 
@@ -74,6 +85,7 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
                     {/* Right content */}
                     <div className="flex-1 overflow-y-auto bg-dashboard-bg-surface/50 p-6">
                         {activeSection === 'profile' && <ProfileSection />}
+                        {activeSection === 'ra-import' && <SettingsRAImport />}
                         {activeSection === 'account' && <AccountSettingsSection />}
                     </div>
                 </div>
